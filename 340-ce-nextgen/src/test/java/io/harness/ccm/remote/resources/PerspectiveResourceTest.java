@@ -55,6 +55,9 @@ public class PerspectiveResourceTest extends CategoryTest {
   private BudgetService budgetService = mock(BudgetService.class);
   private CCMNotificationService notificationService = mock(CCMNotificationService.class);
   private AwsAccountFieldHelper awsAccountFieldHelper = mock(AwsAccountFieldHelper.class);
+  private TelemetryReporter telemetryReporter = mock(TelemetryReporter.class);
+  private TransactionTemplate transactionTemplate = mock(TransactionTemplate.class);
+  private OutboxService outboxService = mock(OutboxService.class);
   private PerspectiveResource perspectiveResource;
 
   private final String ACCOUNT_ID = "ACCOUNT_ID";
@@ -67,10 +70,6 @@ public class PerspectiveResourceTest extends CategoryTest {
   private final String UNIFIED_TABLE_NAME = "unified";
 
   private CEView perspective;
-
-  @Mock private TelemetryReporter telemetryReporter;
-  @Mock private TransactionTemplate transactionTemplate;
-  @Mock private OutboxService outboxService;
 
   @Before
   public void setUp() throws IllegalAccessException, IOException {
