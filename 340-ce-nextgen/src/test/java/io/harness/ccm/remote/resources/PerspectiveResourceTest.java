@@ -31,6 +31,7 @@ import io.harness.ccm.views.service.CEReportScheduleService;
 import io.harness.ccm.views.service.CEViewService;
 import io.harness.ccm.views.service.ViewCustomFieldService;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.outbox.api.OutboxService;
 import io.harness.rule.Owner;
 import io.harness.telemetry.TelemetryReporter;
 
@@ -41,6 +42,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class PerspectiveResourceTest extends CategoryTest {
@@ -67,6 +69,8 @@ public class PerspectiveResourceTest extends CategoryTest {
   private CEView perspective;
 
   @Mock private TelemetryReporter telemetryReporter;
+  @Mock private TransactionTemplate transactionTemplate;
+  @Mock private OutboxService outboxService;
 
   @Before
   public void setUp() throws IllegalAccessException, IOException {
@@ -87,7 +91,7 @@ public class PerspectiveResourceTest extends CategoryTest {
 
     perspectiveResource = new PerspectiveResource(ceViewService, ceReportScheduleService, viewCustomFieldService,
         bigQueryService, bigQueryHelper, budgetCostService, budgetService, notificationService, awsAccountFieldHelper,
-        telemetryReporter);
+        telemetryReporter, transactionTemplate, outboxService);
   }
 
   @Test
