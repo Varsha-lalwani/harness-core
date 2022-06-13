@@ -74,22 +74,21 @@ public final class CEView implements PersistentEntity, UuidAware, CreatedAtAware
   private EmbeddedUser lastUpdatedBy;
 
   public CEView toDTO() {
-    CEView dto = CEView.builder()
-                     .uuid(getUuid())
-                     .name(getName())
-                     .accountId(getAccountId())
-                     .viewVersion(getViewVersion())
-                     .viewRules(getViewRules())
-                     .dataSources(getDataSources())
-                     .viewVisualization(getViewVisualization())
-                     .viewType(getViewType())
-                     .viewState(getViewState())
-                     .totalCost(getTotalCost())
-                     .createdAt(getCreatedAt())
-                     .lastUpdatedAt(getLastUpdatedAt())
-                     .createdBy(getCreatedBy())
-                     .lastUpdatedBy(getLastUpdatedBy())
-                     .build();
-    return dto;
+    return CEView.builder()
+        .uuid(getUuid())
+        .name(getName())
+        .accountId(getAccountId())
+        .viewVersion(getViewVersion())
+        .viewRules(getViewRules())
+        .dataSources(getDataSources())
+        .viewVisualization(getViewVisualization())
+        .viewType(getViewType())
+        .viewState(getViewState())
+        .totalCost(getTotalCost())
+        .createdAt(getCreatedAt())
+        .lastUpdatedAt(getLastUpdatedAt())
+        .createdBy(getCreatedBy())
+        .lastUpdatedBy(getLastUpdatedBy())
+        .build();
   }
 }
