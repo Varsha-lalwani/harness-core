@@ -107,7 +107,10 @@ import io.harness.mongo.MongoConfig;
 import io.harness.mongo.MongoPersistence;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.ng.core.event.MessageListener;
+<<<<<<< HEAD
 import io.harness.notification.module.NotificationClientModule;
+=======
+>>>>>>> 69007582ce5 ([CCM-7874]: Enable NG Audit Trails in CCM)
 import io.harness.outbox.TransactionOutboxModule;
 import io.harness.outbox.api.OutboxEventHandler;
 import io.harness.persistence.HPersistence;
