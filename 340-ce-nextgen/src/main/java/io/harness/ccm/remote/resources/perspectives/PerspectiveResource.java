@@ -23,7 +23,7 @@ import static io.harness.telemetry.Destination.AMPLITUDE;
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.ccm.auditEvents.PerspectiveCreateEvent;
+import io.harness.ccm.audittrails.events.PerspectiveCreateEvent;
 import io.harness.ccm.audittrails.events.PerspectiveDeleteEvent;
 import io.harness.ccm.audittrails.events.PerspectiveUpdateEvent;
 import io.harness.ccm.bigQuery.BigQueryService;

@@ -19,12 +19,15 @@ import io.harness.annotations.retry.MethodExecutionHelper;
 import io.harness.annotations.retry.RetryOnException;
 import io.harness.annotations.retry.RetryOnExceptionInterceptor;
 import io.harness.app.PrimaryVersionManagerModule;
+import io.harness.audit.ResourceTypeConstants.PERSPECTIVE;
 import io.harness.audit.client.remote.AuditClientModule;
 import io.harness.aws.AwsClient;
 import io.harness.aws.AwsClientImpl;
 import io.harness.callback.DelegateCallback;
 import io.harness.callback.DelegateCallbackToken;
 import io.harness.callback.MongoDatabase;
+import io.harness.ccm.audittrails.eventhandler.CENextGenOutboxEventHandler;
+import io.harness.ccm.audittrails.eventhandler.PerspectiveEventHandler;
 import io.harness.ccm.bigQuery.BigQueryService;
 import io.harness.ccm.bigQuery.BigQueryServiceImpl;
 import io.harness.ccm.commons.beans.config.GcpConfig;
@@ -106,6 +109,7 @@ import io.harness.morphia.MorphiaRegistrar;
 import io.harness.ng.core.event.MessageListener;
 import io.harness.notification.module.NotificationClientModule;
 import io.harness.outbox.TransactionOutboxModule;
+import io.harness.outbox.api.OutboxEventHandler;
 import io.harness.persistence.HPersistence;
 import io.harness.persistence.NoopUserProvider;
 import io.harness.persistence.UserProvider;
@@ -299,6 +303,8 @@ public class CENextGenModule extends AbstractModule {
     bind(AnomalyService.class).to(AnomalyServiceImpl.class);
     bind(CCMNotificationService.class).to(CCMNotificationServiceImpl.class);
     bind(FilterService.class).to(FilterServiceImpl.class);
+    registerOutboxEventHandlers();
+    bind(OutboxEventHandler.class).to(CENextGenOutboxEventHandler.class);
 
     registerEventsFrameworkMessageListeners();
 
@@ -320,6 +326,13 @@ public class CENextGenModule extends AbstractModule {
     requestInjection(accountIdentifierLogInterceptor);
     bindInterceptor(
         Matchers.any(), Matchers.annotatedWith(LogAccountIdentifier.class), accountIdentifierLogInterceptor);
+  }
+
+  private void registerOutboxEventHandlers() {
+    MapBinder<String, OutboxEventHandler> outboxEventHandlerMapBinder =
+        MapBinder.newMapBinder(binder(), String.class, OutboxEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding(PERSPECTIVE).to(PerspectiveEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding().to(PerspectiveEventHandler.class);
   }
 
   private void registerDelegateTaskService() {
