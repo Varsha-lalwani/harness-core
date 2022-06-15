@@ -180,7 +180,13 @@ import io.harness.delegate.task.azure.appservice.webapp.handler.AzureWebAppSlotS
 import io.harness.delegate.task.azure.appservice.webapp.handler.AzureWebAppTrafficShiftRequestHandler;
 import io.harness.delegate.task.azure.appservice.webapp.ng.AzureWebAppRequestType;
 import io.harness.delegate.task.azure.appservice.webapp.ng.request.AzureWebAppTaskRequest;
-import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
+import io.harness.delegate.task.azure.arm.AzureARMBaseHelper;
+import io.harness.delegate.task.azure.arm.AzureARMBaseHelperImpl;
+import io.harness.delegate.task.azure.arm.AzureARMTaskNG;
+import io.harness.delegate.task.azure.arm.AzureARMTaskType;
+import io.harness.delegate.task.azure.arm.handlers.AzureARMAbstractTaskHandler;
+import io.harness.delegate.task.azure.arm.handlers.AzureARMCreateTaskHandler;
+import io.harness.delegate.task.azure.arm.handlers.AzureBlueprintCreateTaskHandler;
 import io.harness.delegate.task.azure.artifact.AzureArtifactDownloadService;
 import io.harness.delegate.task.azure.artifact.AzureArtifactDownloadServiceImpl;
 import io.harness.delegate.task.azure.resource.operation.AzureResourceProvider;
@@ -1223,6 +1229,13 @@ public class DelegateModule extends AbstractModule {
     cfnTaskTypeToHandlerMap.addBinding(CloudformationTaskType.DELETE_STACK)
         .to(CloudformationDeleteStackTaskHandler.class);
 
+    // Azure ARM/BP Task handlers
+    MapBinder<AzureARMTaskType, AzureARMAbstractTaskHandler> azTaskTypeToHandlerMap =
+        MapBinder.newMapBinder(binder(), AzureARMTaskType.class, AzureARMAbstractTaskHandler.class);
+    azTaskTypeToHandlerMap.addBinding(AzureARMTaskType.ARM_DEPLOYMENT).to(AzureARMCreateTaskHandler.class);
+    azTaskTypeToHandlerMap.addBinding(AzureARMTaskType.BLUEPRINT_DEPLOYMENT).to(AzureBlueprintCreateTaskHandler.class);
+    bind(AzureARMBaseHelper.class).to(AzureARMBaseHelperImpl.class);
+
     // HelmNG Task Handlers
 
     bind(DockerRegistryService.class).to(DockerRegistryServiceImpl.class);
@@ -1316,16 +1329,15 @@ public class DelegateModule extends AbstractModule {
     // Azure ARM tasks
     MapBinder<String, AbstractAzureARMTaskHandler> azureARMTaskTypeToTaskHandlerMap =
         MapBinder.newMapBinder(binder(), String.class, AbstractAzureARMTaskHandler.class);
-    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskParameters.AzureARMTaskType.ARM_DEPLOYMENT.name())
+    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskType.ARM_DEPLOYMENT.name())
         .to(AzureARMDeploymentTaskHandler.class);
-    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskParameters.AzureARMTaskType.ARM_ROLLBACK.name())
+    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskType.ARM_ROLLBACK.name())
         .to(AzureARMRollbackTaskHandler.class);
-    azureARMTaskTypeToTaskHandlerMap
-        .addBinding(AzureARMTaskParameters.AzureARMTaskType.LIST_SUBSCRIPTION_LOCATIONS.name())
+    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskType.LIST_SUBSCRIPTION_LOCATIONS.name())
         .to(AzureARMListSubscriptionLocationsTaskHandler.class);
-    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskParameters.AzureARMTaskType.LIST_MNG_GROUP.name())
+    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskType.LIST_MNG_GROUP.name())
         .to(AzureARMListManagementGroupTaskHandler.class);
-    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskParameters.AzureARMTaskType.BLUEPRINT_DEPLOYMENT.name())
+    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskType.BLUEPRINT_DEPLOYMENT.name())
         .to(AzureBlueprintDeploymentTaskHandler.class);
 
     // Azure Resource tasks
@@ -1748,6 +1760,7 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.SERVERLESS_COMMAND_TASK).toInstance(ServerlessCommandTask.class);
     mapBinder.addBinding(TaskType.AZURE_WEB_APP_TASK_NG).toInstance(AzureWebAppTaskNG.class);
     mapBinder.addBinding(TaskType.COMMAND_TASK_NG).toInstance(CommandTaskNG.class);
+    mapBinder.addBinding(TaskType.AZURE_NG_ARM_BLUEPRINT).toInstance(AzureARMTaskNG.class);
   }
 
   private void registerSecretManagementBindings() {

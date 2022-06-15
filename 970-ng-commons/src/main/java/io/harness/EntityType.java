@@ -271,8 +271,16 @@ public enum EntityType {
   AZURE_WEBAPP_ROLLBACK_STEP(ModuleType.CD, EntityTypeConstants.AZURE_WEBAPP_ROLLBACK, IdentifierRef.class,
       EntityYamlRootNames.AZURE_WEBAPP_ROLLBACK_STEP),
   @JsonProperty(EntityTypeConstants.JENKINS_BUILD)
-  JENKINS_BUILD(
-      ModuleType.CD, EntityTypeConstants.JENKINS_BUILD, IdentifierRef.class, EntityYamlRootNames.JENKINS_BUILD);
+  JENKINS_BUILD(ModuleType.CD, EntityTypeConstants.JENKINS_BUILD, IdentifierRef.class, EntityYamlRootNames.JENKINS_BUILD),
+  @JsonProperty(EntityTypeConstants.AZURE_CREATE_RESOURCE_STEP)
+  AZURE_CREATE_RESOURCE_STEP(ModuleType.CD, EntityTypeConstants.AZURE_CREATE_RESOURCE_STEP, IdentifierRef.class,
+      EntityYamlRootNames.AZURE_CREATE_RESOURCE_STEP),
+  @JsonProperty(EntityTypeConstants.AZURE_CREATE_BP_RESOURCE_STEP)
+  AZURE_CREATE_BP_RESOURCE_STEP(ModuleType.CD, EntityTypeConstants.AZURE_CREATE_BP_RESOURCE_STEP, IdentifierRef.class,
+      EntityYamlRootNames.AZURE_CREATE_BP_RESOURCE_STEP),
+  @JsonProperty(EntityTypeConstants.AZURE_ROLLBACK_ARM_RESOURCE_STEP)
+  AZURE_ROLLBACK_ARM_RESOURCE_STEP(ModuleType.CD, EntityTypeConstants.AZURE_ROLLBACK_ARM_RESOURCE_STEP,
+      IdentifierRef.class, EntityYamlRootNames.AZURE_ROLLBACK_ARM_RESOURCE_STEP);
 
   private final ModuleType moduleType;
   String yamlName;

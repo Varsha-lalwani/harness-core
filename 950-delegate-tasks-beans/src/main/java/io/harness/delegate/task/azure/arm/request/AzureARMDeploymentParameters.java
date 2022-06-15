@@ -7,6 +7,7 @@
 
 package io.harness.delegate.task.azure.arm.request;
 
+import static io.harness.delegate.task.azure.arm.AzureARMTaskType.ARM_DEPLOYMENT;
 import static io.harness.expression.Expression.ALLOW_SECRETS;
 
 import io.harness.azure.model.ARMScopeType;
@@ -38,7 +39,7 @@ public class AzureARMDeploymentParameters extends AzureARMTaskParameters {
       String resourceGroupName, String deploymentDataLocation, String templateJson, String parametersJson,
       String commandName, Integer timeoutIntervalInMin, boolean rollback) {
     super(appId, accountId, activityId, subscriptionId, commandName, timeoutIntervalInMin,
-        AzureARMTaskType.ARM_DEPLOYMENT);
+            ARM_DEPLOYMENT);
     this.deploymentScope = deploymentScope;
     this.deploymentMode = deploymentMode;
     this.deploymentName = deploymentName;

@@ -370,8 +370,15 @@ import io.harness.delegate.task.azure.appservice.webapp.response.AzureWebAppSlot
 import io.harness.delegate.task.azure.appservice.webapp.response.AzureWebAppSwapSlotsResponse;
 import io.harness.delegate.task.azure.appservice.webapp.response.DeploymentSlotData;
 import io.harness.delegate.task.azure.arm.AzureARMPreDeploymentData;
+import io.harness.delegate.task.azure.arm.AzureARMTaskNGParameters;
+import io.harness.delegate.task.azure.arm.AzureARMTaskNGResponse;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
 import io.harness.delegate.task.azure.arm.AzureARMTaskResponse;
+import io.harness.delegate.task.azure.arm.AzureARMTaskType;
+import io.harness.delegate.task.azure.arm.AzureBlueprintTaskNGParameters;
+import io.harness.delegate.task.azure.arm.AzureBlueprintTaskNGResponse;
+import io.harness.delegate.task.azure.arm.AzureTaskNGParameters;
+import io.harness.delegate.task.azure.arm.AzureTaskNGResponse;
 import io.harness.delegate.task.azure.arm.request.AzureARMDeploymentParameters;
 import io.harness.delegate.task.azure.arm.request.AzureARMRollbackParameters;
 import io.harness.delegate.task.azure.arm.request.AzureBlueprintDeploymentParameters;
@@ -1193,7 +1200,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(K8sCanaryDeployResponse.class, 543250);
     kryo.register(AzureARMListManagementGroupResponse.class, 543251);
     kryo.register(AzureARMListSubscriptionLocationsResponse.class, 543252);
-    kryo.register(AzureARMTaskParameters.AzureARMTaskType.class, 543253);
+    kryo.register(AzureARMTaskType.class, 543253);
     kryo.register(K8sSwapServiceSelectorsRequest.class, 543254);
     kryo.register(K8sDeleteRequest.class, 543255);
     kryo.register(ManagementGroupData.class, 543256);
@@ -1620,6 +1627,12 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(AzureWebAppTrafficShiftResponse.class, 55331);
     kryo.register(AzureWebAppSwapSlotsRequest.class, 55332);
     kryo.register(AzureWebAppSwapSlotsResponseNG.class, 55333);
+    kryo.register(AzureTaskNGParameters.class, 55334);
+    kryo.register(AzureTaskNGResponse.class, 55335);
+    kryo.register(AzureBlueprintTaskNGParameters.class, 55336);
+    kryo.register(AzureBlueprintTaskNGResponse.class, 55337);
+    kryo.register(AzureARMTaskNGParameters.class, 55338);
+    kryo.register(AzureARMTaskNGResponse.class, 55339);
 
     kryo.register(SerializedResponseData.class, 55401);
     kryo.register(SerializationFormat.class, 55402);

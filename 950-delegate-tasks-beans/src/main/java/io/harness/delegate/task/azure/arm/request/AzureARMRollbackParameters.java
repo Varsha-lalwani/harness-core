@@ -13,6 +13,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import static io.harness.delegate.task.azure.arm.AzureARMTaskType.ARM_ROLLBACK;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AzureARMRollbackParameters extends AzureARMTaskParameters {
@@ -20,6 +22,6 @@ public class AzureARMRollbackParameters extends AzureARMTaskParameters {
   public AzureARMRollbackParameters(String appId, String accountId, String activityId, String subscriptionId,
       String commandName, Integer timeoutIntervalInMin) {
     super(
-        appId, accountId, activityId, subscriptionId, commandName, timeoutIntervalInMin, AzureARMTaskType.ARM_ROLLBACK);
+        appId, accountId, activityId, subscriptionId, commandName, timeoutIntervalInMin, ARM_ROLLBACK);
   }
 }
