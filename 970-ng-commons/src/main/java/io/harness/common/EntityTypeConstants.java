@@ -96,4 +96,5 @@ public interface EntityTypeConstants {
   String INFRASTRUCTURE = "Infrastructure";
   String COMMAND = "Command";
   String STRATEGY_NODE = "StrategyNode";
+  String AZURE_CREATE_RESOURCE_STEP = "CreateAzureResource";
 }

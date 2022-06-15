@@ -28,6 +28,7 @@ import io.harness.cdng.creator.plan.service.ServiceDefinitionPlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreatorV2;
 import io.harness.cdng.creator.plan.stage.DeploymentStagePMSPlanCreatorV2;
+import io.harness.cdng.creator.plan.steps.AzureCreateResourceStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreator;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreatorV2;
 import io.harness.cdng.creator.plan.steps.CDPMSStepPlanCreator;
@@ -106,6 +107,9 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
   private static final String CLOUDFORMATION_STEP_METADATA = "Cloudformation";
   private static final List<String> TERRAFORM_CATEGORY = Arrays.asList("Kubernetes", "Provisioner", "Helm");
 
+  private static final List<String> AZURE_CREATE_RESOURCE_CATEGORY =
+          Arrays.asList("Kubernetes", "Provisioner", "AzureARM/Blueprint", "Helm");
+  private static final String AZURE_CREATE_RESOURCE_STEP_METADATA = "AzureARM/Blueprint";
   @Inject InjectorUtils injectorUtils;
   @Override
   public List<PartialPlanCreator<?>> getPlanCreators() {
@@ -154,6 +158,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new ConfigFilesPlanCreator());
     planCreators.add(new CommandStepPlanCreator());
     planCreators.add(new SpecNodePlanCreator());
+    planCreators.add(new AzureCreateResourceStepPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
@@ -399,6 +404,17 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                                  .setFeatureFlag(FeatureName.CLOUDFORMATION_NG.name())
                                  .build();
 
+    StepInfo azureCreateResources = StepInfo.newBuilder()
+            .setName("Create resources in Azure")
+            .setType(StepSpecTypeConstants.AZURE_CREATE_RESOURCE)
+            .setFeatureRestrictionName(FeatureRestrictionName.AZURE_CREATE_RESOURCE.name())
+            .setStepMetaData(StepMetaData.newBuilder()
+                    .addAllCategory(AZURE_CREATE_RESOURCE_CATEGORY)
+                    .addFolderPaths(AZURE_CREATE_RESOURCE_STEP_METADATA)
+                    .build())
+            .setFeatureFlag(FeatureName.AZURE_ARM_NG.name())
+            .build();
+
     List<StepInfo> stepInfos = new ArrayList<>();
 
     stepInfos.add(gitOpsCreatePR);
@@ -423,6 +439,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     stepInfos.add(deleteStack);
     stepInfos.add(rollbackStack);
     stepInfos.add(executeCommand);
+    stepInfos.add(azureCreateResources);
     return stepInfos;
   }
 }

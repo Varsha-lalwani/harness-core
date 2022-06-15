@@ -393,3 +393,12 @@ io.harness.cdng.infra.yaml.AzureWebAppInfrastructure
 io.harness.cdng.infra.beans.AzureWebAppInfrastructureOutcome
 io.harness.cdng.gitops.steps.ClusterStepParameters.EnvClusterRefs
 io.harness.cdng.gitops.steps.GitopsClustersOutcome
+io.harness.cdng.provision.azure.ARMDeploymentSpec
+io.harness.cdng.provision.azure.BluePrintDeploymentSpec
+io.harness.cdng.provision.azure.CreateStepsConfiguration
+io.harness.cdng.provision.azure.CreateStepConfigurationParameters
+io.harness.cdng.provision.azure.CreateStepInfo
+io.harness.cdng.provision.azure.CreateStepNode
+io.harness.cdng.provision.azure.CreateStepParameters
+io.harness.cdng.provision.azure.InlineTemplateFileSpec
+io.harness.cdng.provision.azure.RemoteTemplateFileSpec

@@ -67,6 +67,7 @@ public enum FeatureRestrictionName {
   DELETE_STACK,
   ROLLBACK_STACK,
   COMMAND,
+  AZURE_CREATE_RESOURCE,
 
   // STO Features
   SECURITY,

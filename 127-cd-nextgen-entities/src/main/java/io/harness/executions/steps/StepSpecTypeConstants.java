@@ -32,6 +32,8 @@ public interface StepSpecTypeConstants {
   String TERRAFORM_DESTROY = "TerraformDestroy";
   String TERRAFORM_ROLLBACK = "TerraformRollback";
 
+  String AZURE_CREATE_RESOURCE = "CreateAzureResource";
+
   String PLACEHOLDER = "Placeholder";
 
   String HELM_DEPLOY = "HelmDeploy";

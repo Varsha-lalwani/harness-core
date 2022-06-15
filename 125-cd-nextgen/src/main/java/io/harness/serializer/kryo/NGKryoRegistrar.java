@@ -59,6 +59,7 @@ import io.harness.cdng.pipeline.beans.DeploymentStageStepParameters;
 import io.harness.cdng.pipeline.beans.RollbackNode;
 import io.harness.cdng.pipeline.beans.RollbackOptionalChildChainStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
+import io.harness.cdng.provision.azure.AzureCreateStepInfo;
 import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepInfo;
 import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepInfo;
 import io.harness.cdng.provision.cloudformation.CloudformationRollbackStepInfo;
@@ -168,5 +169,7 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(CloudformationRollbackStepInfo.class, 12584);
     kryo.register(ConfigFileStepParameters.class, 12585);
     kryo.register(CommandStepInfo.class, 12600);
+    kryo.register(AzureCreateStepInfo.class, 12601);
+
   }
 }
