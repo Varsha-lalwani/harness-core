@@ -28,7 +28,9 @@ import io.harness.outbox.api.OutboxEventHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class PerspectiveEventHandler implements OutboxEventHandler {
   private final ObjectMapper objectMapper;
   private final AuditClientService auditClientService;
@@ -49,6 +51,7 @@ public class PerspectiveEventHandler implements OutboxEventHandler {
           throw new InvalidArgumentsException(String.format("Not supported event type %s", outboxEvent.getEventType()));
       }
     } catch (IOException exception) {
+      log.error(exception.toString());
       return false;
     }
   }

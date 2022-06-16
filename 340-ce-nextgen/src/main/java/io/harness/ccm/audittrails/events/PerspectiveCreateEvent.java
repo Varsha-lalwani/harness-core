@@ -17,8 +17,10 @@ import io.harness.ng.core.ResourceScope;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 public class PerspectiveCreateEvent implements Event {
   public static final String PERSPECTIVE_CREATED = "PerspectiveCreated";
   private CEView perspectiveDTO;
