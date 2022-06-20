@@ -14,6 +14,7 @@ import io.harness.ng.core.Resource;
 import io.harness.ng.core.ResourceConstants;
 import io.harness.ng.core.ResourceScope;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
@@ -32,11 +33,13 @@ public class PerspectiveCreateEvent implements Event {
   }
 
   @Override
+  @JsonIgnore
   public ResourceScope getResourceScope() {
     return new OrgScope(accountIdentifier, perspectiveDTO.getUuid());
   }
 
   @Override
+  @JsonIgnore
   public Resource getResource() {
     Map<String, String> labels = new HashMap<>();
     labels.put(ResourceConstants.LABEL_KEY_RESOURCE_NAME, perspectiveDTO.getName());
@@ -44,6 +47,7 @@ public class PerspectiveCreateEvent implements Event {
   }
 
   @Override
+  @JsonIgnore
   public String getEventType() {
     return PERSPECTIVE_CREATED;
   }
