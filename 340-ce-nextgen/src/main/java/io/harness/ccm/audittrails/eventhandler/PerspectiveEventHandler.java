@@ -25,7 +25,6 @@ import io.harness.ccm.audittrails.events.PerspectiveDeleteEvent;
 import io.harness.ccm.audittrails.events.PerspectiveUpdateEvent;
 import io.harness.ccm.audittrails.yamlDTOs.PerspectiveDTO;
 import io.harness.context.GlobalContext;
-import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxEventHandler;

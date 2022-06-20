@@ -8,15 +8,7 @@
 package io.harness.ccm.audittrails.events;
 
 import io.harness.ccm.views.entities.CEView;
-import io.harness.event.Event;
-import io.harness.ng.core.OrgScope;
-import io.harness.ng.core.Resource;
-import io.harness.ng.core.ResourceConstants;
-import io.harness.ng.core.ResourceScope;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -31,7 +23,7 @@ public class PerspectiveUpdateEvent extends PerspectiveEvent {
     this.oldPerspectiveDTO = oldPerspectiveDTO;
   }
 
-  @JsonIgnore
+  @Override
   public String getEventType() {
     return PERSPECTIVE_UPDATED;
   }
