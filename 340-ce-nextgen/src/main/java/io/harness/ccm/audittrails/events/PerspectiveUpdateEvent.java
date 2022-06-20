@@ -21,30 +21,32 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class PerspectiveCreateEvent implements Event {
-  public static final String PERSPECTIVE_CREATED = "PerspectiveCreated";
-  private CEView perspectiveDTO;
+public class PerspectiveUpdateEvent implements Event {
+  public static final String PERSPECTIVE_UPDATED = "PerspectiveUpdated";
+  private CEView oldPerspectiveDTO;
+  private CEView newPerspectiveDTO;
   private String accountIdentifier;
 
-  public PerspectiveCreateEvent(String accountIdentifier, CEView perspectiveDTO) {
+  public PerspectiveUpdateEvent(String accountIdentifier, CEView newPerspectiveDTO, CEView oldPerspectiveDTO) {
     this.accountIdentifier = accountIdentifier;
-    this.perspectiveDTO = perspectiveDTO;
+    this.newPerspectiveDTO = newPerspectiveDTO;
+    this.oldPerspectiveDTO = oldPerspectiveDTO;
   }
 
   @Override
   public ResourceScope getResourceScope() {
-    return new OrgScope(accountIdentifier, perspectiveDTO.getUuid());
+    return new OrgScope(accountIdentifier, newPerspectiveDTO.getUuid());
   }
 
   @Override
   public Resource getResource() {
     Map<String, String> labels = new HashMap<>();
-    labels.put(ResourceConstants.LABEL_KEY_RESOURCE_NAME, perspectiveDTO.getName());
-    return Resource.builder().identifier(perspectiveDTO.getUuid()).type("PERSPECTIVE").labels(labels).build();
+    labels.put(ResourceConstants.LABEL_KEY_RESOURCE_NAME, newPerspectiveDTO.getName());
+    return Resource.builder().identifier(newPerspectiveDTO.getUuid()).type("PERSPECTIVE").labels(labels).build();
   }
 
   @Override
   public String getEventType() {
-    return PERSPECTIVE_CREATED;
+    return PERSPECTIVE_UPDATED;
   }
 }

@@ -14,6 +14,7 @@ import io.harness.ng.core.Resource;
 import io.harness.ng.core.ResourceConstants;
 import io.harness.ng.core.ResourceScope;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
@@ -21,21 +22,23 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class PerspectiveCreateEvent implements Event {
-  public static final String PERSPECTIVE_CREATED = "PerspectiveCreated";
+public class PerspectiveDeleteEvent implements Event {
+  public static final String PERSPECTIVE_DELETED = "PerspectiveDeleted";
   private CEView perspectiveDTO;
   private String accountIdentifier;
 
-  public PerspectiveCreateEvent(String accountIdentifier, CEView perspectiveDTO) {
+  public PerspectiveDeleteEvent(String accountIdentifier, CEView perspectiveDTO) {
     this.accountIdentifier = accountIdentifier;
     this.perspectiveDTO = perspectiveDTO;
   }
 
+  @JsonIgnore
   @Override
   public ResourceScope getResourceScope() {
     return new OrgScope(accountIdentifier, perspectiveDTO.getUuid());
   }
 
+  @JsonIgnore
   @Override
   public Resource getResource() {
     Map<String, String> labels = new HashMap<>();
@@ -43,8 +46,9 @@ public class PerspectiveCreateEvent implements Event {
     return Resource.builder().identifier(perspectiveDTO.getUuid()).type("PERSPECTIVE").labels(labels).build();
   }
 
+  @JsonIgnore
   @Override
   public String getEventType() {
-    return PERSPECTIVE_CREATED;
+    return PERSPECTIVE_DELETED;
   }
 }

@@ -367,7 +367,6 @@ public class PerspectiveResource {
     CEView oldPerspective = ceViewService.get(ceView.getUuid());
     ceView.setAccountId(accountId);
     log.info(ceView.toString());
-
     CEView newPerspective = updateTotalCost(ceViewService.update(ceView));
     return ResponseDTO.newResponse(
         Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
