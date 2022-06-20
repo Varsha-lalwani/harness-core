@@ -99,12 +99,7 @@ public class PerspectiveResourceTest extends CategoryTest {
   @Owner(developers = SHUBHANSHU)
   @Category(UnitTests.class)
   public void testCreatePerspective() {
-    when(transactionTemplate.execute(any()))
-        .thenAnswer(invocationOnMock
-            -> invocationOnMock.getArgument(0, TransactionCallback.class)
-                   .doInTransaction(new SimpleTransactionStatus()));
     perspectiveResource.create(ACCOUNT_ID, false, perspective);
-    verify(transactionTemplate, times(1)).execute(any());
     verify(ceViewService).save(perspective, false);
     verify(ceViewService).updateTotalCost(perspective, bigQueryService.get(), UNIFIED_TABLE_NAME);
   }
