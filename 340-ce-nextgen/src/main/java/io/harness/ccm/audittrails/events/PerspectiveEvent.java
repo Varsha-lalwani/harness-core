@@ -22,15 +22,32 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class PerspectiveDeleteEvent extends PerspectiveEvent {
-  public static final String PERSPECTIVE_DELETED = "PerspectiveDeleted";
+public class PerspectiveEvent implements Event {
+  private CEView perspectiveDTO;
+  private String accountIdentifier;
 
-  public PerspectiveDeleteEvent(String accountIdentifier, CEView perspectiveDTO) {
-    super(accountIdentifier, perspectiveDTO);
+  public PerspectiveEvent(String accountIdentifier, CEView perspectiveDTO) {
+    this.accountIdentifier = accountIdentifier;
+    this.perspectiveDTO = perspectiveDTO;
   }
 
   @Override
+  @JsonIgnore
+  public ResourceScope getResourceScope() {
+    return new OrgScope(accountIdentifier, perspectiveDTO.getUuid());
+  }
+
+  @Override
+  @JsonIgnore
+  public Resource getResource() {
+    Map<String, String> labels = new HashMap<>();
+    labels.put(ResourceConstants.LABEL_KEY_RESOURCE_NAME, perspectiveDTO.getName());
+    return Resource.builder().identifier(perspectiveDTO.getUuid()).type("PERSPECTIVE").labels(labels).build();
+  }
+
+  @Override
+  @JsonIgnore
   public String getEventType() {
-    return PERSPECTIVE_DELETED;
+    return "";
   }
 }

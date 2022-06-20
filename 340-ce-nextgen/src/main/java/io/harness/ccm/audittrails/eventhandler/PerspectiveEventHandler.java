@@ -27,10 +27,6 @@ import io.harness.ccm.audittrails.yamlDTOs.PerspectiveDTO;
 import io.harness.context.GlobalContext;
 import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.exception.InvalidArgumentsException;
-import io.harness.ng.core.OrgScope;
-import io.harness.ng.core.dto.OrganizationRequest;
-import io.harness.ng.core.events.OrganizationDeleteEvent;
-import io.harness.ng.core.events.OrganizationUpdateEvent;
 import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxEventHandler;
 
@@ -76,7 +72,7 @@ public class PerspectiveEventHandler implements OutboxEventHandler {
     AuditEntry auditEntry =
         AuditEntry.builder()
             .action(Action.CREATE)
-            .module(ModuleType.CORE)
+            .module(ModuleType.CE)
             .newYaml(
                 getYamlString(PerspectiveDTO.builder().perspective(perspectiveCreateEvent.getPerspectiveDTO()).build()))
             .timestamp(outboxEvent.getCreatedAt())
@@ -94,9 +90,9 @@ public class PerspectiveEventHandler implements OutboxEventHandler {
     AuditEntry auditEntry =
         AuditEntry.builder()
             .action(Action.UPDATE)
-            .module(ModuleType.CORE)
-            .newYaml(getYamlString(
-                PerspectiveDTO.builder().perspective(perspectiveUpdateEvent.getNewPerspectiveDTO()).build()))
+            .module(ModuleType.CE)
+            .newYaml(
+                getYamlString(PerspectiveDTO.builder().perspective(perspectiveUpdateEvent.getPerspectiveDTO()).build()))
             .oldYaml(getYamlString(
                 PerspectiveDTO.builder().perspective(perspectiveUpdateEvent.getOldPerspectiveDTO()).build()))
             .timestamp(outboxEvent.getCreatedAt())
@@ -115,7 +111,7 @@ public class PerspectiveEventHandler implements OutboxEventHandler {
     AuditEntry auditEntry =
         AuditEntry.builder()
             .action(Action.DELETE)
-            .module(ModuleType.CORE)
+            .module(ModuleType.CE)
             .oldYaml(
                 getYamlString(PerspectiveDTO.builder().perspective(perspectiveDeleteEvent.getPerspectiveDTO()).build()))
             .timestamp(outboxEvent.getCreatedAt())

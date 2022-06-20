@@ -22,33 +22,15 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class PerspectiveUpdateEvent implements Event {
+public class PerspectiveUpdateEvent extends PerspectiveEvent {
   public static final String PERSPECTIVE_UPDATED = "PerspectiveUpdated";
   private CEView oldPerspectiveDTO;
-  private CEView newPerspectiveDTO;
-  private String accountIdentifier;
 
   public PerspectiveUpdateEvent(String accountIdentifier, CEView newPerspectiveDTO, CEView oldPerspectiveDTO) {
-    this.accountIdentifier = accountIdentifier;
-    this.newPerspectiveDTO = newPerspectiveDTO;
+    super(accountIdentifier, newPerspectiveDTO);
     this.oldPerspectiveDTO = oldPerspectiveDTO;
   }
 
-  @Override
-  @JsonIgnore
-  public ResourceScope getResourceScope() {
-    return new OrgScope(accountIdentifier, newPerspectiveDTO.getUuid());
-  }
-
-  @Override
-  @JsonIgnore
-  public Resource getResource() {
-    Map<String, String> labels = new HashMap<>();
-    labels.put(ResourceConstants.LABEL_KEY_RESOURCE_NAME, newPerspectiveDTO.getName());
-    return Resource.builder().identifier(newPerspectiveDTO.getUuid()).type("PERSPECTIVE").labels(labels).build();
-  }
-
-  @Override
   @JsonIgnore
   public String getEventType() {
     return PERSPECTIVE_UPDATED;
