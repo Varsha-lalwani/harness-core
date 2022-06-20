@@ -33,7 +33,7 @@ public interface StepSpecTypeConstants {
   String TERRAFORM_ROLLBACK = "TerraformRollback";
 
   String AZURE_CREATE_RESOURCE = "AzureCreateResource";
-
+  String AZURE_ROLLBACK_ARM_RESOURCE = "AzureARMRollback";
   String PLACEHOLDER = "Placeholder";
 
   String HELM_DEPLOY = "HelmDeploy";

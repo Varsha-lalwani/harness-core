@@ -28,6 +28,7 @@ import io.harness.cdng.creator.plan.service.ServiceDefinitionPlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreatorV2;
 import io.harness.cdng.creator.plan.stage.DeploymentStagePMSPlanCreatorV2;
+import io.harness.cdng.creator.plan.steps.AzureARMRollbackResourceStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.AzureCreateResourceStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreator;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreatorV2;
@@ -71,6 +72,7 @@ import io.harness.cdng.creator.variables.ServerlessAwsLambdaDeployStepVariableCr
 import io.harness.cdng.creator.variables.ServerlessAwsLambdaRollbackStepVariableCreator;
 import io.harness.cdng.creator.variables.SshVariableCreator;
 import io.harness.cdng.provision.azure.variablecreator.AzureCreateStepVariableCreator;
+import io.harness.cdng.provision.azure.variablecreator.AzureARMRollbackStepVariableCreator;
 import io.harness.cdng.provision.cloudformation.variablecreator.CloudformationCreateStepVariableCreator;
 import io.harness.cdng.provision.cloudformation.variablecreator.CloudformationDeleteStepVariableCreator;
 import io.harness.cdng.provision.cloudformation.variablecreator.CloudformationRollbackStepVariableCreator;
@@ -108,9 +110,9 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
   private static final String CLOUDFORMATION_STEP_METADATA = "Cloudformation";
   private static final List<String> TERRAFORM_CATEGORY = Arrays.asList("Kubernetes", "Provisioner", "Helm");
 
-  private static final List<String> AZURE_CREATE_RESOURCE_CATEGORY =
+  private static final List<String> AZURE_RESOURCE_CATEGORY =
           Arrays.asList("Kubernetes", "Provisioner", "AzureARM/Blueprint", "Helm");
-  private static final String AZURE_CREATE_RESOURCE_STEP_METADATA = "AzureARM/Blueprint";
+  private static final String AZURE_RESOURCE_STEP_METADATA = "AzureARM/Blueprint";
   @Inject InjectorUtils injectorUtils;
   @Override
   public List<PartialPlanCreator<?>> getPlanCreators() {
@@ -160,6 +162,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new CommandStepPlanCreator());
     planCreators.add(new SpecNodePlanCreator());
     planCreators.add(new AzureCreateResourceStepPlanCreator());
+    planCreators.add(new AzureARMRollbackResourceStepPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
@@ -203,6 +206,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     variableCreators.add(new CloudformationRollbackStepVariableCreator());
     variableCreators.add(new SshVariableCreator());
     variableCreators.add(new AzureCreateStepVariableCreator());
+    variableCreators.add(new AzureARMRollbackStepVariableCreator());
     return variableCreators;
   }
 
@@ -411,8 +415,19 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .setType(StepSpecTypeConstants.AZURE_CREATE_RESOURCE)
             .setFeatureRestrictionName(FeatureRestrictionName.AZURE_CREATE_RESOURCE.name())
             .setStepMetaData(StepMetaData.newBuilder()
-                    .addAllCategory(AZURE_CREATE_RESOURCE_CATEGORY)
-                    .addFolderPaths(AZURE_CREATE_RESOURCE_STEP_METADATA)
+                    .addAllCategory(AZURE_RESOURCE_CATEGORY)
+                    .addFolderPaths(AZURE_RESOURCE_STEP_METADATA)
+                    .build())
+            .setFeatureFlag(FeatureName.AZURE_ARM_NG.name())
+            .build();
+
+    StepInfo azureARMRollback = StepInfo.newBuilder()
+            .setName("Rollback ARM resources in Azure")
+            .setType(StepSpecTypeConstants.AZURE_ROLLBACK_ARM_RESOURCE)
+            .setFeatureRestrictionName(FeatureRestrictionName.AZURE_ROLLBACK_ARM_RESOURCE.name())
+            .setStepMetaData(StepMetaData.newBuilder()
+                    .addAllCategory(AZURE_RESOURCE_CATEGORY)
+                    .addFolderPaths(AZURE_RESOURCE_STEP_METADATA)
                     .build())
             .setFeatureFlag(FeatureName.AZURE_ARM_NG.name())
             .build();
@@ -442,6 +457,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     stepInfos.add(rollbackStack);
     stepInfos.add(executeCommand);
     stepInfos.add(azureCreateResources);
+    stepInfos.add(azureARMRollback);
     return stepInfos;
   }
 }

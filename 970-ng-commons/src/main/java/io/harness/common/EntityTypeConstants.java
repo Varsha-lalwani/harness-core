@@ -97,4 +97,5 @@ public interface EntityTypeConstants {
   String COMMAND = "Command";
   String STRATEGY_NODE = "StrategyNode";
   String AZURE_CREATE_RESOURCE_STEP = "AzureCreateResource";
+  String AZURE_ROLLBACK_ARM_RESOURCE_STEP = "AzureARMRollback";
 }

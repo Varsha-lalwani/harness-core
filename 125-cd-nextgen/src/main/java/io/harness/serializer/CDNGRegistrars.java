@@ -25,6 +25,7 @@ import io.harness.cdng.k8s.K8sRollingRollbackStepNode;
 import io.harness.cdng.k8s.K8sRollingStepNode;
 import io.harness.cdng.k8s.K8sScaleStepNode;
 import io.harness.cdng.pipeline.CDStepInfo;
+import io.harness.cdng.provision.azure.AzureARMRollbackStepNode;
 import io.harness.cdng.provision.azure.AzureCreateStepNode;
 import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepNode;
 import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepNode;
@@ -370,6 +371,18 @@ public class CDNGRegistrars {
                   .availableAtOrgLevel(false)
                   .availableAtAccountLevel(false)
                   .clazz(AzureCreateStepNode.class)
+                  .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                          .namespace(SchemaNamespaceConstants.CD)
+                          .modulesSupported(Arrays.asList(ModuleType.CD, ModuleType.PMS))
+                          .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                          .build())
+                  .build())
+          .add(YamlSchemaRootClass.builder()
+                  .entityType(EntityType.AZURE_ROLLBACK_ARM_RESOURCE_STEP)
+                  .availableAtProjectLevel(true)
+                  .availableAtOrgLevel(false)
+                  .availableAtAccountLevel(false)
+                  .clazz(AzureARMRollbackStepNode.class)
                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
                           .namespace(SchemaNamespaceConstants.CD)
                           .modulesSupported(Arrays.asList(ModuleType.CD, ModuleType.PMS))

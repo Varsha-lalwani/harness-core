@@ -402,3 +402,7 @@ io.harness.cdng.provision.azure.CreateStepNode
 io.harness.cdng.provision.azure.CreateStepParameters
 io.harness.cdng.provision.azure.InlineTemplateFileSpec
 io.harness.cdng.provision.azure.RemoteTemplateFileSpec
+io.harness.cdng.provision.azure.AzureARMRollbackStepConfiguration
+io.harness.cdng.provision.azure.AzureARMRollbackStepInfo
+io.harness.cdng.provision.azure.AzureARMRollback
+io.harness.cdng.provision.azure.AzureARMRollbackStepParameters

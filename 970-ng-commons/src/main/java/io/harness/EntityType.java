@@ -249,7 +249,10 @@ public enum EntityType {
       ModuleType.PMS, EntityTypeConstants.STRATEGY_NODE, IdentifierRef.class, EntityYamlRootNames.STRATEGY_NODE),
   @JsonProperty(EntityTypeConstants.AZURE_CREATE_RESOURCE_STEP)
   AZURE_CREATE_RESOURCE_STEP(ModuleType.CD, EntityTypeConstants.AZURE_CREATE_RESOURCE_STEP,
-          IdentifierRef.class, EntityYamlRootNames.AZURE_CREATE_RESOURCE_STEP);
+          IdentifierRef.class, EntityYamlRootNames.AZURE_CREATE_RESOURCE_STEP),
+  @JsonProperty(EntityTypeConstants.AZURE_ROLLBACK_ARM_RESOURCE_STEP)
+  AZURE_ROLLBACK_ARM_RESOURCE_STEP(ModuleType.CD, EntityTypeConstants.AZURE_ROLLBACK_ARM_RESOURCE_STEP,
+          IdentifierRef.class, EntityYamlRootNames.AZURE_ROLLBACK_ARM_RESOURCE_STEP);
 
   private final ModuleType moduleType;
   String yamlName;

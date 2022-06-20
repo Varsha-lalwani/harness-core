@@ -68,6 +68,7 @@ public enum FeatureRestrictionName {
   ROLLBACK_STACK,
   COMMAND,
   AZURE_CREATE_RESOURCE,
+  AZURE_ROLLBACK_ARM_RESOURCE,
 
   // STO Features
   SECURITY,
