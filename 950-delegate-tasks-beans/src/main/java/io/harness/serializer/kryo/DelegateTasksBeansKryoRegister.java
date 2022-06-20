@@ -347,6 +347,7 @@ import io.harness.delegate.task.azure.appservice.webapp.response.DeploymentSlotD
 import io.harness.delegate.task.azure.arm.AzureARMPreDeploymentData;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
 import io.harness.delegate.task.azure.arm.AzureARMTaskResponse;
+import io.harness.delegate.task.azure.arm.AzureARMTaskType;
 import io.harness.delegate.task.azure.arm.request.AzureARMDeploymentParameters;
 import io.harness.delegate.task.azure.arm.request.AzureARMRollbackParameters;
 import io.harness.delegate.task.azure.arm.request.AzureBlueprintDeploymentParameters;
@@ -1145,7 +1146,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(K8sCanaryDeployResponse.class, 543250);
     kryo.register(AzureARMListManagementGroupResponse.class, 543251);
     kryo.register(AzureARMListSubscriptionLocationsResponse.class, 543252);
-    kryo.register(AzureARMTaskParameters.AzureARMTaskType.class, 543253);
+    kryo.register(AzureARMTaskType.class, 543253);
     kryo.register(K8sSwapServiceSelectorsRequest.class, 543254);
     kryo.register(K8sDeleteRequest.class, 543255);
     kryo.register(ManagementGroupData.class, 543256);

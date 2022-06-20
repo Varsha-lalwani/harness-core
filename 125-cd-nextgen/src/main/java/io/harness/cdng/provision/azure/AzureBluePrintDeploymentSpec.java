@@ -22,7 +22,7 @@ import javax.validation.constraints.NotNull;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @OwnedBy(HarnessTeam.CDP)
 @RecasterAlias("io.harness.cdng.provision.azure.BluePrintDeploymentSpec")
-public class AzureBluePrintDeploymentSpec implements AzureCreateDeploymentSpec {
+public class AzureBluePrintDeploymentSpec implements AzureDeploymentType {
     @JsonProperty(YamlNode.UUID_FIELD_NAME)
     @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
     @ApiModelProperty(hidden = true)
@@ -33,13 +33,25 @@ public class AzureBluePrintDeploymentSpec implements AzureCreateDeploymentSpec {
     ParameterField<String> scope;
     @NotNull AzureCreateTemplateFile templateFile;
 
-    @Override
-    public String getType() {
-        return AzureDeploymentTypes.BLUEPRINT;
-    }
+    @NotNull String connectorRef;
 
     @Override
     public void validateParams() {
         Validator.notNullCheck("Template file can't be empty", templateFile);
+    }
+
+    @Override
+    public String getConnectorRef() {
+        return connectorRef;
+    }
+
+    @Override
+    public AzureCreateTemplateFile getTemplateSpecs() {
+        return templateFile;
+    }
+
+    @Override
+    public String getType() {
+        return AzureDeploymentTypes.BLUEPRINT;
     }
 }

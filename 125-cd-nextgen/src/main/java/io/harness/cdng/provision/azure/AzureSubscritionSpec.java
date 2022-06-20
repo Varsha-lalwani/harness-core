@@ -1,5 +1,6 @@
 package io.harness.cdng.provision.azure;
 
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
@@ -16,45 +17,35 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.NotNull;
+
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @OwnedBy(HarnessTeam.CDP)
-@RecasterAlias("io.harness.cdng.provision.azure.ARMDeploymentSpec")
-public class AzureARMDeploymentSpec implements AzureDeploymentType {
+@RecasterAlias("io.harness.cdng.provision.azure.AzureSubscriptionSpec")
+public class AzureSubscritionSpec implements AzureScopeType{
     @JsonProperty(YamlNode.UUID_FIELD_NAME)
     @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
     @ApiModelProperty(hidden = true)
     String uuid;
 
-    @NotNull String connectorRef;
-    @NotNull AzureCreateTemplateFile templateFile;
-
-    AzureCreateParameterFile parameters;
+    @NotNull
+    @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
+    ParameterField<String> subscription;
 
     @NotNull
-    AzureCreateStepScope scope;
+    @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
+    ParameterField<String> mode;
+
+
+    @NotNull
+    @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
+    ParameterField<String> deploymentDataLocation;
 
     @Override
     public void validateParams() {
-        Validator.notNullCheck("Template file can't be empty", templateFile);
-        Validator.notNullCheck("Connector ref can't be empty", connectorRef);
-        Validator.notNullCheck("Scope can't be empty", scope);
-        scope.getSpec().validateParams();
-    }
-
-    @Override
-    public AzureCreateTemplateFile getTemplateSpecs() {
-        return templateFile;
-    }
-
-    @Override
-    public String getConnectorRef() {
-        return connectorRef;
-    }
-
-    @Override
-    public String getType() {
-        return AzureDeploymentTypes.ARM;
+        Validator.notNullCheck("subscription can't be null", subscription);
+        Validator.notNullCheck("mode can't be null", mode);
+        Validator.notNullCheck("deploymentDataLocation can't be null", deploymentDataLocation);
     }
 }

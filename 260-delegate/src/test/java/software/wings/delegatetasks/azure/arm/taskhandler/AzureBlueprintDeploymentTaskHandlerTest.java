@@ -7,38 +7,21 @@
 
 package software.wings.delegatetasks.azure.arm.taskhandler;
 
-import static io.harness.rule.OwnerRule.IVAN;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.azure.management.network.ResourceIdentityType;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.azure.model.AzureConfig;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
-import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
 import io.harness.delegate.task.azure.arm.AzureARMTaskResponse;
+import io.harness.delegate.task.azure.arm.AzureARMTaskType;
 import io.harness.delegate.task.azure.arm.request.AzureBlueprintDeploymentParameters;
 import io.harness.delegate.task.azure.arm.response.AzureBlueprintDeploymentResponse;
 import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
 import io.harness.serializer.JsonUtils;
-
-import software.wings.WingsBaseTest;
-import software.wings.delegatetasks.azure.arm.deployment.AzureBlueprintDeploymentService;
-import software.wings.delegatetasks.azure.arm.deployment.context.DeploymentBlueprintContext;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.microsoft.azure.management.network.ResourceIdentityType;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -46,6 +29,21 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import software.wings.WingsBaseTest;
+import software.wings.delegatetasks.azure.arm.deployment.AzureBlueprintDeploymentService;
+import software.wings.delegatetasks.azure.arm.deployment.context.DeploymentBlueprintContext;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static io.harness.rule.OwnerRule.IVAN;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 public class AzureBlueprintDeploymentTaskHandlerTest extends WingsBaseTest {
@@ -225,7 +223,7 @@ public class AzureBlueprintDeploymentTaskHandlerTest extends WingsBaseTest {
         .blueprintJson(getBlueprintJson())
         .assignmentJson(getAssignmentJson())
         .artifacts(getArtifacts())
-        .commandName(AzureARMTaskParameters.AzureARMTaskType.BLUEPRINT_DEPLOYMENT.name())
+        .commandName(AzureARMTaskType.BLUEPRINT_DEPLOYMENT.name())
         .timeoutIntervalInMin(20)
         .build();
   }

@@ -168,6 +168,7 @@ import io.harness.delegate.task.azure.appservice.webapp.handler.AzureWebAppReque
 import io.harness.delegate.task.azure.appservice.webapp.handler.AzureWebAppSlotDeploymentRequestHandler;
 import io.harness.delegate.task.azure.appservice.webapp.ng.AzureWebAppRequestType;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
+import io.harness.delegate.task.azure.arm.AzureARMTaskType;
 import io.harness.delegate.task.azure.resource.operation.AzureResourceProvider;
 import io.harness.delegate.task.cek8s.CEKubernetesTestConnectionDelegateTask;
 import io.harness.delegate.task.cek8s.CEKubernetesValidationHandler;
@@ -1242,16 +1243,16 @@ public class DelegateModule extends AbstractModule {
     // Azure ARM tasks
     MapBinder<String, AbstractAzureARMTaskHandler> azureARMTaskTypeToTaskHandlerMap =
         MapBinder.newMapBinder(binder(), String.class, AbstractAzureARMTaskHandler.class);
-    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskParameters.AzureARMTaskType.ARM_DEPLOYMENT.name())
+    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskType.ARM_DEPLOYMENT.name())
         .to(AzureARMDeploymentTaskHandler.class);
-    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskParameters.AzureARMTaskType.ARM_ROLLBACK.name())
+    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskType.ARM_ROLLBACK.name())
         .to(AzureARMRollbackTaskHandler.class);
     azureARMTaskTypeToTaskHandlerMap
-        .addBinding(AzureARMTaskParameters.AzureARMTaskType.LIST_SUBSCRIPTION_LOCATIONS.name())
+        .addBinding(AzureARMTaskType.LIST_SUBSCRIPTION_LOCATIONS.name())
         .to(AzureARMListSubscriptionLocationsTaskHandler.class);
-    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskParameters.AzureARMTaskType.LIST_MNG_GROUP.name())
+    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskType.LIST_MNG_GROUP.name())
         .to(AzureARMListManagementGroupTaskHandler.class);
-    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskParameters.AzureARMTaskType.BLUEPRINT_DEPLOYMENT.name())
+    azureARMTaskTypeToTaskHandlerMap.addBinding(AzureARMTaskType.BLUEPRINT_DEPLOYMENT.name())
         .to(AzureBlueprintDeploymentTaskHandler.class);
 
     // Azure Resource tasks

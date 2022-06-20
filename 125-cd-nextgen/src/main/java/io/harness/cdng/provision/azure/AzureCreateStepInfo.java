@@ -57,36 +57,32 @@ public class AzureCreateStepInfo extends AzureCreateBaseStepInfo implements CDSt
     public Map<String, ParameterField<String>> extractConnectorRefs() {
         Map<String, ParameterField<String>> connectorRefMap = new HashMap<>();
         // Azure connector
-        if (createStepConfiguration.getConnectorRef() != null) {
-            connectorRefMap.put("configuration.connectorRef", createStepConfiguration.getConnectorRef());
+        if (createStepConfiguration.getSpec().getConnectorRef() != null) {
+            connectorRefMap.put("configuration.spec.connectorRef", ParameterField.createValueField(createStepConfiguration.getSpec().getConnectorRef()));
         }
-        if (Objects.equals(createStepConfiguration.getAzureCreateDeployment().getType(), AzureDeploymentTypes.ARM)){
-            AzureARMDeploymentSpec specs = (AzureARMDeploymentSpec) createStepConfiguration.getAzureCreateDeployment().getSpec();
+        if (Objects.equals(createStepConfiguration.getType(), AzureDeploymentTypes.ARM)){
+            AzureARMDeploymentSpec specs = (AzureARMDeploymentSpec) createStepConfiguration.getSpec();
             if (isNotEmpty(specs.getTemplateFile().getSpec().getType()) &&
-                    specs.getTemplateFile().getSpec().getType().equals(AzureCreateTemplateFileTypes.Remote)) {
+                    Objects.equals(specs.getTemplateFile().getType(),AzureCreateTemplateFileTypes.Remote)) {
                 AzureRemoteTemplateFileSpec remoteTemplateFile =
                         (AzureRemoteTemplateFileSpec) specs.getTemplateFile().getSpec();
-                connectorRefMap.put("configuration.deployment.spec.templateFile.store.spec.connectorRef",
+                connectorRefMap.put("configuration.spec.templateFile.store.spec.connectorRef",
                         remoteTemplateFile.getStore().getSpec().getConnectorReference());
             }
-            if (isNotEmpty(specs.getParametersFilesSpecs())) {
-                specs.getParametersFilesSpecs().forEach(createParametersFileSpec
-                        -> {
-                    if (Objects.equals(createParametersFileSpec.getType(), AzureARMParametersFileTypes.Remote)) {
-                        AzureRemoteParametersFileSpec fileSpecs = (AzureRemoteParametersFileSpec) createParametersFileSpec;
-                        connectorRefMap.put("configuration.deployment.spec.parameters." + fileSpecs.getIdentifier()
-                                        + ".store.spec.connectorRef",
-                                fileSpecs.getStore().getSpec().getConnectorReference());
-                    }
-                });
+            if (specs.getParameters() != null && Objects.equals(specs.getParameters().getType(), AzureARMParametersFileTypes.Remote)) {
+                AzureRemoteParametersFileSpec fileSpecs = (AzureRemoteParametersFileSpec) specs.getParameters().getSpec();
+                connectorRefMap.put("configuration.spec.parameters." + fileSpecs.getIdentifier()
+                                + ".store.spec.connectorRef",
+                        fileSpecs.getStore().getSpec().getConnectorReference());
+
             }
         } else {
-            AzureBluePrintDeploymentSpec specs = (AzureBluePrintDeploymentSpec) createStepConfiguration.getAzureCreateDeployment().getSpec();
+            AzureBluePrintDeploymentSpec specs = (AzureBluePrintDeploymentSpec) createStepConfiguration.getSpec();
             if (isNotEmpty(specs.getTemplateFile().getSpec().getType()) &&
-                    specs.getTemplateFile().getSpec().getType().equals(AzureCreateTemplateFileTypes.Remote)) {
+                    Objects.equals(specs.getTemplateFile().getSpec().getType(), AzureCreateTemplateFileTypes.Remote)) {
                 AzureRemoteTemplateFileSpec remoteTemplateFile =
                         (AzureRemoteTemplateFileSpec) specs.getTemplateFile().getSpec();
-                connectorRefMap.put("configuration.deployment.spec.templateFile.store.spec.connectorRef",
+                connectorRefMap.put("configuration.spec.templateFile.store.spec.connectorRef",
                         remoteTemplateFile.getStore().getSpec().getConnectorReference());
             }
         }

@@ -355,7 +355,8 @@ public enum TaskType {
   FETCH_S3_FILE_TASK_NG(TaskGroup.AWS, "Fetch S3 files Task"),
   OCI_HELM_CONNECTIVITY_TASK(TaskGroup.HELM_REPO_CONFIG_VALIDATION),
   AZURE_WEB_APP_TASK_NG(TaskGroup.AZURE, "Azure Web App Task"),
-  COMMAND_TASK_NG(TaskGroup.COMMAND_TASK_NG, "Command Task");
+  COMMAND_TASK_NG(TaskGroup.COMMAND_TASK_NG, "Command Task"),
+  AZURE_NG_ARM_BLUEPRINT(TaskGroup.AZURE_NG_ARM_BLUEPRINT,"Azure ARM/Blueprint");
 
   private final TaskGroup taskGroup;
   private final String displayName;

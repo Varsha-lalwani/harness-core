@@ -10,8 +10,7 @@ import lombok.Data;
 @Data
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-@RecasterAlias("io.harness.cdng.provision.azure.CreateStepConfigurationParameters")
+@RecasterAlias("io.harness.cdng.provision.azure.AzureCreateStepConfigurationParameters")
 public class AzureCreateStepConfigurationParameters {
-    ParameterField<String> connectorRef;
-    AzureCreateDeployment azureCreateDeployment;
+    AzureDeploymentType azureDeploymentType;
 }

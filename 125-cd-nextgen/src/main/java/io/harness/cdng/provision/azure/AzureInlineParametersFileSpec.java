@@ -26,10 +26,10 @@ public class AzureInlineParametersFileSpec implements AzureARMParametersFileSpec
     String uuid;
     @NotNull
     @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-    ParameterField<String> templateBody;
+    ParameterField<String> parameterBody;
 
     @Override
     public String getType() {
-        return AzureCreateTemplateFileTypes.Inline;
+        return AzureARMParametersFileTypes.Inline;
     }
 }

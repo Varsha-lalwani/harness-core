@@ -29,6 +29,6 @@ public class AzureRemoteParametersFileSpec implements AzureARMParametersFileSpec
 
     @Override
     public String getType() {
-        return AzureCreateTemplateFileTypes.Remote;
+        return AzureARMParametersFileTypes.Remote;
     }
 }
