@@ -11,6 +11,7 @@ import static io.harness.ccm.commons.utils.BigQueryHelper.UNIFIED_TABLE;
 import static io.harness.rule.OwnerRule.SHUBHANSHU;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +42,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.transaction.support.SimpleTransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
@@ -96,7 +99,12 @@ public class PerspectiveResourceTest extends CategoryTest {
   @Owner(developers = SHUBHANSHU)
   @Category(UnitTests.class)
   public void testCreatePerspective() {
+    when(transactionTemplate.execute(any()))
+        .thenAnswer(invocationOnMock
+            -> invocationOnMock.getArgument(0, TransactionCallback.class)
+                   .doInTransaction(new SimpleTransactionStatus()));
     perspectiveResource.create(ACCOUNT_ID, false, perspective);
+    verify(transactionTemplate, times(1)).execute(any());
     verify(ceViewService).save(perspective, false);
     verify(ceViewService).updateTotalCost(perspective, bigQueryService.get(), UNIFIED_TABLE_NAME);
   }
