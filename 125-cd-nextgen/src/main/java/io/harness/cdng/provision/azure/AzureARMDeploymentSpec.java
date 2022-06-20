@@ -4,8 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.SwaggerConstants;
-import io.harness.pms.yaml.ParameterField;
+
 import io.harness.pms.yaml.YamlNode;
 import io.harness.validation.Validator;
 import io.swagger.annotations.ApiModelProperty;
@@ -16,6 +15,7 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.NotNull;
+
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)

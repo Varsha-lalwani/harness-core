@@ -20,4 +20,5 @@ public class AzureCreatePassThroughData implements PassThroughData {
     @Builder.Default
     Map<String, String> artifacts = new HashMap<>();
     @Accessors(fluent = true) boolean hasGitFiles;
+    @Accessors(fluent = true) boolean hasGitFiles;
 }
