@@ -34,6 +34,7 @@ public class CENextGenOutboxEventHandler implements OutboxEventHandler {
     } catch (Exception exception) {
       log.error(
           String.format("Unexpected error occurred during handling event of type %s", outboxEvent.getEventType()));
+      log.error("Exception: " + exception.toString());
       return false;
     }
   }
