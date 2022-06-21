@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @Builder
 @RecasterAlias("io.harness.cdng.provision.azure.beans.CreatePassThroughData")
-public class CreatePassThroughData implements PassThroughData {
+public class AzureCreatePassThroughData implements PassThroughData {
     String templateBody;
     String templateUrl;
     @Builder.Default

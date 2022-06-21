@@ -32,7 +32,7 @@ public interface StepSpecTypeConstants {
   String TERRAFORM_DESTROY = "TerraformDestroy";
   String TERRAFORM_ROLLBACK = "TerraformRollback";
 
-  String AZURE_CREATE_RESOURCE = "CreateAzureResource";
+  String AZURE_CREATE_RESOURCE = "AzureCreateResource";
 
   String PLACEHOLDER = "Placeholder";
 

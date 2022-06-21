@@ -105,6 +105,6 @@ public class EntityYamlRootNames {
   public static final String INFRASTRUCTURE = "infrastructure";
   public static final String COMMAND = "Command";
   public static final String STRATEGY_NODE = "StrategyNode";
-  public static final String AZURE_CREATE_RESOURCE_STEP = "CreateAzureResource";
+  public static final String AZURE_CREATE_RESOURCE_STEP = "AzureCreateResource";
 
 }

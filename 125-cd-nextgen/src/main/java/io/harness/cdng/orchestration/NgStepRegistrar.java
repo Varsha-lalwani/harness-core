@@ -39,6 +39,7 @@ import io.harness.cdng.pipeline.steps.DeploymentStageStep;
 import io.harness.cdng.pipeline.steps.NGSectionStep;
 import io.harness.cdng.pipeline.steps.RollbackOptionalChildChainStep;
 import io.harness.cdng.pipeline.steps.RollbackOptionalChildrenStep;
+import io.harness.cdng.provision.azure.AzureCreateStep;
 import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStep;
 import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStep;
 import io.harness.cdng.provision.cloudformation.CloudformationRollbackStep;
@@ -124,6 +125,7 @@ public class NgStepRegistrar {
     engineSteps.put(CommandStep.STEP_TYPE, CommandStep.class);
     engineSteps.putAll(NGCommonUtilStepsRegistrar.getEngineSteps());
     engineSteps.put(GitopsClustersStep.STEP_TYPE, GitopsClustersStep.class);
+    engineSteps.put(AzureCreateStep.STEP_TYPE, AzureCreateStep.class);
     return engineSteps;
   }
 }

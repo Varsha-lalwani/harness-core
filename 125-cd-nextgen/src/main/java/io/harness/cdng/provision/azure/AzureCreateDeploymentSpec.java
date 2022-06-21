@@ -12,8 +12,8 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 @OwnedBy(CDP)
 @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
     @JsonSubTypes({
-        @JsonSubTypes.Type(value = AzureARMDeploymentSpec.class, name = AzureAzureDeploymentTypes.ARM),
-        @JsonSubTypes.Type(value = AzureBluePrintDeploymentSpec.class, name = AzureAzureDeploymentTypes.BLUEPRINT)
+        @JsonSubTypes.Type(value = AzureARMDeploymentSpec.class, name = AzureDeploymentTypes.ARM),
+        @JsonSubTypes.Type(value = AzureBluePrintDeploymentSpec.class, name = AzureDeploymentTypes.BLUEPRINT)
 })
 
 public interface AzureCreateDeploymentSpec {

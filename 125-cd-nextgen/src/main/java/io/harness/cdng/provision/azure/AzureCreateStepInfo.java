@@ -60,7 +60,7 @@ public class AzureCreateStepInfo extends AzureCreateBaseStepInfo implements CDSt
         if (createStepConfiguration.getConnectorRef() != null) {
             connectorRefMap.put("configuration.connectorRef", createStepConfiguration.getConnectorRef());
         }
-        if (Objects.equals(createStepConfiguration.getAzureCreateDeployment().getType(), AzureAzureDeploymentTypes.ARM)){
+        if (Objects.equals(createStepConfiguration.getAzureCreateDeployment().getType(), AzureDeploymentTypes.ARM)){
             AzureARMDeploymentSpec specs = (AzureARMDeploymentSpec) createStepConfiguration.getAzureCreateDeployment().getSpec();
             if (isNotEmpty(specs.getTemplateFile().getSpec().getType()) &&
                     specs.getTemplateFile().getSpec().getType().equals(AzureCreateTemplateFileTypes.Remote)) {
@@ -71,11 +71,15 @@ public class AzureCreateStepInfo extends AzureCreateBaseStepInfo implements CDSt
             }
             if (isNotEmpty(specs.getParametersFilesSpecs())) {
                 specs.getParametersFilesSpecs().forEach(createParametersFileSpec
-                        -> connectorRefMap.put("configuration.deployment.spec.parameters." + createParametersFileSpec.getIdentifier()
-                                + ".store.spec.connectorRef",
-                        createParametersFileSpec.getStore().getSpec().getConnectorReference()));
+                        -> {
+                    if (Objects.equals(createParametersFileSpec.getType(), AzureARMParametersFileTypes.Remote)) {
+                        AzureRemoteParametersFileSpec fileSpecs = (AzureRemoteParametersFileSpec) createParametersFileSpec;
+                        connectorRefMap.put("configuration.deployment.spec.parameters." + fileSpecs.getIdentifier()
+                                        + ".store.spec.connectorRef",
+                                fileSpecs.getStore().getSpec().getConnectorReference());
+                    }
+                });
             }
-
         } else {
             AzureBluePrintDeploymentSpec specs = (AzureBluePrintDeploymentSpec) createStepConfiguration.getAzureCreateDeployment().getSpec();
             if (isNotEmpty(specs.getTemplateFile().getSpec().getType()) &&

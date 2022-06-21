@@ -45,7 +45,7 @@ public class AzureARMDeploymentSpec implements AzureCreateDeploymentSpec {
 
     @Override
     public String getType() {
-        return AzureAzureDeploymentTypes.ARM;
+        return AzureDeploymentTypes.ARM;
     }
 
     @Override

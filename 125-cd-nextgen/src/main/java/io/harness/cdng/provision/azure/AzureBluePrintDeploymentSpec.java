@@ -35,7 +35,7 @@ public class AzureBluePrintDeploymentSpec implements AzureCreateDeploymentSpec {
 
     @Override
     public String getType() {
-        return AzureAzureDeploymentTypes.BLUEPRINT;
+        return AzureDeploymentTypes.BLUEPRINT;
     }
 
     @Override

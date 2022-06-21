@@ -1,6 +1,6 @@
 package io.harness.cdng.provision.azure;
 
-import io.harness.cdng.provision.azure.beans.CreatePassThroughData;
+import io.harness.cdng.provision.azure.beans.AzureCreatePassThroughData;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.plancreator.steps.common.StepElementParameters;
@@ -47,7 +47,7 @@ public class AzureCreateStep extends TaskChainExecutableWithRollbackAndRbac impl
     }
 
     @Override
-    public TaskChainResponse executeCreateTask(Ambiance ambiance, StepElementParameters stepParameters, AzureARMTaskParameters parameters, CreatePassThroughData passThroughData) {
+    public TaskChainResponse executeCreateTask(Ambiance ambiance, StepElementParameters stepParameters, AzureARMTaskParameters parameters, AzureCreatePassThroughData passThroughData) {
         return null;
     }
 }

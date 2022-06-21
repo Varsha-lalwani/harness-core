@@ -70,6 +70,7 @@ import io.harness.cdng.creator.variables.K8sScaleStepVariableCreator;
 import io.harness.cdng.creator.variables.ServerlessAwsLambdaDeployStepVariableCreator;
 import io.harness.cdng.creator.variables.ServerlessAwsLambdaRollbackStepVariableCreator;
 import io.harness.cdng.creator.variables.SshVariableCreator;
+import io.harness.cdng.provision.azure.variablecreator.AzureCreateStepVariableCreator;
 import io.harness.cdng.provision.cloudformation.variablecreator.CloudformationCreateStepVariableCreator;
 import io.harness.cdng.provision.cloudformation.variablecreator.CloudformationDeleteStepVariableCreator;
 import io.harness.cdng.provision.cloudformation.variablecreator.CloudformationRollbackStepVariableCreator;
@@ -201,6 +202,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     variableCreators.add(new CloudformationDeleteStepVariableCreator());
     variableCreators.add(new CloudformationRollbackStepVariableCreator());
     variableCreators.add(new SshVariableCreator());
+    variableCreators.add(new AzureCreateStepVariableCreator());
     return variableCreators;
   }
 
