@@ -7,9 +7,11 @@
 
 package io.harness.ccm.audittrails.events;
 
+import static io.harness.audit.ResourceTypeConstants.PERSPECTIVE;
+
 import io.harness.ccm.views.entities.CEView;
 import io.harness.event.Event;
-import io.harness.ng.core.OrgScope;
+import io.harness.ng.core.AccountScope;
 import io.harness.ng.core.Resource;
 import io.harness.ng.core.ResourceConstants;
 import io.harness.ng.core.ResourceScope;
@@ -22,7 +24,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class PerspectiveEvent implements Event {
+public abstract class PerspectiveEvent implements Event {
   private CEView perspectiveDTO;
   private String accountIdentifier;
 
@@ -34,7 +36,7 @@ public class PerspectiveEvent implements Event {
   @Override
   @JsonIgnore
   public ResourceScope getResourceScope() {
-    return new OrgScope(accountIdentifier, perspectiveDTO.getUuid());
+    return new AccountScope(accountIdentifier);
   }
 
   @Override
@@ -42,12 +44,6 @@ public class PerspectiveEvent implements Event {
   public Resource getResource() {
     Map<String, String> labels = new HashMap<>();
     labels.put(ResourceConstants.LABEL_KEY_RESOURCE_NAME, perspectiveDTO.getName());
-    return Resource.builder().identifier(perspectiveDTO.getUuid()).type("PERSPECTIVE").labels(labels).build();
-  }
-
-  @Override
-  @JsonIgnore
-  public String getEventType() {
-    return "";
+    return Resource.builder().identifier(perspectiveDTO.getUuid()).type(PERSPECTIVE).labels(labels).build();
   }
 }

@@ -41,6 +41,7 @@ public enum ResourceType {
   MONITORED_SERVICE(ResourceTypeConstants.MONITORED_SERVICE),
   CHAOS_AGENT(ResourceTypeConstants.CHAOS_AGENT),
   CHAOS_WORKFLOW(ResourceTypeConstants.CHAOS_WORKFLOW),
+<<<<<<< HEAD
   CHAOS_GITOPS(ResourceTypeConstants.CHAOS_GITOPS),
   SERVICE_LEVEL_OBJECTIVE(ResourceTypeConstants.SERVICE_LEVEL_OBJECTIVE),
   PERSPECTIVE(ResourceTypeConstants.PERSPECTIVE),
@@ -48,6 +49,10 @@ public enum ResourceType {
   PERSPECTIVE_REPORT(ResourceTypeConstants.PERSPECTIVE_REPORT),
   COST_CATEGORY(ResourceTypeConstants.COST_CATEGORY),
   SMTP(ResourceTypeConstants.SMTP);
+=======
+  SERVICE_LEVEL_OBJECTIVE(ResourceTypeConstants.SERVICE_LEVEL_OBJECTIVE),
+  PERSPECTIVE(ResourceTypeConstants.PERSPECTIVE);
+>>>>>>> b4bfbdd9b95 ([CCM-7874]: Enable NG Audit Trails in CCM)
 
   ResourceType(String resourceType) {
     if (!this.name().equals(resourceType)) {
