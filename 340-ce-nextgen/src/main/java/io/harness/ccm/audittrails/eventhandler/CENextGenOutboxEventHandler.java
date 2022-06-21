@@ -26,15 +26,21 @@ public class CENextGenOutboxEventHandler implements OutboxEventHandler {
   @Override
   public boolean handle(OutboxEvent outboxEvent) {
     try {
+      log.info("CENextGenOutboxEventHandler.java: outboxEvent.getResource().getType(): "
+          + outboxEvent.getResource().getType());
+      log.info("CENextGenOutboxEventHandler.java: outboxEventHandlerMap.get(outboxEvent.getResource().getType()): "
+          + outboxEventHandlerMap.get(outboxEvent.getResource().getType()));
       OutboxEventHandler handler = outboxEventHandlerMap.get(outboxEvent.getResource().getType());
       if (handler != null) {
+        log.info("CENextGenOutboxEventHandler.java: Calling handler.handle(outboxEvent)");
         return handler.handle(outboxEvent);
       }
       return false;
     } catch (Exception exception) {
       log.error(
-          String.format("Unexpected error occurred during handling event of type %s", outboxEvent.getEventType()));
-      log.error("Exception: " + exception.toString());
+          String.format("CENextGenOutboxEventHandler.java: Unexpected error occurred during handling event of type %s",
+              outboxEvent.getEventType()));
+      log.error("CENextGenOutboxEventHandler.java: Exception: " + exception.toString());
       return false;
     }
   }
