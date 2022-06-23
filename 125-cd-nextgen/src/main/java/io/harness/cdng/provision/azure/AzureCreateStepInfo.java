@@ -74,7 +74,6 @@ public class AzureCreateStepInfo extends AzureCreateBaseStepInfo implements CDSt
                 connectorRefMap.put("configuration.spec.parameters." + fileSpecs.getIdentifier()
                                 + ".store.spec.connectorRef",
                         fileSpecs.getStore().getSpec().getConnectorReference());
-
             }
         } else {
             AzureBluePrintDeploymentSpec specs = (AzureBluePrintDeploymentSpec) createStepConfiguration.getSpec();

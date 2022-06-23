@@ -84,6 +84,7 @@ public class AzureCreateStepHelper {
 
     @Inject private EngineExpressionService engineExpressionService;
 
+    public static final String DEFAULT_TIMEOUT = "10m";
 
     private static final String TEMPLATE_FILE_IDENTIFIER = "templateFile";
     private static final String PARAMETERS_FILE_IDENTIFIER = "parameterFile";
