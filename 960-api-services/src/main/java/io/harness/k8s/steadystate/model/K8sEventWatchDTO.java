@@ -21,7 +21,6 @@ import lombok.Data;
 public class K8sEventWatchDTO {
   ApiClient apiClient;
   Kubectl client;
-  LogCallback executionLogCallback;
   String eventInfoFormat;
   String eventErrorFormat;
   List<KubernetesResourceId> resourceIds;

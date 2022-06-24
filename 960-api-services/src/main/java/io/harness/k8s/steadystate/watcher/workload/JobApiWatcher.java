@@ -20,11 +20,12 @@ import io.harness.k8s.exception.KubernetesExceptionHints;
 import io.harness.k8s.exception.KubernetesExceptionMessages;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.k8s.steadystate.model.K8ApiResponseDTO;
-import io.harness.k8s.steadystate.model.K8sRolloutStatusDTO;
+import io.harness.k8s.steadystate.model.K8sStatusWatchDTO;
 import io.harness.k8s.steadystate.statusviewer.JobStatusViewer;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.kubernetes.client.openapi.ApiClient;
@@ -38,14 +39,15 @@ import lombok.extern.slf4j.Slf4j;
 public class JobApiWatcher implements WorkloadWatcher {
   @Inject private JobStatusViewer statusViewer;
   @Override
-  public boolean watchRolloutStatus(K8sRolloutStatusDTO k8sRolloutStatusDTO, KubernetesResourceId workload,
+  public boolean watchRolloutStatus(K8sStatusWatchDTO k8SStatusWatchDTO, KubernetesResourceId workload,
       LogCallback executionLogCallback) throws Exception {
-    return watchJobStatus(k8sRolloutStatusDTO.getApiClient(), workload, executionLogCallback,
-        k8sRolloutStatusDTO.isErrorFrameworkEnabled());
+    return watchJobStatus(
+        k8SStatusWatchDTO.getApiClient(), workload, executionLogCallback, k8SStatusWatchDTO.isErrorFrameworkEnabled());
   }
 
   private boolean watchJobStatus(ApiClient apiClient, KubernetesResourceId workload, LogCallback executionLogCallback,
       boolean errorFrameworkEnabled) throws Exception {
+    Preconditions.checkNotNull(apiClient, "K8s API Client cannot be null.");
     BatchV1Api batchV1Api = new BatchV1Api(apiClient);
     while (true) {
       try {

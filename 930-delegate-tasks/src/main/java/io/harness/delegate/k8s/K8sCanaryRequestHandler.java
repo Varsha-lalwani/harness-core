@@ -35,7 +35,7 @@ import io.harness.delegate.task.k8s.K8sCanaryDeployResponse;
 import io.harness.delegate.task.k8s.K8sDeployRequest;
 import io.harness.delegate.task.k8s.K8sDeployResponse;
 import io.harness.delegate.task.k8s.K8sTaskHelperBase;
-import io.harness.delegate.task.k8s.client.KubernetesClient;
+import io.harness.delegate.task.k8s.client.K8sClient;
 import io.harness.delegate.task.k8s.data.K8sCanaryDataException;
 import io.harness.delegate.task.k8s.data.K8sCanaryDataException.K8sCanaryDataExceptionBuilder;
 import io.harness.exception.InvalidArgumentsException;
@@ -112,8 +112,6 @@ public class K8sCanaryRequestHandler extends K8sRequestHandler {
     LogCallback steadyStateLogCallback =
         k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress);
     KubernetesResource canaryWorkload = k8sCanaryHandlerConfig.getCanaryWorkload();
-    //    k8sTaskHelperBase.doStatusCheck(k8sCanaryHandlerConfig.getClient(), canaryWorkload.getResourceId(),
-    //        k8sDelegateTaskParams, steadyStateLogCallback, true);
 
     K8sSteadyStateDTO k8sSteadyStateDTO = K8sSteadyStateDTO.builder()
                                               .request(k8sDeployRequest)
@@ -125,9 +123,9 @@ public class K8sCanaryRequestHandler extends K8sRequestHandler {
                                               .isErrorFrameworkEnabled(true)
                                               .build();
 
-    KubernetesClient kubernetesClient =
+    K8sClient k8sClient =
         k8sTaskHelperBase.getKubernetesClient(k8sCanaryDeployRequest.isUseK8sApiForSteadyStateCheck());
-    kubernetesClient.performSteadyStateCheck(k8sSteadyStateDTO);
+    k8sClient.performSteadyStateCheck(k8sSteadyStateDTO);
 
     LogCallback wrapUpLogCallback =
         k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress);

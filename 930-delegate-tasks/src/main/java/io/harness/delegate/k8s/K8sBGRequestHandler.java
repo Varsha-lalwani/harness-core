@@ -44,7 +44,7 @@ import io.harness.delegate.task.k8s.K8sBGDeployResponse;
 import io.harness.delegate.task.k8s.K8sDeployRequest;
 import io.harness.delegate.task.k8s.K8sDeployResponse;
 import io.harness.delegate.task.k8s.K8sTaskHelperBase;
-import io.harness.delegate.task.k8s.client.KubernetesClient;
+import io.harness.delegate.task.k8s.client.K8sClient;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.KubernetesTaskException;
 import io.harness.exception.KubernetesYamlException;
@@ -150,10 +150,6 @@ public class K8sBGRequestHandler extends K8sRequestHandler {
     currentRelease.setManagedWorkloadRevision(
         k8sTaskHelperBase.getLatestRevision(client, managedWorkload.getResourceId(), k8sDelegateTaskParams));
 
-    //    k8sTaskHelperBase.doStatusCheck(client, managedWorkload.getResourceId(), k8sDelegateTaskParams,
-    //        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress),
-    //        true);
-
     K8sSteadyStateDTO k8sSteadyStateDTO =
         K8sSteadyStateDTO.builder()
             .request(k8sDeployRequest)
@@ -166,9 +162,8 @@ public class K8sBGRequestHandler extends K8sRequestHandler {
             .isErrorFrameworkEnabled(true)
             .build();
 
-    KubernetesClient kubernetesClient =
-        k8sTaskHelperBase.getKubernetesClient(k8sBGDeployRequest.isUseK8sApiForSteadyStateCheck());
-    kubernetesClient.performSteadyStateCheck(k8sSteadyStateDTO);
+    K8sClient k8sClient = k8sTaskHelperBase.getKubernetesClient(k8sBGDeployRequest.isUseK8sApiForSteadyStateCheck());
+    k8sClient.performSteadyStateCheck(k8sSteadyStateDTO);
 
     LogCallback wrapUpLogCallback =
         k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress);

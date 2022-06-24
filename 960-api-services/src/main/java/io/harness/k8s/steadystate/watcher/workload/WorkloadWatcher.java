@@ -8,10 +8,10 @@
 package io.harness.k8s.steadystate.watcher.workload;
 
 import io.harness.k8s.model.KubernetesResourceId;
-import io.harness.k8s.steadystate.model.K8sRolloutStatusDTO;
+import io.harness.k8s.steadystate.model.K8sStatusWatchDTO;
 import io.harness.logging.LogCallback;
 
 public interface WorkloadWatcher {
-  boolean watchRolloutStatus(K8sRolloutStatusDTO k8sRolloutStatusDTO, KubernetesResourceId workload,
+  boolean watchRolloutStatus(K8sStatusWatchDTO k8SStatusWatchDTO, KubernetesResourceId workload,
       LogCallback executionLogCallback) throws Exception;
 }

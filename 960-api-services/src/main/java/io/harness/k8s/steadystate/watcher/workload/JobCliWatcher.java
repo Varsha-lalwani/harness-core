@@ -26,9 +26,10 @@ import io.harness.k8s.kubectl.GetJobCommand;
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.model.K8sDelegateTaskParams;
 import io.harness.k8s.model.KubernetesResourceId;
-import io.harness.k8s.steadystate.model.K8sRolloutStatusDTO;
+import io.harness.k8s.steadystate.model.K8sStatusWatchDTO;
 import io.harness.logging.LogCallback;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.zeroturnaround.exec.ProcessResult;
@@ -38,11 +39,12 @@ import org.zeroturnaround.exec.stream.LogOutputStream;
 @Singleton
 public class JobCliWatcher implements WorkloadWatcher {
   @Override
-  public boolean watchRolloutStatus(K8sRolloutStatusDTO k8sRolloutStatusDTO, KubernetesResourceId resourceId,
+  public boolean watchRolloutStatus(K8sStatusWatchDTO k8SStatusWatchDTO, KubernetesResourceId resourceId,
       LogCallback executionLogCallback) throws Exception {
-    String statusFormat = k8sRolloutStatusDTO.getStatusFormat();
-    Kubectl client = k8sRolloutStatusDTO.getClient();
-    K8sDelegateTaskParams k8sDelegateTaskParams = k8sRolloutStatusDTO.getK8sDelegateTaskParams();
+    String statusFormat = k8SStatusWatchDTO.getStatusFormat();
+    Kubectl client = k8SStatusWatchDTO.getClient();
+    Preconditions.checkNotNull(client, "K8s CLI Client cannot be null.");
+    K8sDelegateTaskParams k8sDelegateTaskParams = k8SStatusWatchDTO.getK8sDelegateTaskParams();
 
     try (LogOutputStream statusInfoStream =
              new LogOutputStream() {
@@ -72,7 +74,7 @@ public class JobCliWatcher implements WorkloadWatcher {
       executionLogCallback.saveExecutionLog(getPrintableCommand(jobStatusCommand.command()) + "\n");
 
       return getJobStatus(k8sDelegateTaskParams, statusInfoStream, statusErrorStream, jobCompleteCommand,
-          jobFailedCommand, jobStatusCommand, jobCompletionTimeCommand, k8sRolloutStatusDTO.isErrorFrameworkEnabled());
+          jobFailedCommand, jobStatusCommand, jobCompletionTimeCommand, k8SStatusWatchDTO.isErrorFrameworkEnabled());
     }
   }
 

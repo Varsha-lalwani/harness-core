@@ -23,7 +23,6 @@ public class K8sWorkloadWatcherConfig {
   @Inject private static DaemonSetApiWatcher daemonSetApiWatcher;
   @Inject private static JobApiWatcher jobApiWatcher;
   @Inject private static DeploymentConfigCliWatcher deploymentConfigCliWatcher;
-  @Inject private static K8sCliWatcher k8sCliWatcher;
   @Inject private static JobCliWatcher jobCliWatcher;
 
   private static final EnumMap<Kind, WorkloadWatcher> apiWorkloadWatcherMap = new EnumMap<>(

@@ -22,9 +22,10 @@ import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.kubectl.RolloutStatusCommand;
 import io.harness.k8s.model.K8sDelegateTaskParams;
 import io.harness.k8s.model.KubernetesResourceId;
-import io.harness.k8s.steadystate.model.K8sRolloutStatusDTO;
+import io.harness.k8s.steadystate.model.K8sStatusWatchDTO;
 import io.harness.logging.LogCallback;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Singleton;
 import java.io.ByteArrayOutputStream;
 import lombok.SneakyThrows;
@@ -36,11 +37,12 @@ import org.zeroturnaround.exec.stream.LogOutputStream;
 @Slf4j
 public class K8sCliWatcher implements WorkloadWatcher {
   @Override
-  public boolean watchRolloutStatus(K8sRolloutStatusDTO k8sRolloutStatusDTO, KubernetesResourceId resourceId,
+  public boolean watchRolloutStatus(K8sStatusWatchDTO k8SStatusWatchDTO, KubernetesResourceId resourceId,
       LogCallback executionLogCallback) throws Exception {
-    String statusFormat = k8sRolloutStatusDTO.getStatusFormat();
-    Kubectl client = k8sRolloutStatusDTO.getClient();
-    K8sDelegateTaskParams k8sDelegateTaskParams = k8sRolloutStatusDTO.getK8sDelegateTaskParams();
+    String statusFormat = k8SStatusWatchDTO.getStatusFormat();
+    Kubectl client = k8SStatusWatchDTO.getClient();
+    Preconditions.checkNotNull(client, "K8s CLI Client cannot be null.");
+    K8sDelegateTaskParams k8sDelegateTaskParams = k8SStatusWatchDTO.getK8sDelegateTaskParams();
 
     try (ByteArrayOutputStream errorCaptureStream = new ByteArrayOutputStream();
          LogOutputStream statusErrorStream =
@@ -75,7 +77,7 @@ public class K8sCliWatcher implements WorkloadWatcher {
       boolean success = 0 == result.getExitValue();
       if (!success) {
         log.warn(result.outputUTF8());
-        if (k8sRolloutStatusDTO.isErrorFrameworkEnabled()) {
+        if (k8SStatusWatchDTO.isErrorFrameworkEnabled()) {
           ProcessResponse processResponse =
               ProcessResponse.builder()
                   .errorMessage(ExceptionMessageSanitizer.sanitizeMessage(errorCaptureStream.toString()))

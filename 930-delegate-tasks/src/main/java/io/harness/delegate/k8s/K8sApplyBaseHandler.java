@@ -25,6 +25,7 @@ import io.harness.delegate.task.k8s.K8sTaskHelperBase;
 import io.harness.exception.ExceptionUtils;
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.model.K8sDelegateTaskParams;
+import io.harness.k8s.model.K8sSteadyStateDTO;
 import io.harness.k8s.model.KubernetesResource;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.logging.CommandExecutionStatus;
@@ -110,14 +111,17 @@ public class K8sApplyBaseHandler {
       return true;
     }
 
-    List<KubernetesResourceId> kubernetesResourceIds = k8sApplyHandlerConfig.getWorkloads()
-                                                           .stream()
-                                                           .map(KubernetesResource::getResourceId)
-                                                           .collect(Collectors.toList());
+    boolean success = true;
+    if (!isErrorFrameworkEnabled) {
+      List<KubernetesResourceId> kubernetesResourceIds = k8sApplyHandlerConfig.getWorkloads()
+                                                             .stream()
+                                                             .map(KubernetesResource::getResourceId)
+                                                             .collect(Collectors.toList());
 
-    boolean success = k8sTaskHelperBase.doStatusCheckForAllResources(k8sApplyHandlerConfig.getClient(),
-        kubernetesResourceIds, k8sDelegateTaskParams, namespace, executionLogCallback,
-        k8sApplyHandlerConfig.getCustomWorkloads().isEmpty(), isErrorFrameworkEnabled);
+      success = k8sTaskHelperBase.doStatusCheckForAllResources(k8sApplyHandlerConfig.getClient(), kubernetesResourceIds,
+          k8sDelegateTaskParams, namespace, executionLogCallback, k8sApplyHandlerConfig.getCustomWorkloads().isEmpty(),
+          isErrorFrameworkEnabled);
+    }
 
     boolean customResourcesStatusSuccess = k8sTaskHelperBase.doStatusCheckForAllCustomResources(
         k8sApplyHandlerConfig.getClient(), k8sApplyHandlerConfig.getCustomWorkloads(), k8sDelegateTaskParams,

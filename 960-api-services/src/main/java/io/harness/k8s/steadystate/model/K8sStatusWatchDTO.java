@@ -9,7 +9,6 @@ package io.harness.k8s.steadystate.model;
 
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.model.K8sDelegateTaskParams;
-import io.harness.logging.LogCallback;
 
 import io.kubernetes.client.openapi.ApiClient;
 import lombok.Builder;
@@ -17,10 +16,9 @@ import lombok.Data;
 
 @Data
 @Builder
-public class K8sRolloutStatusDTO {
+public class K8sStatusWatchDTO {
   ApiClient apiClient;
   Kubectl client;
-  LogCallback logCallback;
   K8sDelegateTaskParams k8sDelegateTaskParams;
   boolean isErrorFrameworkEnabled;
   String statusFormat;

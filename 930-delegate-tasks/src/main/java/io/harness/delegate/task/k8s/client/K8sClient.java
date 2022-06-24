@@ -5,16 +5,10 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.k8s.model;
+package io.harness.delegate.task.k8s.client;
 
-import java.util.concurrent.Future;
-import lombok.Builder;
-import lombok.Data;
-import org.zeroturnaround.exec.StartedProcess;
+import io.harness.k8s.model.K8sSteadyStateDTO;
 
-@Builder
-@Data
-public class K8sEventWatchRef {
-  StartedProcess startedProcess;
-  Future<?> threadFuture;
+public interface K8sClient {
+  boolean performSteadyStateCheck(K8sSteadyStateDTO steadyStateDTO) throws Exception;
 }

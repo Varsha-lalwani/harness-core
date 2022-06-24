@@ -37,12 +37,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Singleton
-public class KubeApiEventWatcher {
+public class K8sApiEventWatcher {
   @Inject @Named("k8sSteadyStateExecutor") private ExecutorService k8sSteadyStateExecutor;
 
   public Future<?> watchForEvents(
       String namespace, K8sEventWatchDTO k8sEventWatchDTO, LogCallback executionLogCallback) {
-    return k8sSteadyStateExecutor.submit(() -> runEventWatchInNamespace(namespace, k8sEventWatchDTO));
+    return k8sSteadyStateExecutor.submit(
+        () -> runEventWatchInNamespace(namespace, k8sEventWatchDTO, executionLogCallback));
   }
 
   public void destroyRunning(List<Future<?>> eventWatchRefs) {
@@ -54,7 +55,8 @@ public class KubeApiEventWatcher {
     }
   }
 
-  public void runEventWatchInNamespace(String namespace, K8sEventWatchDTO k8sNamespaceEventWatchDTO) {
+  public void runEventWatchInNamespace(
+      String namespace, K8sEventWatchDTO k8sNamespaceEventWatchDTO, LogCallback executionLogCallback) {
     ApiClient apiClient = k8sNamespaceEventWatchDTO.getApiClient();
     CoreV1Api coreV1Api = new CoreV1Api(apiClient);
     String eventInfoFormat = k8sNamespaceEventWatchDTO.getEventInfoFormat();
@@ -64,7 +66,6 @@ public class KubeApiEventWatcher {
                                     .stream()
                                     .map(KubernetesResourceId::getName)
                                     .collect(Collectors.toSet());
-    LogCallback executionLogCallback = k8sNamespaceEventWatchDTO.getExecutionLogCallback();
 
     try {
       String resourceVersion = null;

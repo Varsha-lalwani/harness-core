@@ -29,7 +29,7 @@ import org.zeroturnaround.exec.stream.LogOutputStream;
 
 @Singleton
 @Slf4j
-public class KubectlEventWatcher {
+public class K8sCliEventWatcher {
   public StartedProcess watchForEvents(
       String namespace, K8sEventWatchDTO k8sEventWatchDTO, LogCallback executionLogCallback) throws Exception {
     List<KubernetesResourceId> resourceIds = k8sEventWatchDTO.getResourceIds();
@@ -41,7 +41,7 @@ public class KubectlEventWatcher {
                                      .namespace(namespace)
                                      .output(K8sConstants.eventWithNamespaceOutputFormat)
                                      .watchOnly(true);
-    k8sEventWatchDTO.getExecutionLogCallback().saveExecutionLog(getPrintableCommand(eventGetCommand.command()) + "\n");
+    executionLogCallback.saveExecutionLog(getPrintableCommand(eventGetCommand.command()) + "\n");
 
     LogOutputStream watchInfoStream = new LogOutputStream() {
       @Override

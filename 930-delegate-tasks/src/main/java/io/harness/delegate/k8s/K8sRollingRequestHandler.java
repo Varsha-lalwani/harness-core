@@ -43,9 +43,7 @@ import io.harness.delegate.task.k8s.K8sDeployResponse;
 import io.harness.delegate.task.k8s.K8sRollingDeployRequest;
 import io.harness.delegate.task.k8s.K8sRollingDeployResponse;
 import io.harness.delegate.task.k8s.K8sTaskHelperBase;
-import io.harness.delegate.task.k8s.client.KubernetesApiClient;
-import io.harness.delegate.task.k8s.client.KubernetesCliClient;
-import io.harness.delegate.task.k8s.client.KubernetesClient;
+import io.harness.delegate.task.k8s.client.K8sClient;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.k8s.KubernetesContainerService;
 import io.harness.k8s.kubectl.Kubectl;
@@ -157,13 +155,13 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
                                                   .executionLogCallback(waitForeSteadyStateLogCallback)
                                                   .k8sDelegateTaskParams(k8sDelegateTaskParams)
                                                   .namespace(kubernetesConfig.getNamespace())
-                                                  .denoteOverallSuccess(true)
+                                                  .denoteOverallSuccess(customWorkloads.isEmpty())
                                                   .isErrorFrameworkEnabled(true)
                                                   .build();
 
-        KubernetesClient kubernetesClient =
+        K8sClient k8sClient =
             k8sTaskHelperBase.getKubernetesClient(k8sRollingDeployRequest.isUseK8sApiForSteadyStateCheck());
-        kubernetesClient.performSteadyStateCheck(k8sSteadyStateDTO);
+        k8sClient.performSteadyStateCheck(k8sSteadyStateDTO);
 
         k8sTaskHelperBase.doStatusCheckForAllCustomResources(client, customWorkloads, k8sDelegateTaskParams,
             waitForeSteadyStateLogCallback, true, steadyStateTimeoutInMillis, true);

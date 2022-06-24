@@ -12,11 +12,12 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.k8s.steadystate.model.K8ApiResponseDTO;
-import io.harness.k8s.steadystate.model.K8sRolloutStatusDTO;
+import io.harness.k8s.steadystate.model.K8sStatusWatchDTO;
 import io.harness.k8s.steadystate.statusviewer.StatefulSetStatusViewer;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -33,15 +34,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StatefulSetApiWatcher implements WorkloadWatcher {
   @Inject private StatefulSetStatusViewer statusViewer;
+
   @Override
-  public boolean watchRolloutStatus(K8sRolloutStatusDTO k8sRolloutStatusDTO, KubernetesResourceId workload,
+  public boolean watchRolloutStatus(K8sStatusWatchDTO k8SStatusWatchDTO, KubernetesResourceId workload,
       LogCallback executionLogCallback) throws Exception {
-    return watchStatefulSet(k8sRolloutStatusDTO.getApiClient(), workload, executionLogCallback,
-        k8sRolloutStatusDTO.isErrorFrameworkEnabled());
+    return watchStatefulSet(
+        k8SStatusWatchDTO.getApiClient(), workload, executionLogCallback, k8SStatusWatchDTO.isErrorFrameworkEnabled());
   }
 
   private boolean watchStatefulSet(ApiClient apiClient, KubernetesResourceId workload, LogCallback executionLogCallback,
       boolean errorFrameworkEnabled) throws Exception {
+    Preconditions.checkNotNull(apiClient, "K8s API Client cannot be null.");
     AppsV1Api appsV1Api = new AppsV1Api(apiClient);
     while (true) {
       try (Watch<V1StatefulSet> watch = Watch.createWatch(apiClient,

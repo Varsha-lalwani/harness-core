@@ -93,8 +93,9 @@ import io.harness.delegate.service.ExecutionConfigOverrideFromFileOnDelegate;
 import io.harness.delegate.task.git.ScmFetchFilesHelperNG;
 import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.delegate.task.helm.HelmTaskHelperBase;
-import io.harness.delegate.task.k8s.client.KubernetesApiClient;
-import io.harness.delegate.task.k8s.client.KubernetesCliClient;
+import io.harness.delegate.task.k8s.client.K8sApiClient;
+import io.harness.delegate.task.k8s.client.K8sCliClient;
+import io.harness.delegate.task.k8s.client.K8sClient;
 import io.harness.errorhandling.NGErrorHelper;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.HelmClientException;
@@ -270,8 +271,8 @@ public class K8sTaskHelperBase {
   @Inject private OpenShiftDelegateService openShiftDelegateService;
   @Inject private HelmTaskHelperBase helmTaskHelperBase;
   @Inject private ScmFetchFilesHelperNG scmFetchFilesHelper;
-  @Inject private KubernetesCliClient kubernetesCliClient;
-  @Inject private KubernetesApiClient kubernetesApiClient;
+  @Inject private K8sCliClient kubernetesCliClient;
+  @Inject private K8sApiClient kubernetesApiClient;
 
   private DelegateExpressionEvaluator delegateExpressionEvaluator = new DelegateExpressionEvaluator();
 
@@ -2908,8 +2909,7 @@ public class K8sTaskHelperBase {
         namespace, executionLogCallback, false);
   }
 
-  public io.harness.delegate.task.k8s.client.KubernetesClient getKubernetesClient(
-      boolean useK8sApiForSteadyStateCheck) {
+  public K8sClient getKubernetesClient(boolean useK8sApiForSteadyStateCheck) {
     if (useK8sApiForSteadyStateCheck) {
       return kubernetesApiClient;
     }

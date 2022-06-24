@@ -18,7 +18,7 @@ import io.harness.k8s.model.K8sSteadyStateDTO;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.k8s.steadystate.model.K8sEventWatchDTO;
-import io.harness.k8s.steadystate.model.K8sRolloutStatusDTO;
+import io.harness.k8s.steadystate.model.K8sStatusWatchDTO;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -27,19 +27,17 @@ import java.util.List;
 import java.util.Set;
 
 @Singleton
-public class KubernetesClientHelper {
+public class K8sClientHelper {
   @Inject private KubernetesHelperService kubernetesHelperService;
   @Inject private ContainerDeploymentDelegateBaseHelper containerDeploymentDelegateBaseHelper;
 
-  public K8sEventWatchDTO createNamespaceEventWatchDTO(
-      K8sSteadyStateDTO steadyStateDTO, ApiClient apiClient, Kubectl client) {
+  public K8sEventWatchDTO createEventWatchDTO(K8sSteadyStateDTO steadyStateDTO, ApiClient apiClient, Kubectl client) {
     int maxResourceNameLength = getMaxResourceNameLength(steadyStateDTO.getResourceIds());
     final String eventErrorFormat = "%-7s: %s";
     final String eventInfoFormat = "%-7s: %-" + maxResourceNameLength + "s   %s";
     return K8sEventWatchDTO.builder()
         .apiClient(apiClient)
         .client(client)
-        .executionLogCallback(steadyStateDTO.getExecutionLogCallback())
         .eventInfoFormat(eventInfoFormat)
         .eventErrorFormat(eventErrorFormat)
         .resourceIds(steadyStateDTO.getResourceIds())
@@ -47,15 +45,13 @@ public class KubernetesClientHelper {
         .build();
   }
 
-  public K8sRolloutStatusDTO createRolloutStatusDTO(
-      K8sSteadyStateDTO steadyStateDTO, ApiClient apiClient, Kubectl client) {
+  public K8sStatusWatchDTO createStatusWatchDTO(K8sSteadyStateDTO steadyStateDTO, ApiClient apiClient, Kubectl client) {
     int maxResourceNameLength = getMaxResourceNameLength(steadyStateDTO.getResourceIds());
     final String statusFormat = "%n%-7s: %-" + maxResourceNameLength + "s   %s";
 
-    return K8sRolloutStatusDTO.builder()
+    return K8sStatusWatchDTO.builder()
         .apiClient(apiClient)
         .client(client)
-        .logCallback(steadyStateDTO.getExecutionLogCallback())
         .k8sDelegateTaskParams(steadyStateDTO.getK8sDelegateTaskParams())
         .isErrorFrameworkEnabled(steadyStateDTO.isErrorFrameworkEnabled())
         .statusFormat(statusFormat)
