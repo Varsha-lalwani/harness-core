@@ -10,7 +10,10 @@ package io.harness.ccm;
 import static io.harness.AuthorizationServiceHeader.CE_NEXT_GEN;
 import static io.harness.AuthorizationServiceHeader.NG_MANAGER;
 import static io.harness.annotations.dev.HarnessTeam.CE;
+import static io.harness.audit.ResourceTypeConstants.COST_CATEGORY;
 import static io.harness.audit.ResourceTypeConstants.PERSPECTIVE;
+import static io.harness.audit.ResourceTypeConstants.PERSPECTIVE_BUDGET;
+import static io.harness.audit.ResourceTypeConstants.PERSPECTIVE_REPORT;
 import static io.harness.eventsframework.EventsFrameworkConstants.ENTITY_CRUD;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.CONNECTOR_ENTITY;
 import static io.harness.lock.DistributedLockImplementation.MONGO;
@@ -27,8 +30,11 @@ import io.harness.aws.AwsClientImpl;
 import io.harness.callback.DelegateCallback;
 import io.harness.callback.DelegateCallbackToken;
 import io.harness.callback.MongoDatabase;
+import io.harness.ccm.audittrails.eventhandler.BudgetEventHandler;
 import io.harness.ccm.audittrails.eventhandler.CENextGenOutboxEventHandler;
+import io.harness.ccm.audittrails.eventhandler.CostCategoryEventHandler;
 import io.harness.ccm.audittrails.eventhandler.PerspectiveEventHandler;
+import io.harness.ccm.audittrails.eventhandler.ReportEventHandler;
 import io.harness.ccm.bigQuery.BigQueryService;
 import io.harness.ccm.bigQuery.BigQueryServiceImpl;
 import io.harness.ccm.commons.beans.config.GcpConfig;
@@ -108,10 +114,7 @@ import io.harness.mongo.MongoConfig;
 import io.harness.mongo.MongoPersistence;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.ng.core.event.MessageListener;
-<<<<<<< HEAD
 import io.harness.notification.module.NotificationClientModule;
-=======
->>>>>>> 69007582ce5 ([CCM-7874]: Enable NG Audit Trails in CCM)
 import io.harness.outbox.TransactionOutboxModule;
 import io.harness.outbox.api.OutboxEventHandler;
 import io.harness.persistence.HPersistence;
@@ -336,10 +339,9 @@ public class CENextGenModule extends AbstractModule {
     MapBinder<String, OutboxEventHandler> outboxEventHandlerMapBinder =
         MapBinder.newMapBinder(binder(), String.class, OutboxEventHandler.class);
     outboxEventHandlerMapBinder.addBinding(PERSPECTIVE).to(PerspectiveEventHandler.class);
-<<<<<<< HEAD
-    outboxEventHandlerMapBinder.addBinding().to(PerspectiveEventHandler.class);
-=======
->>>>>>> b4bfbdd9b95 ([CCM-7874]: Enable NG Audit Trails in CCM)
+    outboxEventHandlerMapBinder.addBinding(PERSPECTIVE_BUDGET).to(BudgetEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding(PERSPECTIVE_REPORT).to(ReportEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding(COST_CATEGORY).to(CostCategoryEventHandler.class);
   }
 
   private void registerDelegateTaskService() {

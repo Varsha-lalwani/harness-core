@@ -18,6 +18,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.ccm.remote.resources.perspectives.PerspectiveReportResource;
 import io.harness.ccm.views.entities.CEReportSchedule;
 import io.harness.ccm.views.service.CEReportScheduleService;
+import io.harness.outbox.api.OutboxService;
 import io.harness.rule.Owner;
 import io.harness.telemetry.TelemetryReporter;
 
@@ -31,10 +32,13 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PerspectiveReportResourceTest extends CategoryTest {
   private CEReportScheduleService ceReportScheduleService = mock(CEReportScheduleService.class);
+  private TransactionTemplate transactionTemplate = mock(TransactionTemplate.class);
+  private OutboxService outboxService = mock(OutboxService.class);
   @Mock private TelemetryReporter telemetryReporter;
   private PerspectiveReportResource perspectiveReportResource;
 
@@ -61,7 +65,8 @@ public class PerspectiveReportResourceTest extends CategoryTest {
                          .enabled(true)
                          .build();
     when(ceReportScheduleService.get(REPORT_ID, ACCOUNT_ID)).thenReturn(reportSchedule);
-    perspectiveReportResource = new PerspectiveReportResource(ceReportScheduleService, telemetryReporter);
+    perspectiveReportResource =
+        new PerspectiveReportResource(ceReportScheduleService, telemetryReporter, transactionTemplate, outboxService);
   }
 
   @Test

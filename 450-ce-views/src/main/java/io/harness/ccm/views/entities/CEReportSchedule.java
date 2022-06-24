@@ -11,6 +11,7 @@ import io.harness.annotation.StoreIn;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EmbeddedUser;
+import io.harness.ccm.commons.entities.billing.Budget;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
@@ -80,4 +81,22 @@ public final class CEReportSchedule implements PersistentEntity, UuidAware, Crea
   EmbeddedUser createdBy;
   EmbeddedUser lastUpdatedBy;
   Date nextExecution;
+
+  public CEReportSchedule toDTO() {
+    return CEReportSchedule.builder()
+        .uuid(getUuid())
+        .name(getName())
+        .description(getDescription())
+        .viewsId(getViewsId())
+        .userCron(getUserCron())
+        .recipients(getRecipients())
+        .accountId(getAccountId())
+        .createdAt(getCreatedAt())
+        .lastUpdatedAt(getLastUpdatedAt())
+        .userCronTimeZone(getUserCronTimeZone())
+        .createdBy(getCreatedBy())
+        .lastUpdatedBy(getLastUpdatedBy())
+        .nextExecution(getNextExecution())
+        .build();
+  }
 }

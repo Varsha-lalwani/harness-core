@@ -25,6 +25,8 @@ import io.harness.ccm.views.businessMapping.service.intf.BusinessMappingService;
 import io.harness.ccm.views.entities.ViewCondition;
 import io.harness.ccm.views.entities.ViewIdCondition;
 import io.harness.ccm.views.entities.ViewRule;
+import io.harness.outbox.OutboxEvent;
+import io.harness.outbox.api.OutboxService;
 import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
 
@@ -41,10 +43,13 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BusinessMappingResourceTest extends CategoryTest {
   @Mock private BusinessMappingService businessMappingService;
+  @Mock private OutboxService outboxService;
+  @Mock private TransactionTemplate transactionTemplate;
   @InjectMocks private BusinessMappingResource businessMappingResource;
   private BusinessMapping businessMapping;
 
