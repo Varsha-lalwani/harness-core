@@ -93,7 +93,7 @@ public class DeploymentStageConfig implements StageInfoConfig, Visitable {
     return VisitableChildren.builder().visitableChildList(children).build();
   }
 
-  public Boolean getGitOpsEnabled() {
+  public boolean getGitOpsEnabled() {
     return gitOpsEnabled == Boolean.TRUE;
   }
 }
