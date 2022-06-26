@@ -114,7 +114,7 @@ public class DeploymentStageFilterJsonCreatorV2 extends GenericStageFilterJsonCr
   }
 
   private void addFiltersFromEnvironment(FilterCreationContext filterCreationContext, CdFilterBuilder filterBuilder,
-      EnvironmentYamlV2 env, Boolean gitOpsEnabled) {
+      EnvironmentYamlV2 env, boolean gitOpsEnabled) {
     final ParameterField<String> environmentRef = env.getEnvironmentRef();
     if (environmentRef == null || environmentRef.fetchFinalValue() == null) {
       throw new InvalidYamlRuntimeException(
@@ -168,7 +168,7 @@ public class DeploymentStageFilterJsonCreatorV2 extends GenericStageFilterJsonCr
   }
 
   private void addFiltersFromEnvironmentGroup(FilterCreationContext filterCreationContext,
-      CdFilterBuilder filterBuilder, EnvironmentGroupYaml envGroupYaml, Boolean gitOpsEnabled) {
+      CdFilterBuilder filterBuilder, EnvironmentGroupYaml envGroupYaml, boolean gitOpsEnabled) {
     final ParameterField<String> envGroupRef = envGroupYaml.getEnvGroupRef();
     if (envGroupRef == null || envGroupRef.fetchFinalValue() == null) {
       throw new InvalidYamlRuntimeException(
