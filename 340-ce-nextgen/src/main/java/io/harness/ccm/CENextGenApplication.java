@@ -240,6 +240,7 @@ public class CENextGenApplication extends Application<CENextGenConfiguration> {
   private void registerAuthFilters(CENextGenConfiguration configuration, Environment environment, Injector injector) {
     if (configuration.isEnableAuth()) {
       registerNextGenAuthFilter(configuration, environment, injector);
+
       registerInternalApiAuthFilter(configuration, environment);
     }
   }

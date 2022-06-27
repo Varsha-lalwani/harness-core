@@ -8,7 +8,6 @@
 package io.harness.ccm.audittrails.events;
 
 import io.harness.ccm.commons.entities.billing.Budget;
-import io.harness.ccm.views.entities.CEView;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

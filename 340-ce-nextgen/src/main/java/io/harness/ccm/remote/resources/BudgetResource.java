@@ -15,6 +15,7 @@ import static io.harness.ccm.remote.resources.TelemetryConstants.BUDGET_PERIOD;
 import static io.harness.ccm.remote.resources.TelemetryConstants.BUDGET_TYPE;
 import static io.harness.ccm.remote.resources.TelemetryConstants.MODULE;
 import static io.harness.ccm.remote.resources.TelemetryConstants.MODULE_NAME;
+import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
 import static io.harness.springdata.TransactionUtils.DEFAULT_TRANSACTION_RETRY_POLICY;
 import static io.harness.telemetry.Destination.AMPLITUDE;
 
@@ -40,6 +41,7 @@ import io.harness.telemetry.TelemetryReporter;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Operation;
@@ -87,7 +89,7 @@ public class BudgetResource {
   @Inject private BudgetService budgetService;
   @Inject private CEViewService ceViewService;
   @Inject private TelemetryReporter telemetryReporter;
-  @Inject private TransactionTemplate transactionTemplate;
+  @Inject @Named(OUTBOX_TRANSACTION_TEMPLATE) private TransactionTemplate transactionTemplate;
   @Inject private OutboxService outboxService;
 
   private final RetryPolicy<Object> transactionRetryPolicy = DEFAULT_TRANSACTION_RETRY_POLICY;
@@ -124,7 +126,7 @@ public class BudgetResource {
         BUDGET_CREATED, null, accountId, properties, Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL);
     return ResponseDTO.newResponse(
         Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
-          outboxService.save(new BudgetCreateEvent(budget.getAccountId(), budget.toDTO()));
+          outboxService.save(new BudgetCreateEvent(accountId, budget.toDTO()));
           return createCall;
         })));
   }
@@ -237,7 +239,7 @@ public class BudgetResource {
     budgetService.update(budgetId, budget);
     return ResponseDTO.newResponse(
         Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
-          outboxService.save(new BudgetUpdateEvent(budget.getAccountId(), budget.toDTO(), oldBudget.toDTO()));
+          outboxService.save(new BudgetUpdateEvent(accountId, budget.toDTO(), oldBudget.toDTO()));
           return "Successfully updated the budget";
         })));
   }
@@ -265,7 +267,7 @@ public class BudgetResource {
     budgetService.delete(budgetId, accountId);
     return ResponseDTO.newResponse(
         Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
-          outboxService.save(new BudgetDeleteEvent(accountId, budget));
+          outboxService.save(new BudgetDeleteEvent(accountId, budget.toDTO()));
           return "Successfully deleted the budget";
         })));
   }

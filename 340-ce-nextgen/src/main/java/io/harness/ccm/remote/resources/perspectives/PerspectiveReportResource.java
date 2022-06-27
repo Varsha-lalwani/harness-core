@@ -163,7 +163,7 @@ public class PerspectiveReportResource {
           Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
             List<CEReportSchedule> ceList = ceReportScheduleService.getReportSettingByView(perspectiveId, accountId);
             for (CEReportSchedule report : ceList) {
-              outboxService.save(new ReportDeleteEvent(accountId, report));
+              outboxService.save(new ReportDeleteEvent(accountId, report.toDTO()));
             }
             ceReportScheduleService.deleteAllByView(perspectiveId, accountId);
             return deleteSuccessfulMsg;
@@ -173,7 +173,7 @@ public class PerspectiveReportResource {
       ceReportScheduleService.delete(reportId, accountId);
       return ResponseDTO.newResponse(
           Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
-            outboxService.save(new ReportDeleteEvent(accountId, report));
+            outboxService.save(new ReportDeleteEvent(accountId, report.toDTO()));
             return deleteSuccessfulMsg;
           })));
     }
@@ -252,7 +252,7 @@ public class PerspectiveReportResource {
       List<CEReportSchedule> reports = ceReportScheduleService.update(accountId, schedule);
       return ResponseDTO.newResponse(
           Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
-            outboxService.save(new ReportUpdateEvent(accountId, schedule, oldReport));
+            outboxService.save(new ReportUpdateEvent(accountId, schedule.toDTO(), oldReport.toDTO()));
             return reports;
           })));
     } catch (IllegalArgumentException e) {

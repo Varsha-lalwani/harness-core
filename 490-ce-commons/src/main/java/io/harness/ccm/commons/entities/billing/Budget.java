@@ -65,7 +65,6 @@ public final class Budget implements PersistentEntity, UuidAware, AccountAccess,
         .uuid(getUuid())
         .accountId(getAccountId())
         .name(getName())
-        .scope(getScope())
         .type(getType())
         .budgetAmount(getBudgetAmount())
         .period(getPeriod())
