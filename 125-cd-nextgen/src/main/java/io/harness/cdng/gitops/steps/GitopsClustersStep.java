@@ -120,7 +120,9 @@ public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepPar
         : null;
 
     // TODO: need to have thorough testing. Add unit test also
-    resolveVariables(ambiance, variables);
+    if (isNotEmpty(variables)) {
+      resolveVariables(ambiance, variables);
+    }
     try {
       final Map<String, IndividualClusterInternal> validatedClusters = validatedClusters(ambiance, stepParameters);
       final GitopsClustersOutcome outcome = toOutcome(validatedClusters, variables);
