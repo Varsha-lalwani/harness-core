@@ -141,7 +141,7 @@ public class FQNMapGenerator {
       }
       FQN currFQN = FQN.duplicateAndAddNode(baseFQN,
           FQNNode.builder().nodeType(FQNNode.NodeType.UUID).uuidKey(uuidKey).uuidValue(jsonNode.asText()).build());
-      if (uuidKey.equals(YAMLFieldNameConstants.IDENTIFIER)) {
+      if (uuidKey.equals(YAMLFieldNameConstants.IDENTIFIER) || uuidKey.equals(YAMLFieldNameConstants.REF)) {
         generateFQNMap(element, currFQN, res, expressions);
       } else {
         Set<String> fieldNames = new LinkedHashSet<>();

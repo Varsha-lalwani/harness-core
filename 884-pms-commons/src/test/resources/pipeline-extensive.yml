@@ -282,3 +282,29 @@ pipeline:
                     socketTimeoutMillis: 1000
                     method: GET
                     url: https://google.com
+    - stage:
+        name: s1
+        identifier: s1
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: svc1
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      type: DockerRegistry
+                      spec:
+                        tag: <+input>
+          environment:
+            environmentRef: "e1"
+            deployToAll: false
+            infrastructureDefinitions:
+              - ref: infraId
+                inputs:
+                  foo:
+                    bar: <+input>

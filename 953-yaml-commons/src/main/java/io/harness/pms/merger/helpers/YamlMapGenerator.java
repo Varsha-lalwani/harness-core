@@ -8,6 +8,7 @@
 package io.harness.pms.merger.helpers;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
@@ -173,7 +174,7 @@ public class YamlMapGenerator {
       Map<String, Object> res, String topKey, boolean isSanitiseFlow) {
     List<Object> topKeyList = new ArrayList<>();
     String uuidKey = FQNHelper.getUuidKey(list);
-    if (EmptyPredicate.isEmpty(uuidKey)) {
+    if (isEmpty(uuidKey)) {
       if (fqnMap.containsKey(baseFQN)) {
         topKeyList.add(list);
         res.put(topKey, topKeyList);
@@ -188,7 +189,7 @@ public class YamlMapGenerator {
               .uuidValue(element.get(uuidKey).asText())
               .build());
       Map<String, Object> tempRes = new LinkedHashMap<>();
-      if (uuidKey.equals(YAMLFieldNameConstants.IDENTIFIER)) {
+      if (uuidKey.equals(YAMLFieldNameConstants.IDENTIFIER) || uuidKey.equals(YAMLFieldNameConstants.REF)) {
         generateYamlMap(fqnMap, currFQN, element, tempRes, topKey, isSanitiseFlow);
         if (tempRes.containsKey(topKey)) {
           topKeyList.add(tempRes.get(topKey));

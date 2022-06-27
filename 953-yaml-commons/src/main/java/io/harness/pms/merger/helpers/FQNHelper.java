@@ -29,7 +29,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class FQNHelper {
   List<String> possibleUUIDs = Arrays.asList(YAMLFieldNameConstants.IDENTIFIER, YAMLFieldNameConstants.NAME,
-      YAMLFieldNameConstants.KEY, YAMLFieldNameConstants.COMMAND_TYPE);
+      YAMLFieldNameConstants.KEY, YAMLFieldNameConstants.COMMAND_TYPE, YAMLFieldNameConstants.REF);
 
   public void validateUniqueFqn(FQN fqn, Object value, Map<FQN, Object> res, HashSet<String> expressions) {
     String expressionFqn = fqn.displayWithoutParallel();

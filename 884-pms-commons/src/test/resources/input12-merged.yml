@@ -132,3 +132,22 @@ pipeline:
                 type: "Http"
                 spec:
                   method: "<+input>"
+  - stage:
+      identifier: "s1"
+      type: "Deployment"
+      spec:
+        service:
+          serviceInputs:
+            serviceDefinition:
+              type: "Kubernetes"
+              spec:
+                artifacts:
+                  primary:
+                    type: "DockerRegistry"
+                    spec:
+                      tag: "<+input>"
+        environment:
+          infrastructureDefinitions:
+          - inputs:
+              foo:
+                bar: "<+input>"
