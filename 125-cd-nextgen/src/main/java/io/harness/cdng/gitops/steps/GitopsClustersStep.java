@@ -136,27 +136,6 @@ public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepPar
     return stepResponseBuilder.status(Status.SUCCEEDED).build();
   }
 
-  private void resolveVariables(Ambiance ambiance, Map<String, Object> variables) {
-    for (Object value : variables.values()) {
-      if (value instanceof ParameterField) {
-        ParameterField parameterFieldValue = (ParameterField) value;
-        String resolvedValue = null;
-        if (parameterFieldValue.getExpressionValue() != null) {
-          resolvedValue =
-              engineExpressionService.renderExpression(ambiance, parameterFieldValue.getExpressionValue(), false);
-        }
-        if (resolvedValue != null) {
-          if (!parameterFieldValue.isTypeString()) {
-            parameterFieldValue.setValue(Double.valueOf(resolvedValue));
-
-          } else {
-            parameterFieldValue.setValue(resolvedValue);
-          }
-        }
-      }
-    }
-  }
-
   @Override
   public Class<ClusterStepParameters> getStepParametersClass() {
     return ClusterStepParameters.class;
@@ -312,6 +291,27 @@ public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepPar
     String envName;
     String clusterRef;
     String clusterName;
+  }
+
+  private void resolveVariables(Ambiance ambiance, Map<String, Object> variables) {
+    for (Object value : variables.values()) {
+      if (value instanceof ParameterField) {
+        ParameterField parameterFieldValue = (ParameterField) value;
+        String resolvedValue = null;
+        if (parameterFieldValue.isExpression()) {
+          resolvedValue =
+              engineExpressionService.renderExpression(ambiance, parameterFieldValue.getExpressionValue(), false);
+        }
+        if (resolvedValue != null) {
+          if (!parameterFieldValue.isTypeString()) {
+            parameterFieldValue.setValue(Double.valueOf(resolvedValue));
+
+          } else {
+            parameterFieldValue.setValue(resolvedValue);
+          }
+        }
+      }
+    }
   }
 
   private void logDataFromGitops(List<Cluster> content) {
