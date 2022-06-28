@@ -148,7 +148,11 @@ pipeline:
                       tag: "<+input>"
         environment:
           infrastructureDefinitions:
-          - ref: "infraId"
+          - ref: "infraId1"
             inputs:
               foo:
                 bar: "<+input>"
+          - ref: "infraId2"
+            inputs:
+              foo:
+                baz: "<+input>"
