@@ -54,12 +54,3 @@ inputSet:
                                   paths:
                                     - test/baseValues.yaml
                                     - test/qa/values_1.yaml
-      - stage:
-          identifier: s1
-          spec:
-            environment:
-              infrastructureDefinitions:
-                - ref: infraId
-                  inputs:
-                    foo:
-                      bar: myvalue

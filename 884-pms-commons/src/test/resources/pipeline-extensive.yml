@@ -283,8 +283,8 @@ pipeline:
                     method: GET
                     url: https://google.com
     - stage:
-        name: s1
-        identifier: s1
+        name: unrelated_stage1
+        identifier: unrelatedstage1
         description: ""
         type: Deployment
         spec:

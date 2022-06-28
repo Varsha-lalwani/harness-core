@@ -133,7 +133,7 @@ pipeline:
                 spec:
                   method: "<+input>"
   - stage:
-      identifier: "s1"
+      identifier: "unrelatedstage1"
       type: "Deployment"
       spec:
         service:
@@ -148,6 +148,7 @@ pipeline:
                       tag: "<+input>"
         environment:
           infrastructureDefinitions:
-          - inputs:
+          - ref: "infraId"
+            inputs:
               foo:
                 bar: "<+input>"
