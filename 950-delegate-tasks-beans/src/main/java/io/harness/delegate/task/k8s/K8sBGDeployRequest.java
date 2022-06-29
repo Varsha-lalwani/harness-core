@@ -40,5 +40,6 @@ public class K8sBGDeployRequest implements K8sDeployRequest {
   CommandUnitsProgress commandUnitsProgress;
   boolean useLatestKustomizeVersion;
   boolean useNewKubectlVersion;
+  boolean pruningEnabled;
   boolean useK8sApiForSteadyStateCheck;
 }

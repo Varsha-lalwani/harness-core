@@ -56,8 +56,13 @@ public enum EntityType {
   @JsonProperty(EntityTypeConstants.HARNESS_APPROVAL)
   HARNESS_APPROVAL_STEP(
       ModuleType.PMS, EntityTypeConstants.HARNESS_APPROVAL, IdentifierRef.class, EntityYamlRootNames.HARNESS_APPROVAL),
+  @JsonProperty(EntityTypeConstants.CUSTOM_APPROVAL)
+  CUSTOM_APPROVAL_STEP(
+      ModuleType.PMS, EntityTypeConstants.CUSTOM_APPROVAL, IdentifierRef.class, EntityYamlRootNames.CUSTOM_APPROVAL),
   @JsonProperty(EntityTypeConstants.BARRIER)
   BARRIER_STEP(ModuleType.PMS, EntityTypeConstants.BARRIER, IdentifierRef.class, EntityYamlRootNames.BARRIER),
+  @JsonProperty(EntityTypeConstants.QUEUE)
+  QUEUE_STEP(ModuleType.PMS, EntityTypeConstants.QUEUE, IdentifierRef.class, EntityYamlRootNames.QUEUE),
   @JsonProperty(EntityTypeConstants.FlagConfiguration)
   FLAG_CONFIGURATION(ModuleType.CF, EntityTypeConstants.FlagConfiguration, IdentifierRef.class,
       EntityYamlRootNames.FLAG_CONFIGURATION),
@@ -259,7 +264,10 @@ public enum EntityType {
       EntityYamlRootNames.AZURE_SWAP_SLOT_STEP),
   @JsonProperty(EntityTypeConstants.AZURE_WEBAPP_ROLLBACK)
   AZURE_WEBAPP_ROLLBACK_STEP(ModuleType.CD, EntityTypeConstants.AZURE_WEBAPP_ROLLBACK, IdentifierRef.class,
-      EntityYamlRootNames.AZURE_WEBAPP_ROLLBACK_STEP);
+      EntityYamlRootNames.AZURE_WEBAPP_ROLLBACK_STEP),
+  @JsonProperty(EntityTypeConstants.JENKINS_BUILD)
+  JENKINS_BUILD(
+      ModuleType.CD, EntityTypeConstants.JENKINS_BUILD, IdentifierRef.class, EntityYamlRootNames.JENKINS_BUILD);
 
   private final ModuleType moduleType;
   String yamlName;
