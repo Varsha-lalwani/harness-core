@@ -38,11 +38,11 @@ public class TemplateYamlConversionHandler implements YamlConversionHandler {
     String rootYamlFieldName = getRootField(templateEntityType);
     YamlField rootYamlField = yamlField.getNode().getField(rootYamlFieldName);
     if (rootYamlField == null) {
-      throw new NGTemplateException("yamlNode provided doesn not have root yaml field: " + rootYamlFieldName);
+      throw new NGTemplateException("yamlNode provided does not have root yaml field: " + rootYamlFieldName);
     }
     YamlField typeYamlField = rootYamlField.getNode().getField(TYPE);
     if (typeYamlField == null) {
-      throw new NGTemplateException("yamlNode provided doesn not have type yaml field");
+      throw new NGTemplateException("yamlNode provided does not have type yaml field");
     }
     TemplateYamlConversionRecord conversionRecord = TemplateYamlParallelConversionRecord.builder()
                                                         .fieldsToAdd(fieldsToAdd)

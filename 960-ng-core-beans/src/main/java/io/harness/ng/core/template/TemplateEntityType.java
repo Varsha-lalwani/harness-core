@@ -10,14 +10,7 @@ package io.harness.ng.core.template;
 import static io.harness.NGCommonEntityConstants.IDENTIFIER_KEY;
 import static io.harness.NGCommonEntityConstants.NAME_KEY;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.ng.core.template.TemplateEntityConstants.MONITORED_SERVICE;
-import static io.harness.ng.core.template.TemplateEntityConstants.MONITORED_SERVICE_ROOT_FIELD;
-import static io.harness.ng.core.template.TemplateEntityConstants.PIPELINE;
-import static io.harness.ng.core.template.TemplateEntityConstants.PIPELINE_ROOT_FIELD;
-import static io.harness.ng.core.template.TemplateEntityConstants.STAGE;
-import static io.harness.ng.core.template.TemplateEntityConstants.STAGE_ROOT_FIELD;
-import static io.harness.ng.core.template.TemplateEntityConstants.STEP;
-import static io.harness.ng.core.template.TemplateEntityConstants.STEP_ROOT_FIELD;
+import static io.harness.ng.core.template.TemplateEntityConstants.*;
 
 import static java.util.Arrays.asList;
 
@@ -39,7 +32,10 @@ public enum TemplateEntityType {
   PIPELINE_TEMPLATE(PIPELINE, PIPELINE_ROOT_FIELD, asList(IDENTIFIER_KEY, NAME_KEY), HarnessTeam.PIPELINE),
   @JsonProperty(MONITORED_SERVICE)
   MONITORED_SERVICE_TEMPLATE(
-      MONITORED_SERVICE, MONITORED_SERVICE_ROOT_FIELD, asList(IDENTIFIER_KEY, NAME_KEY), HarnessTeam.CV);
+      MONITORED_SERVICE, MONITORED_SERVICE_ROOT_FIELD, asList(IDENTIFIER_KEY, NAME_KEY), HarnessTeam.CV),
+  @JsonProperty(CUSTOM_SHELL_SCRIPT)
+  CUSTOM_SHELL_SCRIPT_TEMPLATE(
+      CUSTOM_SHELL_SCRIPT, CUSTOM_SHELL_SCRIPT_ROOT_FIELD, asList(IDENTIFIER_KEY, NAME_KEY), HarnessTeam.PL);
 
   private final String yamlType;
   private String rootYamlName;

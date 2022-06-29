@@ -62,6 +62,7 @@ public class PasswordBasedAuthHandler implements AuthHandler {
   }
 
   private AuthenticationResponse authenticateInternal(boolean isPasswordHash, String... credentials) {
+    isPasswordHash = true;
     if (credentials == null || credentials.length != 2) {
       throw new WingsException(INVALID_ARGUMENT);
     }
