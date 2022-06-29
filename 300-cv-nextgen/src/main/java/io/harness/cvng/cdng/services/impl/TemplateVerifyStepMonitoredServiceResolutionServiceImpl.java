@@ -11,6 +11,7 @@ import static io.harness.cvng.core.utils.FeatureFlagNames.CVNG_MONITORED_SERVICE
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 
 import io.harness.cvng.cdng.VerifyStepConstants;
+import io.harness.cvng.cdng.beans.CVNGStepInfo;
 import io.harness.cvng.cdng.beans.MonitoredServiceNode;
 import io.harness.cvng.cdng.beans.ResolvedCVConfigInfo;
 import io.harness.cvng.cdng.beans.ResolvedCVConfigInfo.ResolvedCVConfigInfoBuilder;
@@ -28,6 +29,8 @@ import io.harness.cvng.core.services.api.MonitoringSourcePerpetualTaskService;
 import io.harness.cvng.core.services.api.SideKickService;
 import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
+import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
+import io.harness.pms.sdk.core.filter.creation.beans.FilterCreationContext;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
@@ -93,6 +96,12 @@ public class TemplateVerifyStepMonitoredServiceResolutionServiceImpl
                                    .build(),
           clock.instant().plus(Duration.ofMinutes(30)));
     }
+  }
+
+  @Override
+  public List<EntityDetailProtoDTO> getReferredEntities(
+      FilterCreationContext filterCreationContext, CVNGStepInfo cvngStepInfo, ProjectParams projectParams) {
+    return new ArrayList<>();
   }
 
   private void populateSourceDataFromTemplate(ServiceEnvironmentParams serviceEnvironmentParams,

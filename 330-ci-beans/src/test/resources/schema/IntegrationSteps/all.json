@@ -402,7 +402,14 @@
       "type": "object",
       "properties": {
         "cpu": {
-          "type": "string"
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
         },
         "memory": {
           "type": "string"
@@ -1315,15 +1322,9 @@
         },
         {
           "type": "object",
-          "required": [
-            "connectorRef"
-          ],
           "properties": {
             "baseImageConnectorRefs": {
               "$ref": "#/definitions/ParameterFieldListString"
-            },
-            "connectorRef": {
-              "type": "string"
             },
             "imagePullPolicy": {
               "oneOf": [

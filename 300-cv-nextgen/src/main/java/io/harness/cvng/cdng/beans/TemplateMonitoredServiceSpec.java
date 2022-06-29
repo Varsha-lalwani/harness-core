@@ -34,7 +34,7 @@ public class TemplateMonitoredServiceSpec extends MonitoredServiceSpec {
 
   @NotNull String versionLabel;
 
-  @NotNull JsonNode templateInputs;
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.JSON_NODE_CLASSPATH) JsonNode templateInputs;
 
   @Override
   public String getType() {

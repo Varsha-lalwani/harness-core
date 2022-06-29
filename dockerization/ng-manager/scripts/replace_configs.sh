@@ -166,6 +166,10 @@ if [[ "" != "$NEXT_GEN_MANAGER_SECRET" ]]; then
 fi
 
 if [[ "" != "$NEXT_GEN_MANAGER_SECRET" ]]; then
+  yq write -i $CONFIG_FILE nextGen.cvngServiceSecret "$NEXT_GEN_MANAGER_SECRET"
+fi
+
+if [[ "" != "$NEXT_GEN_MANAGER_SECRET" ]]; then
   yq write -i $CONFIG_FILE nextGen.ceNextGenServiceSecret "$NEXT_GEN_MANAGER_SECRET"
 fi
 
@@ -456,9 +460,6 @@ replace_key_value gitGrpcClientConfigs.templateservice.authority "$TEMPLATE_GITS
 replace_key_value gitGrpcClientConfigs.cf.target "$CF_GITSYNC_TARGET"
 replace_key_value gitGrpcClientConfigs.cf.authority "$CF_GITSYNC_AUTHORITY"
 
-replace_key_value gitGrpcClientConfigs.policymgmt.target "$POLICYMGMT_GITSYNC_TARGET"
-replace_key_value gitGrpcClientConfigs.policymgmt.authority "$POLICYMGMT_GITSYNC_AUTHORITY"
-
 replace_key_value cfClientConfig.apiKey "$CF_CLIENT_API_KEY"
 replace_key_value cfClientConfig.configUrl "$CF_CLIENT_CONFIG_URL"
 replace_key_value cfClientConfig.eventUrl "$CF_CLIENT_EVENT_URL"
@@ -472,6 +473,7 @@ replace_key_value ceAzureSetupConfig.azureAppClientId "$AZURE_APP_CLIENT_ID"
 replace_key_value ceAzureSetupConfig.azureAppClientSecret "$AZURE_APP_CLIENT_SECRET"
 replace_key_value pipelineServiceClientConfig.baseUrl "$PIPELINE_SERVICE_CLIENT_BASEURL"
 replace_key_value ciManagerClientConfig.baseUrl "$CI_MANAGER_SERVICE_CLIENT_BASEURL"
+replace_key_value cvngClientConfig.baseUrl "$CVNG_SERVICE_CLIENT_BASEURL"
 replace_key_value scopeAccessCheckEnabled "${SCOPE_ACCESS_CHECK:-true}"
 
 replace_key_value enforcementClientConfiguration.enforcementCheckEnabled "$ENFORCEMENT_CHECK_ENABLED"

@@ -25,6 +25,7 @@ import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.cdng.gitops.beans.ClusterBatchRequest;
+import io.harness.cdng.gitops.beans.ClusterBatchResponse;
 import io.harness.cdng.gitops.beans.ClusterRequest;
 import io.harness.cdng.gitops.beans.ClusterResponse;
 import io.harness.cdng.gitops.entity.Cluster;
@@ -65,7 +66,6 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -75,7 +75,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import retrofit2.Response;
 
 @NextGenManagerAuth
@@ -146,7 +145,7 @@ public class ClusterResource {
         accountId, orgIdentifier, projectIdentifier, environmentIdentifier, ENVIRONMENT_VIEW_PERMISSION, "view");
 
     Optional<Cluster> entity =
-        clusterService.get(orgIdentifier, projectIdentifier, accountId, environmentIdentifier, clusterRef, deleted);
+        clusterService.get(accountId, orgIdentifier, projectIdentifier, environmentIdentifier, clusterRef);
     if (!entity.isPresent()) {
       throw new NotFoundException(format("Cluster with clusterRef [%s] in project [%s], org [%s] not found", clusterRef,
           projectIdentifier, orgIdentifier));
@@ -184,7 +183,7 @@ public class ClusterResource {
   @Operation(operationId = "linkClusters", summary = "Link Clusters",
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the linked Clusters") },
       hidden = true)
-  public ResponseDTO<PageResponse<ClusterResponse>>
+  public ResponseDTO<ClusterBatchResponse>
   linkBatch(@Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
                 NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @Parameter(description = "Details of the createCluster to be created") @Valid ClusterBatchRequest request) {
@@ -226,9 +225,8 @@ public class ClusterResource {
             "failed to fetch cluster list from gitops. Cannot proceed with linking to the environment", io);
       }
     }
-    Page<Cluster> created =
-        isNotEmpty(entities) ? clusterService.bulkCreate(accountId, entities) : new PageImpl<>(new ArrayList<>());
-    return ResponseDTO.newResponse(getNGPageResponse(created.map(ClusterEntityMapper::writeDTO)));
+    long linked = isNotEmpty(entities) ? clusterService.bulkCreate(entities) : 0;
+    return ResponseDTO.newResponse(ClusterBatchResponse.builder().linked(linked).build());
   }
 
   @DELETE
@@ -254,28 +252,6 @@ public class ClusterResource {
         accountId, orgIdentifier, projectIdentifier, environmentIdentifier, ENVIRONMENT_UPDATE_PERMISSION, "delete");
     return ResponseDTO.newResponse(
         clusterService.delete(accountId, orgIdentifier, projectIdentifier, environmentIdentifier, clusterRef));
-  }
-
-  @PUT
-  @ApiOperation(value = "Update a cluster by identifier", nickname = "updateCluster")
-  @Operation(operationId = "updateCluster", summary = "Update a cluster by identifier",
-      responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the updated Cluster") },
-      hidden = true)
-  public ResponseDTO<ClusterResponse>
-  update(@Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
-             NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
-      @Parameter(description = "Details of the Cluster to be updated") @Valid ClusterRequest request) {
-    throwExceptionForNoRequestDTO(request);
-    orgAndProjectValidationHelper.checkThatTheOrganizationAndProjectExists(
-        request.getOrgIdentifier(), request.getProjectIdentifier(), accountId);
-    environmentValidationHelper.checkThatEnvExists(
-        accountId, request.getOrgIdentifier(), request.getProjectIdentifier(), request.getEnvRef());
-    checkForAccessOrThrow(accountId, request.getOrgIdentifier(), request.getProjectIdentifier(), request.getEnvRef(),
-        ENVIRONMENT_UPDATE_PERMISSION, "update");
-
-    Cluster entity = ClusterEntityMapper.toEntity(accountId, request);
-    Cluster updatedEntity = clusterService.update(entity);
-    return ResponseDTO.newResponse(ClusterEntityMapper.writeDTO(updatedEntity));
   }
 
   @GET

@@ -120,14 +120,11 @@ public class CEViewServiceImpl implements CEViewService {
       ceView.setViewState(ViewState.DRAFT);
     }
     if (StringUtils.isEmpty(ceView.getFolderId())) {
-      String defaultFolderId;
-      CEViewFolder defaultFolder = ceViewFolderDao.getDefaultFolder(ceView.getAccountId());
-      if (defaultFolder == null) {
-        defaultFolderId = ceViewFolderDao.createDefaultOrSampleFolder(ceView.getAccountId(), ViewType.DEFAULT);
-      } else {
-        defaultFolderId = defaultFolder.getUuid();
-      }
-      ceView.setFolderId(defaultFolderId);
+      ceView.setFolderId(getDefaultFolderId(ceView.getAccountId()));
+    }
+    CEViewFolder sampleFolder = ceViewFolderDao.getSampleFolder(ceView.getAccountId());
+    if (ceView.getFolderId().equals(sampleFolder.getUuid())) {
+      ceView.setFolderId(getDefaultFolderId(ceView.getAccountId()));
     }
     ceView.setUuid(null);
     ceViewDao.save(ceView);
@@ -324,28 +321,32 @@ public class CEViewServiceImpl implements CEViewService {
   @Override
   public List<QLCEView> getAllViews(String accountId, boolean includeDefault, QLCEViewSortCriteria sortCriteria) {
     List<CEView> viewList = ceViewDao.findByAccountId(accountId, sortCriteria);
+    List<CEViewFolder> folderList = ceViewFolderDao.getFolders(accountId);
     if (!includeDefault) {
       viewList = viewList.stream()
                      .filter(view -> ImmutableSet.of(ViewType.SAMPLE, ViewType.CUSTOMER).contains(view.getViewType()))
                      .collect(Collectors.toList());
     }
-    return getQLCEViewsFromCEViews(viewList);
+    return getQLCEViewsFromCEViews(viewList, folderList);
   }
 
   @Override
   public List<QLCEView> getAllViews(
       String accountId, String folderId, boolean includeDefault, QLCEViewSortCriteria sortCriteria) {
     List<CEView> viewList = ceViewDao.findByAccountIdAndFolderId(accountId, folderId, sortCriteria);
+    List<CEViewFolder> folderList = ceViewFolderDao.getFolders(accountId, Collections.singletonList(folderId));
     if (!includeDefault) {
       viewList = viewList.stream()
                      .filter(view -> ImmutableSet.of(ViewType.SAMPLE, ViewType.CUSTOMER).contains(view.getViewType()))
                      .collect(Collectors.toList());
     }
-    return getQLCEViewsFromCEViews(viewList);
+    return getQLCEViewsFromCEViews(viewList, folderList);
   }
 
-  private List<QLCEView> getQLCEViewsFromCEViews(List<CEView> viewList) {
+  private List<QLCEView> getQLCEViewsFromCEViews(List<CEView> viewList, List<CEViewFolder> folderList) {
     List<QLCEView> graphQLViewObjList = new ArrayList<>();
+    Map<String, String> folderIdToNameMapping = folderList.stream()
+            .collect(Collectors.toMap(CEViewFolder::getUuid, CEViewFolder::getName));
     for (CEView view : viewList) {
       List<CEReportSchedule> reportSchedules =
           ceReportScheduleDao.getReportSettingByView(view.getUuid(), view.getAccountId());
@@ -359,6 +360,7 @@ public class CEViewServiceImpl implements CEViewService {
                                  .id(view.getUuid())
                                  .name(view.getName())
                                  .folderId(view.getFolderId())
+                                 .folderName((view.getFolderId() != null) ? folderIdToNameMapping.get(view.getFolderId()) : null)
                                  .totalCost(view.getTotalCost())
                                  .createdBy(null != view.getCreatedBy() ? view.getCreatedBy().getEmail() : "")
                                  .createdAt(view.getCreatedAt())
@@ -502,5 +504,14 @@ public class CEViewServiceImpl implements CEViewService {
       }
     }
     return null;
+  }
+
+  private String getDefaultFolderId(String accountId) {
+    CEViewFolder defaultFolder = ceViewFolderDao.getDefaultFolder(accountId);
+    if (defaultFolder == null) {
+      return ceViewFolderDao.createDefaultOrSampleFolder(accountId, ViewType.DEFAULT);
+    } else {
+      return defaultFolder.getUuid();
+    }
   }
 }
