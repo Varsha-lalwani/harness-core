@@ -7,7 +7,14 @@
 
 package io.harness.k8s.steadystate.statusviewer;
 
-import io.harness.exception.InvalidRequestException;
+import static io.harness.k8s.steadystate.statusviewer.StatefulSetStatusViewer.ResponseMessages.PARTIAL_ROLLOUT;
+import static io.harness.k8s.steadystate.statusviewer.StatefulSetStatusViewer.ResponseMessages.PARTITIONED_PARTIAL_ROLLOUT;
+import static io.harness.k8s.steadystate.statusviewer.StatefulSetStatusViewer.ResponseMessages.PARTITIONED_SUCCESSFUL_ROLLOUT;
+import static io.harness.k8s.steadystate.statusviewer.StatefulSetStatusViewer.ResponseMessages.SUCCESSFUL_ROLLOUT;
+import static io.harness.k8s.steadystate.statusviewer.StatefulSetStatusViewer.ResponseMessages.UNSUPPORTED_STRATEGY_TYPE;
+import static io.harness.k8s.steadystate.statusviewer.StatefulSetStatusViewer.ResponseMessages.WAITING_FOR_ROLLOUT;
+import static io.harness.k8s.steadystate.statusviewer.StatefulSetStatusViewer.ResponseMessages.WAITING_FOR_UPDATE;
+
 import io.harness.k8s.steadystate.model.K8ApiResponseDTO;
 
 import com.google.inject.Singleton;
@@ -15,6 +22,8 @@ import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1StatefulSetSpec;
 import io.kubernetes.client.openapi.models.V1StatefulSetStatus;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 @Singleton
 public class StatefulSetStatusViewer {
@@ -23,7 +32,7 @@ public class StatefulSetStatusViewer {
 
     if (statefulSet.getSpec() != null && statefulSet.getSpec().getUpdateStrategy() != null
         && !"RollingUpdate".equals(statefulSet.getSpec().getUpdateStrategy().getType())) {
-      throw new InvalidRequestException("rollout status is only available for RollingUpdate strategy type");
+      return K8ApiResponseDTO.builder().isDone(true).message(UNSUPPORTED_STRATEGY_TYPE).build();
     }
 
     V1StatefulSetStatus statefulSetStatus = statefulSet.getStatus();
@@ -33,10 +42,7 @@ public class StatefulSetStatusViewer {
       if (statefulSetStatus.getObservedGeneration() == 0
           || (meta != null && meta.getGeneration() != null
               && meta.getGeneration() > statefulSetStatus.getObservedGeneration())) {
-        return K8ApiResponseDTO.builder()
-            .message("Waiting for statefulset spec update to be observed...%n")
-            .isDone(false)
-            .build();
+        return K8ApiResponseDTO.builder().message(WAITING_FOR_UPDATE).isDone(false).build();
       }
     }
     V1StatefulSetSpec statefulSetSpec = statefulSet.getSpec();
@@ -45,12 +51,12 @@ public class StatefulSetStatusViewer {
         && statefulSetStatus.getReadyReplicas() < statefulSetSpec.getReplicas()) {
       return K8ApiResponseDTO.builder()
           .isDone(false)
-          .message(String.format("Waiting for %d pods to be ready...%n",
-              statefulSetSpec.getReplicas() - statefulSetStatus.getReadyReplicas()))
+          .message(
+              String.format(WAITING_FOR_ROLLOUT, statefulSetSpec.getReplicas() - statefulSetStatus.getReadyReplicas()))
           .build();
     }
 
-    if (statefulSetSpec != null && statefulSetSpec.getUpdateStrategy() != null
+    if (statefulSetStatus != null && statefulSetSpec != null && statefulSetSpec.getUpdateStrategy() != null
         && "RollingUpdate".equals(statefulSetSpec.getUpdateStrategy().getType())
         && statefulSetSpec.getUpdateStrategy().getRollingUpdate() != null
         && statefulSetSpec.getUpdateStrategy().getRollingUpdate().getPartition() != null
@@ -59,17 +65,14 @@ public class StatefulSetStatusViewer {
           && statefulSetStatus.getUpdatedReplicas()
               < statefulSetSpec.getReplicas() - statefulSetSpec.getUpdateStrategy().getRollingUpdate().getPartition()) {
         return K8ApiResponseDTO.builder()
-            .message(String.format(
-                "Waiting for partitioned roll out to finish: %d out of %d new pods have been updated...%n",
-                statefulSetStatus.getUpdatedReplicas(),
+            .message(String.format(PARTITIONED_PARTIAL_ROLLOUT, statefulSetStatus.getUpdatedReplicas(),
                 statefulSetSpec.getReplicas() - statefulSetSpec.getUpdateStrategy().getRollingUpdate().getPartition()))
             .isDone(false)
             .build();
       }
 
       return K8ApiResponseDTO.builder()
-          .message(String.format("partitioned roll out complete: %d new pods have been updated...%n",
-              statefulSetStatus.getUpdatedReplicas()))
+          .message(String.format(PARTITIONED_SUCCESSFUL_ROLLOUT, statefulSetStatus.getUpdatedReplicas()))
           .isDone(true)
           .build();
     }
@@ -79,31 +82,46 @@ public class StatefulSetStatusViewer {
         && !statefulSetStatus.getCurrentRevision().equals(statefulSetStatus.getUpdateRevision())) {
       return K8ApiResponseDTO.builder()
           .isDone(false)
-          .message(String.format("waiting for statefulset rolling update to complete %d pods at revision %s...%n",
-              statefulSetStatus.getUpdatedReplicas(), statefulSetStatus.getUpdateRevision()))
+          .message(String.format(
+              PARTIAL_ROLLOUT, statefulSetStatus.getUpdatedReplicas(), statefulSetStatus.getUpdateRevision()))
           .build();
     }
 
     return K8ApiResponseDTO.builder()
         .isDone(true)
-        .message(String.format("statefulset rolling update complete %d pods at revision %s...%n",
-            statefulSetStatus.getCurrentReplicas(), statefulSetStatus.getCurrentRevision()))
+        .message(String.format(
+            SUCCESSFUL_ROLLOUT, statefulSetStatus.getCurrentReplicas(), statefulSetStatus.getCurrentRevision()))
         .build();
   }
 
   private void initializeNullFieldsInStatefulSetStatus(V1StatefulSetStatus statefulSetStatus) {
-    if (statefulSetStatus != null) {
-      if (statefulSetStatus.getReadyReplicas() == null) {
-        statefulSetStatus.setReadyReplicas(0);
-      }
-
-      if (statefulSetStatus.getUpdatedReplicas() == null) {
-        statefulSetStatus.setUpdatedReplicas(0);
-      }
-
-      if (statefulSetStatus.getCurrentReplicas() == null) {
-        statefulSetStatus.setCurrentReplicas(0);
-      }
+    if (statefulSetStatus == null) {
+      statefulSetStatus = new V1StatefulSetStatus();
     }
+    if (statefulSetStatus.getReadyReplicas() == null) {
+      statefulSetStatus.setReadyReplicas(0);
+    }
+
+    if (statefulSetStatus.getUpdatedReplicas() == null) {
+      statefulSetStatus.setUpdatedReplicas(0);
+    }
+
+    if (statefulSetStatus.getCurrentReplicas() == null) {
+      statefulSetStatus.setCurrentReplicas(0);
+    }
+  }
+
+  @NoArgsConstructor(access = AccessLevel.PRIVATE)
+  static class ResponseMessages {
+    static final String UNSUPPORTED_STRATEGY_TYPE = "rollout status is only available for RollingUpdate strategy type";
+    static final String WAITING_FOR_UPDATE = "Waiting for statefulset spec update to be observed...%n";
+    static final String WAITING_FOR_ROLLOUT = "Waiting for %d pods to be ready...%n";
+    static final String PARTITIONED_PARTIAL_ROLLOUT =
+        "Waiting for partitioned roll out to finish: %d out of %d new pods have been updated...%n";
+    static final String PARTITIONED_SUCCESSFUL_ROLLOUT =
+        "partitioned roll out complete: %d new pods have been updated...%n";
+    static final String PARTIAL_ROLLOUT =
+        "waiting for statefulset rolling update to complete %d pods at revision %s...%n";
+    static final String SUCCESSFUL_ROLLOUT = "statefulset rolling update complete %d pods at revision %s...%n";
   }
 }

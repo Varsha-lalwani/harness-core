@@ -7,6 +7,13 @@
 
 package io.harness.k8s.steadystate.statusviewer;
 
+import static io.harness.k8s.steadystate.statusviewer.DeploymentStatusViewer.ResponseMessages.PARTIALLY_AVAILABLE;
+import static io.harness.k8s.steadystate.statusviewer.DeploymentStatusViewer.ResponseMessages.PARTIALLY_ROLLED_OUT;
+import static io.harness.k8s.steadystate.statusviewer.DeploymentStatusViewer.ResponseMessages.PARTIALLY_UPDATED;
+import static io.harness.k8s.steadystate.statusviewer.DeploymentStatusViewer.ResponseMessages.PROGRESS_DEADLINE_EXCEEDED;
+import static io.harness.k8s.steadystate.statusviewer.DeploymentStatusViewer.ResponseMessages.SUCCESSFUL;
+import static io.harness.k8s.steadystate.statusviewer.DeploymentStatusViewer.ResponseMessages.WAITING_FOR_UPDATE;
+
 import io.harness.k8s.steadystate.model.K8ApiResponseDTO;
 
 import com.google.inject.Singleton;
@@ -17,6 +24,8 @@ import io.kubernetes.client.openapi.models.V1DeploymentStatus;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import java.util.List;
 import java.util.Optional;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 @Singleton
 public class DeploymentStatusViewer {
@@ -39,7 +48,7 @@ public class DeploymentStatusViewer {
               && deploymentCondition.getReason().equalsIgnoreCase("ProgressDeadlineExceeded")) {
             return K8ApiResponseDTO.builder()
                 .isFailed(true)
-                .message(String.format("deployment %s exceeded its progress deadline", meta.getName()))
+                .message(String.format(PROGRESS_DEADLINE_EXCEEDED, meta.getName()))
                 .build();
           }
         }
@@ -53,38 +62,32 @@ public class DeploymentStatusViewer {
         return K8ApiResponseDTO.builder()
             .isDone(false)
             .message(String.format(
-                "Waiting for deployment %s rollout to finish: %s out of %s new replicas have been updated...%n",
-                meta.getName(), deploymentStatus.getUpdatedReplicas(), deploymentSpec.getReplicas()))
+                PARTIALLY_UPDATED, meta.getName(), deploymentStatus.getUpdatedReplicas(), deploymentSpec.getReplicas()))
             .build();
       }
       if (deploymentStatus.getReplicas() > deploymentStatus.getUpdatedReplicas()) {
         return K8ApiResponseDTO.builder()
             .isDone(false)
-            .message(String.format(
-                "Waiting for deployment %s rollout to finish: %s old replicas are pending termination...%n",
-                meta.getName(), deploymentStatus.getReplicas() - deploymentStatus.getUpdatedReplicas()))
+            .message(String.format(PARTIALLY_ROLLED_OUT, meta.getName(),
+                deploymentStatus.getReplicas() - deploymentStatus.getUpdatedReplicas()))
             .build();
       }
       if (deploymentStatus.getAvailableReplicas() < deploymentStatus.getUpdatedReplicas()) {
         return K8ApiResponseDTO.builder()
             .isDone(false)
-            .message(String.format(
-                "Waiting for deployment %s rollout to finish: %s of %s updated replicas are available...%n",
-                meta.getName(), deploymentStatus.getAvailableReplicas(), deploymentStatus.getUpdatedReplicas()))
+            .message(String.format(PARTIALLY_AVAILABLE, meta.getName(), deploymentStatus.getAvailableReplicas(),
+                deploymentStatus.getUpdatedReplicas()))
             .build();
       }
-      return K8ApiResponseDTO.builder()
-          .isDone(true)
-          .message(String.format("deployment %s successfully rolled out%n", meta.getName()))
-          .build();
+      return K8ApiResponseDTO.builder().isDone(true).message(String.format(SUCCESSFUL, meta.getName())).build();
     }
-    return K8ApiResponseDTO.builder()
-        .isDone(false)
-        .message(String.format("Waiting for deployment spec update to be observed...%n"))
-        .build();
+    return K8ApiResponseDTO.builder().isDone(false).message(WAITING_FOR_UPDATE).build();
   }
 
   private void initializeNullFieldsInDeploymentStatus(V1DeploymentStatus deploymentStatus) {
+    if (deploymentStatus == null) {
+      deploymentStatus = new V1DeploymentStatus();
+    }
     if (deploymentStatus.getAvailableReplicas() == null) {
       deploymentStatus.setAvailableReplicas(0);
     }
@@ -100,5 +103,18 @@ public class DeploymentStatusViewer {
     if (deploymentStatus.getUnavailableReplicas() == null) {
       deploymentStatus.setUnavailableReplicas(0);
     }
+  }
+
+  @NoArgsConstructor(access = AccessLevel.PRIVATE)
+  static class ResponseMessages {
+    static final String WAITING_FOR_UPDATE = "Waiting for deployment spec update to be observed...%n";
+    static final String SUCCESSFUL = "deployment %s successfully rolled out%n";
+    static final String PARTIALLY_AVAILABLE =
+        "Waiting for deployment %s rollout to finish: %s of %s updated replicas are available...%n";
+    static final String PARTIALLY_ROLLED_OUT =
+        "Waiting for deployment %s rollout to finish: %s old replicas are pending termination...%n";
+    static final String PARTIALLY_UPDATED =
+        "Waiting for deployment %s rollout to finish: %s out of %s new replicas have been updated...%n";
+    static final String PROGRESS_DEADLINE_EXCEEDED = "deployment %s exceeded its progress deadline";
   }
 }

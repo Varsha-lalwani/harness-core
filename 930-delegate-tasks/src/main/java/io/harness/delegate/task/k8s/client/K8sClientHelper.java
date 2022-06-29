@@ -42,6 +42,7 @@ public class K8sClientHelper {
         .eventErrorFormat(eventErrorFormat)
         .resourceIds(steadyStateDTO.getResourceIds())
         .workingDirectory(steadyStateDTO.getK8sDelegateTaskParams().getWorkingDirectory())
+        .isErrorFrameworkEnabled(steadyStateDTO.isErrorFrameworkEnabled())
         .build();
   }
 

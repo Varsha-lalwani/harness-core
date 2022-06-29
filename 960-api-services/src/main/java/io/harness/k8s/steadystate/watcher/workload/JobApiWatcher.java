@@ -11,7 +11,9 @@ import static io.harness.threading.Morpheus.sleep;
 
 import static java.time.Duration.ofSeconds;
 
+import io.harness.configuration.KubernetesCliCommandType;
 import io.harness.exception.ExceptionUtils;
+import io.harness.exception.KubernetesCliTaskRuntimeException;
 import io.harness.exception.KubernetesTaskException;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
@@ -46,7 +48,7 @@ public class JobApiWatcher implements WorkloadWatcher {
   }
 
   private boolean watchJobStatus(ApiClient apiClient, KubernetesResourceId workload, LogCallback executionLogCallback,
-      boolean errorFrameworkEnabled) throws Exception {
+      boolean errorFrameworkEnabled) {
     Preconditions.checkNotNull(apiClient, "K8s API Client cannot be null.");
     BatchV1Api batchV1Api = new BatchV1Api(apiClient);
     while (true) {
@@ -72,10 +74,11 @@ public class JobApiWatcher implements WorkloadWatcher {
         sleep(ofSeconds(5));
       } catch (ApiException e) {
         ApiException ex = ExceptionMessageSanitizer.sanitizeException(e);
-        log.error("Failed to watch job status.", ex);
-        executionLogCallback.saveExecutionLog(ExceptionUtils.getMessage(ex), LogLevel.ERROR);
+        String errorMessage = "Failed to watch job status." + ExceptionUtils.getMessage(ex);
+        log.error(errorMessage, ex);
+        executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
         if (errorFrameworkEnabled) {
-          throw ex;
+          throw new KubernetesCliTaskRuntimeException(errorMessage, KubernetesCliCommandType.STEADY_STATE_CHECK);
         }
         return false;
       }

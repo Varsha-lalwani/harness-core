@@ -9,10 +9,14 @@ package io.harness.k8s.steadystate.watcher.event;
 
 import static java.lang.String.format;
 
-import io.harness.exception.InvalidRequestException;
+import io.harness.configuration.KubernetesCliCommandType;
+import io.harness.exception.ExceptionUtils;
+import io.harness.exception.KubernetesCliTaskRuntimeException;
+import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.k8s.steadystate.model.K8sEventWatchDTO;
 import io.harness.logging.LogCallback;
+import io.harness.logging.LogLevel;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -35,15 +39,20 @@ import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
+@Slf4j
 public class K8sApiEventWatcher {
   @Inject @Named("k8sSteadyStateExecutor") private ExecutorService k8sSteadyStateExecutor;
+  private static final Pattern RESOURCE_VERSION_PATTERN =
+      Pattern.compile("Timeout: Too large resource version: (\\d+), current: (\\d+)");
 
   public Future<?> watchForEvents(
       String namespace, K8sEventWatchDTO k8sEventWatchDTO, LogCallback executionLogCallback) {
-    return k8sSteadyStateExecutor.submit(
-        () -> runEventWatchInNamespace(namespace, k8sEventWatchDTO, executionLogCallback));
+    return k8sSteadyStateExecutor.submit(()
+                                             -> runEventWatchInNamespace(namespace, k8sEventWatchDTO,
+                                                 executionLogCallback, k8sEventWatchDTO.isErrorFrameworkEnabled()));
   }
 
   public void destroyRunning(List<Future<?>> eventWatchRefs) {
@@ -55,8 +64,8 @@ public class K8sApiEventWatcher {
     }
   }
 
-  public void runEventWatchInNamespace(
-      String namespace, K8sEventWatchDTO k8sNamespaceEventWatchDTO, LogCallback executionLogCallback) {
+  public void runEventWatchInNamespace(String namespace, K8sEventWatchDTO k8sNamespaceEventWatchDTO,
+      LogCallback executionLogCallback, boolean errorFrameworkEnabled) {
     ApiClient apiClient = k8sNamespaceEventWatchDTO.getApiClient();
     CoreV1Api coreV1Api = new CoreV1Api(apiClient);
     String eventInfoFormat = k8sNamespaceEventWatchDTO.getEventInfoFormat();
@@ -83,8 +92,8 @@ public class K8sApiEventWatcher {
           for (Watch.Response<CoreV1Event> eventListResponse : watch) {
             CoreV1Event event = eventListResponse.object;
             V1ObjectReference ref = event.getInvolvedObject();
-            if (workloadNames.parallelStream().noneMatch(
-                    workloadName -> ref.getName() != null && ref.getName().contains(workloadName))) {
+            if (ref.getName() != null
+                && workloadNames.parallelStream().noneMatch(workloadName -> ref.getName().contains(workloadName))) {
               continue;
             }
             if ("WARNING".equalsIgnoreCase(event.getType())) {
@@ -101,11 +110,18 @@ public class K8sApiEventWatcher {
             resourceVersion = null;
           }
         } catch (IOException e) {
-          throw new InvalidRequestException("Failed to list k8s events.", e);
+          IOException ex = ExceptionMessageSanitizer.sanitizeException(e);
+          String errorMessage = "Failed to close Kubernetes watch." + ExceptionUtils.getMessage(ex);
+          log.error(errorMessage, ex);
+          executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
+          if (errorFrameworkEnabled) {
+            throw new KubernetesCliTaskRuntimeException(errorMessage, KubernetesCliCommandType.STEADY_STATE_CHECK);
+          }
         }
       }
     } catch (Exception e) {
-      throw new InvalidRequestException("Failed to fetch events from namespace");
+      throw new KubernetesCliTaskRuntimeException(
+          "Failed to fetch events from namespace " + namespace, KubernetesCliCommandType.STEADY_STATE_CHECK);
     }
   }
 
@@ -117,9 +133,8 @@ public class K8sApiEventWatcher {
 
     Gson gson = new Gson();
     Map<?, ?> st = gson.fromJson(body, Map.class);
-    Pattern p = Pattern.compile("Timeout: Too large resource version: (\\d+), current: (\\d+)");
     String msg = (String) st.get("message");
-    Matcher m = p.matcher(msg);
+    Matcher m = RESOURCE_VERSION_PATTERN.matcher(msg);
     if (!m.matches()) {
       return null;
     }

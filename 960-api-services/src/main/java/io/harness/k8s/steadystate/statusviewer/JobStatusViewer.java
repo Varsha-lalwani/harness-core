@@ -7,6 +7,10 @@
 
 package io.harness.k8s.steadystate.statusviewer;
 
+import static io.harness.k8s.steadystate.statusviewer.JobStatusViewer.ResponseMessages.FAILED;
+import static io.harness.k8s.steadystate.statusviewer.JobStatusViewer.ResponseMessages.SUCCESS;
+import static io.harness.k8s.steadystate.statusviewer.JobStatusViewer.ResponseMessages.WAITING;
+
 import io.harness.k8s.steadystate.model.K8ApiResponseDTO;
 
 import com.google.inject.Singleton;
@@ -14,6 +18,8 @@ import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobCondition;
 import io.kubernetes.client.openapi.models.V1JobStatus;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 @Singleton
 public class JobStatusViewer {
@@ -28,26 +34,24 @@ public class JobStatusViewer {
       if (jobConditions != null) {
         if (jobConditions.stream().anyMatch(
                 condition -> condition.getType().equals("Failed") && condition.getStatus().equals("True"))) {
-          return K8ApiResponseDTO.builder()
-              .isFailed(true)
-              .message(String.format(" Job failed. Status: %s", jobStatusString))
-              .build();
+          return K8ApiResponseDTO.builder().isFailed(true).message(String.format(FAILED, jobStatusString)).build();
         }
 
         if (jobConditions.stream().anyMatch(
                 condition -> condition.getType().equals("Complete") && condition.getStatus().equals("True"))
             && jobStatus.getCompletionTime() != null) {
-          return K8ApiResponseDTO.builder()
-              .isDone(true)
-              .message(String.format("Successfully completed Job with status: %s %n", jobStatusString))
-              .build();
+          return K8ApiResponseDTO.builder().isDone(true).message(String.format(SUCCESS, jobStatusString)).build();
         }
       }
     }
 
-    return K8ApiResponseDTO.builder()
-        .isDone(false)
-        .message(String.format("Waiting for job to complete. %nCurrent Job Status: %s %n", jobStatusString))
-        .build();
+    return K8ApiResponseDTO.builder().isDone(false).message(String.format(WAITING, jobStatusString)).build();
+  }
+
+  @NoArgsConstructor(access = AccessLevel.PRIVATE)
+  static class ResponseMessages {
+    static final String WAITING = "Waiting for job to complete. %nCurrent Job Status: %s %n";
+    static final String SUCCESS = "Successfully completed Job with status: %s %n";
+    static final String FAILED = " Job failed. Status: %s";
   }
 }

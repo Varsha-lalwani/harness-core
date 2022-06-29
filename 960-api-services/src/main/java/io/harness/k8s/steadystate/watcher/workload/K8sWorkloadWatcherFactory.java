@@ -12,21 +12,37 @@ import io.harness.k8s.model.Kind;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.EnumMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Slf4j
 public class K8sWorkloadWatcherFactory {
-  @Inject private K8sWorkloadWatcherConfig workloadWatcherConfig;
+  @Inject private DeploymentApiWatcher deploymentApiWatcher;
+  @Inject private StatefulSetApiWatcher statefulSetApiWatcher;
+  @Inject private DaemonSetApiWatcher daemonSetApiWatcher;
+  @Inject private JobApiWatcher jobApiWatcher;
+  @Inject private DeploymentConfigCliWatcher deploymentConfigCliWatcher;
+  @Inject private JobCliWatcher jobCliWatcher;
   @Inject private K8sCliWatcher k8sCliWatcher;
 
   public WorkloadWatcher getWorkloadWatcher(String kind, boolean isApiEnabled) {
     Kind workloadKind = Kind.valueOf(kind);
     if (isApiEnabled) {
-      EnumMap<Kind, WorkloadWatcher> apiWorkloadWatcherMap = workloadWatcherConfig.getApiWorkloadWatcherMap();
+      EnumMap<Kind, WorkloadWatcher> apiWorkloadWatcherMap = getApiWorkloadWatcherMap();
       return apiWorkloadWatcherMap.get(workloadKind);
     }
-    EnumMap<Kind, WorkloadWatcher> cliWorkloadWatcherMap = workloadWatcherConfig.getCliWorkloadWatcherMap();
+    EnumMap<Kind, WorkloadWatcher> cliWorkloadWatcherMap = getCliWorkloadWatcherMap();
     return cliWorkloadWatcherMap.getOrDefault(workloadKind, k8sCliWatcher);
+  }
+
+  private EnumMap<Kind, WorkloadWatcher> getApiWorkloadWatcherMap() {
+    return new EnumMap<>(
+        Map.of(Kind.Deployment, deploymentApiWatcher, Kind.StatefulSet, statefulSetApiWatcher, Kind.DaemonSet,
+            daemonSetApiWatcher, Kind.Job, jobApiWatcher, Kind.DeploymentConfig, deploymentConfigCliWatcher));
+  }
+
+  private EnumMap<Kind, WorkloadWatcher> getCliWorkloadWatcherMap() {
+    return new EnumMap<>(Map.of(Kind.Job, jobCliWatcher, Kind.DeploymentConfig, deploymentConfigCliWatcher));
   }
 }

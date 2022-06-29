@@ -14,8 +14,8 @@ import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 
-@Builder
 @Data
+@Builder
 public class K8sSteadyStateDTO {
   K8sDeployRequest request;
   K8sDelegateTaskParams k8sDelegateTaskParams;

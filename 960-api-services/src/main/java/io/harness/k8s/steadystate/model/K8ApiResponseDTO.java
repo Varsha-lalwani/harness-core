@@ -10,8 +10,8 @@ package io.harness.k8s.steadystate.model;
 import lombok.Builder;
 import lombok.Data;
 
-@Builder
 @Data
+@Builder
 public class K8ApiResponseDTO {
   String message;
   boolean isDone;

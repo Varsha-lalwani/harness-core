@@ -32,6 +32,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -52,6 +53,7 @@ import io.harness.delegate.task.k8s.K8sRollingDeployRequest;
 import io.harness.delegate.task.k8s.K8sTaskHelperBase;
 import io.harness.delegate.task.k8s.KustomizeManifestDelegateConfig;
 import io.harness.delegate.task.k8s.ManifestDelegateConfig;
+import io.harness.delegate.task.k8s.client.K8sClient;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.ExplanationException;
 import io.harness.exception.HintException;
@@ -69,6 +71,7 @@ import io.harness.k8s.model.HarnessLabelValues;
 import io.harness.k8s.model.HarnessLabels;
 import io.harness.k8s.model.K8sDelegateTaskParams;
 import io.harness.k8s.model.K8sPod;
+import io.harness.k8s.model.K8sSteadyStateDTO;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.k8s.model.KubernetesResource;
 import io.harness.k8s.model.KubernetesResourceId;
@@ -152,6 +155,9 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
             .manifestDelegateConfig(KustomizeManifestDelegateConfig.builder().build())
             .releaseName("releaseName")
             .build();
+    K8sClient k8sClient = mock(K8sClient.class);
+    doReturn(k8sClient).when(k8sTaskHelperBase).getKubernetesClient(anyBoolean());
+    doReturn(true).when(k8sClient).performSteadyStateCheck(any(K8sSteadyStateDTO.class));
     doReturn(HarnessLabelValues.colorBlue)
         .when(k8sBGBaseHandler)
         .getPrimaryColor(any(KubernetesResource.class), eq(kubernetesConfig), eq(logCallback));
@@ -310,6 +316,7 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
             .releaseName("releaseName")
             .build();
     final RuntimeException thrownException = new RuntimeException();
+    K8sClient k8sClient = mock(K8sClient.class);
 
     doReturn(HarnessLabelValues.colorBlue)
         .when(k8sBGBaseHandler)
@@ -322,11 +329,8 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
         .when(k8sTaskHelperBase)
         .applyManifests(any(Kubectl.class), anyListOf(KubernetesResource.class), eq(k8sDelegateTaskParams),
             eq(logCallback), eq(true), eq(true));
-    doThrow(thrownException)
-        .when(k8sTaskHelperBase)
-        .doStatusCheck(
-            any(Kubectl.class), any(KubernetesResourceId.class), eq(k8sDelegateTaskParams), eq(logCallback), eq(true));
-
+    doReturn(k8sClient).when(k8sTaskHelperBase).getKubernetesClient(anyBoolean());
+    doThrow(thrownException).when(k8sClient).performSteadyStateCheck(any(K8sSteadyStateDTO.class));
     assertThatThrownBy(()
                            -> k8sBGRequestHandler.executeTaskInternal(
                                k8sBGDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, commandUnitsProgress))
@@ -337,9 +341,6 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
 
     verify(k8sTaskHelperBase, times(2))
         .saveReleaseHistoryInConfigMap(any(KubernetesConfig.class), eq("releaseName"), anyString());
-    verify(k8sTaskHelperBase)
-        .doStatusCheck(
-            any(Kubectl.class), any(KubernetesResourceId.class), eq(k8sDelegateTaskParams), eq(logCallback), eq(true));
   }
 
   @Test

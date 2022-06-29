@@ -124,6 +124,8 @@ import io.harness.delegate.service.ExecutionConfigOverrideFromFileOnDelegate;
 import io.harness.delegate.task.git.ScmFetchFilesHelperNG;
 import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.delegate.task.helm.HelmTaskHelperBase;
+import io.harness.delegate.task.k8s.client.K8sApiClient;
+import io.harness.delegate.task.k8s.client.K8sCliClient;
 import io.harness.encryption.SecretRefData;
 import io.harness.errorhandling.NGErrorHelper;
 import io.harness.exception.ExceptionUtils;
@@ -296,6 +298,8 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
   @Mock private KubernetesHelperService kubernetesHelperService;
   @Mock private ScmFetchFilesHelperNG scmFetchFilesHelper;
   @Mock private NGErrorHelper ngErrorHelper;
+  @Mock private K8sApiClient k8sApiClient;
+  @Mock private K8sCliClient k8sCliClient;
 
   @Inject @InjectMocks private K8sTaskHelperBase k8sTaskHelperBase;
   @Spy @InjectMocks private K8sTaskHelperBase spyK8sTaskHelperBase;
@@ -3440,5 +3444,13 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         .isInstanceOf(ExplanationException.class)
         .getCause()
         .hasMessageContaining("KUBERNETES_YAML_ERROR");
+  }
+
+  @Test
+  @Owner(developers = ABHINAV2)
+  @Category(UnitTests.class)
+  public void testKubernetesClientInstance() {
+    assertThat(k8sTaskHelperBase.getKubernetesClient(true)).isInstanceOf(K8sApiClient.class);
+    assertThat(k8sTaskHelperBase.getKubernetesClient(false)).isInstanceOf(K8sCliClient.class);
   }
 }

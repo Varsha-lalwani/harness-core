@@ -7,8 +7,9 @@
 
 package io.harness.k8s.steadystate.watcher.workload;
 
+import io.harness.configuration.KubernetesCliCommandType;
 import io.harness.exception.ExceptionUtils;
-import io.harness.exception.InvalidRequestException;
+import io.harness.exception.KubernetesCliTaskRuntimeException;
 import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.k8s.steadystate.model.K8ApiResponseDTO;
@@ -43,7 +44,7 @@ public class StatefulSetApiWatcher implements WorkloadWatcher {
   }
 
   private boolean watchStatefulSet(ApiClient apiClient, KubernetesResourceId workload, LogCallback executionLogCallback,
-      boolean errorFrameworkEnabled) throws Exception {
+      boolean errorFrameworkEnabled) {
     Preconditions.checkNotNull(apiClient, "K8s API Client cannot be null.");
     AppsV1Api appsV1Api = new AppsV1Api(apiClient);
     while (true) {
@@ -67,21 +68,31 @@ public class StatefulSetApiWatcher implements WorkloadWatcher {
               }
               break;
             case "DELETED":
-              throw new InvalidRequestException("object has been deleted");
+              throw new KubernetesCliTaskRuntimeException(
+                  "object has been deleted", KubernetesCliCommandType.STEADY_STATE_CHECK);
             default:
-              throw new InvalidRequestException(String.format("unexpected k8s event %s", event.type));
+              throw new KubernetesCliTaskRuntimeException(
+                  String.format("unexpected k8s event %s", event.type), KubernetesCliCommandType.STEADY_STATE_CHECK);
           }
         }
       } catch (ApiException e) {
         ApiException ex = ExceptionMessageSanitizer.sanitizeException(e);
-        log.error("Failed to watch statefulset rollout status.", ex);
-        executionLogCallback.saveExecutionLog(ExceptionUtils.getMessage(ex), LogLevel.ERROR);
+        String errorMessage = "Failed to watch statefulset rollout status." + ExceptionUtils.getMessage(ex);
+        log.error(errorMessage, ex);
+        executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
         if (errorFrameworkEnabled) {
-          throw ex;
+          throw new KubernetesCliTaskRuntimeException(errorMessage, KubernetesCliCommandType.STEADY_STATE_CHECK);
         }
         return false;
       } catch (IOException e) {
-        throw new InvalidRequestException("Failed to close Kubernetes watch.", e);
+        IOException ex = ExceptionMessageSanitizer.sanitizeException(e);
+        String errorMessage = "Failed to close Kubernetes watch." + ExceptionUtils.getMessage(ex);
+        log.error(errorMessage, ex);
+        executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
+        if (errorFrameworkEnabled) {
+          throw new KubernetesCliTaskRuntimeException(errorMessage, KubernetesCliCommandType.STEADY_STATE_CHECK);
+        }
+        return false;
       }
     }
   }

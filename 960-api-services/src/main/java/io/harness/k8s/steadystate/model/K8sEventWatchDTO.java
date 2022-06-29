@@ -9,7 +9,6 @@ package io.harness.k8s.steadystate.model;
 
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.model.KubernetesResourceId;
-import io.harness.logging.LogCallback;
 
 import io.kubernetes.client.openapi.ApiClient;
 import java.util.List;
@@ -25,4 +24,5 @@ public class K8sEventWatchDTO {
   String eventErrorFormat;
   List<KubernetesResourceId> resourceIds;
   String workingDirectory;
+  boolean isErrorFrameworkEnabled;
 }
