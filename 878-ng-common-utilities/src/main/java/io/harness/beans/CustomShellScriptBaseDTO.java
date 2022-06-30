@@ -7,20 +7,13 @@
 
 package io.harness.beans;
 
-import static io.harness.beans.SwaggerConstants.BOOLEAN_CLASSPATH;
-import static io.harness.beans.SwaggerConstants.INTEGER_CLASSPATH;
-import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.*;
+import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXTERNAL_PROPERTY;
+import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 
-import io.harness.plancreator.steps.TaskSelectorYaml;
-import io.harness.pms.yaml.ParameterField;
-import io.harness.pms.yaml.YamlNode;
-import io.harness.yaml.YamlSchemaTypes;
-import io.harness.yaml.core.VariableExpression;
-import io.harness.yaml.core.variables.NGVariable;
+import io.harness.ng.core.template.TemplateEntityConstants;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import javax.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.data.annotation.TypeAlias;
@@ -28,25 +21,13 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TypeAlias("ShellScriptBaseStepInfo")
+@TypeAlias("CustomShellScriptBaseDTO")
 public class CustomShellScriptBaseDTO {
-  @NotNull @ApiModelProperty(dataType = INTEGER_CLASSPATH) @YamlSchemaTypes({integer}) ParameterField<Integer> timeout;
-  @JsonProperty("type") String type = "CUSTOM_SHELL_SCRIPT";
-  @JsonProperty(YamlNode.UUID_FIELD_NAME)
-  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
-  @ApiModelProperty(hidden = true)
-  String uuid;
-  @NotNull ShellType shell;
-  @NotNull
-  @ApiModelProperty(dataType = BOOLEAN_CLASSPATH)
-  @YamlSchemaTypes({string})
-  ParameterField<Boolean> onDelegate;
+  // TYPE
+  @JsonProperty("type") String type = TemplateEntityConstants.CUSTOM_SHELL_SCRIPT;
 
-  ExecutionTarget executionTarget;
-  @YamlSchemaTypes(value = {runtime})
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
-  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
-  @VariableExpression(skipVariableExpression = true) List<NGVariable> outputVariables;
-  List<NGVariable> environmentVariables;
-  @NotNull CustomShellScriptSourceWrapper source;
+  @NotNull
+  @JsonProperty("spec")
+  @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
+  CustomShellScriptSpec customShellScriptSpec;
 }
