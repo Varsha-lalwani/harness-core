@@ -25,11 +25,12 @@ import io.harness.ngtriggers.beans.scm.WebhookPayloadData.WebhookPayloadDataBuil
 import io.harness.ngtriggers.eventmapper.filters.TriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.AccountCustomTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.AccountTriggerFilter;
+import io.harness.ngtriggers.eventmapper.filters.impl.BitbucketPRCommentTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.EventActionTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.FilepathTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.GitWebhookTriggerRepoFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.GithubIssueCommentTriggerFilter;
-import io.harness.ngtriggers.eventmapper.filters.impl.GitlabIssueCommentTriggerFilter;
+import io.harness.ngtriggers.eventmapper.filters.impl.GitlabMRCommentTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.HeaderTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.JexlConditionsTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.PayloadConditionsTriggerFilter;
@@ -62,7 +63,8 @@ public class TriggerFilterHelperTest extends CategoryTest {
   @Mock EventActionTriggerFilter eventActionTriggerFilter;
   @Mock PayloadConditionsTriggerFilter payloadConditionsTriggerFilter;
   @Mock GithubIssueCommentTriggerFilter githubIssueCommentTriggerFilter;
-  @Mock GitlabIssueCommentTriggerFilter gitlabIssueCommentTriggerFilter;
+  @Mock GitlabMRCommentTriggerFilter gitlabMRCommentTriggerFilter;
+  @Mock BitbucketPRCommentTriggerFilter bitbucketPRCommentTriggerFilter;
   @Mock HeaderTriggerFilter headerTriggerFilter;
   @Mock JexlConditionsTriggerFilter jexlConditionsTriggerFilter;
   @Inject @InjectMocks TriggerFilterStore triggerFilterStore;
@@ -128,20 +130,36 @@ public class TriggerFilterHelperTest extends CategoryTest {
             gitWebhookTriggerRepoFilter, headerTriggerFilter, githubIssueCommentTriggerFilter, filepathTriggerFilter);
 
     webhookTriggerFilters = triggerFilterStore.getWebhookTriggerFilters(
-            webhookPayloadDataBuilder
-                    .parseWebhookResponse(
-                            ParseWebhookResponse.newBuilder()
-                                    .setComment(
-                                            IssueCommentHook.newBuilder()
-                                                    .setIssue(Issue.newBuilder().setPr(PullRequest.newBuilder().setNumber(1).build()).build())
-                                                    .build())
-                                    .build())
-                    .originalEvent(originalEventBuilder.sourceRepoType("GITLAB").build())
-                    .build());
+        webhookPayloadDataBuilder
+            .parseWebhookResponse(
+                ParseWebhookResponse.newBuilder()
+                    .setComment(
+                        IssueCommentHook.newBuilder()
+                            .setIssue(Issue.newBuilder().setPr(PullRequest.newBuilder().setNumber(1).build()).build())
+                            .build())
+                    .build())
+            .originalEvent(originalEventBuilder.sourceRepoType("GITLAB").build())
+            .build());
     assertThat(webhookTriggerFilters).isNotNull();
     assertThat(webhookTriggerFilters)
-            .containsExactlyInAnyOrder(accountTriggerFilter, sourceRepoTypeTriggerFilter, eventActionTriggerFilter,
-                    gitWebhookTriggerRepoFilter, headerTriggerFilter, gitlabIssueCommentTriggerFilter, filepathTriggerFilter);
+        .containsExactlyInAnyOrder(accountTriggerFilter, sourceRepoTypeTriggerFilter, eventActionTriggerFilter,
+            gitWebhookTriggerRepoFilter, headerTriggerFilter, gitlabMRCommentTriggerFilter, filepathTriggerFilter);
+
+    webhookTriggerFilters = triggerFilterStore.getWebhookTriggerFilters(
+        webhookPayloadDataBuilder
+            .parseWebhookResponse(
+                ParseWebhookResponse.newBuilder()
+                    .setComment(
+                        IssueCommentHook.newBuilder()
+                            .setIssue(Issue.newBuilder().setPr(PullRequest.newBuilder().setNumber(1).build()).build())
+                            .build())
+                    .build())
+            .originalEvent(originalEventBuilder.sourceRepoType("BITBUCKET").build())
+            .build());
+    assertThat(webhookTriggerFilters).isNotNull();
+    assertThat(webhookTriggerFilters)
+        .containsExactlyInAnyOrder(accountTriggerFilter, sourceRepoTypeTriggerFilter, eventActionTriggerFilter,
+            gitWebhookTriggerRepoFilter, headerTriggerFilter, bitbucketPRCommentTriggerFilter, filepathTriggerFilter);
   }
 
   @Test

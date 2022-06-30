@@ -10,7 +10,6 @@ package io.harness.cdng.environment.helper;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.cdng.envGroup.beans.EnvironmentGroupConfig;
 import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
 import io.harness.cdng.environment.yaml.EnvironmentYamlV2;
 import io.harness.cdng.gitops.yaml.ClusterYaml;
@@ -68,27 +67,11 @@ public class EnvironmentPlanCreatorConfigMapper {
         .build();
   }
 
-  public EnvironmentPlanCreatorConfig toEnvPlanCreatorConfigWithGitops(
-      EnvironmentGroupConfig environmentGroupConfig, EnvironmentYamlV2 envYaml, NGServiceOverrides serviceOverride) {
-    return EnvironmentPlanCreatorConfig.builder()
-        .environmentRef(envYaml.getEnvironmentRef())
-        .identifier(environmentGroupConfig.getIdentifier())
-        .projectIdentifier(environmentGroupConfig.getProjectIdentifier())
-        .orgIdentifier(environmentGroupConfig.getOrgIdentifier())
-        .description(environmentGroupConfig.getDescription())
-        .name(environmentGroupConfig.getName())
-        .tags(environmentGroupConfig.getTags())
-        .serviceOverrides(serviceOverride)
-        .gitOpsClusterRefs(getClusterRefs(envYaml))
-        .deployToAll(envYaml.isDeployToAll())
-        .build();
-  }
-
   private List<String> getClusterRefs(EnvironmentYamlV2 environmentV2) {
     if (!environmentV2.isDeployToAll()) {
       return environmentV2.getGitOpsClusters()
           .stream()
-          .map(ClusterYaml::getRef)
+          .map(ClusterYaml::getIdentifier)
           .map(ParameterField::getValue)
           .collect(Collectors.toList());
     }

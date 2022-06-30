@@ -8,6 +8,7 @@
 package io.harness.ngtriggers.helpers;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.ngtriggers.beans.source.webhook.WebhookSourceRepo.BITBUCKET;
 import static io.harness.ngtriggers.beans.source.webhook.WebhookSourceRepo.CUSTOM;
 import static io.harness.ngtriggers.beans.source.webhook.WebhookSourceRepo.GITHUB;
 import static io.harness.ngtriggers.beans.source.webhook.WebhookSourceRepo.GITLAB;
@@ -17,11 +18,12 @@ import io.harness.ngtriggers.beans.scm.WebhookPayloadData;
 import io.harness.ngtriggers.eventmapper.filters.TriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.AccountCustomTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.AccountTriggerFilter;
+import io.harness.ngtriggers.eventmapper.filters.impl.BitbucketPRCommentTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.EventActionTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.FilepathTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.GitWebhookTriggerRepoFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.GithubIssueCommentTriggerFilter;
-import io.harness.ngtriggers.eventmapper.filters.impl.GitlabIssueCommentTriggerFilter;
+import io.harness.ngtriggers.eventmapper.filters.impl.GitlabMRCommentTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.HeaderTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.JexlConditionsTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.PayloadConditionsTriggerFilter;
@@ -49,7 +51,8 @@ public class TriggerFilterStore {
   private final EventActionTriggerFilter eventActionTriggerFilter;
   private final PayloadConditionsTriggerFilter payloadConditionsTriggerFilter;
   private final GithubIssueCommentTriggerFilter githubIssueCommentTriggerFilter;
-  private final GitlabIssueCommentTriggerFilter gitlabIssueCommentTriggerFilter;
+  private final GitlabMRCommentTriggerFilter gitlabMRCommentTriggerFilter;
+  private final BitbucketPRCommentTriggerFilter bitbucketPRCommentTriggerFilter;
   private final HeaderTriggerFilter headerTriggerFilter;
   private final JexlConditionsTriggerFilter jexlConditionsTriggerFilter;
   private final FilepathTriggerFilter filepathTriggerFilter;
@@ -71,9 +74,10 @@ public class TriggerFilterStore {
         && webhookPayloadData.getParseWebhookResponse().getComment().getIssue().getPr() != null) {
       if (GITHUB.name().equals(webhookPayloadData.getOriginalEvent().getSourceRepoType())) {
         return getTriggerFiltersGithubIssueCommentList();
-      }
-      if (GITLAB.name().equals(webhookPayloadData.getOriginalEvent().getSourceRepoType())) {
-        return getTriggerFiltersGitlabIssueCommentList();
+      } else if (GITLAB.name().equals(webhookPayloadData.getOriginalEvent().getSourceRepoType())) {
+        return getTriggerFiltersGitlabMRCommentList();
+      } else if (BITBUCKET.name().equals(webhookPayloadData.getOriginalEvent().getSourceRepoType())) {
+        return getTriggerFiltersBitbucketPRCommentList();
       }
     }
     return getWebhookGitTriggerFiltersDefaultList();
@@ -94,8 +98,13 @@ public class TriggerFilterStore {
         headerTriggerFilter, gitWebhookTriggerRepoFilter, githubIssueCommentTriggerFilter, filepathTriggerFilter);
   }
 
-  List<TriggerFilter> getTriggerFiltersGitlabIssueCommentList() {
+  List<TriggerFilter> getTriggerFiltersGitlabMRCommentList() {
     return Arrays.asList(accountTriggerFilter, sourceRepoTypeTriggerFilter, eventActionTriggerFilter,
-            headerTriggerFilter, gitWebhookTriggerRepoFilter, gitlabIssueCommentTriggerFilter, filepathTriggerFilter);
+        headerTriggerFilter, gitWebhookTriggerRepoFilter, gitlabMRCommentTriggerFilter, filepathTriggerFilter);
+  }
+
+  List<TriggerFilter> getTriggerFiltersBitbucketPRCommentList() {
+    return Arrays.asList(accountTriggerFilter, sourceRepoTypeTriggerFilter, eventActionTriggerFilter,
+        headerTriggerFilter, gitWebhookTriggerRepoFilter, bitbucketPRCommentTriggerFilter, filepathTriggerFilter);
   }
 }
