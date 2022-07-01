@@ -826,6 +826,14 @@ public class DelegateModule extends AbstractModule {
 
   @Provides
   @Singleton
+  @Named("k8sSteadyStateExecutor")
+  public ExecutorService k8sSteadyStateExecutor() {
+    return Executors.newCachedThreadPool(
+        new ThreadFactoryBuilder().setNameFormat("k8sSteadyState-%d").setPriority(Thread.MAX_PRIORITY).build());
+  }
+
+  @Provides
+  @Singleton
   @Named("taskExecutor")
   public ThreadPoolExecutor taskExecutor() {
     int maxPoolSize = Integer.MAX_VALUE;

@@ -704,6 +704,11 @@ public class CDStepHelper {
   public boolean shouldCleanUpIncompleteCanaryDeployRelease(String accountId) {
     return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.CLEANUP_INCOMPLETE_CANARY_DEPLOY_RELEASE);
   }
+
+  public boolean shouldUseK8sApiForSteadyStateCheck(String accountId) {
+    return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.USE_K8S_API_FOR_STEADY_STATE_CHECK);
+  }
+
   public boolean isSkipAddingTrackSelectorToDeployment(String accountId) {
     return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.SKIP_ADDING_TRACK_LABEL_SELECTOR_IN_ROLLING);
   }
