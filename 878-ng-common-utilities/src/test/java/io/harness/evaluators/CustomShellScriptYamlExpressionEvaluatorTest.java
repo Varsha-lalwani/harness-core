@@ -70,7 +70,4 @@ public class CustomShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
     assertThat(shellScriptBaseDTO.getType()).isEqualTo(TemplateEntityConstants.CUSTOM_SHELL_SCRIPT);
     assertThat(shellScriptBaseDTO.getCustomShellScriptSpec().getDummy()).isEqualTo("dummyValue2");
   }
-
-  // <+variable.account.id> ----- for variables at account / org level
-  // <+secret.>  ---- referencing secret in the script.
 }
