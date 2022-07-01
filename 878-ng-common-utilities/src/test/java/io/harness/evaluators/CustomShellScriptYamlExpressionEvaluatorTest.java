@@ -42,11 +42,11 @@ public class CustomShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
       + "        script: echo 1\n"
       + "    environmentVariables:\n"
       + "    - name: e1\n"
-      + "      value: anyDummyValue\n"
+      + "      value: <+customShellScript.spec.environmentVariables.e2>\n"
       + "      type: String\n"
       + "      __uuid: 4G7y3pKAQzW-neREpx2mmQ1\n"
       + "    - name: e2\n"
-      + "      value: v1\n"
+      + "      value: dummyValue2\n"
       + "      type: String\n"
       + "      __uuid: 4G7y3pKAQzW-neREpx2mmQ2\n"
       + "    outputVariables:\n"
@@ -68,6 +68,9 @@ public class CustomShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
     shellScriptBaseDTO =
         (CustomShellScriptBaseDTO) shellScriptYamlExpressionEvaluator.resolve(shellScriptBaseDTO, false);
     assertThat(shellScriptBaseDTO.getType()).isEqualTo(TemplateEntityConstants.CUSTOM_SHELL_SCRIPT);
-    assertThat(shellScriptBaseDTO.getCustomShellScriptSpec().getDummy()).isEqualTo("anyDummyValue");
+    assertThat(shellScriptBaseDTO.getCustomShellScriptSpec().getDummy()).isEqualTo("dummyValue2");
   }
+
+  // <+variable.account.id> ----- for variables at account / org level
+  // <+secret.>  ---- referencing secret in the script.
 }
