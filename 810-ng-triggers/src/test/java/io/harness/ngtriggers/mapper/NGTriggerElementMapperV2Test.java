@@ -75,6 +75,7 @@ import io.harness.ngtriggers.beans.source.webhook.v2.WebhookTriggerConfigV2;
 import io.harness.ngtriggers.beans.source.webhook.v2.awscodecommit.AwsCodeCommitSpec;
 import io.harness.ngtriggers.beans.source.webhook.v2.awscodecommit.event.AwsCodeCommitTriggerEvent;
 import io.harness.ngtriggers.beans.source.webhook.v2.azurerepo.AzureRepoSpec;
+import io.harness.ngtriggers.beans.source.webhook.v2.azurerepo.action.AzureRepoIssueCommentAction;
 import io.harness.ngtriggers.beans.source.webhook.v2.azurerepo.action.AzureRepoPRAction;
 import io.harness.ngtriggers.beans.source.webhook.v2.azurerepo.event.AzureRepoTriggerEvent;
 import io.harness.ngtriggers.beans.source.webhook.v2.bitbucket.BitbucketSpec;
@@ -129,6 +130,7 @@ public class NGTriggerElementMapperV2Test extends CategoryTest {
 
   private String ngTriggerYaml_azurerepo_pr;
   private String ngTriggerYaml_azurerepo_push;
+  private String ngTriggerYaml_azurerepo_issue_comment;
 
   private String ngTriggerYaml_awscodecommit_push;
   private String ngTriggerYaml_custom;
@@ -193,6 +195,9 @@ public class NGTriggerElementMapperV2Test extends CategoryTest {
         Objects.requireNonNull(classLoader.getResource("ng-trigger-azurerepo-pr-v2.yaml")), StandardCharsets.UTF_8);
     ngTriggerYaml_azurerepo_push = Resources.toString(
         Objects.requireNonNull(classLoader.getResource("ng-trigger-azurerepo-push-v2.yaml")), StandardCharsets.UTF_8);
+    ngTriggerYaml_azurerepo_issue_comment = Resources.toString(
+        Objects.requireNonNull(classLoader.getResource("ng-trigger-azurerepo-issue-comment-v2.yaml")),
+        StandardCharsets.UTF_8);
     ngTriggerYaml_awscodecommit_push =
         Resources.toString(Objects.requireNonNull(classLoader.getResource("ng-trigger-awscodecommit-push-v2.yaml")),
             StandardCharsets.UTF_8);
@@ -558,6 +563,37 @@ public class NGTriggerElementMapperV2Test extends CategoryTest {
     assertThat(spec.fetchGitAware().fetchAutoAbortPreviousExecutions()).isTrue();
     assertThat(spec.fetchGitAware().fetchEvent()).isEqualTo(AzureRepoTriggerEvent.PUSH);
     assertThat(spec.fetchGitAware().fetchActions()).isEmpty();
+  }
+
+  @Test
+  @Owner(developers = RAGHAV_GUPTA)
+  @Category(UnitTests.class)
+  public void testGAzureRepoIssueComment() throws Exception {
+    NGTriggerConfigV2 ngTriggerConfigV2 =
+        ngTriggerElementMapper.toTriggerConfigV2(ngTriggerYaml_azurerepo_issue_comment);
+
+    assertRootLevelProperties(ngTriggerConfigV2);
+
+    NGTriggerSourceV2 ngTriggerSourceV2 = ngTriggerConfigV2.getSource();
+    assertThat(ngTriggerSourceV2).isNotNull();
+    assertThat(ngTriggerSourceV2.getType()).isEqualTo(WEBHOOK);
+    NGTriggerSpecV2 ngTriggerSpecV2 = ngTriggerSourceV2.getSpec();
+    assertThat(WebhookTriggerConfigV2.class.isAssignableFrom(ngTriggerSpecV2.getClass())).isTrue();
+    WebhookTriggerConfigV2 webhookTriggerConfigV2 = (WebhookTriggerConfigV2) ngTriggerSpecV2;
+    assertThat(webhookTriggerConfigV2.getType()).isEqualTo(WebhookTriggerType.AZURE);
+    assertThat(AzureRepoSpec.class.isAssignableFrom(webhookTriggerConfigV2.getSpec().getClass())).isTrue();
+    AzureRepoSpec azureRepoSpec = (AzureRepoSpec) webhookTriggerConfigV2.getSpec();
+    assertThat(azureRepoSpec.getType()).isEqualTo(AzureRepoTriggerEvent.ISSUE_COMMENT);
+    assertThat(azureRepoSpec.fetchPayloadAware().fetchPayloadConditions()).containsAll(payloadConditions);
+    assertThat(azureRepoSpec.fetchPayloadAware().fetchHeaderConditions()).containsAll(headerConditions);
+    assertThat(azureRepoSpec.fetchPayloadAware().fetchJexlCondition()).isEqualTo(JEXL);
+    assertThat(azureRepoSpec.fetchGitAware().fetchRepoName()).isEqualTo(REPO);
+    assertThat(azureRepoSpec.fetchGitAware().fetchConnectorRef()).isEqualTo(CONN);
+    assertThat(azureRepoSpec.fetchGitAware().fetchAutoAbortPreviousExecutions()).isTrue();
+    assertThat(azureRepoSpec.fetchGitAware().fetchEvent()).isEqualTo(AzureRepoTriggerEvent.ISSUE_COMMENT);
+    assertThat(azureRepoSpec.fetchGitAware().fetchActions())
+        .containsAll(asList(
+            AzureRepoIssueCommentAction.CREATE, AzureRepoIssueCommentAction.EDIT, AzureRepoIssueCommentAction.DELETE));
   }
 
   @Test

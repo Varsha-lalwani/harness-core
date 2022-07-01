@@ -25,6 +25,7 @@ import io.harness.ngtriggers.beans.source.webhook.WebhookSourceRepo;
 import io.harness.ngtriggers.beans.source.webhook.v2.TriggerEventDataCondition;
 import io.harness.ngtriggers.beans.source.webhook.v2.WebhookTriggerConfigV2;
 import io.harness.ngtriggers.beans.source.webhook.v2.awscodecommit.event.AwsCodeCommitTriggerEvent;
+import io.harness.ngtriggers.beans.source.webhook.v2.azurerepo.action.AzureRepoIssueCommentAction;
 import io.harness.ngtriggers.beans.source.webhook.v2.azurerepo.action.AzureRepoPRAction;
 import io.harness.ngtriggers.beans.source.webhook.v2.azurerepo.event.AzureRepoTriggerEvent;
 import io.harness.ngtriggers.beans.source.webhook.v2.bitbucket.action.BitbucketPRAction;
@@ -127,6 +128,10 @@ public class WebhookConfigHelper {
     return Arrays.asList(GithubIssueCommentAction.values());
   }
 
+  public static List<AzureRepoIssueCommentAction> getAzureRepoIssueCommentAction() {
+    return Arrays.asList(AzureRepoIssueCommentAction.values());
+  }
+
   public static List<GitlabPRAction> getGitlabPRAction() {
     return Arrays.asList(GitlabPRAction.values());
   }
@@ -155,6 +160,11 @@ public class WebhookConfigHelper {
     azureRepoMap.put(AzureRepoTriggerEvent.PUSH.getValue(), emptyList());
     azureRepoMap.put(AzureRepoTriggerEvent.PULL_REQUEST.getValue(),
         getAzureRepoPRAction().stream().map(azureRepoPRAction -> azureRepoPRAction.getValue()).collect(toList()));
+    azureRepoMap.put(AzureRepoTriggerEvent.ISSUE_COMMENT.getValue(),
+        getAzureRepoIssueCommentAction()
+            .stream()
+            .map(azureRepoIssueCommentAction -> azureRepoIssueCommentAction.getValue())
+            .collect(toList()));
 
     Map githubMap = new HashMap<GitEvent, List<GitAction>>();
     resposeMap.put(GITHUB.getValue(), githubMap);

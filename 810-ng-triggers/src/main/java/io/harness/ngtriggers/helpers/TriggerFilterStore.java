@@ -8,6 +8,7 @@
 package io.harness.ngtriggers.helpers;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.ngtriggers.beans.source.webhook.WebhookSourceRepo.AZURE_REPO;
 import static io.harness.ngtriggers.beans.source.webhook.WebhookSourceRepo.BITBUCKET;
 import static io.harness.ngtriggers.beans.source.webhook.WebhookSourceRepo.CUSTOM;
 import static io.harness.ngtriggers.beans.source.webhook.WebhookSourceRepo.GITHUB;
@@ -25,6 +26,7 @@ import io.harness.ngtriggers.eventmapper.filters.impl.GitWebhookTriggerRepoFilte
 import io.harness.ngtriggers.eventmapper.filters.impl.GithubIssueCommentTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.GitlabMRCommentTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.HeaderTriggerFilter;
+import io.harness.ngtriggers.eventmapper.filters.impl.IssueCommentTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.JexlConditionsTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.PayloadConditionsTriggerFilter;
 import io.harness.ngtriggers.eventmapper.filters.impl.SourceRepoTypeTriggerFilter;
@@ -53,6 +55,7 @@ public class TriggerFilterStore {
   private final GithubIssueCommentTriggerFilter githubIssueCommentTriggerFilter;
   private final GitlabMRCommentTriggerFilter gitlabMRCommentTriggerFilter;
   private final BitbucketPRCommentTriggerFilter bitbucketPRCommentTriggerFilter;
+  private final IssueCommentTriggerFilter issueCommentTriggerFilter;
   private final HeaderTriggerFilter headerTriggerFilter;
   private final JexlConditionsTriggerFilter jexlConditionsTriggerFilter;
   private final FilepathTriggerFilter filepathTriggerFilter;
@@ -78,6 +81,8 @@ public class TriggerFilterStore {
         return getTriggerFiltersGitlabMRCommentList();
       } else if (BITBUCKET.name().equals(webhookPayloadData.getOriginalEvent().getSourceRepoType())) {
         return getTriggerFiltersBitbucketPRCommentList();
+      } else if (AZURE_REPO.name().equals(webhookPayloadData.getOriginalEvent().getSourceRepoType())) {
+        return getTriggerFiltersAzureRepoIssueCommentList();
       }
     }
     return getWebhookGitTriggerFiltersDefaultList();
@@ -106,5 +111,11 @@ public class TriggerFilterStore {
   List<TriggerFilter> getTriggerFiltersBitbucketPRCommentList() {
     return Arrays.asList(accountTriggerFilter, sourceRepoTypeTriggerFilter, eventActionTriggerFilter,
         headerTriggerFilter, gitWebhookTriggerRepoFilter, bitbucketPRCommentTriggerFilter, filepathTriggerFilter);
+  }
+
+  List<TriggerFilter> getTriggerFiltersAzureRepoIssueCommentList() {
+    return Arrays.asList(accountTriggerFilter, sourceRepoTypeTriggerFilter, eventActionTriggerFilter,
+        headerTriggerFilter, jexlConditionsTriggerFilter, gitWebhookTriggerRepoFilter, issueCommentTriggerFilter,
+        filepathTriggerFilter);
   }
 }
