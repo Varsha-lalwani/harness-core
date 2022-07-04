@@ -18,8 +18,6 @@ import static java.lang.String.format;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
-import com.amazonaws.services.s3.model.S3Object;
-import com.google.inject.Inject;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifactory.ArtifactoryConfigRequest;
@@ -40,6 +38,9 @@ import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.service.impl.AwsApiHelperService;
+
+import com.amazonaws.services.s3.model.S3Object;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +52,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
@@ -61,11 +61,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import software.wings.service.impl.AwsApiHelperService;
 
 @OwnedBy(CDP)
 public class ServerlessTaskHelperBaseTest extends CategoryTest {
@@ -111,7 +109,8 @@ public class ServerlessTaskHelperBaseTest extends CategoryTest {
 
   @Before
   public void setUp() {
-    ARTIFACT_DIRECTORY = "./repository/serverless/" + RandomStringUtils.random(5, 0, 0, true, true, null, new SecureRandom());
+    ARTIFACT_DIRECTORY =
+        "./repository/serverless/" + RandomStringUtils.random(5, 0, 0, true, true, null, new SecureRandom());
   }
 
   @Test
@@ -119,11 +118,11 @@ public class ServerlessTaskHelperBaseTest extends CategoryTest {
   @Category(UnitTests.class)
   public void fetchArtifactoryArtifactTest() throws Exception {
     ServerlessArtifactConfig serverlessArtifactConfig = ServerlessArtifactoryArtifactConfig.builder()
-            .artifactPath(ARTIFACTORY_PATH)
-            .connectorDTO(connectorInfoDTO)
-            .encryptedDataDetails(encryptedDataDetailsList)
-            .repositoryName(repositoryName)
-            .build();
+                                                            .artifactPath(ARTIFACTORY_PATH)
+                                                            .connectorDTO(connectorInfoDTO)
+                                                            .encryptedDataDetails(encryptedDataDetailsList)
+                                                            .repositoryName(repositoryName)
+                                                            .build();
     doReturn(artifactoryConfigRequest).when(artifactoryRequestMapper).toArtifactoryRequest(connectorConfigDTO);
     ServerlessInfraConfig serverlessInfraConfig = ServerlessAwsLambdaInfraConfig.builder().region("us-east-1").build();
     Map<String, String> artifactMetadata = new HashMap<>();
@@ -141,7 +140,8 @@ public class ServerlessTaskHelperBaseTest extends CategoryTest {
         .when(artifactoryNgService)
         .downloadArtifacts(artifactoryConfigRequest, repositoryName, artifactMetadata, ARTIFACTORY_ARTIFACT_PATH,
             ARTIFACTORY_ARTIFACT_NAME);
-    serverlessTaskHelperBase.fetchArtifact(serverlessArtifactConfig, logCallback, ARTIFACT_DIRECTORY, serverlessInfraConfig);
+    serverlessTaskHelperBase.fetchArtifact(
+        serverlessArtifactConfig, logCallback, ARTIFACT_DIRECTORY, serverlessInfraConfig);
     verify(logCallback)
         .saveExecutionLog(color(
             format("Downloading %s artifact with identifier: %s", serverlessArtifactConfig.getServerlessArtifactType(),
@@ -155,32 +155,34 @@ public class ServerlessTaskHelperBaseTest extends CategoryTest {
   @Owner(developers = PIYUSH_BHUWALKA)
   @Category(UnitTests.class)
   public void fetchS3ArtifactTest() throws Exception {
-    ServerlessArtifactConfig serverlessArtifactConfig = ServerlessS3ArtifactConfig.builder()
-            .bucketName(BUCKET_NAME)
-            .filePath(FILE_PATH)
-            .build();
-    ServerlessAwsLambdaInfraConfig serverlessInfraConfig = ServerlessAwsLambdaInfraConfig.builder().region("us-east-1").build();
+    ServerlessArtifactConfig serverlessArtifactConfig =
+        ServerlessS3ArtifactConfig.builder().bucketName(BUCKET_NAME).filePath(FILE_PATH).build();
+    ServerlessAwsLambdaInfraConfig serverlessInfraConfig =
+        ServerlessAwsLambdaInfraConfig.builder().region("us-east-1").build();
 
     String input = "asfd";
     InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
     String artifactPath = Paths
-            .get(((ServerlessS3ArtifactConfig) serverlessArtifactConfig).getBucketName(),
-                    ((ServerlessS3ArtifactConfig) serverlessArtifactConfig).getFilePath())
-            .toString();
+                              .get(((ServerlessS3ArtifactConfig) serverlessArtifactConfig).getBucketName(),
+                                  ((ServerlessS3ArtifactConfig) serverlessArtifactConfig).getFilePath())
+                              .toString();
 
     S3Object s3Object = new S3Object();
     s3Object.setObjectContent(inputStream);
 
-    doReturn(awsInternalConfig).when(awsNgConfigMapper).createAwsInternalConfig(serverlessInfraConfig.getAwsConnectorDTO());
+    doReturn(awsInternalConfig)
+        .when(awsNgConfigMapper)
+        .createAwsInternalConfig(serverlessInfraConfig.getAwsConnectorDTO());
     doReturn(s3Object)
-            .when(awsApiHelperService)
-            .getObjectFromS3(awsInternalConfig, serverlessInfraConfig.getRegion(), BUCKET_NAME, FILE_PATH);
-    serverlessTaskHelperBase.fetchArtifact(serverlessArtifactConfig, logCallback, ARTIFACT_DIRECTORY, serverlessInfraConfig);
+        .when(awsApiHelperService)
+        .getObjectFromS3(awsInternalConfig, serverlessInfraConfig.getRegion(), BUCKET_NAME, FILE_PATH);
+    serverlessTaskHelperBase.fetchArtifact(
+        serverlessArtifactConfig, logCallback, ARTIFACT_DIRECTORY, serverlessInfraConfig);
     verify(logCallback)
-            .saveExecutionLog(color(
-                    format("Downloading %s artifact with identifier: %s", serverlessArtifactConfig.getServerlessArtifactType(),
-                            ((ServerlessS3ArtifactConfig) serverlessArtifactConfig).getIdentifier()),
-                    White, Bold));
+        .saveExecutionLog(color(
+            format("Downloading %s artifact with identifier: %s", serverlessArtifactConfig.getServerlessArtifactType(),
+                ((ServerlessS3ArtifactConfig) serverlessArtifactConfig).getIdentifier()),
+            White, Bold));
     verify(logCallback).saveExecutionLog("S3 Object Path: " + artifactPath);
     verify(logCallback).saveExecutionLog(color("Successfully downloaded artifact..", White, Bold));
   }

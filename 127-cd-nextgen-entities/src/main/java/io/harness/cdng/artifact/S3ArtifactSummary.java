@@ -7,13 +7,14 @@
 
 package io.harness.cdng.artifact;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.task.artifacts.ArtifactSourceConstants;
+
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Builder;
 import lombok.Data;
-
-import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 @OwnedBy(PIPELINE)
 @Data

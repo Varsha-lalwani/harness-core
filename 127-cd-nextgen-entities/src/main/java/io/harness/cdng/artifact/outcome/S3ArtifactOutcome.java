@@ -7,18 +7,18 @@
 
 package io.harness.cdng.artifact.outcome;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import static io.harness.annotations.dev.HarnessTeam.CDC;
+
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.ArtifactSummary;
-import io.harness.cdng.artifact.EcrArtifactSummary;
 import io.harness.cdng.artifact.S3ArtifactSummary;
+
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.springframework.data.annotation.TypeAlias;
-
-import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 @Value
 @Builder
