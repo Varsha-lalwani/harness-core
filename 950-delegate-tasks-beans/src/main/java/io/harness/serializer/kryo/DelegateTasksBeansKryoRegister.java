@@ -345,9 +345,15 @@ import io.harness.delegate.task.azure.appservice.webapp.response.AzureWebAppSlot
 import io.harness.delegate.task.azure.appservice.webapp.response.AzureWebAppSwapSlotsResponse;
 import io.harness.delegate.task.azure.appservice.webapp.response.DeploymentSlotData;
 import io.harness.delegate.task.azure.arm.AzureARMPreDeploymentData;
+import io.harness.delegate.task.azure.arm.AzureARMTaskNGParameters;
+import io.harness.delegate.task.azure.arm.AzureARMTaskNGResponse;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
 import io.harness.delegate.task.azure.arm.AzureARMTaskResponse;
 import io.harness.delegate.task.azure.arm.AzureARMTaskType;
+import io.harness.delegate.task.azure.arm.AzureBlueprintTaskNGParameters;
+import io.harness.delegate.task.azure.arm.AzureBlueprintTaskNGResponse;
+import io.harness.delegate.task.azure.arm.AzureTaskNGParameters;
+import io.harness.delegate.task.azure.arm.AzureTaskNGResponse;
 import io.harness.delegate.task.azure.arm.request.AzureARMDeploymentParameters;
 import io.harness.delegate.task.azure.arm.request.AzureARMRollbackParameters;
 import io.harness.delegate.task.azure.arm.request.AzureBlueprintDeploymentParameters;
@@ -1548,5 +1554,11 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(FileDelegateConfig.class, 55318);
     kryo.register(HarnessStoreDelegateConfig.class, 55319);
     kryo.register(ConfigFileParameters.class, 55320);
+    kryo.register(AzureTaskNGParameters.class, 55321);
+    kryo.register(AzureTaskNGResponse.class, 55322);
+    kryo.register(AzureBlueprintTaskNGParameters.class, 55323);
+    kryo.register(AzureBlueprintTaskNGResponse.class, 55324);
+    kryo.register(AzureARMTaskNGParameters.class, 55325);
+    kryo.register(AzureARMTaskNGResponse.class, 55326);
   }
 }

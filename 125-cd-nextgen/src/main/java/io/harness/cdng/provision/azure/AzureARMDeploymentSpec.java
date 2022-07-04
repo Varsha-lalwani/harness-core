@@ -1,13 +1,22 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.cdng.provision.azure;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
 import io.harness.pms.yaml.YamlNode;
 import io.harness.validation.Validator;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -22,31 +31,31 @@ import javax.validation.constraints.NotNull;
 @OwnedBy(HarnessTeam.CDP)
 @RecasterAlias("io.harness.cdng.provision.azure.ARMDeploymentSpec")
 public class AzureARMDeploymentSpec implements AzureDeploymentType {
-    @JsonProperty(YamlNode.UUID_FIELD_NAME)
-    @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
-    @ApiModelProperty(hidden = true)
-    String uuid;
+  @JsonProperty(YamlNode.UUID_FIELD_NAME)
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  String uuid;
 
-    @NotNull String connectorRef;
-    @NotNull AzureCreateTemplateFile templateFile;
+  @NotNull String connectorRef;
+  @NotNull AzureCreateTemplateFile templateFile;
 
-    AzureCreateParameterFile parameters;
+  AzureCreateParameterFile parameters;
 
     @NotNull
     AzureCreateStepScope scope;
 
-    @Override
-    public void validateParams() {
-        Validator.notNullCheck("Template file can't be empty", templateFile);
-        Validator.notNullCheck("Connector ref can't be empty", connectorRef);
+  @Override
+  public void validateParams() {
+    Validator.notNullCheck("Template file can't be empty", templateFile);
+  Validator.notNullCheck("Connector ref can't be empty", connectorRef);
         Validator.notNullCheck("Scope can't be empty", scope);
         scope.getSpec().validateParams();
     }
 
-    @Override
-    public AzureCreateTemplateFile getTemplateSpecs() {
-        return templateFile;
-    }
+  @Override
+  public AzureCreateTemplateFile getTemplateSpecs() {
+    return templateFile;
+  }
 
     @Override
     public String getConnectorRef() {

@@ -1,7 +1,16 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.cdng.provision.azure;
 
-import com.google.inject.Inject;
+import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
+
 import io.harness.EntityType;
+import io.harness.azure.model.ARMScopeType;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
@@ -34,41 +43,40 @@ import io.harness.steps.StepUtils;
 import io.harness.supplier.ThrowingSupplier;
 import io.harness.tasks.ResponseData;
 import io.harness.utils.IdentifierRefHelper;
+
 import software.wings.beans.TaskType;
 
+import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
-
 public class AzureCreateStep extends TaskChainExecutableWithRollbackAndRbac implements AzureCreateStepExecutor {
-    public static final StepType STEP_TYPE = StepType.newBuilder()
-            .setType(ExecutionNodeType.AZURE_CREATE_RESOURCE.getYamlType())
-            .setStepCategory(StepCategory.STEP)
-            .build();
-    @Inject
-    private CDFeatureFlagHelper cdFeatureFlagHelper;
-    @Inject private PipelineRbacHelper pipelineRbacHelper;
-    @Inject private KryoSerializer kryoSerializer;
+  public static final StepType STEP_TYPE = StepType.newBuilder()
+                                               .setType(ExecutionNodeType.AZURE_CREATE_RESOURCE.getYamlType())
+                                               .setStepCategory(StepCategory.STEP)
+                                               .build();
+  @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
+  @Inject private PipelineRbacHelper pipelineRbacHelper;
+  @Inject private KryoSerializer kryoSerializer;
 
-    @Inject private StepHelper stepHelper;
+  @Inject private StepHelper stepHelper;
 
-    @Inject private AzureCreateStepHelper azureCreateStepHelper;
-    @Inject private CDStepHelper cdStepHelper;
+  @Inject private AzureCreateStepHelper azureCreateStepHelper;
+  @Inject private CDStepHelper cdStepHelper;
 
-    @Override
-    public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
-//        if (!cdFeatureFlagHelper.isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.AZURE_ARM_NG)) {
-//            throw new AccessDeniedException(
-//                    "Azure NG is not enabled for this account. Please contact harness customer care.",
-//                    ErrorCode.NG_ACCESS_DENIED, WingsException.USER);
-//        }
-        List<EntityDetail> entityDetailList = new ArrayList<>();
-        String accountId = AmbianceUtils.getAccountId(ambiance);
-        String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
-        String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
+  @Override
+  public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
+    //        if (!cdFeatureFlagHelper.isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.AZURE_ARM_NG)) {
+    //            throw new AccessDeniedException(
+    //                    "Azure NG is not enabled for this account. Please contact harness customer care.",
+    //                    ErrorCode.NG_ACCESS_DENIED, WingsException.USER);
+    //        }
+    List<EntityDetail> entityDetailList = new ArrayList<>();
+    String accountId = AmbianceUtils.getAccountId(ambiance);
+    String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
+    String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
 
         // Template file connector
         AzureCreateStepParameters azureCreateStepParameters =
@@ -99,58 +107,58 @@ public class AzureCreateStep extends TaskChainExecutableWithRollbackAndRbac impl
             }
         }
 
-        // Azure connector
-        String connectorRef =
-                azureCreateStepParameters.getConfiguration().getAzureDeploymentType().getConnectorRef();
-        IdentifierRef identifierRef =
-                IdentifierRefHelper.getIdentifierRef(connectorRef, accountId, orgIdentifier, projectIdentifier);
-        EntityDetail entityDetail = EntityDetail.builder().type(EntityType.CONNECTORS).entityRef(identifierRef).build();
-        entityDetailList.add(entityDetail);
+    // Azure connector
+    String connectorRef = azureCreateStepParameters.getConfiguration().getAzureDeploymentType().getConnectorRef();
+    IdentifierRef identifierRef =
+        IdentifierRefHelper.getIdentifierRef(connectorRef, accountId, orgIdentifier, projectIdentifier);
+    EntityDetail entityDetail = EntityDetail.builder().type(EntityType.CONNECTORS).entityRef(identifierRef).build();
+    entityDetailList.add(entityDetail);
 
-        pipelineRbacHelper.checkRuntimePermissions(ambiance, entityDetailList, true);
+    pipelineRbacHelper.checkRuntimePermissions(ambiance, entityDetailList, true);
+  }
+
+  @Override
+  public TaskChainResponse executeNextLinkWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters,
+      StepInputPackage inputPackage, PassThroughData passThroughData, ThrowingSupplier<ResponseData> responseSupplier)
+      throws Exception {
+    return azureCreateStepHelper.executeNextLink(this, ambiance, stepParameters, passThroughData, responseSupplier);
+  }
+
+  @Override
+  public StepResponse finalizeExecutionWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters,
+      PassThroughData passThroughData, ThrowingSupplier<ResponseData> responseDataSupplier) throws Exception {
+    if (passThroughData instanceof StepExceptionPassThroughData) {
+      StepExceptionPassThroughData stepExceptionPassThroughData = (StepExceptionPassThroughData) passThroughData;
+      return cdStepHelper.handleStepExceptionFailure(stepExceptionPassThroughData);
     }
+    // TODO: To implement after the DelegateTask is implemented.return null;
+  }
 
-    @Override
-    public TaskChainResponse executeNextLinkWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage, PassThroughData passThroughData, ThrowingSupplier<ResponseData> responseSupplier) throws Exception {
-        return azureCreateStepHelper.executeNextLink(this, ambiance, stepParameters, passThroughData, responseSupplier);
-    }
+  @Override
+  public TaskChainResponse startChainLinkAfterRbac(
+      Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage) {
+    return azureCreateStepHelper.startChainLink(this, ambiance, stepParameters);
+  }
 
-    @Override
-    public StepResponse finalizeExecutionWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters, PassThroughData passThroughData, ThrowingSupplier<ResponseData> responseDataSupplier) throws Exception {
-        if (passThroughData instanceof StepExceptionPassThroughData) {
-            StepExceptionPassThroughData stepExceptionPassThroughData = (StepExceptionPassThroughData) passThroughData;
-            return cdStepHelper.handleStepExceptionFailure(stepExceptionPassThroughData);
-        }
-        // TODO: To implement after the DelegateTask is implemented.
-        return null;
-    }
+  @Override
+  public Class<StepElementParameters> getStepParametersClass() {
+    return StepElementParameters.class;
+  }
+  @Override
+  public TaskChainResponse executeCreateTask(Ambiance ambiance, StepElementParameters stepParameters,
+      AzureTaskNGParameters parameters, AzureCreatePassThroughData passThroughData) {
+    TaskData taskData =
+        TaskData.builder()
+            .async(true)
+            .taskType(TaskType.AZURE_NG_ARM_BLUEPRINT.name())
+            .timeout(StepUtils.getTimeoutMillis(stepParameters.getTimeout(), AzureCreateStepHelper.DEFAULT_TIMEOUT))
+            .parameters(new Object[] {parameters})
+            .build();
+    final TaskRequest taskRequest = StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
+        Collections.singletonList(AzureCommandUnit.Create.name()), TaskType.AZURE_NG_ARM_BLUEPRINT.getDisplayName(),
+        TaskSelectorYaml.toTaskSelector(((AzureCreateStepParameters) stepParameters.getSpec()).getDelegateSelectors()),
+        stepHelper.getEnvironmentType(ambiance));
 
-    @Override
-    public TaskChainResponse startChainLinkAfterRbac(Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage) {
-        return azureCreateStepHelper.startChainLink(this, ambiance, stepParameters);
-
-    }
-
-    @Override
-    public Class<StepElementParameters> getStepParametersClass() {
-        return StepElementParameters.class;
-    }
-    @Override
-    public TaskChainResponse executeCreateTask(Ambiance ambiance, StepElementParameters stepParameters, AzureTaskNGParameters parameters, AzureCreatePassThroughData passThroughData) {
-        TaskData taskData = TaskData.builder()
-                .async(true)
-                .taskType(TaskType.AZURE_NG_ARM_BLUEPRINT.name())
-                .timeout(StepUtils.getTimeoutMillis(stepParameters.getTimeout(), AzureCreateStepHelper.DEFAULT_TIMEOUT))
-                .parameters(new Object[] {parameters})
-                .build();
-        final TaskRequest taskRequest = StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
-                Collections.singletonList(AzureCommandUnit.Create.name()), TaskType.AZURE_NG_ARM_BLUEPRINT.getDisplayName(),
-                TaskSelectorYaml.toTaskSelector(
-                        ((AzureCreateStepParameters) stepParameters.getSpec()).getDelegateSelectors()),
-                stepHelper.getEnvironmentType(ambiance));
-
-        return TaskChainResponse.builder().taskRequest(taskRequest).passThroughData(passThroughData).chainEnd(true).build();
-
-    }
+    return TaskChainResponse.builder().taskRequest(taskRequest).passThroughData(passThroughData).chainEnd(true).build();
+  }
 }
-

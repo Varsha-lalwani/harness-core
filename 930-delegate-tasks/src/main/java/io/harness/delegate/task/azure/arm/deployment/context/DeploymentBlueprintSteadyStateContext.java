@@ -5,29 +5,29 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package software.wings.delegatetasks.azure.arm.deployment.context;
+package io.harness.delegate.task.azure.arm.deployment.context;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
+import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.azure.model.AzureDeploymentMode;
-import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
-import io.harness.delegate.task.azure.common.AzureLogCallbackProvider;
+import io.harness.annotations.dev.TargetModule;
+import io.harness.azure.model.AzureConfig;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @OwnedBy(CDP)
-public class DeploymentContext {
-  private String deploymentName;
-  private AzureDeploymentMode mode;
-  private String templateJson;
-  private String parametersJson;
-  private AzureLogCallbackProvider logStreamingTaskClient;
-  private int steadyStateTimeoutInMin;
-  private String runningCommandUnit;
+public class DeploymentBlueprintSteadyStateContext {
+  private AzureConfig azureConfig;
+  private String assignmentResourceScope;
+  private String assignmentName;
+  private int steadyCheckTimeoutInMinutes;
+  private long statusCheckIntervalInSeconds;
 }

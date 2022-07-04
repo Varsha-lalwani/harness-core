@@ -23,6 +23,7 @@ import io.harness.delegate.task.azure.AzureTaskExecutionResponse;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
 import io.harness.delegate.task.azure.arm.AzureARMTaskResponse;
 import io.harness.delegate.task.azure.arm.response.AzureARMDeploymentResponse;
+import io.harness.delegate.task.azure.common.AzureLogCallbackProvider;
 import io.harness.exception.AzureClientException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.logging.CommandExecutionStatus;
@@ -36,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(CDP)
 public abstract class AbstractAzureARMTaskHandler {
   AzureTaskExecutionResponse executeTask(AzureARMTaskParameters azureARMTaskParameters, AzureConfig azureConfig,
-      ILogStreamingTaskClient logStreamingTaskClient) {
+      AzureLogCallbackProvider logStreamingTaskClient) {
     try {
       AzureARMTaskResponse azureARMTaskResponse =
           executeTaskInternal(azureARMTaskParameters, azureConfig, logStreamingTaskClient);
@@ -91,7 +92,7 @@ public abstract class AbstractAzureARMTaskHandler {
   }
 
   protected void printDefaultFailureMsgForARMDeploymentUnits(
-      Exception ex, ILogStreamingTaskClient logStreamingTaskClient, final String runningCommandUnit) {
+      Exception ex, AzureLogCallbackProvider logStreamingTaskClient, final String runningCommandUnit) {
     if ((ex instanceof InvalidRequestException) || isBlank(runningCommandUnit)) {
       return;
     }
@@ -110,7 +111,7 @@ public abstract class AbstractAzureARMTaskHandler {
   }
 
   protected void printErrorMsg(
-      ILogStreamingTaskClient logStreamingTaskClient, final String runningCommandUnit, final String errorMsg) {
+      AzureLogCallbackProvider logStreamingTaskClient, final String runningCommandUnit, final String errorMsg) {
     if (isBlank(runningCommandUnit)) {
       return;
     }
@@ -119,5 +120,5 @@ public abstract class AbstractAzureARMTaskHandler {
   }
 
   protected abstract AzureARMTaskResponse executeTaskInternal(AzureARMTaskParameters azureARMTaskParameters,
-      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient);
+      AzureConfig azureConfig, AzureLogCallbackProvider logStreamingTaskClient);
 }
