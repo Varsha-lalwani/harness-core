@@ -151,7 +151,6 @@ public class ServerlessEntityHelper {
           .identifier(s3ArtifactOutcome.getIdentifier())
           .connectorDTO(connectorDTO)
           .encryptedDataDetails(getEncryptionDataDetails(connectorDTO, ngAccess))
-          .region(s3ArtifactOutcome.getRegion())
           .primaryArtifact(s3ArtifactOutcome.isPrimaryArtifact())
           .type(s3ArtifactOutcome.getType())
           .build();

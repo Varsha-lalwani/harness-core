@@ -27,7 +27,6 @@ import lombok.experimental.NonFinal;
 public class ServerlessS3ArtifactConfig implements ServerlessArtifactConfig, NestedAnnotationResolver {
   @NonFinal @Expression(ALLOW_SECRETS) String bucketName;
   @NonFinal @Expression(ALLOW_SECRETS) String filePath;
-  @NonFinal @Expression(ALLOW_SECRETS) String region;
   String type;
   String identifier;
   ConnectorInfoDTO connectorDTO;
