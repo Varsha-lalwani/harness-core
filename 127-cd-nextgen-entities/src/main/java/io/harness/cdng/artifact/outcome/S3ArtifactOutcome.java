@@ -1,8 +1,8 @@
 /*
- * Copyright 2021 Harness Inc. All rights reserved.
- * Use of this source code is governed by the PolyForm Shield 1.0.0 license
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
  * that can be found in the licenses directory at the root of this repository, also available at
- * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
 package io.harness.cdng.artifact.outcome;
@@ -23,31 +23,31 @@ import org.springframework.data.annotation.TypeAlias;
 @Value
 @Builder
 @EqualsAndHashCode(callSuper = false)
-@TypeAlias("ecrArtifactOutcome")
-@JsonTypeName("ecrArtifactOutcome")
+@TypeAlias("S3ArtifactOutcome")
+@JsonTypeName("s3ArtifactOutcome")
 @OwnedBy(CDC)
-@RecasterAlias("io.harness.ngpipeline.artifact.bean.EcrArtifactOutcome")
+@RecasterAlias("io.harness.ngpipeline.artifact.bean.S3ArtifactOutcome")
 public class S3ArtifactOutcome implements ArtifactOutcome {
-  /** Docker hub registry connector. */
+  /** AWS connector. */
   String connectorRef;
-  /** Images in repos need to be referenced via a path. */
+
+  /** Bucket in repos */
   String bucketName;
-  /** Tag refers to exact tag number. */
-  String tag;
-  /** Tag regex is used to get latest build from builds matching regex. */
+
+  /** artifactPath refers to the exact filePath*/
   String filePath;
-  /** region */
-  String region;
+
+  /** filePathRegex regex is used to get latest artifactPaths from builds matching regex. */
+  String filePathRegex;
+
   /** Identifier for artifact. */
   String identifier;
+
   /** Artifact type. */
   String type;
+
   /** Whether this config corresponds to primary artifact.*/
   boolean primaryArtifact;
-  /** registryHostName/imagePath:tag */
-  String image;
-  /** imagePullSecret for Ecr credentials base encoded.*/
-  String imagePullSecret;
 
   @Override
   public ArtifactSummary getArtifactSummary() {
@@ -57,5 +57,10 @@ public class S3ArtifactOutcome implements ArtifactOutcome {
   @Override
   public String getArtifactType() {
     return type;
+  }
+
+  @Override
+  public String getTag() {
+    return null;
   }
 }

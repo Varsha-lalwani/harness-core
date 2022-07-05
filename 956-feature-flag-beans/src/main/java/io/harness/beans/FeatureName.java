@@ -394,10 +394,12 @@ public enum FeatureName {
   ENABLE_DEFAULT_NG_EXPERIENCE_FOR_ONPREM,
   PRUNE_KUBERNETES_RESOURCES_NG;
 
+  @Deprecated
   FeatureName() {
     scope = Scope.PER_ACCOUNT;
   }
 
+  @Deprecated
   FeatureName(Scope scope) {
     this.scope = scope;
   }
@@ -407,6 +409,7 @@ public enum FeatureName {
   FeatureName(String description, HarnessTeam owner) {
     this.description = description;
     this.owner = owner;
+    this.scope = Scope.PER_ACCOUNT;
   }
 
   @Getter private String description;
