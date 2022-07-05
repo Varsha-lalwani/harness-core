@@ -116,7 +116,7 @@ public class ApprovalResource {
       })
   public ResponseDTO<ApprovalInstanceResponseDTO>
   addHarnessApprovalActivity(
-      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(
+      @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(
           description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) @AccountIdentifier String accountId,
       @Parameter(description = APPROVAL_PARAM_MESSAGE) @NotEmpty @PathParam(
           "approvalInstanceId") String approvalInstanceId,
