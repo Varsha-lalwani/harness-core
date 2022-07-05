@@ -35,6 +35,6 @@ public class ServerlessS3ArtifactConfig implements ServerlessArtifactConfig, Nes
 
   @Override
   public ServerlessArtifactType getServerlessArtifactType() {
-    return ServerlessArtifactType.S3;
+    return ServerlessArtifactType.AMAZON_S3;
   }
 }
