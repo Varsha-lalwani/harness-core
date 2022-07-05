@@ -18,6 +18,7 @@ public interface TemplateEntityConstants {
   String PIPELINE = "Pipeline";
   String MONITORED_SERVICE = "MonitoredService";
   String SECRET_MANAGER = "SecretManager";
+  String SCRIPT = "Script";
   String STABLE_TEMPLATE = "Stable";
   String LAST_UPDATES_TEMPLATE = "LastUpdated";
   String ALL = "All";
