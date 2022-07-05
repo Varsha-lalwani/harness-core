@@ -119,7 +119,7 @@ public class AzureBlueprintCreateTaskHandlerTest extends CategoryTest {
         + "    },\n"
         + "    \"location\": \"westus2\",\n"
         + "    \"properties\": {\n"
-        + "      \"blueprintId\": \"/providers/Microsoft.Management/managementGroups/HarnessARMTest/providers/Microsoft.Blueprint/blueprints/101-boilerplate-mng/versions/v1\",\n"
+        + "      \"blueprintId\": \"/providers/Microsoft.Management/managementGroups/CD Non-Production/providers/Microsoft.Blueprint/blueprints/101-boilerplate-mng/versions/v2\",\n"
         + "      \"resourceGroups\": {\n"
         + "        \"SingleRG\": {\n"
         + "          \"name\": \"mng-001\",\n"
