@@ -9,7 +9,9 @@ package io.harness.engine.expressions;
 
 import static io.harness.beans.SwaggerConstants.BOOLEAN_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.INTEGER_CLASSPATH;
-import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.*;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.integer;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
