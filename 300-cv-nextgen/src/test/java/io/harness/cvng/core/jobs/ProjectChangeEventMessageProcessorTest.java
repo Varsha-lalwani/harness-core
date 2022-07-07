@@ -7,7 +7,13 @@
 
 package io.harness.cvng.core.jobs;
 
-import com.google.inject.Inject;
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.rule.OwnerRule.KAMAL;
+import static io.harness.rule.OwnerRule.NAVEEN;
+import static io.harness.rule.OwnerRule.VUK;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.harness.CvNextGenTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -30,22 +36,17 @@ import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveS
 import io.harness.eventsframework.entity_crud.project.ProjectEntityChangeDTO;
 import io.harness.persistence.PersistentEntity;
 import io.harness.rule.Owner;
+
+import com.google.inject.Inject;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.MockitoAnnotations;
 import org.reflections.Reflections;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.rule.OwnerRule.KAMAL;
-import static io.harness.rule.OwnerRule.NAVEEN;
-import static io.harness.rule.OwnerRule.VUK;
-import static org.assertj.core.api.Assertions.assertThat;
 @OwnedBy(HarnessTeam.CV)
 public class ProjectChangeEventMessageProcessorTest extends CvNextGenTestBase {
   @Inject private ProjectChangeEventMessageProcessor projectChangeEventMessageProcessor;
@@ -122,21 +123,25 @@ public class ProjectChangeEventMessageProcessorTest extends CvNextGenTestBase {
     monitoredServiceService.create(accountId, monitoredServiceDTO2);
 
     projectChangeEventMessageProcessor.processDeleteAction(ProjectEntityChangeDTO.newBuilder()
-            .setAccountIdentifier(accountId)
-            .setOrgIdentifier(orgIdentifier)
-            .setIdentifier("project1")
-            .build());
+                                                               .setAccountIdentifier(accountId)
+                                                               .setOrgIdentifier(orgIdentifier)
+                                                               .setIdentifier("project1")
+                                                               .build());
 
-    MonitoredServiceParams monitoredServiceParams1 = MonitoredServiceParams.builder()
+    MonitoredServiceParams monitoredServiceParams1 =
+        MonitoredServiceParams.builder()
             .monitoredServiceIdentifier(monitoredServiceDTO1.getIdentifier())
             .orgIdentifier(orgIdentifier)
             .projectIdentifier("project1")
-            .accountIdentifier(accountId).build();
-    MonitoredServiceParams monitoredServiceParams2 = MonitoredServiceParams.builder()
+            .accountIdentifier(accountId)
+            .build();
+    MonitoredServiceParams monitoredServiceParams2 =
+        MonitoredServiceParams.builder()
             .monitoredServiceIdentifier(monitoredServiceDTO1.getIdentifier())
             .orgIdentifier(orgIdentifier)
             .projectIdentifier("project2")
-            .accountIdentifier(accountId).build();
+            .accountIdentifier(accountId)
+            .build();
 
     assertThat(monitoredServiceService.getMonitoredServiceDTO(monitoredServiceParams1)).isNull();
     assertThat(monitoredServiceService.getMonitoredServiceDTO(monitoredServiceParams2)).isNull();
@@ -153,24 +158,27 @@ public class ProjectChangeEventMessageProcessorTest extends CvNextGenTestBase {
     String orgIdentifier = builderFactory.getContext().getOrgIdentifier();
     String projectIdentifier = builderFactory.getContext().getProjectIdentifier();
     ProjectParams projectParams = ProjectParams.builder()
-            .accountIdentifier(accountId)
-            .orgIdentifier(orgIdentifier)
-            .projectIdentifier(projectIdentifier)
-            .build();
+                                      .accountIdentifier(accountId)
+                                      .orgIdentifier(orgIdentifier)
+                                      .projectIdentifier(projectIdentifier)
+                                      .build();
     monitoredServiceService.create(accountId, monitoredServiceDTO);
     serviceLevelObjectiveService.create(projectParams, sloDTO);
 
-    projectChangeEventMessageProcessor.processDeleteAction(
-            ProjectEntityChangeDTO.newBuilder()
-                    .setAccountIdentifier(accountId)
-                    .setOrgIdentifier(orgIdentifier).setIdentifier(projectIdentifier).build());
-    assertThat(serviceLevelObjectiveService.getByMonitoredServiceIdentifier(projectParams,
-            monitoredServiceDTO.getIdentifier())).isEmpty();
+    projectChangeEventMessageProcessor.processDeleteAction(ProjectEntityChangeDTO.newBuilder()
+                                                               .setAccountIdentifier(accountId)
+                                                               .setOrgIdentifier(orgIdentifier)
+                                                               .setIdentifier(projectIdentifier)
+                                                               .build());
+    assertThat(serviceLevelObjectiveService.getByMonitoredServiceIdentifier(
+                   projectParams, monitoredServiceDTO.getIdentifier()))
+        .isEmpty();
     MonitoredServiceParams monitoredServiceParams = MonitoredServiceParams.builder()
-            .monitoredServiceIdentifier(monitoredServiceDTO.getIdentifier())
-            .projectIdentifier(projectIdentifier)
-            .orgIdentifier(orgIdentifier)
-            .accountIdentifier(accountId).build();
+                                                        .monitoredServiceIdentifier(monitoredServiceDTO.getIdentifier())
+                                                        .projectIdentifier(projectIdentifier)
+                                                        .orgIdentifier(orgIdentifier)
+                                                        .accountIdentifier(accountId)
+                                                        .build();
     assertThat(monitoredServiceService.getMonitoredServiceDTO((monitoredServiceParams))).isNull();
   }
 
