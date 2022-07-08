@@ -14,6 +14,7 @@ import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.service.instancesynchandler.AbstractInstanceSyncHandler;
 import io.harness.service.instancesynchandler.K8sInstanceSyncHandler;
 import io.harness.service.instancesynchandler.NativeHelmInstanceSyncHandler;
+import io.harness.service.instancesynchandler.PdcInstanceSyncHandler;
 import io.harness.service.instancesynchandler.ServerlessAwsLambdaInstanceSyncHandler;
 
 import com.google.inject.Inject;
@@ -27,6 +28,8 @@ public class InstanceSyncHandlerFactoryServiceImpl implements InstanceSyncHandle
   private final K8sInstanceSyncHandler k8sInstanceSyncHandler;
   private final NativeHelmInstanceSyncHandler nativeHelmInstanceSyncHandler;
   private final ServerlessAwsLambdaInstanceSyncHandler serverlessAwsLambdaInstanceSyncHandler;
+  private final PdcInstanceSyncHandler pdcInstanceSyncHandler;
+
   @Override
   public AbstractInstanceSyncHandler getInstanceSyncHandler(final String deploymentType) {
     switch (deploymentType) {
@@ -36,6 +39,8 @@ public class InstanceSyncHandlerFactoryServiceImpl implements InstanceSyncHandle
         return nativeHelmInstanceSyncHandler;
       case ServiceSpecType.SERVERLESS_AWS_LAMBDA:
         return serverlessAwsLambdaInstanceSyncHandler;
+      case ServiceSpecType.SSH:
+        return pdcInstanceSyncHandler;
       default:
         throw new UnexpectedException("No instance sync handler registered for deploymentType: " + deploymentType);
     }

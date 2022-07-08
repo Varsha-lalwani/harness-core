@@ -14,7 +14,12 @@ import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static java.util.Collections.emptyList;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.instance.info.InstanceInfoService;
+import io.harness.cdng.sshwinrm.PdcDeploymentOutcome;
+import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.delegate.beans.TaskData;
+import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
+import io.harness.delegate.beans.instancesync.mapper.PdcToServiceInstanceInfoMapper;
 import io.harness.delegate.task.shell.CommandTaskResponse;
 import io.harness.delegate.task.shell.SshCommandTaskParameters;
 import io.harness.executions.steps.ExecutionNodeType;
@@ -38,6 +43,7 @@ import io.harness.supplier.ThrowingSupplier;
 import software.wings.beans.TaskType;
 
 import com.google.inject.Inject;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,6 +55,7 @@ public class CommandStep extends TaskExecutableWithRollbackAndRbac<CommandTaskRe
   @Inject private KryoSerializer kryoSerializer;
   @Inject private StepHelper stepHelper;
   @Inject private SshCommandStepHelper sshCommandStepHelper;
+  @Inject private InstanceInfoService instanceInfoService;
 
   @Override
   public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
@@ -79,6 +86,7 @@ public class CommandStep extends TaskExecutableWithRollbackAndRbac<CommandTaskRe
     List<String> commandExecutionUnits =
         taskParameters.getCommandUnits().stream().map(cu -> cu.getName()).collect(Collectors.toList());
     String taskName = TaskType.COMMAND_TASK_NG.getDisplayName();
+
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer, commandExecutionUnits, taskName,
         TaskSelectorYaml.toTaskSelector(
             emptyIfNull(getParameterFieldValue(executeCommandStepParameters.getDelegateSelectors()))),
@@ -103,6 +111,25 @@ public class CommandStep extends TaskExecutableWithRollbackAndRbac<CommandTaskRe
     }
     stepResponseBuilder.failureInfo(failureInfoBuilder.build());
 
-    return stepResponseBuilder.build();
+    CommandStepParameters executeCommandStepParameters = (CommandStepParameters) stepParameters.getSpec();
+    SshCommandTaskParameters taskParameters =
+        sshCommandStepHelper.buildSshCommandTaskParameters(ambiance, executeCommandStepParameters);
+
+    List<String> filteredInfraHosts = taskParameters.getSshInfraDelegateConfig().getHosts();
+    List<String> hosts = Arrays.asList(taskParameters.getHost());
+
+    PdcDeploymentOutcome pdcDeploymentOutcome = PdcDeploymentOutcome.builder().host(taskParameters.getHost()).build();
+
+    List<ServerInstanceInfo> serverInstanceInfoList =
+
+        PdcToServiceInstanceInfoMapper.toServerInstanceInfoList(hosts, filteredInfraHosts);
+    instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance, serverInstanceInfoList);
+
+    return stepResponseBuilder
+        .stepOutcome(StepResponse.StepOutcome.builder()
+                         .name(OutcomeExpressionConstants.OUTPUT)
+                         .outcome(pdcDeploymentOutcome)
+                         .build())
+        .build();
   }
 }

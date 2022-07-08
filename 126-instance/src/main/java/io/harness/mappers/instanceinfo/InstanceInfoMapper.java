@@ -12,11 +12,13 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.dtos.instanceinfo.InstanceInfoDTO;
 import io.harness.dtos.instanceinfo.K8sInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.NativeHelmInstanceInfoDTO;
+import io.harness.dtos.instanceinfo.PdcInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.ReferenceInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.ServerlessAwsLambdaInstanceInfoDTO;
 import io.harness.entities.instanceinfo.InstanceInfo;
 import io.harness.entities.instanceinfo.K8sInstanceInfo;
 import io.harness.entities.instanceinfo.NativeHelmInstanceInfo;
+import io.harness.entities.instanceinfo.PdcInstanceInfo;
 import io.harness.entities.instanceinfo.ReferenceInstanceInfo;
 import io.harness.entities.instanceinfo.ServerlessAwsLambdaInstanceInfo;
 import io.harness.exception.InvalidRequestException;
@@ -35,6 +37,8 @@ public class InstanceInfoMapper {
       return NativeHelmInstanceInfoMapper.toDTO((NativeHelmInstanceInfo) instanceInfo);
     } else if (instanceInfo instanceof ServerlessAwsLambdaInstanceInfo) {
       return ServerlessAwsLambdaInstanceInfoMapper.toDTO((ServerlessAwsLambdaInstanceInfo) instanceInfo);
+    } else if (instanceInfo instanceof PdcInstanceInfo) {
+      return PdcInstanceInfoMapper.toDTO((PdcInstanceInfo) instanceInfo);
     }
     throw new InvalidRequestException("No InstanceInfoMapper toDTO found for instanceInfo : {}" + instanceInfo);
   }
@@ -48,6 +52,8 @@ public class InstanceInfoMapper {
       return NativeHelmInstanceInfoMapper.toEntity((NativeHelmInstanceInfoDTO) instanceInfoDTO);
     } else if (instanceInfoDTO instanceof ServerlessAwsLambdaInstanceInfoDTO) {
       return ServerlessAwsLambdaInstanceInfoMapper.toEntity((ServerlessAwsLambdaInstanceInfoDTO) instanceInfoDTO);
+    } else if (instanceInfoDTO instanceof PdcInstanceInfoDTO) {
+      return PdcInstanceInfoMapper.toEntity((PdcInstanceInfoDTO) instanceInfoDTO);
     }
     throw new InvalidRequestException(
         "No InstanceInfoMapper toEntity found for instanceInfoDTO : {}" + instanceInfoDTO);

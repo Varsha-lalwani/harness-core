@@ -191,7 +191,7 @@ public class CommandStepPlanCreator extends CDPMSStepPlanCreatorV2<CommandStepNo
         PlanNode.builder()
             .uuid(ctx.getCurrentField().getNode().getUuid() + host)
             .name(getName(stepElement))
-            .identifier(stepElement.getIdentifier() + host)
+            .identifier(stepElement.getIdentifier() + Math.abs(host.hashCode()))
             .stepType(stepElement.getStepSpecType().getStepType())
             .group(StepOutcomeGroup.STEP.name())
             .stepParameters(newStepParamsWithHost)
