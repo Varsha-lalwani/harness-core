@@ -112,7 +112,7 @@ public class AzureArmTaskNGTest extends CategoryTest {
                            .resourceGroupName("resourceGroupName")
                            .deploymentMode(AzureDeploymentMode.COMPLETE)
                            .timeoutInMs(100000)
-                           .encryptedDataDetailList(Collections.singletonList(EncryptedDataDetail.builder().build()))
+                           .encryptedDataDetails(Collections.singletonList(EncryptedDataDetail.builder().build()))
                            .deploymentDataLocation("eastus")
                            .build();
 

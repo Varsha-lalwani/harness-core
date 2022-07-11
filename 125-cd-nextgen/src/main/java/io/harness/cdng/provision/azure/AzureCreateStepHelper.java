@@ -120,10 +120,10 @@ public class AzureCreateStepHelper {
       throw new InvalidRequestException("Invalid connector selected in Azure step. Select Azure connector");
     }
 
-
-
     List<GitFetchFilesConfig> gitFetchFilesConfigs =
-        getParametersGitFetchFileConfigs(ambiance, stepConfigurationParameters);AzureCreateTemplateFileSpec azureCreateTemplateFileSpec = stepConfigurationParameters.getAzureDeploymentType().getTemplateSpecs().getSpec();
+        getParametersGitFetchFileConfigs(ambiance, stepConfigurationParameters);
+    AzureCreateTemplateFileSpec azureCreateTemplateFileSpec =
+        stepConfigurationParameters.getAzureDeploymentType().getTemplateSpecs().getSpec();
     if (isTemplateStoredOnGit(azureCreateTemplateFileSpec)) {
       gitFetchFilesConfigs.add(getTemplateGitFetchFileConfig(ambiance, stepConfigurationParameters));
     }
@@ -164,44 +164,44 @@ public class AzureCreateStepHelper {
     AzureCreateStepParameters azureCreateStepParameters = (AzureCreateStepParameters) stepElementParameters.getSpec();
     AzureCreateStepConfigurationParameters stepConfigurationParameters = azureCreateStepParameters.getConfiguration();
     if (Objects.equals(stepConfigurationParameters.getAzureDeploymentType().getType(), AzureDeploymentTypes.ARM)) {
-      AzureARMDeploymentSpec specs =
-          (AzureARMDeploymentSpec) stepConfigurationParameters.getAzureDeploymentType();
+      AzureARMDeploymentSpec specs = (AzureARMDeploymentSpec) stepConfigurationParameters.getAzureDeploymentType();
       AzureARMTaskNGParameters.AzureARMTaskNGParametersBuilder builder = AzureARMTaskNGParameters.builder();
-          builder.accountId(AmbianceUtils.getAccountId(ambiance))
+      builder.accountId(AmbianceUtils.getAccountId(ambiance))
           .taskType(ARM_DEPLOYMENT)
           .templateBody(passThroughData.getTemplateBody())
           .connectorDTO(connectorConfig)
           .parametersBody(passThroughData.getParametersBody())
           .timeoutInMs(StepUtils.getTimeoutMillis(stepElementParameters.getTimeout(), DEFAULT_TIMEOUT));
-            if (specs.getScope().getSpec() instanceof AzureResourceGroupSpec) {
-                AzureResourceGroupSpec resourceGroupSpec = (AzureResourceGroupSpec) specs.getScope().getSpec();
-                builder.scopeType(ARMScopeType.fromString(specs.getScope().getType()))
-                        .deploymentMode(retrieveDeploymentMode(ARMScopeType.fromString(specs.getScope().getType()), resourceGroupSpec.getMode().getValue()))
-          .subscriptionId(resourceGroupSpec.getSubscription().getValue())
-          .resourceGroupName(resourceGroupSpec.getResourceGroup().getValue());
-            } else if (specs.getScope().getSpec() instanceof AzureSubscritionSpec) {
-                AzureSubscritionSpec subscriptionSpec = (AzureSubscritionSpec) specs.getScope().getSpec();
-                builder.scopeType(ARMScopeType.fromString(specs.getScope().getType()))
-                        .deploymentDataLocation(subscriptionSpec.getDeploymentDataLocation().getValue())
-                        .deploymentMode(retrieveDeploymentMode(ARMScopeType.fromString(specs.getScope().getType()), subscriptionSpec.getMode().getValue()))
-                        .subscriptionId(subscriptionSpec.getSubscription().getValue());
-          } else if (specs.getScope().getSpec() instanceof AzureManagementSpec) {
-                AzureManagementSpec managementSpec = (AzureManagementSpec) specs.getScope().getSpec();
-                builder.scopeType(ARMScopeType.fromString(specs.getScope().getType())).deploymentMode(
-              retrieveDeploymentMode(ARMScopeType.fromString(specs.getScope().getType()), null))
-                        .deploymentDataLocation(managementSpec.getDeploymentDataLocation().getValue())
-                        .managementGroupId(managementSpec.getManagementGroupId().getValue());
-            } else if (specs.getScope().getSpec() instanceof AzureTenantSpec) {
-                AzureTenantSpec tenantSpec = (AzureTenantSpec) specs.getScope().getSpec();
-                builder.scopeType(ARMScopeType.fromString(specs.getScope().getType()))
-                        .deploymentMode(retrieveDeploymentMode(ARMScopeType.fromString(specs.getScope().getType()), null))
-                        .deploymentDataLocation(tenantSpec.getDeploymentDataLocation().getValue());
-          } else {
-                throw new InvalidRequestException("Invalid scope type in Azure step. Select one of the following: ResourceGroup, Subscription, Management, Tenant");
-            }
-          return builder.encryptedDataDetailList(getAzureEncryptionDetails(ambiance, connectorConfig))
-          .deploymentDataLocation(specs.getDeploymentDataLocation().getValue())
-          .build();
+      if (specs.getScope().getSpec() instanceof AzureResourceGroupSpec) {
+        AzureResourceGroupSpec resourceGroupSpec = (AzureResourceGroupSpec) specs.getScope().getSpec();
+        builder.scopeType(ARMScopeType.fromString(specs.getScope().getType()))
+            .deploymentMode(retrieveDeploymentMode(
+                ARMScopeType.fromString(specs.getScope().getType()), resourceGroupSpec.getMode().getValue()))
+            .subscriptionId(resourceGroupSpec.getSubscription().getValue())
+            .resourceGroupName(resourceGroupSpec.getResourceGroup().getValue());
+      } else if (specs.getScope().getSpec() instanceof AzureSubscritionSpec) {
+        AzureSubscritionSpec subscriptionSpec = (AzureSubscritionSpec) specs.getScope().getSpec();
+        builder.scopeType(ARMScopeType.fromString(specs.getScope().getType()))
+            .deploymentDataLocation(subscriptionSpec.getDeploymentDataLocation().getValue())
+            .deploymentMode(retrieveDeploymentMode(
+                ARMScopeType.fromString(specs.getScope().getType()), subscriptionSpec.getMode().getValue()))
+            .subscriptionId(subscriptionSpec.getSubscription().getValue());
+      } else if (specs.getScope().getSpec() instanceof AzureManagementSpec) {
+        AzureManagementSpec managementSpec = (AzureManagementSpec) specs.getScope().getSpec();
+        builder.scopeType(ARMScopeType.fromString(specs.getScope().getType()))
+            .deploymentMode(retrieveDeploymentMode(ARMScopeType.fromString(specs.getScope().getType()), null))
+            .deploymentDataLocation(managementSpec.getDeploymentDataLocation().getValue())
+            .managementGroupId(managementSpec.getManagementGroupId().getValue());
+      } else if (specs.getScope().getSpec() instanceof AzureTenantSpec) {
+        AzureTenantSpec tenantSpec = (AzureTenantSpec) specs.getScope().getSpec();
+        builder.scopeType(ARMScopeType.fromString(specs.getScope().getType()))
+            .deploymentMode(retrieveDeploymentMode(ARMScopeType.fromString(specs.getScope().getType()), null))
+            .deploymentDataLocation(tenantSpec.getDeploymentDataLocation().getValue());
+      } else {
+        throw new InvalidRequestException(
+            "Invalid scope type in Azure step. Select one of the following: ResourceGroup, Subscription, Management, Tenant");
+      }
+      return builder.encryptedDataDetails(getAzureEncryptionDetails(ambiance, connectorConfig)).build();
     } else {
       AzureBluePrintDeploymentSpec specs =
           (AzureBluePrintDeploymentSpec) stepConfigurationParameters.getAzureDeploymentType();
@@ -287,9 +287,7 @@ public class AzureCreateStepHelper {
   private GitFetchFilesConfig getTemplateGitFetchFileConfig(
       Ambiance ambiance, AzureCreateStepConfigurationParameters stepConfiguration) {
     AzureRemoteTemplateFileSpec azureCreateTemplateFileSpec =
-        (AzureRemoteTemplateFileSpec) stepConfiguration.getAzureDeploymentType()
-            .getTemplateSpecs()
-            .getSpec();
+        (AzureRemoteTemplateFileSpec) stepConfiguration.getAzureDeploymentType().getTemplateSpecs().getSpec();
     if (Objects.equals(stepConfiguration.getAzureDeploymentType().getType(), AzureDeploymentTypes.ARM)) {
       return GitFetchFilesConfig.builder()
           .manifestType("Azure Template")
@@ -362,8 +360,7 @@ public class AzureCreateStepHelper {
 
   private boolean hasGitStoredParameters(AzureCreateStepConfigurationParameters stepConfigurationParameters) {
     if (Objects.equals(stepConfigurationParameters.getAzureDeploymentType().getType(), AzureDeploymentTypes.ARM)) {
-      AzureARMDeploymentSpec spec =
-          (AzureARMDeploymentSpec) stepConfigurationParameters.getAzureDeploymentType();
+      AzureARMDeploymentSpec spec = (AzureARMDeploymentSpec) stepConfigurationParameters.getAzureDeploymentType();
       return spec.getParameters() != null
           && Objects.equals(spec.getParameters().getType(), AzureARMParametersFileTypes.Remote)
           && ManifestStoreType.isInGitSubset(
@@ -372,7 +369,7 @@ public class AzureCreateStepHelper {
     return false;
   }
 
-   TaskChainResponse handleGitFetchResponse(AzureCreateStepExecutor azureCreateStepExecutor, Ambiance ambiance,
+  TaskChainResponse handleGitFetchResponse(AzureCreateStepExecutor azureCreateStepExecutor, Ambiance ambiance,
       StepElementParameters stepElementParameters, AzureCreateStepConfigurationParameters stepConfigurationParameters,
       AzureCreatePassThroughData passThroughData, GitFetchResponse responseData) {
     Map<String, FetchFilesResult> filesFromMultipleRepo = responseData.getFilesFromMultipleRepo();
@@ -387,8 +384,7 @@ public class AzureCreateStepHelper {
       if (filesFromMultipleRepo.get(PARAMETERS_FILE_IDENTIFIER) != null) {
         parametersBody = filesFromMultipleRepo.get(PARAMETERS_FILE_IDENTIFIER).getFiles().get(0).getFileContent();
       } else {
-        AzureARMDeploymentSpec spec =
-            (AzureARMDeploymentSpec) stepConfigurationParameters.getAzureDeploymentType();
+        AzureARMDeploymentSpec spec = (AzureARMDeploymentSpec) stepConfigurationParameters.getAzureDeploymentType();
         if (spec.getParameters() != null
             && Objects.equals(spec.getParameters().getType(), AzureARMParametersFileTypes.Inline)) {
           AzureInlineParametersFileSpec fileSpec = (AzureInlineParametersFileSpec) spec.getParameters().getSpec();
@@ -398,8 +394,7 @@ public class AzureCreateStepHelper {
       if (filesFromMultipleRepo.get(TEMPLATE_FILE_IDENTIFIER) != null) {
         templateBody = filesFromMultipleRepo.get(TEMPLATE_FILE_IDENTIFIER).getFiles().get(0).getFileContent();
       } else {
-        AzureARMDeploymentSpec spec =
-            (AzureARMDeploymentSpec) stepConfigurationParameters.getAzureDeploymentType();
+        AzureARMDeploymentSpec spec = (AzureARMDeploymentSpec) stepConfigurationParameters.getAzureDeploymentType();
         if (Objects.equals(spec.getTemplateFile().getType(), AzureCreateTemplateFileTypes.Inline)) {
           AzureInlineTemplateFileSpec fileSpec = (AzureInlineTemplateFileSpec) spec.getTemplateFile().getSpec();
           parametersBody = fileSpec.getTemplateBody().getValue();
@@ -422,7 +417,8 @@ public class AzureCreateStepHelper {
       }
     }
     populatePassThroughData(passThroughData, templateBody, parametersBody, blueprintBody, assignBody, artifacts);
-    AzureConnectorDTO connectorDTO = getAzureConnectorConfig(ambiance, ParameterField.createValueField(stepConfigurationParameters.getAzureDeploymentType().getConnectorRef()));
+    AzureConnectorDTO connectorDTO = getAzureConnectorConfig(ambiance,
+        ParameterField.createValueField(stepConfigurationParameters.getAzureDeploymentType().getConnectorRef()));
     AzureTaskNGParameters azureTaskNGParameters =
         getAzureTaskNGParams(ambiance, stepElementParameters, connectorDTO, passThroughData);
     return azureCreateStepExecutor.executeCreateTask(

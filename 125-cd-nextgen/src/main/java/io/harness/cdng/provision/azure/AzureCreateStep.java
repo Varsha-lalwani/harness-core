@@ -18,7 +18,6 @@ import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.provision.azure.beans.AzureCreatePassThroughData;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.azure.arm.AzureTaskNGParameters;
-import io.harness.exception.InvalidArgumentsException;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.AccessDeniedException;
 import io.harness.exception.InvalidArgumentsException;
@@ -78,34 +77,37 @@ public class AzureCreateStep extends TaskChainExecutableWithRollbackAndRbac impl
     String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
     String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
 
-        // Template file connector
-        AzureCreateStepParameters azureCreateStepParameters =
-                (AzureCreateStepParameters) stepParameters.getSpec();
-        AzureCreateTemplateFile azureCreateTemplateFile;
-        azureCreateTemplateFile = azureCreateStepParameters.getConfiguration().getAzureDeploymentType().getTemplateSpecs();
+    // Template file connector
+    AzureCreateStepParameters azureCreateStepParameters = (AzureCreateStepParameters) stepParameters.getSpec();
+    AzureCreateTemplateFile azureCreateTemplateFile;
+    azureCreateTemplateFile = azureCreateStepParameters.getConfiguration().getAzureDeploymentType().getTemplateSpecs();
 
-        if (azureCreateTemplateFile.getType().equals(AzureCreateTemplateFileTypes.Remote)) {
-            AzureRemoteTemplateFileSpec azureRemoteTemplateFileSpec = (AzureRemoteTemplateFileSpec) azureCreateTemplateFile.getSpec();
-            String connectorRef = getParameterFieldValue(azureRemoteTemplateFileSpec.getStore().getSpec().getConnectorReference());
-            IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(connectorRef, accountId, orgIdentifier, projectIdentifier);
-            EntityDetail entityDetail = EntityDetail.builder().type(EntityType.CONNECTORS).entityRef(identifierRef).build();
-            entityDetailList.add(entityDetail);
-        }
+    if (azureCreateTemplateFile.getType().equals(AzureCreateTemplateFileTypes.Remote)) {
+      AzureRemoteTemplateFileSpec azureRemoteTemplateFileSpec =
+          (AzureRemoteTemplateFileSpec) azureCreateTemplateFile.getSpec();
+      String connectorRef =
+          getParameterFieldValue(azureRemoteTemplateFileSpec.getStore().getSpec().getConnectorReference());
+      IdentifierRef identifierRef =
+          IdentifierRefHelper.getIdentifierRef(connectorRef, accountId, orgIdentifier, projectIdentifier);
+      EntityDetail entityDetail = EntityDetail.builder().type(EntityType.CONNECTORS).entityRef(identifierRef).build();
+      entityDetailList.add(entityDetail);
+    }
 
-        // Parameters file connectors. This will be valid only if the type is ARM.
-        if (Objects.equals(azureCreateStepParameters.getConfiguration().getAzureDeploymentType().getType(), AzureDeploymentTypes.ARM)) {
-            AzureARMDeploymentSpec specs = (AzureARMDeploymentSpec) azureCreateStepParameters.getConfiguration().getAzureDeploymentType();
-            if (specs.getParameters() != null && Objects.equals(specs.getParameters().getType(), AzureARMParametersFileTypes.Remote)) {
-                AzureRemoteParametersFileSpec fileSpec = (AzureRemoteParametersFileSpec) specs.getParameters().getSpec();
-                String connectorRef =
-                        getParameterFieldValue(fileSpec.getStore().getSpec().getConnectorReference());
-                IdentifierRef identifierRef =
-                        IdentifierRefHelper.getIdentifierRef(connectorRef, accountId, orgIdentifier, projectIdentifier);
-                EntityDetail entityDetail =
-                        EntityDetail.builder().type(EntityType.CONNECTORS).entityRef(identifierRef).build();
-                entityDetailList.add(entityDetail);
-            }
-        }
+    // Parameters file connectors. This will be valid only if the type is ARM.
+    if (Objects.equals(azureCreateStepParameters.getConfiguration().getAzureDeploymentType().getType(),
+            AzureDeploymentTypes.ARM)) {
+      AzureARMDeploymentSpec specs =
+          (AzureARMDeploymentSpec) azureCreateStepParameters.getConfiguration().getAzureDeploymentType();
+      if (specs.getParameters() != null
+          && Objects.equals(specs.getParameters().getType(), AzureARMParametersFileTypes.Remote)) {
+        AzureRemoteParametersFileSpec fileSpec = (AzureRemoteParametersFileSpec) specs.getParameters().getSpec();
+        String connectorRef = getParameterFieldValue(fileSpec.getStore().getSpec().getConnectorReference());
+        IdentifierRef identifierRef =
+            IdentifierRefHelper.getIdentifierRef(connectorRef, accountId, orgIdentifier, projectIdentifier);
+        EntityDetail entityDetail = EntityDetail.builder().type(EntityType.CONNECTORS).entityRef(identifierRef).build();
+        entityDetailList.add(entityDetail);
+      }
+    }
 
     // Azure connector
     String connectorRef = azureCreateStepParameters.getConfiguration().getAzureDeploymentType().getConnectorRef();
@@ -131,7 +133,8 @@ public class AzureCreateStep extends TaskChainExecutableWithRollbackAndRbac impl
       StepExceptionPassThroughData stepExceptionPassThroughData = (StepExceptionPassThroughData) passThroughData;
       return cdStepHelper.handleStepExceptionFailure(stepExceptionPassThroughData);
     }
-    // TODO: To implement after the DelegateTask is implemented.return null;
+    // TODO: To implement after the DelegateTask is implemented.
+    return null;
   }
 
   @Override

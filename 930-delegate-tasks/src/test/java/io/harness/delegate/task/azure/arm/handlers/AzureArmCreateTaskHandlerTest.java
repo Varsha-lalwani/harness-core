@@ -147,7 +147,7 @@ public class AzureArmCreateTaskHandlerTest extends CategoryTest {
         .deploymentMode(AzureDeploymentMode.INCREMENTAL)
         .parametersBody(parameters)
         .templateBody(template)
-        .encryptedDataDetailList(Collections.emptyList());
+        .encryptedDataDetails(Collections.emptyList());
   }
 
   @Test
