@@ -8,7 +8,7 @@
 package io.harness.expression;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.rule.OwnerRule.GARVIT;
+import static io.harness.rule.OwnerRule.SHREYAS;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,7 +59,7 @@ public class ShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
 
   @Test
   @Category(UnitTests.class)
-  @Owner(developers = GARVIT)
+  @Owner(developers = SHREYAS)
   public void testResolve() throws Exception {
     ShellScriptYamlExpressionEvaluator shellScriptYamlExpressionEvaluator =
         new ShellScriptYamlExpressionEvaluator(yaml);
