@@ -70,7 +70,7 @@ public class CustomShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
     // Tests for single value resolution
     assertThat(shellScriptBaseDTO.getType()).isEqualTo(TemplateEntityConstants.SCRIPT);
     // Tests for resolution of Hierarchical resolution
-    // ie resolve(expression 1) where expression 1 points to expression 2
+    // ie resolve(expression 1) where expression 1 needs resolution of expression 2 or more levels
     assertThat(shellScriptBaseDTO.getCustomShellScriptSpec().getSource().getSpec().getScript().getValue())
         .isEqualTo("echo 1 echo 10_Inline and dummyValue2");
     // TODO: Tests for secret resolution
