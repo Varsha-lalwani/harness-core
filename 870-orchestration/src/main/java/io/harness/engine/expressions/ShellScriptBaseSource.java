@@ -24,7 +24,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName("Inline")
 @OwnedBy(PL)
 @TypeAlias("ShellScriptBaseSource")
-public class CustomShellScriptBaseSource {
+public class ShellScriptBaseSource {
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> script;
 
   public String getType() {

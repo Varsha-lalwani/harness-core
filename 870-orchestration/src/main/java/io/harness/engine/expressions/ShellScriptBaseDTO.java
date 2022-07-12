@@ -23,12 +23,12 @@ import org.springframework.data.annotation.TypeAlias;
 @NoArgsConstructor
 @AllArgsConstructor
 @TypeAlias("ShellScriptBaseDTO")
-public class CustomShellScriptBaseDTO {
+public class ShellScriptBaseDTO {
   // TYPE
   @JsonProperty("type") String type = TemplateEntityConstants.SCRIPT;
 
   @NotNull
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
-  CustomShellScriptSpec customShellScriptSpec;
+  ShellScriptSpec shellScriptSpec;
 }

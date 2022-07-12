@@ -41,7 +41,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName(TemplateEntityConstants.SCRIPT)
 @TypeAlias("ShellScriptSpec")
 @OwnedBy(HarnessTeam.PL)
-public class CustomShellScriptSpec implements Visitable, WithDelegateSelector {
+public class ShellScriptSpec implements Visitable, WithDelegateSelector {
   // TIMEOUT
   @NotNull @ApiModelProperty(dataType = INTEGER_CLASSPATH) @YamlSchemaTypes({integer}) ParameterField<Integer> timeout;
 
@@ -75,7 +75,7 @@ public class CustomShellScriptSpec implements Visitable, WithDelegateSelector {
   List<NGVariable> environmentVariables;
 
   // SOURCE
-  @NotNull CustomShellScriptSourceWrapper source;
+  @NotNull ShellScriptSourceWrapper source;
 
   @Override
   public ParameterField<List<TaskSelectorYaml>> fetchDelegateSelectors() {

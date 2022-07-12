@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @OwnedBy(PL)
-public class CustomShellScriptSourceWrapper {
+public class ShellScriptSourceWrapper {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
@@ -35,5 +35,5 @@ public class CustomShellScriptSourceWrapper {
 
   @NotNull
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
-  CustomShellScriptBaseSource spec;
+  ShellScriptBaseSource spec;
 }

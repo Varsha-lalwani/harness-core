@@ -15,8 +15,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.engine.expressions.CustomShellScriptBaseDTO;
-import io.harness.engine.expressions.CustomShellScriptYamlDTO;
+import io.harness.engine.expressions.ShellScriptBaseDTO;
+import io.harness.engine.expressions.ShellScriptYamlDTO;
 import io.harness.engine.expressions.ShellScriptYamlExpressionEvaluator;
 import io.harness.ng.core.template.TemplateEntityConstants;
 import io.harness.pms.yaml.YamlUtils;
@@ -25,7 +25,7 @@ import io.harness.rule.Owner;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 @OwnedBy(PL)
-public class CustomShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
+public class ShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
   private String yaml = "---\n"
       + "script:\n"
       + "  type: Script\n"
@@ -63,15 +63,13 @@ public class CustomShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
   public void testResolve() throws Exception {
     ShellScriptYamlExpressionEvaluator shellScriptYamlExpressionEvaluator =
         new ShellScriptYamlExpressionEvaluator(yaml);
-    CustomShellScriptBaseDTO shellScriptBaseDTO =
-        YamlUtils.read(yaml, CustomShellScriptYamlDTO.class).getCustomShellScriptBaseDTO();
-    shellScriptBaseDTO =
-        (CustomShellScriptBaseDTO) shellScriptYamlExpressionEvaluator.resolve(shellScriptBaseDTO, false);
+    ShellScriptBaseDTO shellScriptBaseDTO = YamlUtils.read(yaml, ShellScriptYamlDTO.class).getShellScriptBaseDTO();
+    shellScriptBaseDTO = (ShellScriptBaseDTO) shellScriptYamlExpressionEvaluator.resolve(shellScriptBaseDTO, false);
     // Tests for single value resolution
     assertThat(shellScriptBaseDTO.getType()).isEqualTo(TemplateEntityConstants.SCRIPT);
     // Tests for resolution of Hierarchical resolution
     // ie resolve(expression 1) where expression 1 needs resolution of expression 2 or more levels
-    assertThat(shellScriptBaseDTO.getCustomShellScriptSpec().getSource().getSpec().getScript().getValue())
+    assertThat(shellScriptBaseDTO.getShellScriptSpec().getSource().getSpec().getScript().getValue())
         .isEqualTo("echo 1 echo 10_Inline and dummyValue2");
     // TODO: Tests for secret resolution
   }

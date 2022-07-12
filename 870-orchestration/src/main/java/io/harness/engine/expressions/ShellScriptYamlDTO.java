@@ -17,6 +17,6 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @Builder
 @TypeAlias("ShellScriptYamlDTO")
-public class CustomShellScriptYamlDTO implements YamlDTO {
-  @JsonProperty("script") CustomShellScriptBaseDTO customShellScriptBaseDTO;
+public class ShellScriptYamlDTO implements YamlDTO {
+  @JsonProperty("script") ShellScriptBaseDTO shellScriptBaseDTO;
 }
