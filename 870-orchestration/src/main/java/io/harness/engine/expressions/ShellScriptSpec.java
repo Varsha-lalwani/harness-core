@@ -42,9 +42,6 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("ShellScriptSpec")
 @OwnedBy(HarnessTeam.PL)
 public class ShellScriptSpec implements Visitable, WithDelegateSelector {
-  // TIMEOUT
-  @NotNull @ApiModelProperty(dataType = INTEGER_CLASSPATH) @YamlSchemaTypes({integer}) ParameterField<Integer> timeout;
-
   // UUID
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })

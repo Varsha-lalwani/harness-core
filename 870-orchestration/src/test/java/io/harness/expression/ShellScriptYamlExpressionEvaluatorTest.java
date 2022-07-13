@@ -32,14 +32,13 @@ public class ShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
       + "  name: Script\n"
       + "  identifier: Script\n"
       + "  spec:\n"
-      + "    timeout: 10\n"
       + "    shell: Bash\n"
       + "    onDelegate: 'true'\n"
       + "    source:\n"
       + "      __uuid: neREpx2mmQ14G7y3pKAQzW\n"
       + "      type: Inline\n"
       + "      spec:\n"
-      + "        script: echo 1 echo <+script.spec.timeout>_<+script.spec.source.type> and <+script.spec.environmentVariables.e1>\n"
+      + "        script: echo 1 echo <+script.spec.shell>_<+script.spec.source.type> and <+script.spec.environmentVariables.e1>\n"
       + "    environmentVariables:\n"
       + "    - name: e1\n"
       + "      value: <+script.spec.environmentVariables.e2>\n"
@@ -70,7 +69,7 @@ public class ShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
     // Tests for resolution of Hierarchical resolution
     // ie resolve(expression 1) where expression 1 needs resolution of expression 2 or more levels
     assertThat(shellScriptBaseDTO.getShellScriptSpec().getSource().getSpec().getScript().getValue())
-        .isEqualTo("echo 1 echo 10_Inline and dummyValue2");
+        .isEqualTo("echo 1 echo Bash_Inline and dummyValue2");
     // TODO: Tests for secret resolution
   }
 }
