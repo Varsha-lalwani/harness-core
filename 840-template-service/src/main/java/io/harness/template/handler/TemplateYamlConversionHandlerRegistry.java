@@ -13,6 +13,7 @@ import io.harness.exception.ngexception.NGTemplateException;
 
 import com.google.inject.Singleton;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @OwnedBy(HarnessTeam.CDC)
@@ -21,16 +22,14 @@ public class TemplateYamlConversionHandlerRegistry {
   private final Map<String, YamlConversionHandler> registry = new ConcurrentHashMap<>();
 
   public void register(String templateType, YamlConversionHandler yamlConversionHandler) {
-    if (registry.containsKey(templateType)) {
-      throw new NGTemplateException("YamlConversionHandler already Registered with type: " + templateType);
-    }
-    registry.put(templateType, yamlConversionHandler);
+    Optional.ofNullable(registry.putIfAbsent(templateType, yamlConversionHandler)).ifPresent(v -> {
+      throw new NGTemplateException(
+          "YamlConversionHandler already Registered with type: " + templateType + " and value " + v);
+    });
   }
 
   public YamlConversionHandler obtain(String templateType) {
-    if (registry.containsKey(templateType)) {
-      return registry.get(templateType);
-    }
-    throw new NGTemplateException("No yamlConversionHandler registered for type: " + templateType);
+    return Optional.ofNullable(registry.get(templateType))
+        .orElseThrow(() -> new NGTemplateException("No yamlConversionHandler registered for type: " + templateType));
   }
 }
