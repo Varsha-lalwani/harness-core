@@ -10,29 +10,25 @@ package io.harness.dtos.deploymentinfo;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.util.InstanceSyncKey;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 import javax.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
-@Builder
+@SuperBuilder
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @OwnedBy(CDP)
-public class PdcDeploymentInfoDTO extends DeploymentInfoDTO {
+public abstract class PdcDeploymentInfoDTO extends DeploymentInfoDTO {
   @NotNull String infraIdentifier;
   @NotNull private List<String> hosts;
-
-  @Override
-  public String getType() {
-    return ServiceSpecType.SSH;
-  }
 
   @Override
   public String prepareInstanceSyncHandlerKey() {

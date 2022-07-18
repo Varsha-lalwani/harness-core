@@ -5,27 +5,21 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package io.harness.delegate.beans.instancesync.info;
+package io.harness.entities.instanceinfo;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@JsonTypeName("PdcServerInstanceInfo")
-@JsonIgnoreProperties(ignoreUnknown = true)
+@OwnedBy(HarnessTeam.CDP)
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@OwnedBy(HarnessTeam.CDP)
-public class PdcServerInstanceInfo extends ServerInstanceInfo {
-  private String serviceType;
-  private String host;
-  private List<String> filteredInfraHosts;
+public class AwsInstanceInfo extends InstanceInfo {
+  @NotNull private String host;
 }

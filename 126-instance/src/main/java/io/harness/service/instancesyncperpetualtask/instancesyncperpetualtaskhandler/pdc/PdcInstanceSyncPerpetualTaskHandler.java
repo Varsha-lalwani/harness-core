@@ -63,6 +63,7 @@ public class PdcInstanceSyncPerpetualTaskHandler extends InstanceSyncPerpetualTa
     PdcInstanceSyncPerpetualTaskParamsNg pdcInstanceSyncPerpetualTaskParamsNg =
         PdcInstanceSyncPerpetualTaskParamsNg.newBuilder()
             .setAccountId(infrastructure.getAccountIdentifier())
+            .setServiceType(pdcDeploymentInfoDTOs.get(0).getType())
             .addAllHosts(hosts)
             .setPort(port)
             .build();

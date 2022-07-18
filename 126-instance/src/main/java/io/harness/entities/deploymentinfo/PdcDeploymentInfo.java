@@ -12,15 +12,17 @@ import io.harness.annotations.dev.OwnedBy;
 
 import java.util.List;
 import javax.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
+@SuperBuilder
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @OwnedBy(HarnessTeam.CDP)
-public class PdcDeploymentInfo extends DeploymentInfo {
+public abstract class PdcDeploymentInfo extends DeploymentInfo {
   @NotNull String infraIdentifier;
   @NotNull private List<String> hosts;
 }

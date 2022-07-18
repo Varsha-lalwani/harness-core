@@ -40,6 +40,8 @@ public class InstanceSyncHandlerFactoryServiceImpl implements InstanceSyncHandle
       case ServiceSpecType.SERVERLESS_AWS_LAMBDA:
         return serverlessAwsLambdaInstanceSyncHandler;
       case ServiceSpecType.SSH:
+      case ServiceSpecType.WINRM:
+        // TODO get infra definition for AWS, Azure, PDC
         return pdcInstanceSyncHandler;
       default:
         throw new UnexpectedException("No instance sync handler registered for deploymentType: " + deploymentType);

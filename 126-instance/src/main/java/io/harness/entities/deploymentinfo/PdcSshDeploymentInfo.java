@@ -5,24 +5,21 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package io.harness.dtos.deploymentinfo;
+package io.harness.entities.deploymentinfo;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
+import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Data
-@NoArgsConstructor
-@EqualsAndHashCode
 @SuperBuilder
-@OwnedBy(HarnessTeam.DX)
-public abstract class DeploymentInfoDTO {
-  // Create combination of fields that can be used to identify related instance info details
-  // The key should be same as instance handler key of the corresponding instance info
-  public abstract String getType();
-  public abstract String prepareInstanceSyncHandlerKey();
-}
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@OwnedBy(HarnessTeam.CDP)
+public class PdcSshDeploymentInfo extends PdcDeploymentInfo {}

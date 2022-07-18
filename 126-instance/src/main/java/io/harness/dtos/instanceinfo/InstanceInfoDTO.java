@@ -20,7 +20,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
   , @JsonSubTypes.Type(value = NativeHelmInstanceInfoDTO.class, name = "NativeHelm"),
       @JsonSubTypes.Type(value = ReferenceInstanceInfoDTO.class, name = "Reference"),
       @JsonSubTypes.Type(value = ServerlessAwsLambdaInstanceInfoDTO.class, name = "ServerlessAwsLambda"),
-      @JsonSubTypes.Type(value = PdcInstanceInfoDTO.class, name = "Pdc")
+      @JsonSubTypes.Type(value = PdcInstanceInfoDTO.class, name = "Pdc"),
+      @JsonSubTypes.Type(value = AwsInstanceInfoDTO.class, name = "Aws")
 })
 public abstract class InstanceInfoDTO {
   // Create combination of fields that identifies any related instance uniquely

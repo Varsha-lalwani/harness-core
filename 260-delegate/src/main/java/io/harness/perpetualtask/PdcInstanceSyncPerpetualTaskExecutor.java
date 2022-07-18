@@ -17,13 +17,12 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.delegate.beans.instancesync.InstanceSyncPerpetualTaskResponse;
-import io.harness.delegate.beans.instancesync.PdcInstanceSyncPerpetualTaskResponse;
-import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
+import io.harness.delegate.beans.instancesync.*;
 import io.harness.delegate.beans.instancesync.info.PdcServerInstanceInfo;
 import io.harness.grpc.utils.AnyUtils;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.managerclient.DelegateAgentManagerClient;
+import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.perpetualtask.instancesync.PdcInstanceSyncPerpetualTaskParamsNg;
 
 import software.wings.beans.HostReachabilityInfo;
@@ -56,21 +55,22 @@ public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecut
 
   private PerpetualTaskResponse executeTask(PerpetualTaskId taskId, PdcInstanceSyncPerpetualTaskParamsNg taskParams) {
     List<ServerInstanceInfo> serverInstanceInfos =
-        getServerInstanceInfoList(taskParams.getHostsList(), taskParams.getPort());
+        getServerInstanceInfoList(taskParams.getHostsList(), taskParams.getPort(), taskParams.getServiceType());
 
     log.info("Pdc Instance sync nInstances: {}, task id: {}",
         isEmpty(serverInstanceInfos) ? 0 : serverInstanceInfos.size(), taskId);
 
-    String instanceSyncResponseMsg = publishInstanceSyncResult(taskId, taskParams.getAccountId(), serverInstanceInfos);
+    String instanceSyncResponseMsg =
+        publishInstanceSyncResult(taskId, taskParams.getAccountId(), serverInstanceInfos, taskParams.getServiceType());
     return PerpetualTaskResponse.builder().responseCode(SC_OK).responseMessage(instanceSyncResponseMsg).build();
   }
 
-  private List<ServerInstanceInfo> getServerInstanceInfoList(List<String> hosts, int port) {
+  private List<ServerInstanceInfo> getServerInstanceInfoList(List<String> hosts, int port, String serviceType) {
     try {
       List<HostReachabilityInfo> hostReachabilityInfos = hostValidationService.validateReachability(hosts, port);
       return hostReachabilityInfos.stream()
           .filter(hr -> Boolean.TRUE.equals(hr.getReachable()))
-          .map(this::mapToPdcServerInstanceInfo)
+          .map(o -> mapToPdcServerInstanceInfo(serviceType, o))
           .collect(Collectors.toList());
     } catch (Exception e) {
       log.warn("Unable to get list of server instances, hosts: {}, port: {}", hosts, port, e);
@@ -79,9 +79,12 @@ public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecut
   }
 
   private String publishInstanceSyncResult(
-      PerpetualTaskId taskId, String accountId, List<ServerInstanceInfo> serverInstanceInfos) {
-    InstanceSyncPerpetualTaskResponse instanceSyncResponse = PdcInstanceSyncPerpetualTaskResponse.builder()
-                                                                 .serverInstanceDetails(serverInstanceInfos)
+      PerpetualTaskId taskId, String accountId, List<ServerInstanceInfo> serverInstanceInfos, String serviceType) {
+    PdcInstanceSyncPerpetualTaskResponse.PdcInstanceSyncPerpetualTaskResponseBuilder builder =
+        ServiceSpecType.SSH.equals(serviceType) ? PdcSshInstanceSyncPerpetualTaskResponse.builder()
+                                                : PdcWinrmInstanceSyncPerpetualTaskResponse.builder();
+
+    InstanceSyncPerpetualTaskResponse instanceSyncResponse = builder.serverInstanceDetails(serverInstanceInfos)
                                                                  .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
                                                                  .build();
 
@@ -96,8 +99,8 @@ public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecut
     return SUCCESS_RESPONSE_MSG;
   }
 
-  private ServerInstanceInfo mapToPdcServerInstanceInfo(HostReachabilityInfo hostReachabilityInfo) {
-    return PdcServerInstanceInfo.builder().host(hostReachabilityInfo.getHostName()).build();
+  private ServerInstanceInfo mapToPdcServerInstanceInfo(String serviceType, HostReachabilityInfo hostReachabilityInfo) {
+    return PdcServerInstanceInfo.builder().serviceType(serviceType).host(hostReachabilityInfo.getHostName()).build();
   }
 
   @Override

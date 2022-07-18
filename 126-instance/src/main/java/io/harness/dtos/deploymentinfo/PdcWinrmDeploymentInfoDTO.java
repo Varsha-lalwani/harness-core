@@ -7,22 +7,26 @@
 
 package io.harness.dtos.deploymentinfo;
 
-import io.harness.annotations.dev.HarnessTeam;
-import io.harness.annotations.dev.OwnedBy;
+import static io.harness.annotations.dev.HarnessTeam.CDP;
 
+import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.k8s.ServiceSpecType;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
-@NoArgsConstructor
-@EqualsAndHashCode
 @SuperBuilder
-@OwnedBy(HarnessTeam.DX)
-public abstract class DeploymentInfoDTO {
-  // Create combination of fields that can be used to identify related instance info details
-  // The key should be same as instance handler key of the corresponding instance info
-  public abstract String getType();
-  public abstract String prepareInstanceSyncHandlerKey();
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@OwnedBy(CDP)
+public class PdcWinrmDeploymentInfoDTO extends PdcDeploymentInfoDTO {
+  @Override
+  public String getType() {
+    return ServiceSpecType.WINRM;
+  }
 }

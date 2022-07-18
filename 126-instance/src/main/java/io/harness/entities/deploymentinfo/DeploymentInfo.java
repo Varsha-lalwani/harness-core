@@ -13,9 +13,11 @@ import io.harness.annotations.dev.OwnedBy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode
+@SuperBuilder
 @OwnedBy(HarnessTeam.DX)
 public abstract class DeploymentInfo {}

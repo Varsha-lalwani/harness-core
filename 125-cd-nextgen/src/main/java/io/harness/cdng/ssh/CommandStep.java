@@ -24,6 +24,7 @@ import io.harness.delegate.task.shell.CommandTaskResponse;
 import io.harness.delegate.task.shell.SshCommandTaskParameters;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.UnitProgress;
+import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
@@ -120,9 +121,9 @@ public class CommandStep extends TaskExecutableWithRollbackAndRbac<CommandTaskRe
 
     PdcDeploymentOutcome pdcDeploymentOutcome = PdcDeploymentOutcome.builder().host(taskParameters.getHost()).build();
 
+    // TODO adjust service type
     List<ServerInstanceInfo> serverInstanceInfoList =
-
-        PdcToServiceInstanceInfoMapper.toServerInstanceInfoList(hosts, filteredInfraHosts);
+        PdcToServiceInstanceInfoMapper.toServerInstanceInfoList(ServiceSpecType.SSH, hosts, filteredInfraHosts);
     instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance, serverInstanceInfoList);
 
     return stepResponseBuilder

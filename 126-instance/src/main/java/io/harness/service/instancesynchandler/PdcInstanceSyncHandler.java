@@ -17,6 +17,8 @@ import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.info.PdcServerInstanceInfo;
 import io.harness.dtos.deploymentinfo.DeploymentInfoDTO;
 import io.harness.dtos.deploymentinfo.PdcDeploymentInfoDTO;
+import io.harness.dtos.deploymentinfo.PdcSshDeploymentInfoDTO;
+import io.harness.dtos.deploymentinfo.PdcWinrmDeploymentInfoDTO;
 import io.harness.dtos.instanceinfo.InstanceInfoDTO;
 import io.harness.dtos.instanceinfo.PdcInstanceInfoDTO;
 import io.harness.entities.InstanceType;
@@ -24,6 +26,7 @@ import io.harness.exception.InvalidArgumentsException;
 import io.harness.models.infrastructuredetails.InfrastructureDetails;
 import io.harness.models.infrastructuredetails.PdcInfrastructureDetails;
 import io.harness.ng.core.infrastructure.InfrastructureKind;
+import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.perpetualtask.PerpetualTaskType;
 
 import com.google.inject.Singleton;
@@ -92,9 +95,14 @@ public class PdcInstanceSyncHandler extends AbstractInstanceSyncHandler {
     }
 
     List<PdcServerInstanceInfo> pdcServerInstanceInfos = (List<PdcServerInstanceInfo>) (List<?>) serverInstanceInfoList;
-    List<String> hosts = pdcServerInstanceInfos.get(0).getFilteredInfraHosts();
+    PdcServerInstanceInfo pdcServerInstanceInfo = pdcServerInstanceInfos.get(0);
+    List<String> hosts = pdcServerInstanceInfo.getFilteredInfraHosts();
 
-    return PdcDeploymentInfoDTO.builder()
+    //    PdcDeploymentInfoDTO.PdcDeploymentInfoDTOBuilder builder =
+    //        ServiceSpecType.SSH.equals(pdcServerInstanceInfo.getServiceType()) ? PdcSshDeploymentInfoDTO.builder()
+    //                                                                           : PdcWinrmDeploymentInfoDTO.builder();
+
+    return PdcSshDeploymentInfoDTO.builder()
         .infraIdentifier(infrastructureOutcome.getInfrastructureKey())
         .hosts(hosts)
         .build();

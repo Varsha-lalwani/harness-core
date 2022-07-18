@@ -5,22 +5,43 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package io.harness.entities.instanceinfo;
+package io.harness.dtos.instanceinfo;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.util.InstanceSyncKey;
 
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.commons.lang3.StringUtils;
 
 @OwnedBy(HarnessTeam.CDP)
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-public class PdcInstanceInfo extends InstanceInfo {
+public class AwsInstanceInfoDTO extends InstanceInfoDTO {
   @NotNull private String host;
-  @NotNull private List<String> filteredInfraHosts;
+
+  @Override
+  public String prepareInstanceKey() {
+    return InstanceSyncKey.builder().clazz(AwsInstanceInfoDTO.class).part(host).build().toString();
+  }
+
+  @Override
+  public String prepareInstanceSyncHandlerKey() {
+    return InstanceSyncKey.builder().part(host).build().toString();
+  }
+
+  @Override
+  public String getPodName() {
+    return StringUtils.EMPTY;
+  }
+
+  @Override
+  public String getType() {
+    return "Aws";
+  }
 }

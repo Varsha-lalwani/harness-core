@@ -19,13 +19,18 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(HarnessTeam.CDP)
 public class PdcToServiceInstanceInfoMapper {
-  public ServerInstanceInfo toServerInstanceInfo(String host, List<String> filteredHosts) {
-    return PdcServerInstanceInfo.builder().host(host).filteredInfraHosts(filteredHosts).build();
+  public ServerInstanceInfo toServerInstanceInfo(String serviceType, String host, List<String> filteredHosts) {
+    return PdcServerInstanceInfo.builder()
+        .serviceType(serviceType)
+        .host(host)
+        .filteredInfraHosts(filteredHosts)
+        .build();
   }
 
-  public List<ServerInstanceInfo> toServerInstanceInfoList(List<String> hosts, List<String> filteredHosts) {
+  public List<ServerInstanceInfo> toServerInstanceInfoList(
+      String serviceType, List<String> hosts, List<String> filteredHosts) {
     return hosts.stream()
-        .map(h -> PdcToServiceInstanceInfoMapper.toServerInstanceInfo(h, filteredHosts))
+        .map(h -> PdcToServiceInstanceInfoMapper.toServerInstanceInfo(serviceType, h, filteredHosts))
         .collect(Collectors.toList());
   }
 }

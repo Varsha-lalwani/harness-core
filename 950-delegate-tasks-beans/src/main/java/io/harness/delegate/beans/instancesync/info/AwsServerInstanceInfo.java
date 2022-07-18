@@ -11,21 +11,17 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@JsonTypeName("PdcServerInstanceInfo")
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeName("AwsServerInstanceInfo")
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
 @OwnedBy(HarnessTeam.CDP)
-public class PdcServerInstanceInfo extends ServerInstanceInfo {
-  private String serviceType;
+public class AwsServerInstanceInfo extends ServerInstanceInfo {
   private String host;
-  private List<String> filteredInfraHosts;
 }
