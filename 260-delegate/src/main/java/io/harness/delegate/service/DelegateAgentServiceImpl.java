@@ -2427,7 +2427,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private String getVersion() {
-    return isImmutableDelegate ? versionInfoManager.getVersionInfo().getDelegateVersion()
+    // logs for testing, to be removed.
+    log.info("Value of immutable flag {}", this.isImmutableDelegate);
+    log.info("Value of new version {}", versionInfoManager.getVersionInfo().getDelegateVersion());
+    return this.isImmutableDelegate ? versionInfoManager.getVersionInfo().getDelegateVersion()
                                : versionInfoManager.getVersionInfo().getVersion();
   }
 
