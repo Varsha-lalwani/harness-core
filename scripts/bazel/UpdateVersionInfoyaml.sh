@@ -26,7 +26,7 @@ patch=$(getProperty "${buildPropertiesFile}" "build.patch")
 timestamp=$( date +'%y%m%d-%H%M')
 
 echo "----------------------------------------------------------------------------"
-echo $buildNo $GIT_COMMIT $GIT_BRANCH $timestamp $patch $buildMajorVersion $buildMinorVersion
+echo $buildNo $GIT_COMMIT $GIT_BRANCH $timestamp $patch $buildMajorVersion $buildMinorVersion $delegateVersion
 echo "----------------------------------------------------------------------------"
 
 sed -i.bak "s|\${build.number}|${buildNo}|g"  "980-commons/src/main/resources-filtered/versionInfo.yaml"
