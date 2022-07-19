@@ -14,8 +14,6 @@ function getProperty () {
    FILENAME=$1
    PROP_KEY=$2
    PROP_VALUE=`head -5 "$FILENAME" | grep "$PROP_KEY" | cut -d'=' -f2`
-   echo "-------Displaying prop file, key and values----------"
-   echo $FILENAME  $PROP_KEY $PROP_VALUE
 }
 
 buildNo=$1
