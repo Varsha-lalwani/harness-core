@@ -21,9 +21,11 @@ import io.harness.delegate.beans.instancesync.InstanceSyncPerpetualTaskResponse;
 import io.harness.delegate.beans.instancesync.PdcInstanceSyncPerpetualTaskResponse;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.info.PdcServerInstanceInfo;
+import io.harness.exception.InvalidArgumentsException;
 import io.harness.grpc.utils.AnyUtils;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.managerclient.DelegateAgentManagerClient;
+import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.perpetualtask.instancesync.PdcInstanceSyncPerpetualTaskParamsNg;
 
 import software.wings.beans.HostReachabilityInfo;
@@ -31,8 +33,7 @@ import software.wings.utils.HostValidationService;
 
 import com.google.inject.Inject;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,6 +42,9 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(CDP)
 public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecutor {
   private static final String SUCCESS_RESPONSE_MSG = "success";
+
+  private static final Set<String> VALID_SERVICE_TYPES =
+      Collections.unmodifiableSet(new HashSet(Arrays.asList(ServiceSpecType.SSH, ServiceSpecType.WINRM)));
 
   @Inject private DelegateAgentManagerClient delegateAgentManagerClient;
   @Inject private HostValidationService hostValidationService;
@@ -51,26 +55,33 @@ public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecut
     log.info("Running the Pdc InstanceSync perpetual task executor for task id: {}", taskId);
     PdcInstanceSyncPerpetualTaskParamsNg taskParams =
         AnyUtils.unpack(params.getCustomizedParams(), PdcInstanceSyncPerpetualTaskParamsNg.class);
+
+    if (!VALID_SERVICE_TYPES.contains(taskParams.getServiceType())) {
+      throw new InvalidArgumentsException(
+          format("Invalid serviceType provided %s . Expected: %s", taskParams.getServiceType(), VALID_SERVICE_TYPES));
+    }
+
     return executeTask(taskId, taskParams);
   }
 
   private PerpetualTaskResponse executeTask(PerpetualTaskId taskId, PdcInstanceSyncPerpetualTaskParamsNg taskParams) {
     List<ServerInstanceInfo> serverInstanceInfos =
-        getServerInstanceInfoList(taskParams.getHostsList(), taskParams.getPort());
+        getServerInstanceInfoList(taskParams.getHostsList(), taskParams.getPort(), taskParams.getServiceType());
 
     log.info("Pdc Instance sync nInstances: {}, task id: {}",
         isEmpty(serverInstanceInfos) ? 0 : serverInstanceInfos.size(), taskId);
 
-    String instanceSyncResponseMsg = publishInstanceSyncResult(taskId, taskParams.getAccountId(), serverInstanceInfos);
+    String instanceSyncResponseMsg =
+        publishInstanceSyncResult(taskId, taskParams.getAccountId(), serverInstanceInfos, taskParams.getServiceType());
     return PerpetualTaskResponse.builder().responseCode(SC_OK).responseMessage(instanceSyncResponseMsg).build();
   }
 
-  private List<ServerInstanceInfo> getServerInstanceInfoList(List<String> hosts, int port) {
+  private List<ServerInstanceInfo> getServerInstanceInfoList(List<String> hosts, int port, String serviceType) {
     try {
       List<HostReachabilityInfo> hostReachabilityInfos = hostValidationService.validateReachability(hosts, port);
       return hostReachabilityInfos.stream()
           .filter(hr -> Boolean.TRUE.equals(hr.getReachable()))
-          .map(this::mapToPdcServerInstanceInfo)
+          .map(o -> mapToPdcServerInstanceInfo(serviceType, o))
           .collect(Collectors.toList());
     } catch (Exception e) {
       log.warn("Unable to get list of server instances, hosts: {}, port: {}", hosts, port, e);
@@ -79,8 +90,9 @@ public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecut
   }
 
   private String publishInstanceSyncResult(
-      PerpetualTaskId taskId, String accountId, List<ServerInstanceInfo> serverInstanceInfos) {
+      PerpetualTaskId taskId, String accountId, List<ServerInstanceInfo> serverInstanceInfos, String serviceType) {
     InstanceSyncPerpetualTaskResponse instanceSyncResponse = PdcInstanceSyncPerpetualTaskResponse.builder()
+                                                                 .serviceType(serviceType)
                                                                  .serverInstanceDetails(serverInstanceInfos)
                                                                  .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
                                                                  .build();
@@ -96,8 +108,8 @@ public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecut
     return SUCCESS_RESPONSE_MSG;
   }
 
-  private ServerInstanceInfo mapToPdcServerInstanceInfo(HostReachabilityInfo hostReachabilityInfo) {
-    return PdcServerInstanceInfo.builder().host(hostReachabilityInfo.getHostName()).build();
+  private ServerInstanceInfo mapToPdcServerInstanceInfo(String serviceType, HostReachabilityInfo hostReachabilityInfo) {
+    return PdcServerInstanceInfo.builder().serviceType(serviceType).host(hostReachabilityInfo.getHostName()).build();
   }
 
   @Override

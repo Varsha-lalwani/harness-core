@@ -11,6 +11,7 @@ option java_multiple_files = true;
 
 message PdcInstanceSyncPerpetualTaskParamsNg {
   string account_id = 1;
-  repeated string hosts = 2;
-  int32 port = 3;
+  string service_type = 2;
+  repeated string hosts = 3;
+  int32 port = 4;
 }
