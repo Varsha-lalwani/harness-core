@@ -5,6 +5,15 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.jira;
+package io.harness.delegate.task.jira;
 
-public class JiraSearchUserMetadataNG {}
+import lombok.Builder;
+import lombok.Value;
+
+@Value
+@Builder
+public class JiraSearchUserParams {
+  String accountId;
+  String userQuery;
+  String startAt;
+}

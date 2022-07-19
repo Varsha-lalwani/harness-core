@@ -7,13 +7,17 @@
 
 package io.harness.delegate.task.jira;
 
+import io.harness.jira.JiraUserData;
+
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
 @Value
 @Builder
-public class JiraUserSearchParams {
-  String accountId;
-  String userQuery;
-  String startAt;
+@AllArgsConstructor
+public class JiraSearchUserData {
+  List<JiraUserData> jiraUserDataList;
 }

@@ -35,7 +35,7 @@ import lombok.experimental.FieldDefaults;
 public class JiraTaskNGParameters implements TaskParameters, ExecutionCapabilityDemander {
   JiraConnectorDTO jiraConnectorDTO;
   List<EncryptedDataDetail> encryptionDetails;
-  JiraUserSearchParams jiraUserSearchParams;
+  JiraSearchUserParams jiraSearchUserParams;
 
   JiraActionNG action;
   String projectKey;

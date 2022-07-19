@@ -36,7 +36,6 @@ import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
@@ -115,13 +114,18 @@ public class JiraResource {
   }
 
   @GET
-  @Path("{connectorId}/searchUser")
+  @Path("searchUser")
   @ApiOperation(hidden = true, value = "Get jira usernames for the jira connector", nickname = "jiraUserSearch")
-  public ResponseDTO<List<JiraUserData>> getUserSearch(@QueryParam("appId") String appId,
-      @QueryParam("accountId") @NotEmpty String accountId, @PathParam("connectorId") String connectorId,
-      @QueryParam("user") String userQuery, @QueryParam("offset") String offset) {
-    return ResponseDTO.newResponse(
-        jiraResourceService.searchUser(connectorId, accountId, appId, DEFAULT_SYNC_CALL_TIMEOUT, userQuery, offset));
+  public ResponseDTO<List<JiraUserData>> getUserSearch(
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotEmpty String accountId,
+      @QueryParam(NGCommonEntityConstants.CONNECTOR_IDENTIFIER_KEY) String connectorId,
+      @QueryParam("userQuery") String userQuery, @QueryParam("offset") String offset) {
+    return ResponseDTO.newResponse(jiraResourceService
+                                       .searchUser(accountId, orgIdentifier, projectIdentifier, connectorId,
+                                           DEFAULT_SYNC_CALL_TIMEOUT, userQuery, offset)
+                                       .getJiraUserDataList());
   }
 
   @GET

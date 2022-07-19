@@ -1721,7 +1721,8 @@
 55334:io.harness.delegate.task.ssh.config.SecretConfigFile
 55335:io.harness.delegate.task.ssh.PdcWinRmInfraDelegateConfig
 55336:io.harness.delegate.task.shell.WinrmTaskParameters
-55337:io.harness.delegate.task.jira.JiraUserSearchParams
+55337:io.harness.delegate.task.jira.JiraSearchUserParams
+55338:io.harness.delegate.task.jira.JiraSearchUserData
 55401:io.harness.delegate.beans.SerializedResponseData
 55402:software.wings.beans.SerializationFormat
 55403:io.harness.delegate.beans.gitapi.GitApiMergePRTaskResponse

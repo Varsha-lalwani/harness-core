@@ -11,11 +11,11 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.delegate.task.jira.JiraSearchUserData;
 import io.harness.jira.JiraIssueCreateMetadataNG;
 import io.harness.jira.JiraIssueUpdateMetadataNG;
 import io.harness.jira.JiraProjectBasicNG;
 import io.harness.jira.JiraStatusNG;
-import io.harness.jira.JiraUserData;
 
 import java.util.List;
 
@@ -29,6 +29,6 @@ public interface JiraResourceService {
       String projectKey, String issueType, String expand, boolean fetchStatus, boolean ignoreComment);
   JiraIssueUpdateMetadataNG getIssueUpdateMetadata(
       IdentifierRef jiraConnectorRef, String orgId, String projectId, String issueKey);
-  List<JiraUserData> searchUser(
-      String connectorId, String accountId, String appId, long timeoutMillis, String userQuery, String offset);
+  JiraSearchUserData searchUser(String accountId, String orgIdentifier, String projectIdentifier, String connectorId,
+      long defaultSyncCallTimeout, String userQuery, String offset);
 }

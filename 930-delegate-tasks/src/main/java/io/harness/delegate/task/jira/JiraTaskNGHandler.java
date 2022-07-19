@@ -22,6 +22,7 @@ import io.harness.jira.JiraIssueNG;
 import io.harness.jira.JiraIssueUpdateMetadataNG;
 import io.harness.jira.JiraProjectBasicNG;
 import io.harness.jira.JiraStatusNG;
+import io.harness.jira.JiraUserData;
 
 import com.google.inject.Singleton;
 import java.util.HashSet;
@@ -113,9 +114,11 @@ public class JiraTaskNGHandler {
 
   public JiraTaskNGResponse searchUser(JiraTaskNGParameters params) {
     JiraClient jiraClient = getJiraClient(params);
-    JiraIssueNG issue = (JiraIssueNG) jiraClient.getUsers(params.getJiraUserSearchParams().getAccountId(),
-        params.getJiraUserSearchParams().getUserQuery(), params.getJiraUserSearchParams().getStartAt());
-    return JiraTaskNGResponse.builder().issue(issue).build();
+    List<JiraUserData> jiraUserDataList = jiraClient.getUsers(
+        params.getJiraSearchUserParams().getUserQuery(), null, params.getJiraSearchUserParams().getStartAt());
+    return JiraTaskNGResponse.builder()
+        .jiraSearchUserData(JiraSearchUserData.builder().jiraUserDataList(jiraUserDataList).build())
+        .build();
   }
 
   private JiraClient getJiraClient(JiraTaskNGParameters parameters) {

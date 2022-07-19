@@ -37,10 +37,12 @@ import lombok.experimental.FieldDefaults;
 public class JiraTaskNGResponse implements DelegateTaskNotifyResponseData {
   List<JiraProjectBasicNG> projects;
   List<JiraStatusNG> statuses;
+  // List<JiraUserData> jiraUserDataList;
 
   JiraIssueNG issue;
   JiraIssueCreateMetadataNG issueCreateMetadata;
   JiraIssueUpdateMetadataNG issueUpdateMetadata;
+  JiraSearchUserData jiraSearchUserData;
 
   DelegateMetaInfo delegateMetaInfo;
 }
