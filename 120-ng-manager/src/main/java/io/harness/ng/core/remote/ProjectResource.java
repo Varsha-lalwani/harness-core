@@ -139,7 +139,7 @@ public class ProjectResource {
           DEFAULT_ORG_IDENTIFIER) @OrgIdentifier String orgIdentifier,
       @RequestBody(required = true,
           description = "Details of the Project to create") @NotNull @Valid ProjectRequest projectDTO) {
-    Project createdProject = projectService.create(accountIdentifier, orgIdentifier, projectDTO.getProject());
+    Project createdProject = projectService.create(accountIdentifier, orgIdentifier, projectDTO.getProject(), null);
     return ResponseDTO.newResponse(createdProject.getVersion().toString(), toResponseWrapper(createdProject));
   }
 

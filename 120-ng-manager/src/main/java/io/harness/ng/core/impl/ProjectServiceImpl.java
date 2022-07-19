@@ -151,7 +151,8 @@ public class ProjectServiceImpl implements ProjectService {
 
   @Override
   @FeatureRestrictionCheck(MULTIPLE_PROJECTS)
-  public Project create(@AccountIdentifier String accountIdentifier, String orgIdentifier, ProjectDTO projectDTO) {
+  public Project create(
+      @AccountIdentifier String accountIdentifier, String orgIdentifier, ProjectDTO projectDTO, String userId) {
     orgIdentifier = orgIdentifier == null ? DEFAULT_ORG_IDENTIFIER : orgIdentifier;
     validateCreateProjectRequest(accountIdentifier, orgIdentifier, projectDTO);
     Project project = toProject(projectDTO);
@@ -167,7 +168,7 @@ public class ProjectServiceImpl implements ProjectService {
             outboxService.save(new ProjectCreateEvent(project.getAccountIdentifier(), ProjectMapper.writeDTO(project)));
             return savedProject;
           }));
-      setupProject(Scope.of(accountIdentifier, orgIdentifier, projectDTO.getIdentifier()));
+      setupProject(Scope.of(accountIdentifier, orgIdentifier, projectDTO.getIdentifier()), userId);
       log.info(String.format("Project with identifier %s and orgIdentifier %s was successfully created",
           project.getIdentifier(), projectDTO.getOrgIdentifier()));
       instrumentationHelper.sendProjectCreateEvent(createdProject, accountIdentifier);
@@ -180,18 +181,23 @@ public class ProjectServiceImpl implements ProjectService {
     }
   }
 
-  private void setupProject(Scope scope) {
+  private void setupProject(Scope scope, String userId) {
     String principalId = null;
     PrincipalType principalType = PrincipalType.USER;
-    if (SourcePrincipalContextBuilder.getSourcePrincipal() != null
-        && (SourcePrincipalContextBuilder.getSourcePrincipal().getType() == PrincipalType.USER
-            || SourcePrincipalContextBuilder.getSourcePrincipal().getType() == PrincipalType.SERVICE_ACCOUNT)) {
-      principalId = SourcePrincipalContextBuilder.getSourcePrincipal().getName();
-      principalType = SourcePrincipalContextBuilder.getSourcePrincipal().getType();
+    if (userId != null) {
+      principalId = userId;
+    } else {
+      if (SourcePrincipalContextBuilder.getSourcePrincipal() != null
+          && (SourcePrincipalContextBuilder.getSourcePrincipal().getType() == PrincipalType.USER
+              || SourcePrincipalContextBuilder.getSourcePrincipal().getType() == PrincipalType.SERVICE_ACCOUNT)) {
+        principalId = SourcePrincipalContextBuilder.getSourcePrincipal().getName();
+        principalType = SourcePrincipalContextBuilder.getSourcePrincipal().getType();
+      }
+      if (isEmpty(principalId)) {
+        throw new InvalidRequestException("User not found in security context");
+      }
     }
-    if (isEmpty(principalId)) {
-      throw new InvalidRequestException("User not found in security context");
-    }
+
     try {
       assignProjectAdmin(scope, principalId, principalType);
       busyPollUntilProjectSetupCompletes(scope, principalId);

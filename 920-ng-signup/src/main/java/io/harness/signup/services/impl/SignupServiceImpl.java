@@ -7,8 +7,8 @@
 
 package io.harness.signup.services.impl;
 
+import static io.harness.NGConstants.DEFAULT_ORG_IDENTIFIER;
 import static io.harness.annotations.dev.HarnessTeam.GTM;
-import static io.harness.beans.FeatureName.AUTO_FREE_MODULE_LICENSE;
 import static io.harness.configuration.DeployMode.DEPLOY_MODE;
 import static io.harness.configuration.DeployVariant.DEPLOY_VERSION;
 import static io.harness.exception.WingsException.USER;
@@ -17,6 +17,7 @@ import static io.harness.signup.services.SignupType.COMMUNITY_PROVISION;
 import static io.harness.utils.CryptoUtils.secureRandAlphaNumString;
 
 import static java.lang.Boolean.FALSE;
+import static java.util.Collections.emptyMap;
 import static org.mindrot.jbcrypt.BCrypt.hashpw;
 
 import io.harness.ModuleType;
@@ -40,6 +41,9 @@ import io.harness.licensing.Edition;
 import io.harness.licensing.beans.modules.StartTrialDTO;
 import io.harness.licensing.services.LicenseService;
 import io.harness.ng.core.dto.AccountDTO;
+import io.harness.ng.core.dto.ProjectDTO;
+import io.harness.ng.core.entities.Project;
+import io.harness.ng.core.services.ProjectService;
 import io.harness.ng.core.user.SignupAction;
 import io.harness.ng.core.user.UserInfo;
 import io.harness.ng.core.user.UserRequestDTO;
@@ -110,6 +114,7 @@ public class SignupServiceImpl implements SignupService {
   private final LicenseService licenseService;
   private final VersionInfoManager versionInfoManager;
   private final FeatureFlagService featureFlagService;
+  private final ProjectService projectService;
 
   public static final String FAILED_EVENT_NAME = "SIGNUP_ATTEMPT_FAILED";
   public static final String SUCCEED_EVENT_NAME = "NEW_SIGNUP";
@@ -130,7 +135,7 @@ public class SignupServiceImpl implements SignupService {
       SignupNotificationHelper signupNotificationHelper, SignupVerificationTokenRepository verificationTokenRepository,
       @Named("NGSignupNotification") ExecutorService executorService,
       @Named("PRIVILEGED") AccessControlClient accessControlClient, LicenseService licenseService,
-      VersionInfoManager versionInfoManager, FeatureFlagService featureFlagService) {
+      VersionInfoManager versionInfoManager, FeatureFlagService featureFlagService, ProjectService projectService) {
     this.accountService = accountService;
     this.userClient = userClient;
     this.signupValidator = signupValidator;
@@ -143,6 +148,7 @@ public class SignupServiceImpl implements SignupService {
     this.licenseService = licenseService;
     this.versionInfoManager = versionInfoManager;
     this.featureFlagService = featureFlagService;
+    this.projectService = projectService;
   }
 
   /**
@@ -315,13 +321,16 @@ public class SignupServiceImpl implements SignupService {
 
       waitForRbacSetup(userInfo.getDefaultAccountId(), userInfo.getUuid(), userInfo.getEmail());
 
-      if (featureFlagService.isGlobalEnabled(AUTO_FREE_MODULE_LICENSE)) {
-        enableModuleLicense(
-            !userInfo.getIntent().equals("") ? ModuleType.valueOf(userInfo.getIntent().toUpperCase()) : null,
-            userInfo.getEdition() != null ? Edition.valueOf(userInfo.getEdition()) : null,
-            userInfo.getSignupAction() != null ? SignupAction.valueOf(userInfo.getSignupAction()) : null,
-            userInfo.getDefaultAccountId());
-      }
+      // if (featureFlagService.isGlobalEnabled(AUTO_FREE_MODULE_LICENSE)) {
+      enableModuleLicense(
+          !userInfo.getIntent().equals("") ? ModuleType.valueOf(userInfo.getIntent().toUpperCase()) : null,
+          userInfo.getEdition() != null ? Edition.valueOf(userInfo.getEdition()) : null,
+          userInfo.getSignupAction() != null ? SignupAction.valueOf(userInfo.getSignupAction()) : null,
+          userInfo.getDefaultAccountId());
+      Project project =
+          createDefaultProject(userInfo.getDefaultAccountId(), DEFAULT_ORG_IDENTIFIER, userInfo.getUuid());
+
+      //}
 
       log.info("Completed NG signup for {}", userInfo.getEmail());
       return userInfo;
@@ -364,6 +373,21 @@ public class SignupServiceImpl implements SignupService {
                 -> accessControlClient.hasAccess(
                     ResourceScope.of(accountId, null, null), Resource.of("USER", userId), "core_organization_create"))
         .get();
+  }
+
+  private Project createDefaultProject(String accountIdentifier, String organizationIdentifier, String userId) {
+    Optional<Project> project = projectService.get(accountIdentifier, organizationIdentifier, "default");
+    if (project.isPresent()) {
+      log.info(String.format(
+          "Default Project for account %s organization %s already present", accountIdentifier, organizationIdentifier));
+      return project.get();
+    }
+    ProjectDTO createProjectDTO = ProjectDTO.builder().build();
+    createProjectDTO.setIdentifier("default");
+    createProjectDTO.setName("default");
+    createProjectDTO.setTags(emptyMap());
+    createProjectDTO.setDescription("Default Project");
+    return projectService.create(accountIdentifier, organizationIdentifier, createProjectDTO, userId);
   }
 
   private AccountDTO createAccount(SignupDTO dto) {
@@ -467,9 +491,12 @@ public class SignupServiceImpl implements SignupService {
       }
     });
 
-    if (featureFlagService.isGlobalEnabled(AUTO_FREE_MODULE_LICENSE)) {
-      enableModuleLicense(dto.getIntent(), dto.getEdition(), dto.getSignupAction(), account.getIdentifier());
-    }
+    // if (featureFlagService.isGlobalEnabled(AUTO_FREE_MODULE_LICENSE)) {
+    enableModuleLicense(dto.getIntent(), dto.getEdition(), dto.getSignupAction(), account.getIdentifier());
+    Project project =
+        createDefaultProject(oAuthUser.getDefaultAccountId(), DEFAULT_ORG_IDENTIFIER, oAuthUser.getUuid());
+
+    // }
     waitForRbacSetup(oAuthUser.getDefaultAccountId(), oAuthUser.getUuid(), oAuthUser.getEmail());
     return oAuthUser;
   }

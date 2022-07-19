@@ -44,6 +44,7 @@ import io.harness.licensing.beans.modules.StartTrialDTO;
 import io.harness.licensing.services.LicenseService;
 import io.harness.ng.core.dto.AccountDTO;
 import io.harness.ng.core.dto.GatewayAccountRequestDTO;
+import io.harness.ng.core.services.ProjectService;
 import io.harness.ng.core.user.SignupAction;
 import io.harness.ng.core.user.UserInfo;
 import io.harness.ng.core.user.UserRequestDTO;
@@ -96,6 +97,7 @@ public class SignupServiceImplTest extends CategoryTest {
   @Mock LicenseService licenseService;
   @Mock VersionInfoManager versionInfoManager;
   @Mock FeatureFlagService featureFlagService;
+  @Mock ProjectService projectService;
 
   private static final String TOKEN = "token";
   private static final String EMAIL = "test@test.com";
@@ -111,7 +113,7 @@ public class SignupServiceImplTest extends CategoryTest {
     initMocks(this);
     signupServiceImpl = new SignupServiceImpl(accountService, userClient, signupValidator, reCaptchaVerifier,
         telemetryReporter, signupNotificationHelper, verificationTokenRepository, executorService, accessControlClient,
-        licenseService, versionInfoManager, featureFlagService);
+        licenseService, versionInfoManager, featureFlagService, projectService);
   }
 
   @Test
