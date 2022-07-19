@@ -233,12 +233,17 @@ public class FeatureFlagServiceImpl implements FeatureFlagService {
       log.info("Using same default account id and name - " + accountId);
     } else {
       log.info("Fetching account name for account id " + accountId);
-      if (optionalAccountClient.isPresent()) {
-        AccountDTO accountDTO = RestClientUtils.getResponse(optionalAccountClient.get().getAccountDTO(accountId));
-        name = accountDTO.getName();
-        log.info("Account name is " + name);
-      } else {
-        log.info("Account client is absent, using account ID as name");
+      try {
+        if (optionalAccountClient.isPresent()) {
+          AccountDTO accountDTO = RestClientUtils.getResponse(optionalAccountClient.get().getAccountDTO(accountId));
+          name = accountDTO.getName();
+          log.info("Account name is " + name);
+        } else {
+          log.info("Account client is absent, using account ID as name");
+          name = accountId;
+        }
+      } catch (Exception e) {
+        log.info("Exception occurred while trying to get account name. Using account id as account name.");
         name = accountId;
       }
     }
