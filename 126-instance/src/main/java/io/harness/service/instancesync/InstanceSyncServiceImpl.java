@@ -147,6 +147,8 @@ public class InstanceSyncServiceImpl implements InstanceSyncService {
               deploymentSummaryDTO.getInstanceSyncKey(), deploymentSummaryDTO);
 
           // Sync only for deployment infos / instance sync handler keys from instances from server
+          AbstractInstanceSyncHandler instanceSyncHandler = instanceSyncHandlerFactoryService.getInstanceSyncHandler(
+              deploymentSummaryDTO.getDeploymentInfoDTO().getType(), infrastructureMappingDTO.getInfrastructureKind());
           performInstanceSync(instanceSyncPerpetualTaskInfoDTO, infrastructureMappingDTO,
               deploymentSummaryDTO.getServerInstanceInfoList(), abstractInstanceSyncHandler, true);
 
