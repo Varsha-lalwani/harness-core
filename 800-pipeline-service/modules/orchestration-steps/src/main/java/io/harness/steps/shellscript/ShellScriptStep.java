@@ -9,8 +9,6 @@ package io.harness.steps.shellscript;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
-import static java.util.Collections.emptyList;
-
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.beans.TaskData;
@@ -18,7 +16,6 @@ import io.harness.delegate.task.shell.ShellScriptTaskNG;
 import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
 import io.harness.delegate.task.shell.ShellScriptTaskResponseNG;
 import io.harness.logging.CommandExecutionStatus;
-import io.harness.logging.UnitProgress;
 import io.harness.logstreaming.ILogStreamingStepClient;
 import io.harness.logstreaming.LogStreamingStepClientFactory;
 import io.harness.plancreator.steps.TaskSelectorYaml;
@@ -44,7 +41,6 @@ import software.wings.beans.TaskType;
 
 import com.google.inject.Inject;
 import java.util.Collections;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(CDC)
@@ -93,11 +89,6 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
       StepResponseBuilder stepResponseBuilder = StepResponse.builder();
       ShellScriptTaskResponseNG taskResponse = responseSupplier.get();
       ShellScriptStepParameters shellScriptStepParameters = (ShellScriptStepParameters) stepParameters.getSpec();
-      List<UnitProgress> unitProgresses = taskResponse.getUnitProgressData() == null
-          ? emptyList()
-          : taskResponse.getUnitProgressData().getUnitProgresses();
-      stepResponseBuilder.unitProgressList(unitProgresses);
-
       stepResponseBuilder.status(StepUtils.getStepStatus(taskResponse.getStatus()));
 
       FailureInfo.Builder failureInfoBuilder = FailureInfo.newBuilder();
