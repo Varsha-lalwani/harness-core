@@ -5190,6 +5190,9 @@
             "useAwsIam": {
               "type": "boolean"
             },
+            "useCacheForAppRole": {
+              "type": "string"
+            },
             "useK8sAuth": {
               "type": "boolean"
             },
