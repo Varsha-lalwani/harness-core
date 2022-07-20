@@ -7,6 +7,8 @@
 
 package software.wings.search.entities.service;
 
+import io.harness.event.reconciliation.service.LookerEntityReconService;
+import io.harness.event.reconciliation.service.ServiceEntityReconServiceImpl;
 import io.harness.persistence.PersistentEntity;
 
 import software.wings.beans.Service;
@@ -19,6 +21,7 @@ import java.util.Set;
 
 public class ServiceTimeScaleEntity implements TimeScaleEntity<Service> {
   @Inject private ServiceTimescaleChangeHandler serviceTimescaleChangeHandler;
+  @Inject private ServiceEntityReconServiceImpl serviceEntityReconService;
   @Inject private MigrateServicesToTimeScaleDB migrateServicesToTimeScaleDB;
 
   public static final Class<Service> SOURCE_ENTITY_CLASS = Service.class;
@@ -31,6 +34,11 @@ public class ServiceTimeScaleEntity implements TimeScaleEntity<Service> {
   @Override
   public ChangeHandler getChangeHandler() {
     return serviceTimescaleChangeHandler;
+  }
+
+  @Override
+  public LookerEntityReconService getReconService() {
+    return serviceEntityReconService;
   }
 
   @Override
