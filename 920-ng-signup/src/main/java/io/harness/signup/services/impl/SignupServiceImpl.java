@@ -8,7 +8,10 @@
 package io.harness.signup.services.impl;
 
 import static io.harness.NGConstants.DEFAULT_ORG_IDENTIFIER;
+import static io.harness.NGConstants.DEFAULT_PROJECT_IDENTIFIER;
+import static io.harness.NGConstants.DEFAULT_PROJECT_NAME;
 import static io.harness.annotations.dev.HarnessTeam.GTM;
+import static io.harness.beans.FeatureName.AUTO_FREE_MODULE_LICENSE;
 import static io.harness.configuration.DeployMode.DEPLOY_MODE;
 import static io.harness.configuration.DeployVariant.DEPLOY_VERSION;
 import static io.harness.exception.WingsException.USER;
@@ -17,7 +20,6 @@ import static io.harness.signup.services.SignupType.COMMUNITY_PROVISION;
 import static io.harness.utils.CryptoUtils.secureRandAlphaNumString;
 
 import static java.lang.Boolean.FALSE;
-import static java.util.Collections.emptyMap;
 import static org.mindrot.jbcrypt.BCrypt.hashpw;
 
 import io.harness.ModuleType;
@@ -321,16 +323,15 @@ public class SignupServiceImpl implements SignupService {
 
       waitForRbacSetup(userInfo.getDefaultAccountId(), userInfo.getUuid(), userInfo.getEmail());
 
-      // if (featureFlagService.isGlobalEnabled(AUTO_FREE_MODULE_LICENSE)) {
-      enableModuleLicense(
-          !userInfo.getIntent().equals("") ? ModuleType.valueOf(userInfo.getIntent().toUpperCase()) : null,
-          userInfo.getEdition() != null ? Edition.valueOf(userInfo.getEdition()) : null,
-          userInfo.getSignupAction() != null ? SignupAction.valueOf(userInfo.getSignupAction()) : null,
-          userInfo.getDefaultAccountId());
-      Project project =
-          createDefaultProject(userInfo.getDefaultAccountId(), DEFAULT_ORG_IDENTIFIER, userInfo.getUuid());
-
-      //}
+      if (featureFlagService.isGlobalEnabled(AUTO_FREE_MODULE_LICENSE)) {
+        enableModuleLicense(
+            !userInfo.getIntent().equals("") ? ModuleType.valueOf(userInfo.getIntent().toUpperCase()) : null,
+            userInfo.getEdition() != null ? Edition.valueOf(userInfo.getEdition()) : null,
+            userInfo.getSignupAction() != null ? SignupAction.valueOf(userInfo.getSignupAction()) : null,
+            userInfo.getDefaultAccountId());
+        Project project =
+            createDefaultProject(userInfo.getDefaultAccountId(), DEFAULT_ORG_IDENTIFIER, userInfo.getUuid());
+      }
 
       log.info("Completed NG signup for {}", userInfo.getEmail());
       return userInfo;
@@ -376,17 +377,16 @@ public class SignupServiceImpl implements SignupService {
   }
 
   private Project createDefaultProject(String accountIdentifier, String organizationIdentifier, String userId) {
-    Optional<Project> project = projectService.get(accountIdentifier, organizationIdentifier, "default");
+    Optional<Project> project =
+        projectService.get(accountIdentifier, organizationIdentifier, DEFAULT_PROJECT_IDENTIFIER);
     if (project.isPresent()) {
       log.info(String.format(
           "Default Project for account %s organization %s already present", accountIdentifier, organizationIdentifier));
       return project.get();
     }
     ProjectDTO createProjectDTO = ProjectDTO.builder().build();
-    createProjectDTO.setIdentifier("default");
-    createProjectDTO.setName("default");
-    createProjectDTO.setTags(emptyMap());
-    createProjectDTO.setDescription("Default Project");
+    createProjectDTO.setIdentifier(DEFAULT_PROJECT_IDENTIFIER);
+    createProjectDTO.setName(DEFAULT_PROJECT_NAME);
     return projectService.create(accountIdentifier, organizationIdentifier, createProjectDTO, userId);
   }
 
@@ -491,12 +491,11 @@ public class SignupServiceImpl implements SignupService {
       }
     });
 
-    // if (featureFlagService.isGlobalEnabled(AUTO_FREE_MODULE_LICENSE)) {
-    enableModuleLicense(dto.getIntent(), dto.getEdition(), dto.getSignupAction(), account.getIdentifier());
-    Project project =
-        createDefaultProject(oAuthUser.getDefaultAccountId(), DEFAULT_ORG_IDENTIFIER, oAuthUser.getUuid());
-
-    // }
+    if (featureFlagService.isGlobalEnabled(AUTO_FREE_MODULE_LICENSE)) {
+      enableModuleLicense(dto.getIntent(), dto.getEdition(), dto.getSignupAction(), account.getIdentifier());
+      Project project =
+          createDefaultProject(oAuthUser.getDefaultAccountId(), DEFAULT_ORG_IDENTIFIER, oAuthUser.getUuid());
+    }
     waitForRbacSetup(oAuthUser.getDefaultAccountId(), oAuthUser.getUuid(), oAuthUser.getEmail());
     return oAuthUser;
   }
