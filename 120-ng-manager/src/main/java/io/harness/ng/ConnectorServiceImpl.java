@@ -279,6 +279,16 @@ public class ConnectorServiceImpl implements ConnectorService {
 
   @Override
   public ConnectorResponseDTO update(ConnectorDTO connectorDTO, String accountIdentifier, ChangeType gitChangeType) {
+    if (ngFeatureFlagHelperService.isEnabled(accountIdentifier, CACHE_APPROLE_TOKEN)
+        && (connectorDTO.getConnectorInfo().getConnectorConfig() instanceof VaultConnectorDTO)) {
+      ConnectorInfoDTO connectorInfoDTO = connectorDTO.getConnectorInfo();
+      VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfoDTO.getConnectorConfig();
+      if (AccessType.APP_ROLE.equals(vaultConnectorDTO.getAccessType())) {
+        vaultConnectorDTO.setUseCacheForAppRole(true);
+        connectorInfoDTO.setConnectorConfig(vaultConnectorDTO);
+        connectorDTO.setConnectorInfo(connectorInfoDTO);
+      }
+    }
     try (AutoLogContext ignore1 = new NgAutoLogContext(connectorDTO.getConnectorInfo().getProjectIdentifier(),
              connectorDTO.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);
          AutoLogContext ignore2 =
