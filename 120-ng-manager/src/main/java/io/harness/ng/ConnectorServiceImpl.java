@@ -9,6 +9,7 @@ package io.harness.ng;
 
 import static io.harness.NGConstants.CONNECTOR_HEARTBEAT_LOG_PREFIX;
 import static io.harness.NGConstants.CONNECTOR_STRING;
+import static io.harness.beans.FeatureName.CACHE_APPROLE_TOKEN;
 import static io.harness.connector.ConnectivityStatus.FAILURE;
 import static io.harness.connector.ConnectivityStatus.SUCCESS;
 import static io.harness.connector.ConnectorCategory.SECRET_MANAGER;
@@ -48,6 +49,7 @@ import io.harness.connector.services.ConnectorHeartbeatService;
 import io.harness.connector.services.ConnectorService;
 import io.harness.connector.stats.ConnectorStatistics;
 import io.harness.delegate.beans.connector.ConnectorType;
+import io.harness.delegate.beans.connector.vaultconnector.VaultConnectorDTO;
 import io.harness.errorhandling.NGErrorHelper;
 import io.harness.eventsframework.EventsFrameworkConstants;
 import io.harness.eventsframework.EventsFrameworkMetadataConstants;
@@ -70,8 +72,10 @@ import io.harness.ng.opa.entities.connector.OpaConnectorService;
 import io.harness.opaclient.model.OpaConstants;
 import io.harness.perpetualtask.PerpetualTaskId;
 import io.harness.repositories.ConnectorRepository;
+import io.harness.security.encryption.AccessType;
 import io.harness.telemetry.helpers.ConnectorInstrumentationHelper;
 import io.harness.utils.FullyQualifiedIdentifierHelper;
+import io.harness.utils.featureflaghelper.NGFeatureFlagHelperService;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -105,6 +109,7 @@ public class ConnectorServiceImpl implements ConnectorService {
   private final GitSyncSdkService gitSyncSdkService;
   private final ConnectorInstrumentationHelper instrumentationHelper;
   private final OpaConnectorService opaConnectorService;
+  private final NGFeatureFlagHelperService ngFeatureFlagHelperService;
 
   @Inject
   public ConnectorServiceImpl(@Named(DEFAULT_CONNECTOR_SERVICE) ConnectorService defaultConnectorService,
@@ -114,7 +119,7 @@ public class ConnectorServiceImpl implements ConnectorService {
       ExecutorService executorService, ConnectorErrorMessagesHelper connectorErrorMessagesHelper,
       HarnessManagedConnectorHelper harnessManagedConnectorHelper, NGErrorHelper ngErrorHelper,
       GitSyncSdkService gitSyncSdkService, ConnectorInstrumentationHelper instrumentationHelper,
-      OpaConnectorService opaConnectorService) {
+      OpaConnectorService opaConnectorService, NGFeatureFlagHelperService ngFeatureFlagHelperService) {
     this.defaultConnectorService = defaultConnectorService;
     this.secretManagerConnectorService = secretManagerConnectorService;
     this.connectorActivityService = connectorActivityService;
@@ -128,6 +133,7 @@ public class ConnectorServiceImpl implements ConnectorService {
     this.gitSyncSdkService = gitSyncSdkService;
     this.instrumentationHelper = instrumentationHelper;
     this.opaConnectorService = opaConnectorService;
+    this.ngFeatureFlagHelperService = ngFeatureFlagHelperService;
   }
 
   private ConnectorService getConnectorService(ConnectorType connectorType) {
@@ -161,6 +167,16 @@ public class ConnectorServiceImpl implements ConnectorService {
 
   private ConnectorResponseDTO createInternal(
       ConnectorDTO connectorDTO, String accountIdentifier, ChangeType gitChangeType) {
+    if (ngFeatureFlagHelperService.isEnabled(accountIdentifier, CACHE_APPROLE_TOKEN)
+        && (connectorDTO.getConnectorInfo().getConnectorConfig() instanceof VaultConnectorDTO)) {
+      ConnectorInfoDTO connectorInfoDTO = connectorDTO.getConnectorInfo();
+      VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfoDTO.getConnectorConfig();
+      if (AccessType.APP_ROLE.equals(vaultConnectorDTO.getAccessType())) {
+        vaultConnectorDTO.setUseCacheForAppRole(true);
+        connectorInfoDTO.setConnectorConfig(vaultConnectorDTO);
+        connectorDTO.setConnectorInfo(connectorInfoDTO);
+      }
+    }
     PerpetualTaskId connectorHeartbeatTaskId = null;
     try (AutoLogContext ignore1 = new NgAutoLogContext(connectorDTO.getConnectorInfo().getProjectIdentifier(),
              connectorDTO.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);

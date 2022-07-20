@@ -12,6 +12,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.eraro.ErrorCode.VAULT_OPERATION_ERROR;
 import static io.harness.exception.WingsException.USER;
+import static io.harness.helpers.NGVaultTaskHelper.getVaultAppRoleLoginResult;
 import static io.harness.helpers.NGVaultTaskHelper.getVaultAwmIamAuthLoginResult;
 import static io.harness.helpers.NGVaultTaskHelper.getVaultK8sAuthLoginResult;
 import static io.harness.threading.Morpheus.sleep;
@@ -34,6 +35,8 @@ import software.wings.beans.VaultConfig;
 import software.wings.helpers.ext.vault.VaultK8sLoginResult;
 import software.wings.helpers.ext.vault.VaultRestClientFactory;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.google.inject.Inject;
@@ -43,6 +46,8 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.validation.executable.ValidateOnExecution;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,6 +58,8 @@ import lombok.extern.slf4j.Slf4j;
 public class HashicorpVaultEncryptor implements VaultEncryptor {
   private final TimeLimiter timeLimiter;
   private final int NUM_OF_RETRIES = 3;
+  private final Cache<String, String> vaultTokenCache =
+      Caffeine.newBuilder().maximumSize(2000).expireAfterAccess(30, TimeUnit.SECONDS).build();
 
   @Inject
   public HashicorpVaultEncryptor(TimeLimiter timeLimiter) {
@@ -256,6 +263,18 @@ public class HashicorpVaultEncryptor implements VaultEncryptor {
     } else if (vaultConfig.isUseK8sAuth()) {
       VaultK8sLoginResult vaultK8sLoginResult = getVaultK8sAuthLoginResult(vaultConfig);
       vaultConfig.setAuthToken(vaultK8sLoginResult.getClientToken());
+    } else if (vaultConfig.isUseCacheForAppRole()) {
+      Optional<String> token = Optional.ofNullable(vaultTokenCache.getIfPresent(vaultConfig.getUuid()));
+      if (token.isPresent()) {
+        log.info("cache hit - approle");
+        return token.toString();
+      } else {
+        log.info("cache miss - approle");
+        vaultTokenCache.invalidate(vaultConfig.getUuid());
+        VaultAppRoleLoginResult vaultAppRoleLoginResult = getVaultAppRoleLoginResult(vaultConfig);
+        vaultTokenCache.put(vaultConfig.getUuid(), vaultAppRoleLoginResult.getClientToken());
+        return vaultAppRoleLoginResult.getClientToken();
+      }
     }
     return vaultConfig.getAuthToken();
   }

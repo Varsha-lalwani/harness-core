@@ -70,6 +70,8 @@ public class VaultConnector extends Connector implements PersistentRegularIterab
   String serviceAccountTokenPath;
   String k8sAuthEndpoint;
 
+  @Builder.Default Boolean useCacheForAppRole = Boolean.FALSE;
+
   public long getRenewedAt() {
     if (renewedAt == null) {
       return 0;
@@ -123,5 +125,9 @@ public class VaultConnector extends Connector implements PersistentRegularIterab
 
   public Boolean getUseK8sAuth() {
     return useK8sAuth == null ? Boolean.FALSE : useK8sAuth;
+  }
+
+  public Boolean getUseCacheForAppRole() {
+    return useCacheForAppRole == null ? Boolean.FALSE : useCacheForAppRole;
   }
 }
