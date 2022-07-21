@@ -7,8 +7,9 @@
 
 package io.harness.event.reconciliation.service;
 
-import io.harness.event.reconciliation.deployment.ReconciliationStatus;
+import io.harness.event.reconciliation.ReconciliationStatus;
 
 public interface LookerEntityReconService {
-  ReconciliationStatus performReconciliation(String accountId, long durationStartTs, long durationEndTs);
+  ReconciliationStatus performReconciliation(
+      String accountId, long durationStartTs, long durationEndTs, Class sourceEntityClass);
 }

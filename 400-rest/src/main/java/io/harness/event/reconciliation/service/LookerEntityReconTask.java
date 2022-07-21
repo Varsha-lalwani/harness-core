@@ -8,11 +8,8 @@
 package io.harness.event.reconciliation.service;
 
 import io.harness.beans.FeatureName;
-import io.harness.event.reconciliation.deployment.ReconciliationStatus;
-import io.harness.event.timeseries.processor.DeploymentEventProcessor;
+import io.harness.event.reconciliation.ReconciliationStatus;
 import io.harness.ff.FeatureFlagService;
-import io.harness.lock.AcquiredLock;
-import io.harness.lock.PersistentLocker;
 
 import software.wings.beans.Account;
 import software.wings.search.framework.TimeScaleEntity;
@@ -20,13 +17,10 @@ import software.wings.service.intfc.AccountService;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import java.time.Duration;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -63,8 +57,8 @@ public class LookerEntityReconTask implements Runnable {
               final long durationStartTs = startTime - 45 * 60 * 1000;
               final long durationEndTs = startTime - 5 * 60 * 1000;
               try {
-                ReconciliationStatus reconciliationStatus =
-                    lookerEntityReconService.performReconciliation(account.getUuid(), durationStartTs, durationEndTs);
+                ReconciliationStatus reconciliationStatus = lookerEntityReconService.performReconciliation(
+                    account.getUuid(), durationStartTs, durationEndTs, timeScaleEntity.getSourceEntityClass());
                 log.info(
                     "Completed reconciliation for accountID:[{}],accountName:[{}] durationStart:[{}],durationEnd:[{}],status:[{}],entity[{}]",
                     account.getUuid(), account.getAccountName(), new Date(durationStartTs), new Date(durationEndTs),

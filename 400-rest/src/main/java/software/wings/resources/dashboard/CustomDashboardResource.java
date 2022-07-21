@@ -26,7 +26,7 @@ import io.harness.dashboard.DashboardSettingsService;
 import io.harness.eraro.ErrorCode;
 import io.harness.eraro.Level;
 import io.harness.eraro.ResponseMessage;
-import io.harness.event.reconciliation.deployment.ReconciliationStatus;
+import io.harness.event.reconciliation.ReconciliationStatus;
 import io.harness.event.reconciliation.service.DeploymentReconService;
 import io.harness.event.timeseries.processor.DeploymentEventProcessor;
 import io.harness.event.timeseries.processor.instanceeventprocessor.InstanceEventProcessor;
