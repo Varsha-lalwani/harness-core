@@ -9,87 +9,26 @@ load("@rules_spring//springboot:springboot.bzl", "springboot")
 
 HarnessTeam = "DEL"
 
-java_library(
-    name = "module",
-    srcs = glob(["src/main/java/**/*.java"]),
-    resources = [
-        "//260-delegate/src/main/resources:resource",
-        "//980-commons/src/main/resources-filtered:resource",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//:lombok",
-        "//420-delegate-agent:module",
-        "//420-delegate-service:module",
-        "//490-ce-commons:module",
-        "//950-ng-core:module",
-        "//platform-service/modules/notification-service/delegate-tasks:module",
-        "@maven//:org_apache_commons_commons_math3",
-        "@maven//:org_apache_logging_log4j_log4j_api",
-        "@maven//:org_apache_logging_log4j_log4j_to_slf4j",
-        "@maven//:org_atmosphere_wasync",
-        "@maven//:org_codehaus_janino_commons_compiler",
-        "@maven//:org_codehaus_janino_janino",
-        "@maven//:org_springframework_boot_spring_boot_loader",
-    ],
-)
-
-java_binary(
-    name = "execute",
-    main_class = "io.harness.delegate.app.DelegateApplication",
-    runtime_deps = [":module"],
-)
-
-# Temporary target while we have two entrypoints. Once old is deleted remove this target.
-java_binary(
-    name = "executedw",
-    main_class = "io.harness.delegate.app.DelegateAgentApplication",
-    runtime_deps = [":module"],
-)
-
-config_setting(
-    name = "immutable",
-    values = {
-        "define": "is_immutable=true",
-    },
-)
-
-springboot(
-    name = "module_deploy",
-    boot_app_class = select({
-        ":immutable": "io.harness.delegate.app.DelegateAgentApplication",
-        "//conditions:default": "io.harness.delegate.app.DelegateApplication",
-    }),
-    java_library = ":module",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "tests",
-    testonly = True,
-    srcs = glob(
-        ["src/test/**/*.java"],
-    ),
-    data = [
-        "//400-rest/src/test/resources:resource",
-    ],
-    resources = [
-        "//:resource",
-        "//260-delegate/src/test/resources:resource",
-        "//400-rest/src/main/resources:resource",
-        "//980-commons/src/main/resources:resource",
-        "//980-commons/src/main/resources-filtered:resource",
-        "//980-commons/src/test/resources:resource",
-    ],
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        "//400-rest/src/main/resources",
-        "//980-commons/src/main/resources",
-        "//980-commons/src/main/resources-filtered:resources",
-        "//980-commons/src/test/resources",
-        "@maven//:javax_ws_rs_javax_ws_rs_api",
-    ],
-    deps = [
+# This is required due to dependency override issue for netty.
+# GRPC/Proto transitive deps are overriding netty deps
+# This is an workaround to handle the issue
+shared_dependencies = [
+        "@maven//:io_netty_netty_all",
+        "@maven//:io_netty_netty_buffer",
+        "@maven//:io_netty_netty_codec",
+        "@maven//:io_netty_netty_codec_dns",
+        "@maven//:io_netty_netty_codec_http",
+        "@maven//:io_netty_netty_codec_http2",
+        "@maven//:io_netty_netty_codec_socks",
+        "@maven//:io_netty_netty_common",
+        "@maven//:io_netty_netty_handler",
+        "@maven//:io_netty_netty_handler_proxy",
+        "@maven//:io_netty_netty_resolver",
+        "@maven//:io_netty_netty_resolver_dns",
+        "@maven//:io_netty_netty_transport",
+        "@maven//:io_netty_netty_transport_native_epoll",
+        "@maven//:io_netty_netty_transport_native_unix_common",
+] + [
         ":module",
         "//:lombok",
         "//400-rest:module",
@@ -437,21 +376,6 @@ java_library(
         "@maven//:io_kubernetes_client_java_api_fluent",
         "@maven//:io_kubernetes_client_java_extended",
         "@maven//:io_kubernetes_client_java_proto",
-        "@maven//:io_netty_netty_all",
-        "@maven//:io_netty_netty_buffer",
-        "@maven//:io_netty_netty_codec",
-        "@maven//:io_netty_netty_codec_dns",
-        "@maven//:io_netty_netty_codec_http",
-        "@maven//:io_netty_netty_codec_http2",
-        "@maven//:io_netty_netty_codec_socks",
-        "@maven//:io_netty_netty_common",
-        "@maven//:io_netty_netty_handler",
-        "@maven//:io_netty_netty_handler_proxy",
-        "@maven//:io_netty_netty_resolver",
-        "@maven//:io_netty_netty_resolver_dns",
-        "@maven//:io_netty_netty_transport",
-        "@maven//:io_netty_netty_transport_native_epoll",
-        "@maven//:io_netty_netty_transport_native_unix_common",
         "@maven//:io_opencensus_opencensus_api",
         "@maven//:io_opencensus_opencensus_contrib_http_util",
         "@maven//:io_perfmark_perfmark_api",
@@ -734,7 +658,89 @@ java_library(
         "@maven//:xml_apis_xml_apis",
         "@maven//:xml_resolver_xml_resolver",
         "@maven//:xpp3_xpp3",
+]
+
+java_library(
+    name = "module",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = [
+        "//260-delegate/src/main/resources:resource",
+        "//980-commons/src/main/resources-filtered:resource",
     ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:lombok",
+        "//420-delegate-agent:module",
+        "//420-delegate-service:module",
+        "//490-ce-commons:module",
+        "//950-ng-core:module",
+        "//platform-service/modules/notification-service/delegate-tasks:module",
+        "@maven//:org_apache_commons_commons_math3",
+        "@maven//:org_apache_logging_log4j_log4j_api",
+        "@maven//:org_apache_logging_log4j_log4j_to_slf4j",
+        "@maven//:org_atmosphere_wasync",
+        "@maven//:org_codehaus_janino_commons_compiler",
+        "@maven//:org_codehaus_janino_janino",
+        "@maven//:org_springframework_boot_spring_boot_loader",
+    ],
+)
+
+java_binary(
+    name = "execute",
+    main_class = "io.harness.delegate.app.DelegateApplication",
+    runtime_deps = [":module"],
+)
+
+# Temporary target while we have two entrypoints. Once old is deleted remove this target.
+java_binary(
+    name = "executedw",
+    main_class = "io.harness.delegate.app.DelegateAgentApplication",
+    runtime_deps = [":module"],
+)
+
+config_setting(
+    name = "immutable",
+    values = {
+        "define": "is_immutable=true",
+    },
+)
+
+springboot(
+    name = "module_deploy",
+    boot_app_class = select({
+        ":immutable": "io.harness.delegate.app.DelegateAgentApplication",
+        "//conditions:default": "io.harness.delegate.app.DelegateApplication",
+    }),
+    java_library = ":module",
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "tests",
+    testonly = True,
+    srcs = glob(
+        ["src/test/**/*.java"],
+    ),
+    data = [
+        "//400-rest/src/test/resources:resource",
+    ],
+    resources = [
+        "//:resource",
+        "//260-delegate/src/test/resources:resource",
+        "//400-rest/src/main/resources:resource",
+        "//980-commons/src/main/resources:resource",
+        "//980-commons/src/main/resources-filtered:resource",
+        "//980-commons/src/test/resources:resource",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        "//400-rest/src/main/resources",
+        "//980-commons/src/main/resources",
+        "//980-commons/src/main/resources-filtered:resources",
+        "//980-commons/src/test/resources",
+        "@maven//:javax_ws_rs_javax_ws_rs_api",
+    ],
+    deps = shared_dependencies,
 )
 
 run_tests()
