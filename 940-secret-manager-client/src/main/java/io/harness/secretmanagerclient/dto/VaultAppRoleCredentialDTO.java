@@ -26,5 +26,5 @@ import lombok.EqualsAndHashCode;
 public class VaultAppRoleCredentialDTO extends VaultCredentialDTO {
   private String appRoleId;
   @ApiModelProperty(dataType = "string") private SecretRefData secretId;
-  private String useCacheForAppRole;
+  private String doNotRenewAppRoleToken;
 }

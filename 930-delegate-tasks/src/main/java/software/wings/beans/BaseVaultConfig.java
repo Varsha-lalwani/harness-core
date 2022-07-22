@@ -78,7 +78,7 @@ public abstract class BaseVaultConfig extends SecretManagerConfig {
   @Attributes(title = "serviceAccountTokenPath") private String serviceAccountTokenPath;
   @Attributes(title = "k8sAuthEndpoint") private String k8sAuthEndpoint;
 
-  @Attributes(title = "useCacheForAppRole") private boolean useCacheForAppRole;
+  @Attributes(title = "doNotRenewAppRoleToken") private boolean doNotRenewAppRoleToken;
 
   public boolean isCertValidationRequired() {
     return isCertValidationRequired;

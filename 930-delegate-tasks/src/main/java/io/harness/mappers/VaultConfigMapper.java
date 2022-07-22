@@ -51,7 +51,7 @@ public class VaultConfigMapper {
                                   .serviceAccountTokenPath(vaultConfigDTO.getServiceAccountTokenPath())
                                   .k8sAuthEndpoint(vaultConfigDTO.getK8sAuthEndpoint())
                                   .sinkPath(vaultConfigDTO.getSinkPath())
-                                  .useCacheForAppRole(vaultConfigDTO.isUseCacheForAppRole())
+                                  .doNotRenewAppRoleToken(vaultConfigDTO.isDoNotRenewAppRoleToken())
                                   .build();
     vaultConfig.setNgMetadata(ngMetaDataFromDto(vaultConfigDTO));
     vaultConfig.setAccountId(vaultConfigDTO.getAccountIdentifier());

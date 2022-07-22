@@ -9,7 +9,7 @@ package io.harness.ng;
 
 import static io.harness.NGConstants.CONNECTOR_HEARTBEAT_LOG_PREFIX;
 import static io.harness.NGConstants.CONNECTOR_STRING;
-import static io.harness.beans.FeatureName.CACHE_APPROLE_TOKEN;
+import static io.harness.beans.FeatureName.REMOVE_APPROLE_TOKEN_RENEWAL;
 import static io.harness.connector.ConnectivityStatus.FAILURE;
 import static io.harness.connector.ConnectivityStatus.SUCCESS;
 import static io.harness.connector.ConnectorCategory.SECRET_MANAGER;
@@ -167,12 +167,12 @@ public class ConnectorServiceImpl implements ConnectorService {
 
   private ConnectorResponseDTO createInternal(
       ConnectorDTO connectorDTO, String accountIdentifier, ChangeType gitChangeType) {
-    if (ngFeatureFlagHelperService.isEnabled(accountIdentifier, CACHE_APPROLE_TOKEN)
+    if (ngFeatureFlagHelperService.isEnabled(accountIdentifier, REMOVE_APPROLE_TOKEN_RENEWAL)
         && (connectorDTO.getConnectorInfo().getConnectorConfig() instanceof VaultConnectorDTO)) {
       ConnectorInfoDTO connectorInfoDTO = connectorDTO.getConnectorInfo();
       VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfoDTO.getConnectorConfig();
       if (AccessType.APP_ROLE.equals(vaultConnectorDTO.getAccessType())) {
-        vaultConnectorDTO.setUseCacheForAppRole(true);
+        vaultConnectorDTO.setDoNotRenewAppRoleToken(true);
         connectorInfoDTO.setConnectorConfig(vaultConnectorDTO);
         connectorDTO.setConnectorInfo(connectorInfoDTO);
       }
@@ -279,12 +279,12 @@ public class ConnectorServiceImpl implements ConnectorService {
 
   @Override
   public ConnectorResponseDTO update(ConnectorDTO connectorDTO, String accountIdentifier, ChangeType gitChangeType) {
-    if (ngFeatureFlagHelperService.isEnabled(accountIdentifier, CACHE_APPROLE_TOKEN)
+    if (ngFeatureFlagHelperService.isEnabled(accountIdentifier, REMOVE_APPROLE_TOKEN_RENEWAL)
         && (connectorDTO.getConnectorInfo().getConnectorConfig() instanceof VaultConnectorDTO)) {
       ConnectorInfoDTO connectorInfoDTO = connectorDTO.getConnectorInfo();
       VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfoDTO.getConnectorConfig();
       if (AccessType.APP_ROLE.equals(vaultConnectorDTO.getAccessType())) {
-        vaultConnectorDTO.setUseCacheForAppRole(true);
+        vaultConnectorDTO.setDoNotRenewAppRoleToken(true);
         connectorInfoDTO.setConnectorConfig(vaultConnectorDTO);
         connectorDTO.setConnectorInfo(connectorInfoDTO);
       }

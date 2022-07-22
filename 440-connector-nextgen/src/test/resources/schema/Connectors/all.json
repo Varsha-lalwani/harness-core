@@ -5190,7 +5190,7 @@
             "useAwsIam": {
               "type": "boolean"
             },
-            "useCacheForAppRole": {
+            "doNotRenewAppRoleToken": {
               "type": "boolean"
             },
             "useK8sAuth": {

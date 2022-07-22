@@ -101,7 +101,7 @@ public class NGVaultSecretManagerRenewalHandler implements Handler<VaultConnecto
           return;
         }
         if (vaultConnector.getAccessType() == APP_ROLE) {
-          if (!vaultConnector.getUseCacheForAppRole()) {
+          if (!vaultConnector.getDoNotRenewAppRoleToken()) {
             vaultService.renewAppRoleClientToken(vaultConnector);
           }
         } else {

@@ -7,6 +7,8 @@
 
 package io.harness.beans;
 
+import static io.harness.annotations.dev.HarnessTeam.PL;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag.Scope;
@@ -17,7 +19,7 @@ import lombok.Getter;
  * Add your feature name here. When the feature is fully launched and no longer needs to be flagged,
  * delete the feature name.
  */
-@OwnedBy(HarnessTeam.PL)
+@OwnedBy(PL)
 public enum FeatureName {
   DEPRECATE_K8S_STEADY_STATE_CHECK_STEP,
   NG_GITOPS,
@@ -381,7 +383,7 @@ public enum FeatureName {
   YAML_APIS_GRANULAR_PERMISSION,
   JENKINS_BUILD,
   ENABLE_DEFAULT_NG_EXPERIENCE_FOR_ONPREM,
-  NG_SETTINGS("Enable Settings at various scopes in NG", HarnessTeam.PL),
+  NG_SETTINGS("Enable Settings at various scopes in NG", PL),
   QUEUED_COUNT_FOR_QUEUEKEY("Used to display the count of the queue in CG git sync", HarnessTeam.SPG),
   NG_EMAIL_STEP,
   PRUNE_KUBERNETES_RESOURCES_NG,
@@ -401,7 +403,8 @@ public enum FeatureName {
       "Customers started facing NPE due to migration of usergroup reference, removed null check behind FF - ticket ID - CDS-39770, CG",
       HarnessTeam.SPG),
   HOSTED_BUILDS("Used to enabled Hosted builds in paid accounts", HarnessTeam.CI),
-  CD_ONBOARDING_ENABLED;
+  CD_ONBOARDING_ENABLED,
+  REMOVE_APPROLE_TOKEN_RENEWAL("Removing token renewal in appRole method of auth in HashiCorp Vault", PL);
 
   @Deprecated
   FeatureName() {

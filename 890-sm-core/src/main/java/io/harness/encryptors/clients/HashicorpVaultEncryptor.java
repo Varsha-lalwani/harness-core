@@ -60,8 +60,6 @@ import lombok.extern.slf4j.Slf4j;
 public class HashicorpVaultEncryptor implements VaultEncryptor {
   private final TimeLimiter timeLimiter;
   private final int NUM_OF_RETRIES = 3;
-  private final Cache<VaultTokenCacheKey, String> vaultTokenCache =
-      Caffeine.newBuilder().maximumSize(2000).expireAfterAccess(30, TimeUnit.SECONDS).build();
 
   @Inject
   public HashicorpVaultEncryptor(TimeLimiter timeLimiter) {
@@ -265,19 +263,9 @@ public class HashicorpVaultEncryptor implements VaultEncryptor {
     } else if (vaultConfig.isUseK8sAuth()) {
       VaultK8sLoginResult vaultK8sLoginResult = getVaultK8sAuthLoginResult(vaultConfig);
       vaultConfig.setAuthToken(vaultK8sLoginResult.getClientToken());
-    } else if (vaultConfig.isUseCacheForAppRole()) {
-      VaultTokenCacheKey cacheKey = new VaultTokenCacheKey(vaultConfig.getUuid());
-      String token = vaultTokenCache.getIfPresent(cacheKey);
-      if (isNotEmpty(token)) {
-        log.info("cache hit - approle");
-        return token;
-      } else {
-        log.info("cache miss - approle");
-        vaultTokenCache.invalidate(cacheKey);
-        VaultAppRoleLoginResult vaultAppRoleLoginResult = getVaultAppRoleLoginResult(vaultConfig);
-        vaultTokenCache.put(cacheKey, vaultAppRoleLoginResult.getClientToken());
-        return vaultAppRoleLoginResult.getClientToken();
-      }
+    } else if (vaultConfig.isDoNotRenewAppRoleToken()) {
+      VaultAppRoleLoginResult vaultAppRoleLoginResult = getVaultAppRoleLoginResult(vaultConfig);
+      vaultConfig.setAuthToken(vaultAppRoleLoginResult.getClientToken());
     }
     return vaultConfig.getAuthToken();
   }

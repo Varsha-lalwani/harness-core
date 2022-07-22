@@ -39,8 +39,8 @@ public class SecretManagerDescriptionConstants {
   public static final String SERVICE_ACCOUNT_TOKEN_PATH =
       "This is the SA token path where the token is mounted in the K8s Pod.";
   public static final String K8S_AUTH_ENDPOINT = "This is the path where kubernetes auth is enabled in Vault.";
-  public static final String APPROLE_CACHE =
-      "This is to specify whether or not cache the appRoleToken on the fly and not to renew in background";
+  public static final String DO_NOT_RENEW_APPROLE_TOKEN =
+      "This is to specify whether or not to renew appRoleToken and use the creds on the fly to generate new token before a CRUD operation";
   public static final String ACCESS_KEY = "Access Key for AWS authentication.";
   public static final String SECRET_KEY = "Secret Key for AWS authentication.";
   public static final String ROLE_ARN = "Role ARN for the Delegate with STS Role.";
