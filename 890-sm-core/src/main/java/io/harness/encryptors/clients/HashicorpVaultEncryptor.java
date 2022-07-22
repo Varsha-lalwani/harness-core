@@ -35,8 +35,6 @@ import software.wings.beans.VaultConfig;
 import software.wings.helpers.ext.vault.VaultK8sLoginResult;
 import software.wings.helpers.ext.vault.VaultRestClientFactory;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.google.inject.Inject;
@@ -46,7 +44,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 import javax.validation.executable.ValidateOnExecution;
 import lombok.AllArgsConstructor;
 import lombok.Data;

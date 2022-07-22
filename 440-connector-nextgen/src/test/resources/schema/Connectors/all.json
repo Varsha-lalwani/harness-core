@@ -5155,6 +5155,9 @@
                 "type": "string"
               }
             },
+            "doNotRenewAppRoleToken": {
+              "type": "boolean"
+            },
             "k8sAuthEndpoint": {
               "type": "string"
             },
@@ -5188,9 +5191,6 @@
               "type": "string"
             },
             "useAwsIam": {
-              "type": "boolean"
-            },
-            "doNotRenewAppRoleToken": {
               "type": "boolean"
             },
             "useK8sAuth": {
