@@ -177,9 +177,11 @@ public class UserGroupChangeConsumerImpl implements ChangeConsumer<UserGroupDBO>
             -> principalsAddedToUserGroup.forEach(principalIdentifier
                 -> existingResourceSelectors.forEach(resourceSelector
                     -> aclsToCreate.add(buildACL(permissionIdentifier, Principal.of(USER, principalIdentifier),
-                        roleAssignmentDBO, resourceSelector)))));
+                        roleAssignmentDBO, resourceSelector, false)))));
       }
       numberOfACLsCreated += aclRepository.insertAllIgnoringDuplicates(aclsToCreate);
+      numberOfACLsCreated += aclRepository.insertAllIgnoringDuplicates(
+          changeConsumerService.getImplicitACLsForRoleAssignment(roleAssignmentDBO, principalsAddedToUserGroup));
 
       return new Result(numberOfACLsCreated, numberOfACLsDeleted);
     }

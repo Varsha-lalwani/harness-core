@@ -47,6 +47,7 @@ import io.harness.rule.Owner;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -79,8 +80,8 @@ public class RoleAssignmentChangeConsumerImplTest extends AggregatorTestBase {
     userGroupService = mock(UserGroupService.class);
     scopeService = mock(ScopeService.class);
     roleAssignmentRepository = mock(RoleAssignmentRepository.class);
-    ChangeConsumerService changeConsumerService =
-        new ChangeConsumerServiceImpl(roleService, userGroupService, resourceGroupService, scopeService);
+    ChangeConsumerService changeConsumerService = new ChangeConsumerServiceImpl(
+        roleService, userGroupService, resourceGroupService, scopeService, new HashMap<>());
     roleAssignmentChangeConsumer = new RoleAssignmentChangeConsumerImpl(
         aclRepository, roleAssignmentRepository, changeConsumerService, roleAssignmentCRUDEventHandler);
     scopeIdentifier =

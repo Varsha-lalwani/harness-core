@@ -12,6 +12,7 @@ import static io.harness.accesscontrol.principals.PrincipalType.USER;
 import static io.harness.accesscontrol.principals.PrincipalType.USER_GROUP;
 import static io.harness.accesscontrol.scopes.core.ScopeHelper.toParentScope;
 import static io.harness.aggregator.ACLUtils.buildACL;
+import static io.harness.aggregator.ACLUtils.buildResourceSelector;
 
 import io.harness.accesscontrol.acl.api.Principal;
 import io.harness.accesscontrol.acl.persistence.ACL;
@@ -21,10 +22,12 @@ import io.harness.accesscontrol.principals.usergroups.UserGroupService;
 import io.harness.accesscontrol.resources.resourcegroups.ResourceGroup;
 import io.harness.accesscontrol.resources.resourcegroups.ResourceGroupService;
 import io.harness.accesscontrol.resources.resourcegroups.ResourceSelector;
+import io.harness.accesscontrol.resources.resourcegroups.ScopeSelector;
 import io.harness.accesscontrol.roleassignments.persistence.RoleAssignmentDBO;
 import io.harness.accesscontrol.roles.Role;
 import io.harness.accesscontrol.roles.RoleService;
 import io.harness.accesscontrol.scopes.core.Scope;
+import io.harness.accesscontrol.scopes.core.ScopeLevel;
 import io.harness.accesscontrol.scopes.core.ScopeService;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -34,10 +37,12 @@ import com.google.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 
 @Singleton
 @OwnedBy(HarnessTeam.PL)
@@ -47,6 +52,7 @@ public class ChangeConsumerServiceImpl implements ChangeConsumerService {
   private final UserGroupService userGroupService;
   private final ResourceGroupService resourceGroupService;
   private final ScopeService scopeService;
+  private final Map<Pair<ScopeLevel, Boolean>, Set<String>> implicitPermissionsByScope;
 
   @Override
   public List<ACL> getAClsForRoleAssignment(RoleAssignmentDBO roleAssignment) {
@@ -88,14 +94,73 @@ public class ChangeConsumerServiceImpl implements ChangeConsumerService {
       for (String principalIdentifier : principals) {
         for (ResourceSelector resourceSelector : resourceSelectors) {
           if (SERVICE_ACCOUNT.equals(roleAssignment.getPrincipalType())) {
-            acls.add(buildACL(
-                permission, Principal.of(SERVICE_ACCOUNT, principalIdentifier), roleAssignment, resourceSelector));
+            acls.add(buildACL(permission, Principal.of(SERVICE_ACCOUNT, principalIdentifier), roleAssignment,
+                resourceSelector, false));
           } else {
-            acls.add(buildACL(permission, Principal.of(USER, principalIdentifier), roleAssignment, resourceSelector));
+            acls.add(
+                buildACL(permission, Principal.of(USER, principalIdentifier), roleAssignment, resourceSelector, false));
           }
         }
       }
     }
+
     return acls;
+  }
+
+  @Override
+  public List<ACL> getImplicitACLsForRoleAssignment(RoleAssignmentDBO roleAssignment) {
+    Set<String> principals = new HashSet<>();
+    if (USER_GROUP.equals(roleAssignment.getPrincipalType())) {
+      Scope scope = toParentScope(scopeService.buildScopeFromScopeIdentifier(roleAssignment.getScopeIdentifier()),
+          roleAssignment.getPrincipalScopeLevel());
+      String principalScopeIdentifier = scope == null ? roleAssignment.getScopeIdentifier() : scope.toString();
+      Optional<UserGroup> userGroup =
+          userGroupService.get(roleAssignment.getPrincipalIdentifier(), principalScopeIdentifier);
+      userGroup.ifPresent(group -> principals.addAll(group.getUsers()));
+    } else {
+      principals.add(roleAssignment.getPrincipalIdentifier());
+    }
+    return getImplicitACLsForRoleAssignment(roleAssignment, principals);
+  }
+
+  @Override
+  public List<ACL> getImplicitACLsForRoleAssignment(RoleAssignmentDBO roleAssignment, Set<String> principals) {
+    Optional<ResourceGroup> resourceGroup = resourceGroupService.get(
+        roleAssignment.getResourceGroupIdentifier(), roleAssignment.getScopeIdentifier(), ManagedFilter.NO_FILTER);
+    if (!resourceGroup.isPresent()) {
+      return new ArrayList<>();
+    }
+    List<ACL> acls = new ArrayList<>();
+    if (resourceGroup.get().getScopeSelectors() != null) {
+      for (ScopeSelector scopeSelector : resourceGroup.get().getScopeSelectors()) {
+        Scope currentScope = scopeSelector.getScope() == null
+            ? scopeService.buildScopeFromScopeIdentifier(roleAssignment.getScopeIdentifier())
+            : scopeSelector.getScope();
+        boolean givePermissionOnChildScopes = scopeSelector.isIncludingChildScopes();
+        while (currentScope != null) {
+          ResourceSelector resourceSelector =
+              ResourceSelector.builder().selector(buildResourceSelector(currentScope)).build();
+          Set<String> permissions = getPermissions(currentScope, givePermissionOnChildScopes);
+          for (String principalIdentifier : principals) {
+            for (String permission : permissions) {
+              if (SERVICE_ACCOUNT.equals(roleAssignment.getPrincipalType())) {
+                acls.add(buildACL(permission, Principal.of(SERVICE_ACCOUNT, principalIdentifier), roleAssignment,
+                    resourceSelector, true));
+              } else {
+                acls.add(buildACL(
+                    permission, Principal.of(USER, principalIdentifier), roleAssignment, resourceSelector, true));
+              }
+            }
+          }
+          givePermissionOnChildScopes = false;
+          currentScope = currentScope.getParentScope();
+        }
+      }
+    }
+    return acls;
+  }
+
+  private Set<String> getPermissions(Scope scope, boolean givePermissionOnChildScopes) {
+    return implicitPermissionsByScope.get(Pair.of(scope.getLevel(), givePermissionOnChildScopes));
   }
 }

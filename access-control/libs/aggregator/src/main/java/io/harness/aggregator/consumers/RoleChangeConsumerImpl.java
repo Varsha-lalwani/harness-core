@@ -164,7 +164,7 @@ public class RoleChangeConsumerImpl implements ChangeConsumer<RoleDBO> {
             -> existingPrincipals.forEach(principalIdentifier
                 -> existingResourceSelectors.forEach(resourceSelector
                     -> aclsToCreate.add(buildACL(permissionIdentifier, Principal.of(principalType, principalIdentifier),
-                        roleAssignmentDBO, resourceSelector)))));
+                        roleAssignmentDBO, resourceSelector, false)))));
       }
       numberOfACLsCreated += aclRepository.insertAllIgnoringDuplicates(aclsToCreate);
 

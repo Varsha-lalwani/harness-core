@@ -66,6 +66,7 @@ public class RoleAssignmentChangeConsumerImpl implements ChangeConsumer<RoleAssi
 
   private long createACLs(RoleAssignmentDBO roleAssignment) {
     List<ACL> aclsToCreate = changeConsumerService.getAClsForRoleAssignment(roleAssignment);
+    aclsToCreate.addAll(changeConsumerService.getImplicitACLsForRoleAssignment(roleAssignment));
     return aclRepository.insertAllIgnoringDuplicates(aclsToCreate);
   }
 

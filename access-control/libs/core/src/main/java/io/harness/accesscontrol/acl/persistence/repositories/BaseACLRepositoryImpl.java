@@ -87,7 +87,8 @@ public abstract class BaseACLRepositoryImpl implements ACLRepository {
 
   @Override
   public Set<ResourceSelector> getDistinctResourceSelectorsInACLs(String roleAssignmentId) {
-    Criteria criteria = Criteria.where(ACLKeys.roleAssignmentId).is(roleAssignmentId);
+    Criteria criteria =
+        Criteria.where(ACLKeys.roleAssignmentId).is(roleAssignmentId).and(ACL.IMPLICIT_FOR_SCOPE_KEY).ne(true);
     Query query = new Query();
     query.addCriteria(criteria);
     List<ACL> acls = mongoTemplate.find(query, ACL.class, getCollectionName());
@@ -107,7 +108,8 @@ public abstract class BaseACLRepositoryImpl implements ACLRepository {
     if (isEmpty(resourceSelectorsToDelete)) {
       return 0;
     }
-    Criteria criteria = Criteria.where(ACLKeys.roleAssignmentId).is(roleAssignmentId);
+    Criteria criteria =
+        Criteria.where(ACLKeys.roleAssignmentId).is(roleAssignmentId).and(ACL.IMPLICIT_FOR_SCOPE_KEY).ne(true);
     Criteria[] resourceSelectorCriteria = resourceSelectorsToDelete.stream()
                                               .map(resourceSelector
                                                   -> Criteria.where(ACLKeys.resourceSelector)
@@ -126,6 +128,8 @@ public abstract class BaseACLRepositoryImpl implements ACLRepository {
     return mongoTemplate
         .remove(new Query(Criteria.where(ACLKeys.roleAssignmentId)
                               .is(roleAssignmentId)
+                              .and(ACL.IMPLICIT_FOR_SCOPE_KEY)
+                              .ne(true)
                               .and(ACLKeys.permissionIdentifier)
                               .in(permissions)),
             ACL.class, getCollectionName())
@@ -144,8 +148,19 @@ public abstract class BaseACLRepositoryImpl implements ACLRepository {
   }
 
   @Override
+  public long deleteByRoleAssignmentIdAndImplicitForScope(String roleAssignmentId) {
+    return mongoTemplate
+        .remove(
+            new Query(
+                Criteria.where(ACLKeys.roleAssignmentId).is(roleAssignmentId).and(ACL.IMPLICIT_FOR_SCOPE_KEY).is(true)),
+            ACL.class, getCollectionName())
+        .getDeletedCount();
+  }
+
+  @Override
   public List<String> getDistinctPermissionsInACLsForRoleAssignment(String roleAssignmentId) {
-    Criteria criteria = Criteria.where(ACLKeys.roleAssignmentId).is(roleAssignmentId);
+    Criteria criteria =
+        Criteria.where(ACLKeys.roleAssignmentId).is(roleAssignmentId).and(ACL.IMPLICIT_FOR_SCOPE_KEY).ne(true);
     Query query = new Query();
     query.addCriteria(criteria);
     return mongoTemplate.findDistinct(
