@@ -34,6 +34,7 @@ import static software.wings.security.PermissionAttribute.Action.READ;
 import static software.wings.security.PermissionAttribute.Action.UPDATE;
 import static software.wings.security.PermissionAttribute.PermissionType.MANAGE_APPLICATIONS;
 
+import static java.util.Base64.getUrlDecoder;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -118,6 +119,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.io.UnsupportedEncodingException;
+import java.util.Base64.Decoder;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -397,14 +399,15 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   public void validateDelegateToken(String accountId, String tokenString, String delegateId, String delegateTokenName,
-      boolean shouldSetTokenNameInGlobalContext) {
-    delegateTokenAuthenticator.validateDelegateToken(
-        accountId, tokenString, delegateId, delegateTokenName, shouldSetTokenNameInGlobalContext);
-  }
-
-  @Override
-  public void validateDelegateToken(String accountId, String tokenString) {
-    delegateTokenAuthenticator.validateDelegateAuth2Token(accountId, tokenString);
+      String agentMtlAuthority, boolean shouldSetTokenNameInGlobalContext) {
+    Decoder decoder = getUrlDecoder();
+    final String authHeader = new String(decoder.decode(tokenString.split("\\.")[0]));
+    if (authHeader.contains("HS256")) {
+      delegateTokenAuthenticator.validateDelegateAuth2Token(accountId, tokenString, agentMtlAuthority);
+    } else {
+      delegateTokenAuthenticator.validateDelegateToken(
+          accountId, tokenString, delegateId, delegateTokenName, agentMtlAuthority, shouldSetTokenNameInGlobalContext);
+    }
   }
 
   @Override
