@@ -19,6 +19,7 @@ import lombok.Getter;
  */
 @OwnedBy(HarnessTeam.PL)
 public enum FeatureName {
+  HELM_CACHE_TIED_TO_EXECUTION,
   DEPRECATE_K8S_STEADY_STATE_CHECK_STEP,
   NG_GITOPS,
   APPD_CV_TASK,

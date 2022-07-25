@@ -1054,13 +1054,6 @@ public class HelmDeployState extends State {
             helmChartConfigTaskParams.setUseLatestChartMuseumVersion(
                 featureFlagService.isEnabled(USE_LATEST_CHARTMUSEUM_VERSION, context.getAccountId()));
 
-            if (HelmVersion.isHelmV3(helmVersion)) {
-              helmChartConfigTaskParams.setUseRepoFlags(
-                  featureFlagService.isEnabled(USE_HELM_REPO_FLAGS, context.getAccountId()));
-              helmChartConfigTaskParams.setDeleteRepoCacheDir(
-                  featureFlagService.isEnabled(DELETE_HELM_REPO_CACHE_DIR, context.getAccountId()));
-            }
-
             helmChartConfigTaskParams.setCheckIncorrectChartVersion(
                 featureFlagService.isEnabled(HELM_CHART_VERSION_STRICT_MATCH, context.getAccountId()));
 

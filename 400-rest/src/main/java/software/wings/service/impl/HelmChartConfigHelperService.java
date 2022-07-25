@@ -130,13 +130,6 @@ public class HelmChartConfigHelperService {
     helmChartConfigParamsBuilder.useLatestChartMuseumVersion(
         featureFlagService.isEnabled(FeatureName.USE_LATEST_CHARTMUSEUM_VERSION, context.getAccountId()));
 
-    if (HelmVersion.isHelmV3(getHelmVersionFromService(context))) {
-      helmChartConfigParamsBuilder.useRepoFlags(
-          featureFlagService.isEnabled(FeatureName.USE_HELM_REPO_FLAGS, context.getAccountId()));
-      helmChartConfigParamsBuilder.deleteRepoCacheDir(
-          featureFlagService.isEnabled(FeatureName.DELETE_HELM_REPO_CACHE_DIR, context.getAccountId()));
-    }
-
     helmChartConfigParamsBuilder.checkIncorrectChartVersion(
         featureFlagService.isEnabled(FeatureName.HELM_CHART_VERSION_STRICT_MATCH, context.getAccountId()));
 
@@ -179,11 +172,25 @@ public class HelmChartConfigHelperService {
     List<EncryptedDataDetail> encryptionDataDetails =
         secretManager.getEncryptionDetails(helmRepoConfig, context.getAppId(), context.getWorkflowExecutionId());
 
-    String repoName = generateRepoName(helmRepoConfig, settingAttribute.getUuid(), context.getWorkflowExecutionId());
+    /*
+      going forward, we will be creating repoName based on service + env (infraMapping id)
+      instead of connector id as before. Details here:
+      https://harness.atlassian.net/wiki/spaces/CDP/pages/21134344193/Helm+FFs+cleanup
+     */
+    String repoId = "";
+    boolean useCache = !featureFlagService.isEnabled(FeatureName.HELM_CACHE_TIED_TO_EXECUTION, context.getAccountId());
+    if (useCache) {
+      repoId = context.fetchInfraMappingId();
+    } else {
+      repoId = context.getWorkflowExecutionId();
+    }
+
+    String repoName = convertBase64UuidToCanonicalForm(repoId);
 
     helmChartConfigParamsBuilder.helmRepoConfig(helmRepoConfig)
+        .useCache(useCache)
         .encryptedDataDetails(encryptionDataDetails)
-        .repoDisplayName(settingAttribute.getName())
+        .repoDisplayName(settingAttribute.getName() + " " + context.fetchInfraMappingElement().getName())
         .repoName(repoName)
         .bypassHelmFetch(featureFlagService.isEnabled(FeatureName.BYPASS_HELM_FETCH, context.getAccountId()))
         .basePath(context.renderExpression(helmChartConfig.getBasePath()));
@@ -213,17 +220,5 @@ public class HelmChartConfigHelperService {
         ((PhaseElement) context.getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM))
             .getServiceElement()
             .getUuid());
-  }
-
-  private String generateRepoName(
-      HelmRepoConfig helmRepoConfig, String settingAttributeId, String workflowExecutionId) {
-    switch (helmRepoConfig.getSettingType()) {
-      case HTTP_HELM_REPO:
-      case OCI_HELM_REPO:
-        return convertBase64UuidToCanonicalForm(settingAttributeId);
-
-      default:
-        return convertBase64UuidToCanonicalForm(workflowExecutionId);
-    }
   }
 }

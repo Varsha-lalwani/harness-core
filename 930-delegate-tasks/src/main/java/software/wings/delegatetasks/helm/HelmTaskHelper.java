@@ -313,7 +313,7 @@ public class HelmTaskHelper {
       }
       removeRepo(modifiedRepoName, chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis,
           useRepoFlags, EMPTY);
-      if (helmChartConfigParams.isUseRepoFlags() && helmChartConfigParams.isDeleteRepoCacheDir()) {
+      if (!helmChartConfigParams.isUseCache()) {
         try {
           deleteDirectoryAndItsContentIfExists(Paths.get(cacheDir).getParent().toString());
         } catch (IOException ie) {
@@ -435,7 +435,7 @@ public class HelmTaskHelper {
           helmChartConfigParams.getHelmVersion(), helmCommandFlag, timeoutInMillis,
           helmChartConfigParams.isCheckIncorrectChartVersion(), cacheDir);
     } finally {
-      if (helmChartConfigParams.isUseRepoFlags() && helmChartConfigParams.isDeleteRepoCacheDir()) {
+      if (!helmChartConfigParams.isUseCache()) {
         try {
           deleteDirectoryAndItsContentIfExists(Paths.get(cacheDir).getParent().toString());
         } catch (IOException ie) {
@@ -448,17 +448,15 @@ public class HelmTaskHelper {
 
   private String getCacheDir(HelmChartConfigParams helmChartConfigParams, String repoName) {
     String cacheDir = "";
-    if (helmChartConfigParams.isUseRepoFlags()) {
-      if (helmChartConfigParams.isDeleteRepoCacheDir()) {
-        cacheDir = Paths
-                       .get(RESOURCE_DIR_BASE, repoName, RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT),
-                           "cache")
-                       .toAbsolutePath()
-                       .normalize()
-                       .toString();
-      } else {
-        cacheDir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
-      }
+    if (helmChartConfigParams.isUseCache()) {
+      cacheDir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
+    } else {
+      cacheDir =
+          Paths
+              .get(RESOURCE_DIR_BASE, repoName, RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT), "cache")
+              .toAbsolutePath()
+              .normalize()
+              .toString();
     }
     return cacheDir;
   }
@@ -477,7 +475,7 @@ public class HelmTaskHelper {
           helmChartConfigParams.getChartVersion(), chartDirectory, helmChartConfigParams.getHelmVersion(),
           helmCommandFlag, timeoutInMillis, helmChartConfigParams.isCheckIncorrectChartVersion(), cacheDir);
     } finally {
-      if (helmChartConfigParams.isUseRepoFlags() && helmChartConfigParams.isDeleteRepoCacheDir()) {
+      if (!helmChartConfigParams.isUseCache()) {
         try {
           deleteDirectoryAndItsContentIfExists(Paths.get(cacheDir).getParent().toString());
         } catch (IOException ie) {
