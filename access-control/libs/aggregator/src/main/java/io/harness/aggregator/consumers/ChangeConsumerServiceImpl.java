@@ -133,9 +133,9 @@ public class ChangeConsumerServiceImpl implements ChangeConsumerService {
     List<ACL> acls = new ArrayList<>();
     if (resourceGroup.get().getScopeSelectors() != null) {
       for (ScopeSelector scopeSelector : resourceGroup.get().getScopeSelectors()) {
-        Scope currentScope = scopeSelector.getScope() == null
+        Scope currentScope = scopeSelector.getScopeIdentifier() == null
             ? scopeService.buildScopeFromScopeIdentifier(roleAssignment.getScopeIdentifier())
-            : scopeSelector.getScope();
+            : scopeService.buildScopeFromScopeIdentifier(scopeSelector.getScopeIdentifier());
         boolean givePermissionOnChildScopes = scopeSelector.isIncludingChildScopes();
         while (currentScope != null) {
           ResourceSelector resourceSelector =

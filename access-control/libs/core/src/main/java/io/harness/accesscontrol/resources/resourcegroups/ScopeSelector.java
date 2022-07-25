@@ -1,6 +1,5 @@
 package io.harness.accesscontrol.resources.resourcegroups;
 
-import io.harness.accesscontrol.scopes.core.Scope;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
@@ -17,6 +16,6 @@ import lombok.experimental.FieldNameConstants;
 @FieldNameConstants(innerTypeName = "ScopeSelectorKeys")
 @OwnedBy(HarnessTeam.PL)
 public class ScopeSelector {
-  @NotNull Scope scope;
+  @NotNull String scopeIdentifier;
   boolean includingChildScopes;
 }

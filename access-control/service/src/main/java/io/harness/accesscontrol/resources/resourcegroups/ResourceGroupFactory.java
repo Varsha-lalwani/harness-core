@@ -72,7 +72,7 @@ public class ResourceGroupFactory {
       ScopeSelector scopeSelector) {
     Scope scope = getScope(scopeSelector);
     return io.harness.accesscontrol.resources.resourcegroups.ScopeSelector.builder()
-        .scope(scope)
+        .scopeIdentifier(scope == null ? null : scope.toString())
         .includingChildScopes(ScopeFilterType.INCLUDING_CHILD_SCOPES.equals(scopeSelector.getFilter()))
         .build();
   }
