@@ -542,7 +542,7 @@ public class HelmTaskHelperBase {
           manifest.getChartName(), manifest.getChartVersion(), destinationDirectory, manifest.getHelmVersion(),
           manifest.getHelmCommandFlag(), timeoutInMillis, manifest.isCheckIncorrectChartVersion(), cacheDir);
     } finally {
-      if (manifest.isUseRepoFlags() && manifest.isDeleteRepoCacheDir()) {
+      if (!manifest.isUseCache()) {
         try {
           deleteDirectoryAndItsContentIfExists(Paths.get(cacheDir).getParent().toString());
         } catch (IOException ie) {
@@ -574,7 +574,7 @@ public class HelmTaskHelperBase {
           manifest.getChartVersion(), destinationDirectory, HelmVersion.V380, manifest.getHelmCommandFlag(),
           timeoutInMillis, manifest.isCheckIncorrectChartVersion(), cacheDir);
     } finally {
-      if (manifest.isUseRepoFlags() && manifest.isDeleteRepoCacheDir()) {
+      if (!manifest.isUseCache()) {
         try {
           deleteDirectoryAndItsContentIfExists(Paths.get(cacheDir).getParent().toString());
         } catch (IOException ie) {
@@ -587,17 +587,15 @@ public class HelmTaskHelperBase {
 
   private String getCacheDir(HelmChartManifestDelegateConfig manifest, String repoName) {
     String cacheDir = "";
-    if (manifest.isUseRepoFlags()) {
-      if (manifest.isDeleteRepoCacheDir()) {
-        cacheDir = Paths
-                       .get(RESOURCE_DIR_BASE, repoName, RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT),
-                           "cache")
-                       .toAbsolutePath()
-                       .normalize()
-                       .toString();
-      } else {
-        cacheDir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
-      }
+    if (manifest.isUseCache()) {
+      cacheDir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
+    } else {
+      cacheDir =
+          Paths
+              .get(RESOURCE_DIR_BASE, repoName, RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT), "cache")
+              .toAbsolutePath()
+              .normalize()
+              .toString();
     }
     return cacheDir;
   }
@@ -649,7 +647,7 @@ public class HelmTaskHelperBase {
 
       cleanup(resourceDirectory);
 
-      if (manifest.isUseRepoFlags() && manifest.isDeleteRepoCacheDir()) {
+      if (!manifest.isUseCache()) {
         try {
           deleteDirectoryAndItsContentIfExists(Paths.get(cacheDir).getParent().toString());
         } catch (IOException ie) {
