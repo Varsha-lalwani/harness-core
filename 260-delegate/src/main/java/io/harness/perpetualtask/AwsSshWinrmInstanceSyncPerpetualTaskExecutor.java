@@ -17,18 +17,23 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.instancesync.InstanceSyncPerpetualTaskResponse;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.SshWinrmInstanceSyncPerpetualTaskResponse;
-import io.harness.delegate.beans.instancesync.info.PdcServerInstanceInfo;
+import io.harness.delegate.beans.instancesync.info.AwsServerInstanceInfo;
+import io.harness.delegate.task.aws.AwsListEC2InstancesDelegateTaskHelper;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.grpc.utils.AnyUtils;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.managerclient.DelegateAgentManagerClient;
 import io.harness.ng.core.k8s.ServiceSpecType;
-import io.harness.perpetualtask.instancesync.PdcInstanceSyncPerpetualTaskParamsNg;
+import io.harness.perpetualtask.instancesync.AwsSshInstanceSyncPerpetualTaskParamsNg;
+import io.harness.security.encryption.EncryptedDataDetail;
+import io.harness.serializer.KryoSerializer;
 
 import software.wings.beans.HostReachabilityInfo;
+import software.wings.service.impl.aws.model.AwsEC2Instance;
 import software.wings.utils.HostValidationService;
 
 import com.google.inject.Inject;
@@ -44,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 @OwnedBy(CDP)
-public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecutor {
+public class AwsSshWinrmInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecutor {
   private static final String SUCCESS_RESPONSE_MSG = "success";
 
   private static final Set<String> VALID_SERVICE_TYPES =
@@ -52,13 +57,15 @@ public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecut
 
   @Inject private DelegateAgentManagerClient delegateAgentManagerClient;
   @Inject private HostValidationService hostValidationService;
+  @Inject private KryoSerializer kryoSerializer;
+  @Inject private AwsListEC2InstancesDelegateTaskHelper awsListEC2InstancesDelegateTaskHelper;
 
   @Override
   public PerpetualTaskResponse runOnce(
       PerpetualTaskId taskId, PerpetualTaskExecutionParams params, Instant heartbeatTime) {
-    log.info("Running the Pdc InstanceSync perpetual task executor for task id: {}", taskId);
-    PdcInstanceSyncPerpetualTaskParamsNg taskParams =
-        AnyUtils.unpack(params.getCustomizedParams(), PdcInstanceSyncPerpetualTaskParamsNg.class);
+    log.info("Running the Aws InstanceSync perpetual task executor for task id: {}", taskId);
+    AwsSshInstanceSyncPerpetualTaskParamsNg taskParams =
+        AnyUtils.unpack(params.getCustomizedParams(), AwsSshInstanceSyncPerpetualTaskParamsNg.class);
 
     if (!VALID_SERVICE_TYPES.contains(taskParams.getServiceType())) {
       throw new InvalidArgumentsException(
@@ -68,11 +75,17 @@ public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecut
     return executeTask(taskId, taskParams);
   }
 
-  private PerpetualTaskResponse executeTask(PerpetualTaskId taskId, PdcInstanceSyncPerpetualTaskParamsNg taskParams) {
-    List<ServerInstanceInfo> serverInstanceInfos =
-        getServerInstanceInfoList(taskParams.getHostsList(), taskParams.getPort(), taskParams.getServiceType());
+  private PerpetualTaskResponse executeTask(
+      PerpetualTaskId taskId, AwsSshInstanceSyncPerpetualTaskParamsNg taskParams) {
+    List<AwsEC2Instance> awsEC2Instances = getAwsEC2Instance(taskParams);
+    List<String> awsHosts = awsEC2Instances.stream().map(AwsEC2Instance::getPublicDnsName).collect(Collectors.toList());
+    List<String> instanceHosts =
+        taskParams.getDeployedHostsList().stream().filter(awsHosts::contains).collect(Collectors.toList());
 
-    log.info("Pdc Instance sync nInstances: {}, task id: {}",
+    List<ServerInstanceInfo> serverInstanceInfos =
+        getServerInstanceInfoList(instanceHosts, taskParams.getPort(), taskParams.getServiceType());
+
+    log.info("Aws Instance sync Instances: {}, task id: {}",
         isEmpty(serverInstanceInfos) ? 0 : serverInstanceInfos.size(), taskId);
 
     String instanceSyncResponseMsg =
@@ -80,12 +93,22 @@ public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecut
     return PerpetualTaskResponse.builder().responseCode(SC_OK).responseMessage(instanceSyncResponseMsg).build();
   }
 
+  private List<AwsEC2Instance> getAwsEC2Instance(AwsSshInstanceSyncPerpetualTaskParamsNg taskParams) {
+    AwsConnectorDTO awsConnector =
+        (AwsConnectorDTO) kryoSerializer.asObject(taskParams.getAwsConnector().toByteArray());
+    List<EncryptedDataDetail> encryptedDataDetails =
+        (List<EncryptedDataDetail>) kryoSerializer.asObject(taskParams.getEncryptedData().toByteArray());
+    boolean isWinRm = ServiceSpecType.WINRM.equals(taskParams.getServiceType());
+    return awsListEC2InstancesDelegateTaskHelper.getInstances(awsConnector, encryptedDataDetails,
+        taskParams.getRegion(), taskParams.getVpcIdsList(), taskParams.getTagsMap(), isWinRm);
+  }
+
   private List<ServerInstanceInfo> getServerInstanceInfoList(List<String> hosts, int port, String serviceType) {
     try {
       List<HostReachabilityInfo> hostReachabilityInfos = hostValidationService.validateReachability(hosts, port);
       return hostReachabilityInfos.stream()
           .filter(hr -> Boolean.TRUE.equals(hr.getReachable()))
-          .map(o -> mapToPdcServerInstanceInfo(serviceType, o, hosts))
+          .map(o -> mapToAwsServerInstanceInfo(serviceType, o, hosts))
           .collect(Collectors.toList());
     } catch (Exception e) {
       log.warn("Unable to get list of server instances, hosts: {}, port: {}", hosts, port, e);
@@ -105,19 +128,19 @@ public class PdcInstanceSyncPerpetualTaskExecutor implements PerpetualTaskExecut
       execute(delegateAgentManagerClient.processInstanceSyncNGResult(taskId.getId(), accountId, instanceSyncResponse));
     } catch (Exception e) {
       String errorMsg = format(
-          "Failed to publish Pdc instance sync result PerpetualTaskId [%s], accountId [%s]", taskId.getId(), accountId);
+          "Failed to publish Aws instance sync result PerpetualTaskId [%s], accountId [%s]", taskId.getId(), accountId);
       log.error(errorMsg + ", serverInstanceInfos: {}", serverInstanceInfos, e);
       return errorMsg;
     }
     return SUCCESS_RESPONSE_MSG;
   }
 
-  private ServerInstanceInfo mapToPdcServerInstanceInfo(
-      String serviceType, HostReachabilityInfo hostReachabilityInfo, List<String> filteredInfraHosts) {
-    return PdcServerInstanceInfo.builder()
+  private ServerInstanceInfo mapToAwsServerInstanceInfo(
+      String serviceType, HostReachabilityInfo hostReachabilityInfo, List<String> deployedHosts) {
+    return AwsServerInstanceInfo.builder()
         .serviceType(serviceType)
         .host(hostReachabilityInfo.getHostName())
-        .filteredInfraHosts(filteredInfraHosts)
+        .deployedHosts(deployedHosts)
         .build();
   }
 
