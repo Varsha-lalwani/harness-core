@@ -591,24 +591,24 @@ public class HelmTaskHelper {
       String destinationDirectory, long timeoutInMillis, String workingDirectory) throws IOException {
     HelmChartConfigParams helmChartConfigParams = helmChartCollectionParams.getHelmChartConfigParams();
     HttpHelmRepoConfig httpHelmRepoConfig = (HttpHelmRepoConfig) helmChartConfigParams.getHelmRepoConfig();
-    boolean useRepoFlags = helmChartCollectionParams.isUseRepoFlags();
+    boolean useCache = helmChartConfigParams.isUseCache();
     Map<String, String> environment = new HashMap<>();
     String tempDir = EMPTY;
-    if (useRepoFlags) {
+    if (!useCache) {
       tempDir = Files.createTempDirectory("charts").toAbsolutePath().toString();
     }
     String commandOutput;
 
     try {
       removeRepo(helmChartConfigParams.getRepoName(), workingDirectory, helmChartConfigParams.getHelmVersion(),
-          timeoutInMillis, useRepoFlags, tempDir);
+          timeoutInMillis, !useCache, tempDir);
       addRepo(helmChartConfigParams.getRepoName(), helmChartConfigParams.getRepoDisplayName(),
           httpHelmRepoConfig.getChartRepoUrl(), httpHelmRepoConfig.getUsername(), httpHelmRepoConfig.getPassword(),
           destinationDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis, tempDir);
 
       String command = fetchHelmChartVersionsCommand(helmChartConfigParams.getHelmVersion(),
           helmChartConfigParams.getChartName(), helmChartConfigParams.getRepoName(), destinationDirectory);
-      if (useRepoFlags) {
+      if (!useCache) {
         environment.putIfAbsent(HELM_CACHE_HOME,
             HELM_CACHE_HOME_PATH.replace(REPO_NAME, helmChartConfigParams.getRepoName())
                 .replace(HELM_CACHE_HOME_PLACEHOLDER, tempDir));
@@ -628,7 +628,7 @@ public class HelmTaskHelper {
     } finally {
       // We do remove repo only when the useFlags FF is on.
       deleteDirectoryAndItsContentIfExists(workingDirectory + "/helm");
-      if (useRepoFlags) {
+      if (!useCache) {
         deleteQuietlyWithErrorLog(tempDir);
       }
     }
