@@ -149,6 +149,7 @@ public class ManifestCollectionUtils {
             .chartUrl(helmChartConfig.getChartUrl())
             .basePath(helmChartConfig.getBasePath())
             .encryptedDataDetails(encryptionDataDetails)
+            // TODO(achyuth): confirm if we need appManifestId here or can we use same logic as CDP
             .repoName(convertBase64UuidToCanonicalForm(appManifestId))
             .repoDisplayName(settingAttribute.getName())
             .helmVersion(helmVersion)

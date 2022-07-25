@@ -1296,8 +1296,7 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     assertThatCode(() -> helmTaskHelper.removeRepo(repoName, workingDirectory, V2, LONG_TIMEOUT_INTERVAL))
         .doesNotThrowAnyException();
 
-    verify(helmTaskHelperBase)
-        .removeRepo(repoName, workingDirectory, V2, LONG_TIMEOUT_INTERVAL, false, StringUtils.EMPTY);
+    verify(helmTaskHelperBase).removeRepo(repoName, workingDirectory, V2, LONG_TIMEOUT_INTERVAL, StringUtils.EMPTY);
   }
 
   @Test

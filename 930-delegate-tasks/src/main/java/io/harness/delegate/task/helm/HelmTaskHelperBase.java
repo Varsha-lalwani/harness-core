@@ -360,18 +360,18 @@ public class HelmTaskHelperBase {
   }
 
   public void removeRepo(String repoName, String workingDirectory, HelmVersion helmVersion, long timeoutInMillis) {
-    removeRepo(repoName, workingDirectory, helmVersion, timeoutInMillis, false, EMPTY);
+    removeRepo(repoName, workingDirectory, helmVersion, timeoutInMillis, EMPTY);
   }
 
-  public void removeRepo(String repoName, String workingDirectory, HelmVersion helmVersion, long timeoutInMillis,
-      boolean useRepoFlags, String tempDir) {
+  public void removeRepo(
+      String repoName, String workingDirectory, HelmVersion helmVersion, long timeoutInMillis, String cacheDir) {
     try {
       Map<String, String> environment = new HashMap<>();
       String repoRemoveCommand = getRepoRemoveCommand(repoName, workingDirectory, helmVersion);
-      if (useRepoFlags) {
+      if (!isEmpty(cacheDir)) {
         environment.putIfAbsent(HELM_CACHE_HOME,
-            HELM_CACHE_HOME_PATH.replace(REPO_NAME, repoName).replace(HELM_CACHE_HOME_PLACEHOLDER, tempDir));
-        repoRemoveCommand = addRepoFlags(repoRemoveCommand, repoName, tempDir);
+            HELM_CACHE_HOME_PATH.replace(REPO_NAME, repoName).replace(HELM_CACHE_HOME_PLACEHOLDER, cacheDir));
+        repoRemoveCommand = addRepoFlags(repoRemoveCommand, repoName, cacheDir);
       }
       ProcessResult processResult = executeCommand(environment, repoRemoveCommand, null,
           format("remove helm repo %s", repoName), timeoutInMillis, HelmCliCommandType.REPO_REMOVE);
@@ -1037,15 +1037,15 @@ public class HelmTaskHelperBase {
   }
 
   public void updateRepo(
-      String repoName, String workingDirectory, HelmVersion helmVersion, long timeoutInMillis, String repoDir) {
+      String repoName, String workingDirectory, HelmVersion helmVersion, long timeoutInMillis, String cacheDir) {
     try {
       String repoUpdateCommand = getRepoUpdateCommand(repoName, workingDirectory, helmVersion);
       Map<String, String> environment = new HashMap<>();
 
-      if (!isEmpty(repoDir)) {
+      if (!isEmpty(cacheDir)) {
         environment.put(HELM_CACHE_HOME,
-            HELM_CACHE_HOME_PATH.replace(REPO_NAME, repoName).replace(HELM_CACHE_HOME_PLACEHOLDER, repoDir));
-        repoUpdateCommand = addRepoFlags(repoUpdateCommand, repoName, repoDir);
+            HELM_CACHE_HOME_PATH.replace(REPO_NAME, repoName).replace(HELM_CACHE_HOME_PLACEHOLDER, cacheDir));
+        repoUpdateCommand = addRepoFlags(repoUpdateCommand, repoName, cacheDir);
       }
 
       ProcessResult processResult = executeCommand(environment, repoUpdateCommand, workingDirectory,
