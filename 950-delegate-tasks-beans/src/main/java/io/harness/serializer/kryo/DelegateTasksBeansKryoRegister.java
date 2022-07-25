@@ -251,6 +251,7 @@ import io.harness.delegate.beans.gitapi.GitApiResult;
 import io.harness.delegate.beans.gitapi.GitApiTaskParams;
 import io.harness.delegate.beans.gitapi.GitApiTaskResponse;
 import io.harness.delegate.beans.gitapi.GitRepoType;
+import io.harness.delegate.beans.instancesync.info.AwsServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.info.K8sServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.info.PdcServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.info.ServerlessAwsLambdaServerInstanceInfo;
@@ -596,6 +597,7 @@ import io.harness.delegate.task.spotinst.response.SpotinstTrafficShiftAlbSetupRe
 import io.harness.delegate.task.ssh.AzureInfraDelegateConfig;
 import io.harness.delegate.task.ssh.AzureSshInfraDelegateConfig;
 import io.harness.delegate.task.ssh.AzureWinrmInfraDelegateConfig;
+import io.harness.delegate.task.ssh.AwsSshWinrmInfraDelegateConfig;
 import io.harness.delegate.task.ssh.CopyCommandUnit;
 import io.harness.delegate.task.ssh.NGCommandUnitType;
 import io.harness.delegate.task.ssh.NgCleanupCommandUnit;
@@ -1642,5 +1644,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(AzureSshInfraDelegateConfig.class, 55414);
     kryo.register(AzureWinrmInfraDelegateConfig.class, 55415);
     kryo.register(PdcServerInstanceInfo.class, 55501);
+    kryo.register(AwsServerInstanceInfo.class, 55502);
+    kryo.register(AwsSshWinrmInfraDelegateConfig.class, 55503);
   }
 }
