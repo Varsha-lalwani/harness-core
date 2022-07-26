@@ -30,6 +30,8 @@ import org.springframework.data.mongodb.core.query.Update;
 public interface PMSPipelineService {
   PipelineCRUDResult create(PipelineEntity pipelineEntity);
 
+  PipelineCRUDResult createWithoutValidations(PipelineEntity pipelineEntity);
+
   PipelineSaveResponse clone(ClonePipelineDTO clonePipelineDTO, String accountId);
 
   Optional<PipelineEntity> get(
@@ -58,7 +60,7 @@ public interface PMSPipelineService {
       String projectIdentifier, Boolean getDistinctFromBranches);
 
   PipelineEntity importPipelineFromRemote(String accountId, String orgIdentifier, String projectIdentifier,
-      String pipelineIdentifier, PipelineImportRequestDTO pipelineImportRequest);
+      String pipelineIdentifier, PipelineImportRequestDTO pipelineImportRequest, boolean isForceImport);
 
   Long countAllPipelines(Criteria criteria);
 

@@ -47,8 +47,6 @@ public class ParameterField<T> {
   public T getValue() {
     return value != null ? value : defaultValue;
   }
-  private static final ParameterField<?> EMPTY =
-      new ParameterField<>(null, false, false, null, null, false, null, false, null);
 
   public static <T> ParameterField<T> createExpressionField(
       boolean isExpression, String expressionValue, InputSetValidator inputSetValidator, boolean isTypeString) {
@@ -75,7 +73,7 @@ public class ParameterField<T> {
   }
 
   public static <T> ParameterField<T> ofNull() {
-    return (ParameterField<T>) EMPTY;
+    return new ParameterField<T>(null, false, false, null, null, false, null, false, null);
   }
 
   public ParameterField(String expressionValue, boolean expression, boolean isExecutionInput, T value, T defaultValue,
@@ -159,6 +157,10 @@ public class ParameterField<T> {
 
   public Object fetchFinalValue() {
     return expression ? expressionValue : (value != null ? value : defaultValue);
+  }
+
+  public static boolean isNotNull(ParameterField<?> actualField) {
+    return !isNull(actualField);
   }
 
   public static boolean isNull(ParameterField<?> actualField) {

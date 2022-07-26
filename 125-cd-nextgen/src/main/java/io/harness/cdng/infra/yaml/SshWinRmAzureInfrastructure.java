@@ -9,11 +9,13 @@ package io.harness.cdng.infra.yaml;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.cdng.infra.beans.InfraMapping;
+import io.harness.cdng.infra.beans.InfrastructureDetailsAbstract;
 import io.harness.cdng.infra.beans.SshWinRmAzureInfraMapping;
 import io.harness.cdng.infra.beans.SshWinRmAzureInfraMapping.SshWinRmAzureInfraMappingBuilder;
 import io.harness.filters.ConnectorRefExtractorHelper;
@@ -46,7 +48,8 @@ import org.springframework.data.annotation.TypeAlias;
 @SimpleVisitorHelper(helperClass = ConnectorRefExtractorHelper.class)
 @TypeAlias("SshWinRmAzureInfrastructure")
 @RecasterAlias("io.harness.cdng.infra.yaml.SshWinRmAzureInfrastructure")
-public class SshWinRmAzureInfrastructure implements Infrastructure, Visitable, WithConnectorRef {
+public class SshWinRmAzureInfrastructure
+    extends InfrastructureDetailsAbstract implements Infrastructure, Visitable, WithConnectorRef {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
@@ -76,7 +79,7 @@ public class SshWinRmAzureInfrastructure implements Infrastructure, Visitable, W
   @Wither
   ParameterField<String> credentialsRef;
 
-  @YamlSchemaTypes({runtime})
+  @YamlSchemaTypes({string})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_MAP_CLASSPATH)
   @Wither
   ParameterField<Map<String, String>> tags;

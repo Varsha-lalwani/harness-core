@@ -33,6 +33,7 @@ import static io.harness.eventsframework.EventsFrameworkMetadataConstants.USER_E
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.USER_SCOPE_RECONCILIATION;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.VARIABLE_ENTITY;
 import static io.harness.lock.DistributedLockImplementation.MONGO;
+import static io.harness.pms.listener.NgOrchestrationNotifyEventListener.NG_ORCHESTRATION;
 
 import static java.lang.Boolean.TRUE;
 
@@ -46,6 +47,7 @@ import io.harness.accesscontrol.AccessControlAdminClientModule;
 import io.harness.account.AbstractAccountModule;
 import io.harness.account.AccountClientModule;
 import io.harness.account.AccountConfig;
+import io.harness.agent.AgentMtlsModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.PrimaryVersionManagerModule;
@@ -58,6 +60,8 @@ import io.harness.ccm.license.remote.CeLicenseClientModule;
 import io.harness.cdng.NGModule;
 import io.harness.cdng.fileservice.FileServiceClient;
 import io.harness.cdng.fileservice.FileServiceClientFactory;
+import io.harness.cdng.jenkins.jenkinsstep.JenkinsBuildStepHelperService;
+import io.harness.cdng.jenkins.jenkinsstep.JenkinsBuildStepHelperServiceImpl;
 import io.harness.connector.ConnectorModule;
 import io.harness.connector.ConnectorResourceClientModule;
 import io.harness.connector.events.ConnectorEventHandler;
@@ -110,6 +114,7 @@ import io.harness.ng.accesscontrol.migrations.AccessControlMigrationModule;
 import io.harness.ng.accesscontrol.user.AggregateUserService;
 import io.harness.ng.accesscontrol.user.AggregateUserServiceImpl;
 import io.harness.ng.authenticationsettings.AuthenticationSettingsModule;
+import io.harness.ng.chaos.AbstractChaosModule;
 import io.harness.ng.core.AccountOrgProjectHelper;
 import io.harness.ng.core.AccountOrgProjectHelperImpl;
 import io.harness.ng.core.CoreModule;
@@ -120,6 +125,7 @@ import io.harness.ng.core.NGAggregateModule;
 import io.harness.ng.core.SecretManagementModule;
 import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.accountsetting.services.NGAccountSettingServiceImpl;
+import io.harness.ng.core.agent.client.AgentNgManagerCgManagerClientModule;
 import io.harness.ng.core.api.ApiKeyService;
 import io.harness.ng.core.api.NGModulesService;
 import io.harness.ng.core.api.NGSecretServiceV2;
@@ -178,8 +184,6 @@ import io.harness.ng.core.user.service.NgUserService;
 import io.harness.ng.core.user.service.impl.LastAdminCheckServiceImpl;
 import io.harness.ng.core.user.service.impl.NgUserServiceImpl;
 import io.harness.ng.core.user.service.impl.UserEntityCrudStreamListener;
-import io.harness.ng.core.variable.services.VariableService;
-import io.harness.ng.core.variable.services.impl.VariableServiceImpl;
 import io.harness.ng.eventsframework.EventsFrameworkModule;
 import io.harness.ng.feedback.services.FeedbackService;
 import io.harness.ng.feedback.services.impls.FeedbackServiceImpl;
@@ -221,6 +225,9 @@ import io.harness.outbox.TransactionOutboxModule;
 import io.harness.outbox.api.OutboxEventHandler;
 import io.harness.persistence.UserProvider;
 import io.harness.pipeline.remote.PipelineRemoteClientModule;
+import io.harness.pms.expression.EngineExpressionService;
+import io.harness.pms.expression.NoopEngineExpressionServiceImpl;
+import io.harness.pms.sdk.core.waiter.AsyncWaitEngine;
 import io.harness.polling.service.impl.PollingPerpetualTaskServiceImpl;
 import io.harness.polling.service.impl.PollingServiceImpl;
 import io.harness.polling.service.intfc.PollingPerpetualTaskService;
@@ -262,6 +269,8 @@ import io.harness.tracing.AbstractPersistenceTracerModule;
 import io.harness.user.UserClientModule;
 import io.harness.version.VersionModule;
 import io.harness.waiter.AbstractWaiterModule;
+import io.harness.waiter.AsyncWaitEngineImpl;
+import io.harness.waiter.WaitNotifyEngine;
 import io.harness.waiter.WaiterConfiguration;
 import io.harness.yaml.YamlSdkModule;
 import io.harness.yaml.core.StepSpecType;
@@ -431,10 +440,17 @@ public class NextGenModule extends AbstractModule {
     return this.appConfig.getCeGcpSetupConfig();
   }
 
+  @Provides
+  @Singleton
+  public AsyncWaitEngine asyncWaitEngine(WaitNotifyEngine waitNotifyEngine) {
+    return new AsyncWaitEngineImpl(waitNotifyEngine, NG_ORCHESTRATION);
+  }
+
   @Override
   protected void configure() {
     install(VersionModule.getInstance());
     install(PrimaryVersionManagerModule.getInstance());
+    install(new NGSettingModule(appConfig));
     install(new AbstractPersistenceTracerModule() {
       @Override
       protected RedisConfig redisConfigProvider() {
@@ -532,7 +548,8 @@ public class NextGenModule extends AbstractModule {
     install(new io.harness.service.DelegateServiceModule());
     install(NGModule.getInstance());
     install(ExceptionModule.getInstance());
-    install(new EventsFrameworkModule(this.appConfig.getEventsFrameworkConfiguration()));
+    install(new EventsFrameworkModule(
+        this.appConfig.getEventsFrameworkConfiguration(), this.appConfig.getDebeziumConsumerConfigs()));
     install(new SecretManagementModule());
     install(new AccountClientModule(appConfig.getManagerClientConfig(),
         appConfig.getNextGenConfig().getManagerServiceSecret(), NG_MANAGER.toString()));
@@ -559,10 +576,11 @@ public class NextGenModule extends AbstractModule {
         this.appConfig.isEnableAudit()));
     install(new NotificationClientModule(appConfig.getNotificationClientConfiguration()));
     install(new InstanceModule());
+    install(new AgentMtlsModule());
     install(new TokenClientModule(this.appConfig.getNgManagerClientConfig(),
         this.appConfig.getNextGenConfig().getNgManagerServiceSecret(), NG_MANAGER.getServiceId()));
-    install(
-        new OpaClientModule(appConfig.getOpaServerConfig().getBaseUrl(), appConfig.getOpaServerConfig().getSecret()));
+    install(new OpaClientModule(
+        appConfig.getOpaClientConfig(), appConfig.getPolicyManagerSecret(), NG_MANAGER.getServiceId()));
     install(EnforcementModule.getInstance());
 
     install(EnforcementClientModule.getInstance(appConfig.getNgManagerClientConfig(),
@@ -574,6 +592,8 @@ public class NextGenModule extends AbstractModule {
     install(new NgConnectorManagerClientModule(
         appConfig.getManagerClientConfig(), appConfig.getNextGenConfig().getManagerServiceSecret()));
     install(new DelegateNgManagerCgManagerClientModule(appConfig.getManagerClientConfig(),
+        appConfig.getNextGenConfig().getManagerServiceSecret(), NG_MANAGER.getServiceId()));
+    install(new AgentNgManagerCgManagerClientModule(appConfig.getManagerClientConfig(),
         appConfig.getNextGenConfig().getManagerServiceSecret(), NG_MANAGER.getServiceId()));
     bind(NgGlobalKmsService.class).to(NgGlobalKmsServiceImpl.class);
     install(new ProviderModule() {
@@ -623,6 +643,7 @@ public class NextGenModule extends AbstractModule {
       }
     });
     install(new NGLdapModule(appConfig));
+    install(new NgVariableModule(appConfig));
     install(EntitySetupUsageModule.getInstance());
     install(PersistentLockModule.getInstance());
     install(new TransactionOutboxModule(
@@ -655,6 +676,23 @@ public class NextGenModule extends AbstractModule {
       @Override
       public AccountConfig accountConfiguration() {
         return appConfig.getAccountConfig();
+      }
+    });
+    install(new AbstractChaosModule() {
+      // todo: implement this
+      @Override
+      public ServiceHttpClientConfig chaosClientConfig() {
+        return null;
+      }
+
+      @Override
+      public String serviceSecret() {
+        return null;
+      }
+
+      @Override
+      public String clientId() {
+        return null;
       }
     });
 
@@ -705,6 +743,10 @@ public class NextGenModule extends AbstractModule {
     bind(FeedbackService.class).to(FeedbackServiceImpl.class);
     bind(PollingService.class).to(PollingServiceImpl.class);
     bind(PollingPerpetualTaskService.class).to(PollingPerpetualTaskServiceImpl.class);
+    bind(JenkinsBuildStepHelperService.class).to(JenkinsBuildStepHelperServiceImpl.class);
+    if (!appConfig.getShouldConfigureWithPMS().equals(TRUE)) {
+      bind(EngineExpressionService.class).to(NoopEngineExpressionServiceImpl.class);
+    }
     bind(ScheduledExecutorService.class)
         .annotatedWith(Names.named("ngTelemetryPublisherExecutor"))
         .toInstance(new ScheduledThreadPoolExecutor(1,
@@ -724,7 +766,6 @@ public class NextGenModule extends AbstractModule {
     registerEventsFrameworkMessageListeners();
     registerEncryptors();
 
-    bind(VariableService.class).to(VariableServiceImpl.class);
     bindExceptionHandlers();
   }
 

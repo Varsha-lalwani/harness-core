@@ -28,7 +28,6 @@ import io.harness.ccm.budget.utils.BudgetUtils;
 import io.harness.ccm.commons.entities.billing.Budget;
 import io.harness.timescaledb.TimeScaleDBService;
 
-import org.apache.commons.lang3.StringUtils;
 import software.wings.beans.SlackMessage;
 import software.wings.beans.User;
 import software.wings.beans.notification.SlackNotificationSetting;
@@ -52,6 +51,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -115,8 +115,8 @@ public class BudgetAlertsServiceImpl {
     checkAlertThresholdsAndSendAlerts(budget, alertsBasedOnForecastCost, emailAddresses, forecastCost);
   }
 
-  private void checkAlertThresholdsAndSendAlerts(Budget budget, AlertThreshold[] alertThresholds,
-      List<String> emailAddresses, double cost) {
+  private void checkAlertThresholdsAndSendAlerts(
+      Budget budget, AlertThreshold[] alertThresholds, List<String> emailAddresses, double cost) {
     for (AlertThreshold alertThreshold : alertThresholds) {
       List<String> userGroupIds =
           Arrays.asList(Optional.ofNullable(alertThreshold.getUserGroupIds()).orElse(new String[0]));
@@ -130,7 +130,8 @@ public class BudgetAlertsServiceImpl {
       slackWebhooks.addAll(getSlackWebhooksForUserGroup(budget.getAccountId(), userGroupIds));
 
       if (isEmpty(slackWebhooks) && isEmpty(emailAddresses)) {
-        log.warn("The budget with id={} has no associated communication channels for threshold={}.", budget.getUuid(), alertThreshold);
+        log.warn("The budget with id={} has no associated communication channels for threshold={}.", budget.getUuid(),
+            alertThreshold);
         continue;
       }
 
@@ -187,8 +188,7 @@ public class BudgetAlertsServiceImpl {
               .put("BUDGET_NAME", budget.getName())
               .build();
       String slackMessage = replace(slackMessageTemplate, params);
-      slackMessageSender.send(
-              new SlackMessage(webhook, null, null, slackMessage), false, false);
+      slackMessageSender.send(new SlackMessage(webhook, null, null, slackMessage), false, false);
     });
   }
 

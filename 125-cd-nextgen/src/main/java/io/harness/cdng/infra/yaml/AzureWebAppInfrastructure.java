@@ -7,14 +7,13 @@
 
 package io.harness.cdng.infra.yaml;
 
-import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
-
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.cdng.infra.beans.AzureWebAppInfraMapping;
 import io.harness.cdng.infra.beans.InfraMapping;
+import io.harness.cdng.infra.beans.InfrastructureDetailsAbstract;
 import io.harness.filters.ConnectorRefExtractorHelper;
 import io.harness.filters.WithConnectorRef;
 import io.harness.ng.core.infrastructure.InfrastructureKind;
@@ -22,7 +21,6 @@ import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
-import io.harness.yaml.YamlSchemaTypes;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
@@ -43,7 +41,8 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("azureWebAppInfrastructure")
 @OwnedBy(HarnessTeam.CDP)
 @RecasterAlias("io.harness.cdng.infra.yaml.AzureWebAppInfrastructure")
-public class AzureWebAppInfrastructure implements Infrastructure, Visitable, WithConnectorRef {
+public class AzureWebAppInfrastructure
+    extends InfrastructureDetailsAbstract implements Infrastructure, Visitable, WithConnectorRef {
   @NotNull
   @NotEmpty
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
@@ -59,17 +58,6 @@ public class AzureWebAppInfrastructure implements Infrastructure, Visitable, Wit
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Wither
   ParameterField<String> resourceGroup;
-  @NotNull
-  @NotEmpty
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-  @Wither
-  ParameterField<String> webApp;
-  @NotNull
-  @NotEmpty
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-  @Wither
-  ParameterField<String> deploymentSlot;
-  @YamlSchemaTypes({string}) @Wither ParameterField<String> targetSlot;
 
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
@@ -79,8 +67,6 @@ public class AzureWebAppInfrastructure implements Infrastructure, Visitable, Wit
         .azureConnector(connectorRef.getValue())
         .subscription(subscriptionId.getValue())
         .resourceGroup(resourceGroup.getValue())
-        .webApp(webApp.getValue())
-        .deploymentSlot(deploymentSlot.getValue())
         .build();
   }
 
@@ -91,8 +77,7 @@ public class AzureWebAppInfrastructure implements Infrastructure, Visitable, Wit
 
   @Override
   public String[] getInfrastructureKeyValues() {
-    return new String[] {connectorRef.getValue(), subscriptionId.getValue(), resourceGroup.getValue(),
-        webApp.getValue(), deploymentSlot.getValue()};
+    return new String[] {connectorRef.getValue(), subscriptionId.getValue(), resourceGroup.getValue()};
   }
 
   @Override
@@ -112,15 +97,6 @@ public class AzureWebAppInfrastructure implements Infrastructure, Visitable, Wit
     }
     if (!ParameterField.isNull(config.getResourceGroup())) {
       resultantInfra = resultantInfra.withResourceGroup(config.getResourceGroup());
-    }
-    if (!ParameterField.isNull(config.getWebApp())) {
-      resultantInfra = resultantInfra.withWebApp(config.getWebApp());
-    }
-    if (!ParameterField.isNull(config.getDeploymentSlot())) {
-      resultantInfra = resultantInfra.withDeploymentSlot(config.getDeploymentSlot());
-    }
-    if (!ParameterField.isNull(config.getTargetSlot())) {
-      resultantInfra = resultantInfra.withTargetSlot(config.getTargetSlot());
     }
     return resultantInfra;
   }

@@ -13,7 +13,6 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.FeatureName;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
@@ -27,9 +26,6 @@ import io.harness.delegate.task.cloudformation.CloudFormationCreateStackNGRespon
 import io.harness.delegate.task.cloudformation.CloudformationCommandUnit;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse;
-import io.harness.eraro.ErrorCode;
-import io.harness.exception.AccessDeniedException;
-import io.harness.exception.WingsException;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.ng.core.EntityDetail;
@@ -81,11 +77,6 @@ public class CloudformationCreateStackStep
 
   @Override
   public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
-    if (!cdFeatureFlagHelper.isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.CLOUDFORMATION_NG)) {
-      throw new AccessDeniedException(
-          "Cloudformation NG is not enabled for this account. Please contact harness customer care.",
-          ErrorCode.NG_ACCESS_DENIED, WingsException.USER);
-    }
     List<EntityDetail> entityDetailList = new ArrayList<>();
     String accountId = AmbianceUtils.getAccountId(ambiance);
     String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
@@ -161,33 +152,42 @@ public class CloudformationCreateStackStep
       return cloudformationStepHelper.getFailureResponse(e.getCommandUnitsProgress().getUnitProgresses(), errorMessage);
     }
 
-    if (cloudformationTaskNGResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
-      return cloudformationStepHelper.getFailureResponse(
-          cloudformationTaskNGResponse.getUnitProgressData().getUnitProgresses(),
-          cloudformationTaskNGResponse.getErrorMessage());
-    }
-    CloudFormationCreateStackNGResponse cloudFormationCreateStackNGResponse =
-        (CloudFormationCreateStackNGResponse) cloudformationTaskNGResponse.getCloudFormationCommandNGResponse();
+    try {
+      CloudFormationCreateStackNGResponse cloudFormationCreateStackNGResponse =
+          (CloudFormationCreateStackNGResponse) cloudformationTaskNGResponse.getCloudFormationCommandNGResponse();
 
-    cloudformationStepHelper.saveCloudFormationInheritOutput(stepConfiguration,
-        getParameterFieldValue(cloudformationCreateStackStepParameters.getProvisionerIdentifier()), ambiance,
-        cloudFormationCreateStackNGResponse.isExistentStack());
-    if (!cloudformationTaskNGResponse.isUpdatedNotPerformed()) {
-      CloudformationConfig cloudformationConfig = cloudformationStepHelper.getCloudformationConfig(
-          ambiance, stepParameters, (CloudFormationCreateStackPassThroughData) passThroughData);
-      cloudformationConfigDAL.saveCloudformationConfig(cloudformationConfig);
+      if (cloudformationTaskNGResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
+        return cloudformationStepHelper.getFailureResponse(
+            cloudformationTaskNGResponse.getUnitProgressData().getUnitProgresses(),
+            cloudformationTaskNGResponse.getErrorMessage());
+      }
+
+      cloudformationStepHelper.saveCloudFormationInheritOutput(stepConfiguration,
+          getParameterFieldValue(cloudformationCreateStackStepParameters.getProvisionerIdentifier()), ambiance,
+          cloudFormationCreateStackNGResponse.isExistentStack());
+      if (!cloudformationTaskNGResponse.isUpdatedNotPerformed()) {
+        CloudformationConfig cloudformationConfig = cloudformationStepHelper.getCloudformationConfig(
+            ambiance, stepParameters, (CloudFormationCreateStackPassThroughData) passThroughData);
+        cloudformationConfigDAL.saveCloudformationConfig(cloudformationConfig);
+      }
+      return StepResponse.builder()
+          .unitProgressList(cloudformationTaskNGResponse.getUnitProgressData().getUnitProgresses())
+          .stepOutcome(StepResponse.StepOutcome.builder()
+                           .name(OutcomeExpressionConstants.OUTPUT)
+                           .outcome(new CloudformationCreateStackOutcome(
+                               isNotEmpty(cloudFormationCreateStackNGResponse.getCloudFormationOutputMap())
+                                   ? cloudFormationCreateStackNGResponse.getCloudFormationOutputMap()
+                                   : new HashMap<>()))
+                           .build())
+          .status(Status.SUCCEEDED)
+          .build();
+    } catch (Exception e) {
+      String errorMessage =
+          String.format("Exception while executing Cloudformation Create Stack step: %s", e.getMessage());
+      log.error(errorMessage, e);
+      return cloudformationStepHelper.getFailureResponse(
+          cloudformationTaskNGResponse.getUnitProgressData().getUnitProgresses(), errorMessage);
     }
-    return StepResponse.builder()
-        .unitProgressList(cloudformationTaskNGResponse.getUnitProgressData().getUnitProgresses())
-        .stepOutcome(StepResponse.StepOutcome.builder()
-                         .name(OutcomeExpressionConstants.OUTPUT)
-                         .outcome(new CloudformationCreateStackOutcome(
-                             isNotEmpty(cloudFormationCreateStackNGResponse.getCloudFormationOutputMap())
-                                 ? cloudFormationCreateStackNGResponse.getCloudFormationOutputMap()
-                                 : new HashMap<>()))
-                         .build())
-        .status(Status.SUCCEEDED)
-        .build();
   }
 
   @Override

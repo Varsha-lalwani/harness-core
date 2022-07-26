@@ -10,14 +10,18 @@ package software.wings.service.impl.yaml;
 import io.harness.beans.FeatureName;
 import io.harness.ff.FeatureFlagService;
 import io.harness.git.model.ChangeType;
+import io.harness.yaml.BaseYaml;
 
 import software.wings.beans.Application;
 import software.wings.beans.ConfigFile;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.ManifestFile;
+import software.wings.beans.entityinterface.ApplicationAccess;
 import software.wings.beans.yaml.GitFileChange;
+import software.wings.service.impl.yaml.handler.BaseYamlHandler;
 import software.wings.service.impl.yaml.handler.YamlHandlerFactory;
+import software.wings.service.impl.yaml.handler.YamlHandlerFromBeanFactory;
 import software.wings.service.impl.yaml.service.YamlHelper;
 import software.wings.service.intfc.yaml.EntityUpdateService;
 import software.wings.service.intfc.yaml.YamlChangeSetService;
@@ -45,6 +49,7 @@ public class YamlChangeSetHelper {
   @Inject private YamlHandlerFactory yamlHandlerFactory;
   @Inject private FeatureFlagService featureFlagService;
   @Inject private YamlHelper yamlHelper;
+  @Inject private YamlHandlerFromBeanFactory yamlHandlerFromBeanFactory;
 
   public List<GitFileChange> getConfigFileGitChangeSet(ConfigFile configFile, ChangeType changeType) {
     return entityUpdateService.obtainEntityGitSyncFileChangeSet(
@@ -76,6 +81,10 @@ public class YamlChangeSetHelper {
     if (isRename) {
       entityRenameYamlChange(accountId, oldEntity, newEntity);
     } else {
+      if (compareYaml(oldEntity, newEntity)
+          && featureFlagService.isEnabled(FeatureName.COMPARE_YAML_IN_GIT_SYNC, accountId)) {
+        return;
+      }
       entityYamlChangeSet(accountId, newEntity, ChangeType.MODIFY);
     }
   }
@@ -138,6 +147,7 @@ public class YamlChangeSetHelper {
     changeSet.addAll(
         entityUpdateService.obtainEntityGitSyncFileChangeSet(accountId, null, newEntity, ChangeType.MODIFY));
     YamlChangeSet savedChangeSet = yamlChangeSetService.saveChangeSet(accountId, changeSet, newEntity);
+    long timeOfRename = System.currentTimeMillis();
     String parentYamlChangeSetId = savedChangeSet.getUuid();
 
     List<YamlChangeSet> yamlChangeSets =
@@ -148,6 +158,15 @@ public class YamlChangeSetHelper {
     }
     for (YamlChangeSet yamlChangeSet : yamlChangeSets) {
       yamlChangeSet.setParentYamlChangeSetId(parentYamlChangeSetId);
+      // [PL-25117]: In rename operation, we are creating two changesets,
+      // 1. The First one to perform rename
+      // 2. Second to perform a full sync
+      // If two renames are done at the same time, then the order of this operations can be
+      // rename1 rename2 fullsync1 fullsync2
+      // This leads to a bad state in git as fullsync1 will recreate the renamed entity
+      // The solution was to ensure that fullsync happens just after rename. So we used the queue on
+      // field to say that full sync is queued just after the rename
+      yamlChangeSet.setQueuedOn(timeOfRename);
       yamlChangeSetService.save(yamlChangeSet);
     }
   }
@@ -180,6 +199,7 @@ public class YamlChangeSetHelper {
     }
 
     YamlChangeSet savedChangeSet = yamlChangeSetService.saveChangeSet(accountId, changeSet, newEntity);
+    long timeOfRename = System.currentTimeMillis();
     String parentYamlChangeSetId = savedChangeSet.getUuid();
 
     List<YamlChangeSet> yamlChangeSets =
@@ -190,7 +210,23 @@ public class YamlChangeSetHelper {
     }
     for (YamlChangeSet yamlChangeSet : yamlChangeSets) {
       yamlChangeSet.setParentYamlChangeSetId(parentYamlChangeSetId);
+      yamlChangeSet.setQueuedOn(timeOfRename);
       yamlChangeSetService.save(yamlChangeSet);
+    }
+  }
+
+  private <T> boolean compareYaml(T oldEntity, T newEntity) {
+    if ((oldEntity != null) && (oldEntity instanceof ApplicationAccess)) {
+      BaseYamlHandler yamlHandler = yamlHandlerFromBeanFactory.getYamlHandler(oldEntity);
+      if (yamlHandler != null) {
+        BaseYaml yamlOld = yamlHandler.toYaml(oldEntity, ((ApplicationAccess) oldEntity).getAppId());
+        BaseYaml yamlNew = yamlHandler.toYaml(newEntity, ((ApplicationAccess) newEntity).getAppId());
+        return yamlOld != null && yamlOld.equals(yamlNew);
+      } else {
+        return false;
+      }
+    } else {
+      return false;
     }
   }
 }

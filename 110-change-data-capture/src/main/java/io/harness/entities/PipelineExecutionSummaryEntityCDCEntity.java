@@ -27,13 +27,16 @@ public class PipelineExecutionSummaryEntityCDCEntity implements CDCEntity<Pipeli
   @Inject
   private PlanExecutionSummaryCdChangeServiceInfraChangeDataHandlerNew
       planExecutionSummaryCdChangeServiceInfraChangeDataHandlerNew;
+
   @Override
   public ChangeHandler getChangeHandler(String handlerClass) {
     if (handlerClass.contentEquals("PipelineExecutionSummaryEntity")) {
       return planExecutionSummaryChangeDataHandler;
     } else if (handlerClass.contentEquals("PipelineExecutionSummaryEntityCD")) {
       return planExecutionSummaryCdChangeDataHandler;
-    } else if (handlerClass.contentEquals("PipelineExecutionSummaryEntityServiceAndInfra")) {
+    } else if (handlerClass.contentEquals("PipelineExecutionSummaryEntityServiceAndInfra"))
+
+    {
       return planExecutionSummaryCdChangeServiceInfraChangeDataHandlerNew;
     }
     return null;

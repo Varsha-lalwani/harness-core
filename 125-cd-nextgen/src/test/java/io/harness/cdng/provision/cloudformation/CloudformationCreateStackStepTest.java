@@ -8,19 +8,19 @@
 package io.harness.cdng.provision.cloudformation;
 
 import static io.harness.rule.OwnerRule.NGONZALEZ;
+import static io.harness.rule.OwnerRule.TMACARI;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
@@ -46,7 +46,6 @@ import io.harness.delegate.task.cloudformation.CloudFormationCreateStackNGRespon
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse;
 import io.harness.delegate.task.cloudformation.CloudformationTaskType;
-import io.harness.exception.AccessDeniedException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
 import io.harness.logging.UnitStatus;
@@ -79,12 +78,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 @PrepareForTest({StepUtils.class})
-@RunWith(PowerMockRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 @OwnedBy(HarnessTeam.CDP)
 public class CloudformationCreateStackStepTest extends CategoryTest {
   @Mock PipelineRbacHelper pipelineRbacHelper;
@@ -197,16 +197,6 @@ public class CloudformationCreateStackStepTest extends CategoryTest {
   @Test
   @Owner(developers = NGONZALEZ)
   @Category(UnitTests.class)
-  public void testValidateFailsIfFFisNotEnabled() {
-    doReturn(false).when(cdFeatureFlagHelper).isEnabled(anyString(), any());
-    assertThatThrownBy(
-        () -> cloudformationCreateStackStep.validateResources(getAmbiance(), StepElementParameters.builder().build()))
-        .isInstanceOf(AccessDeniedException.class);
-  }
-
-  @Test
-  @Owner(developers = NGONZALEZ)
-  @Category(UnitTests.class)
   public void testExecuteCloudformationTask() {
     CloudformationCreateStackStepParameters parameters = new CloudformationCreateStackStepParameters();
     RemoteCloudformationTemplateFileSpec templateFileSpec = new RemoteCloudformationTemplateFileSpec();
@@ -233,7 +223,7 @@ public class CloudformationCreateStackStepTest extends CategoryTest {
     parameters.setDelegateSelectors(ParameterField.createValueField(Arrays.asList(taskSelectorYaml)));
 
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(parameters).build();
-    mockStatic(StepUtils.class);
+    Mockito.mockStatic(StepUtils.class);
     PowerMockito.when(StepUtils.prepareCDTaskRequest(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(TaskRequest.newBuilder().build());
     ArgumentCaptor<TaskData> taskDataArgumentCaptor = ArgumentCaptor.forClass(TaskData.class);
@@ -356,5 +346,74 @@ public class CloudformationCreateStackStepTest extends CategoryTest {
     cloudformationCreateStackStep.finalizeExecutionWithSecurityContext(
         getAmbiance(), stepElementParameters, passThroughData, () -> failedTaskResponse);
     verify(cloudformationStepHelper, times(1)).getFailureResponse(any(), any());
+  }
+
+  @Test
+  @Owner(developers = TMACARI)
+  @Category(UnitTests.class)
+  public void finalizeExecutionWithSecurityContextExceptionThrownInStep() throws Exception {
+    ConnectorInfoDTO connectorInfoDTO =
+        ConnectorInfoDTO.builder()
+            .connectorConfig(
+                AwsConnectorDTO.builder()
+                    .credential(AwsCredentialDTO.builder().config(AwsManualConfigSpecDTO.builder().build()).build())
+                    .build())
+            .build();
+    doReturn(connectorInfoDTO).when(cdStepHelper).getConnector(any(), any());
+
+    CloudformationCreateStackStepParameters parameters = new CloudformationCreateStackStepParameters();
+    RemoteCloudformationTemplateFileSpec templateFileSpec = new RemoteCloudformationTemplateFileSpec();
+    CloudformationParametersFileSpec parametersFileSpec = new CloudformationParametersFileSpec();
+    CloudformationParametersFileSpec parametersFileSpec2 = new CloudformationParametersFileSpec();
+    LinkedHashMap<String, CloudformationParametersFileSpec> parametersFileSpecs = new LinkedHashMap<>();
+    parametersFileSpecs.put("var1", parametersFileSpec);
+    parametersFileSpecs.put("var2", parametersFileSpec2);
+    CloudformationConfig cloudformationConfig = CloudformationConfig.builder().build();
+
+    StoreConfigWrapper storeConfigWrapper = StoreConfigWrapper.builder()
+                                                .spec(S3UrlStoreConfig.builder()
+                                                          .urls(ParameterField.createValueField(Arrays.asList("url1")))
+                                                          .region(ParameterField.createValueField("region"))
+                                                          .connectorRef(ParameterField.createValueField(CONNECTOR_REF))
+                                                          .build())
+                                                .build();
+    parametersFileSpec.setStore(storeConfigWrapper);
+    parametersFileSpec2.setStore(storeConfigWrapper);
+    templateFileSpec.setStore(storeConfigWrapper);
+    parameters.setConfiguration(CloudformationCreateStackStepConfigurationParameters.builder()
+                                    .region(ParameterField.createValueField("region"))
+                                    .stackName(ParameterField.createValueField("stack-name"))
+                                    .parameters(parametersFileSpecs)
+                                    .templateFile(CloudformationTemplateFile.builder()
+                                                      .spec(templateFileSpec)
+                                                      .type(CloudformationTemplateFileTypes.Remote)
+                                                      .build())
+                                    .build());
+    StepElementParameters stepElementParameters = StepElementParameters.builder().spec(parameters).build();
+
+    CloudFormationCreateStackPassThroughData passThroughData =
+        CloudFormationCreateStackPassThroughData.builder().build();
+
+    CloudformationTaskNGResponse cloudformationTaskNGResponse =
+        CloudformationTaskNGResponse.builder()
+            .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+            .cloudFormationCommandNGResponse(
+                CloudFormationCreateStackNGResponse.builder().cloudFormationOutputMap(new HashMap<>()).build())
+            .unitProgressData(
+                UnitProgressData.builder()
+                    .unitProgresses(Arrays.asList(
+                        UnitProgress.newBuilder().setUnitName("name").setStatus(UnitStatus.FAILURE).build()))
+                    .build())
+            .build();
+    doThrow(new RuntimeException("testException"))
+        .when(cloudformationStepHelper)
+        .saveCloudFormationInheritOutput(any(), any(), any(), anyBoolean());
+    doReturn(cloudformationConfig).when(cloudformationStepHelper).getCloudformationConfig(any(), any(), any());
+
+    cloudformationCreateStackStep.finalizeExecutionWithSecurityContext(
+        getAmbiance(), stepElementParameters, passThroughData, () -> cloudformationTaskNGResponse);
+
+    verify(cloudformationStepHelper, times(1))
+        .getFailureResponse(any(), eq("Exception while executing Cloudformation Create Stack step: testException"));
   }
 }

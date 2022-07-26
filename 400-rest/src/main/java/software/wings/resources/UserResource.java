@@ -28,6 +28,7 @@ import static software.wings.utils.Utils.urlDecode;
 import static com.google.common.collect.ImmutableMap.of;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
@@ -97,6 +98,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.typesafe.config.Optional;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -523,6 +525,24 @@ public class UserResource {
     return new RestResponse<>(UserThreadLocal.get().getPublicUser());
   }
 
+  /**
+   * Get User Account details response.
+   *
+   * @return the rest response
+   */
+  @GET
+  @Path("accounts")
+  @Scope(value = ResourceType.USER, scope = LOGGED_IN)
+  @Timed
+  @ExceptionMetered
+  @AuthRule(permissionType = LOGGED_IN)
+  public RestResponse<io.harness.ng.beans.PageResponse<Account>> getUserAccounts(
+      @QueryParam(NGResourceFilterConstants.PAGE_KEY) @DefaultValue("0") int pageIndex,
+      @QueryParam(NGResourceFilterConstants.SIZE_KEY) @DefaultValue("20") int pageSize,
+      @Optional @QueryParam(NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm) {
+    return new RestResponse<>(userService.getUserAccountsAndSupportAccounts(
+        UserThreadLocal.get().getUuid(), pageIndex, pageSize, searchTerm));
+  }
   /**
    * Look up the user object using email and login the user. Intended for internal use only.
    * E.g. The Identity Service authenticated the user through OAuth provider and get the user email, then

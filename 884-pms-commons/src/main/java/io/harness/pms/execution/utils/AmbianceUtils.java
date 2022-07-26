@@ -21,6 +21,7 @@ import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.plan.execution.SetupAbstractionKeys;
+import io.harness.strategy.StrategyValidationUtils;
 
 import com.cronutils.utils.StringUtils;
 import com.google.common.annotations.VisibleForTesting;
@@ -110,13 +111,17 @@ public class AmbianceUtils {
     return ambiance.getLevelsList().get(ambiance.getLevelsList().size() - 1);
   }
 
-  public static String obtainOriginalStepIdentifier(Ambiance ambiance) {
-    Level level = obtainCurrentLevel(ambiance);
-    return level == null || isEmpty(level.getOriginalIdentifier()) ? null : level.getOriginalIdentifier();
-  }
-
   public static String obtainStepIdentifier(Ambiance ambiance) {
     Level level = obtainCurrentLevel(ambiance);
+    return level == null || isEmpty(level.getIdentifier()) ? null : level.getIdentifier();
+  }
+
+  public static String obtainStepGroupIdentifier(Ambiance ambiance) {
+    Level level = null;
+    Optional<Level> levelOptional = getStepGroupLevelFromAmbiance(ambiance);
+    if (levelOptional.isPresent()) {
+      level = levelOptional.get();
+    }
     return level == null || isEmpty(level.getIdentifier()) ? null : level.getIdentifier();
   }
 
@@ -208,6 +213,16 @@ public class AmbianceUtils {
     return stageLevel;
   }
 
+  public Optional<Level> getStepGroupLevelFromAmbiance(Ambiance ambiance) {
+    Optional<Level> stageLevel = Optional.empty();
+    for (Level level : ambiance.getLevelsList()) {
+      if (level.getStepType().getType().equals("STEP_GROUP")) {
+        stageLevel = Optional.of(level);
+      }
+    }
+    return stageLevel;
+  }
+
   public static boolean isRetry(Ambiance ambiance) {
     Level level = Objects.requireNonNull(obtainCurrentLevel(ambiance));
     return level.getRetryIndex() != 0;
@@ -220,9 +235,14 @@ public class AmbianceUtils {
     return ambiance.getLevels(ambiance.getLevelsCount() - 2).getRuntimeId();
   }
 
-  public static String getStrategyPostfix(Ambiance ambiance) {
+  public static String modifyIdentifier(Ambiance ambiance, String identifier) {
     Level level = obtainCurrentLevel(ambiance);
-    return getStrategyPostfix(level);
+    return modifyIdentifier(level, identifier);
+  }
+
+  public static String modifyIdentifier(Level level, String identifier) {
+    return identifier.replaceAll(
+        StrategyValidationUtils.STRATEGY_IDENTIFIER_POSTFIX_ESCAPED, getStrategyPostfix(level));
   }
 
   public static String getStrategyPostfix(Level level) {
@@ -245,5 +265,18 @@ public class AmbianceUtils {
               .stream()
               .map(String::valueOf)
               .collect(Collectors.joining("_"));
+  }
+  public boolean isCurrentStrategyLevelAtStage(Ambiance ambiance) {
+    int levelsCount = ambiance.getLevelsCount();
+    // Parent of current level is stages.
+    if (levelsCount >= 2 && ambiance.getLevels(levelsCount - 2).getGroup().equals("STAGES")) {
+      return true;
+    }
+    // Parent is Parallel and Its parent of parent is STAGES.
+    if (levelsCount >= 3 && ambiance.getLevels(levelsCount - 2).getStepType().getStepCategory() == StepCategory.FORK
+        && ambiance.getLevels(levelsCount - 3).getGroup().equals("STAGES")) {
+      return true;
+    }
+    return false;
   }
 }

@@ -10,13 +10,16 @@ package software.wings.beans;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.beans.ExecutionInterruptType.ABORT_ALL;
 import static io.harness.beans.ExecutionInterruptType.ROLLBACK;
+import static io.harness.beans.ExecutionInterruptType.ROLLBACK_ON_APPROVAL;
 import static io.harness.beans.ExecutionInterruptType.ROLLBACK_PROVISIONER_AFTER_PHASES;
+import static io.harness.beans.ExecutionInterruptType.ROLLBACK_PROVISIONER_AFTER_PHASES_ON_APPROVAL;
 import static io.harness.beans.ExecutionStatus.ERROR;
 import static io.harness.beans.ExecutionStatus.EXPIRED;
 import static io.harness.beans.ExecutionStatus.FAILED;
 import static io.harness.beans.ExecutionStatus.STARTING;
 import static io.harness.beans.ExecutionStatus.SUCCESS;
 import static io.harness.beans.FeatureName.CONSIDER_ORIGINAL_STATE_VERSION;
+import static io.harness.beans.FeatureName.ENABLE_EXPERIMENTAL_STEP_FAILURE_STRATEGIES;
 import static io.harness.beans.FeatureName.LOG_APP_DEFAULTS;
 import static io.harness.beans.FeatureName.TIMEOUT_FAILURE_SUPPORT;
 import static io.harness.beans.OrchestrationWorkflowType.ROLLING;
@@ -295,8 +298,10 @@ public class CanaryWorkflowExecutionAdvisor implements ExecutionEventAdvisor {
 
       if (phaseSubWorkflow == null && executionInterrupts != null
           && executionInterrupts.stream().anyMatch(ex
-              -> ex.getExecutionInterruptType() == ROLLBACK
-                  || ex.getExecutionInterruptType() == ROLLBACK_PROVISIONER_AFTER_PHASES)
+              -> ex.getExecutionInterruptType().equals(ROLLBACK)
+                  || ex.getExecutionInterruptType().equals(ROLLBACK_PROVISIONER_AFTER_PHASES)
+                  || ex.getExecutionInterruptType().equals(ROLLBACK_ON_APPROVAL)
+                  || ex.getExecutionInterruptType().equals(ROLLBACK_PROVISIONER_AFTER_PHASES_ON_APPROVAL))
           && !rollbackProvisioners) {
         return anExecutionEventAdvice().withExecutionInterruptType(ExecutionInterruptType.END_EXECUTION).build();
       }
@@ -309,11 +314,14 @@ public class CanaryWorkflowExecutionAdvisor implements ExecutionEventAdvisor {
         return null;
       }
       if (phaseSubWorkflow != null && executionInterrupts != null
-          && executionInterrupts.stream().anyMatch(ex -> ex.getExecutionInterruptType() == ROLLBACK)) {
+          && executionInterrupts.stream().anyMatch(ex
+              -> ex.getExecutionInterruptType() == ROLLBACK
+                  || ex.getExecutionInterruptType().equals(ROLLBACK_ON_APPROVAL))) {
         return phaseSubWorkflowAdvice(orchestrationWorkflow, phaseSubWorkflow, stateExecutionInstance);
       } else if (phaseSubWorkflow != null && executionInterrupts != null
-          && executionInterrupts.stream().anyMatch(
-              ex -> ex.getExecutionInterruptType() == ROLLBACK_PROVISIONER_AFTER_PHASES)) {
+          && executionInterrupts.stream().anyMatch(ex
+              -> ex.getExecutionInterruptType().equals(ROLLBACK_PROVISIONER_AFTER_PHASES)
+                  || ex.getExecutionInterruptType().equals(ROLLBACK_PROVISIONER_AFTER_PHASES_ON_APPROVAL))) {
         /*
         Handle execution interrupt when failure strategy is configured as
         <ROLLBACK_PROVISIONER_AFTER_PHASES> action after timeout in Manual Intervention failure strategy
@@ -340,8 +348,9 @@ public class CanaryWorkflowExecutionAdvisor implements ExecutionEventAdvisor {
          */
         if (stateExecutionInstance.isRollbackProvisionerAfterPhases()
             || (executionInterrupts != null
-                && executionInterrupts.stream().anyMatch(
-                    ex -> ex.getExecutionInterruptType() == ROLLBACK_PROVISIONER_AFTER_PHASES))) {
+                && executionInterrupts.stream().anyMatch(ex
+                    -> ex.getExecutionInterruptType().equals(ROLLBACK_PROVISIONER_AFTER_PHASES)
+                        || ex.getExecutionInterruptType().equals(ROLLBACK_PROVISIONER_AFTER_PHASES_ON_APPROVAL)))) {
           if (featureFlagService.isEnabled(FeatureName.ROLLBACK_PROVISIONER_AFTER_PHASES, context.getAccountId())) {
             // All Done
             return anExecutionEventAdvice().withExecutionInterruptType(ExecutionInterruptType.ROLLBACK_DONE).build();
@@ -662,6 +671,20 @@ public class CanaryWorkflowExecutionAdvisor implements ExecutionEventAdvisor {
 
       case ROLLBACK_WORKFLOW: {
         if (phaseSubWorkflow == null) {
+          log.info(
+              "Customer setup rollback workflow on step failure strategy: " + stateExecutionInstance.getAccountId());
+
+          if (featureFlagService.isEnabled(
+                  ENABLE_EXPERIMENTAL_STEP_FAILURE_STRATEGIES, stateExecutionInstance.getAccountId())) {
+            ExecutionInterrupt executionInterrupt =
+                anExecutionInterrupt()
+                    .executionInterruptType(ROLLBACK)
+                    .executionUuid(executionEvent.getContext().getWorkflowExecutionId())
+                    .appId(executionEvent.getContext().getAppId())
+                    .build();
+            workflowExecutionService.triggerExecutionInterrupt(executionInterrupt);
+            return anExecutionEventAdvice().withExecutionInterruptType(ROLLBACK).build();
+          }
           return null;
         }
 

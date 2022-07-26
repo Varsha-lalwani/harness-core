@@ -76,6 +76,8 @@ public class NextGenRegistrars {
           .addAll(InstanceRegistrars.morphiaRegistrars)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
           .addAll(SubscriptionRegistrars.morphiaRegistrars)
+          .addAll(NGVariableRegistrars.morphiaRegistrars)
+          .addAll(NGSettingRegistrar.morphiaRegistrars)
           .build();
 
   public static final ImmutableList<YamlSchemaRootClass> yamlSchemaRegistrars =

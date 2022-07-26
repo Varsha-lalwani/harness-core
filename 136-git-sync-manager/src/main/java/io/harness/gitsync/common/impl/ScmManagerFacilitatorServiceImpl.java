@@ -32,6 +32,7 @@ import io.harness.exception.WingsException;
 import io.harness.gitsync.common.beans.InfoForGitPush;
 import io.harness.gitsync.common.dtos.CreateGitFileRequestDTO;
 import io.harness.gitsync.common.dtos.CreatePRDTO;
+import io.harness.gitsync.common.dtos.GetLatestCommitOnFileRequestDTO;
 import io.harness.gitsync.common.dtos.GitDiffResultFileListDTO;
 import io.harness.gitsync.common.dtos.GitFileChangeDTO;
 import io.harness.gitsync.common.dtos.GitFileContent;
@@ -52,6 +53,7 @@ import io.harness.product.ci.scm.proto.CreatePRResponse;
 import io.harness.product.ci.scm.proto.CreateWebhookResponse;
 import io.harness.product.ci.scm.proto.DeleteFileResponse;
 import io.harness.product.ci.scm.proto.FileContent;
+import io.harness.product.ci.scm.proto.GetLatestCommitOnFileResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
 import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
@@ -113,18 +115,18 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
 
   @Override
   public FileContent getFile(String accountIdentifier, String orgIdentifier, String projectIdentifier,
-      ScmConnector scmConnector, String repoName, String branchName, String filePath, String commitId) {
-    ScmConnector connector =
-        gitSyncConnectorHelper.getDecryptedConnector(accountIdentifier, orgIdentifier, projectIdentifier, scmConnector);
+      String connectorRef, String repoName, String branchName, String filePath, String commitId) {
+    ScmConnector connector = gitSyncConnectorHelper.getDecryptedConnectorForGivenRepo(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
     final GitFilePathDetails gitFilePathDetails = getGitFilePathDetails(filePath, branchName, commitId);
     return scmClient.getFileContent(connector, gitFilePathDetails);
   }
 
   @Override
   public CreatePRResponse createPullRequest(
-      Scope scope, ScmConnector scmConnector, String repoName, String sourceBranch, String targetBranch, String title) {
-    final ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnector(
-        scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), scmConnector);
+      Scope scope, String connectorRef, String repoName, String sourceBranch, String targetBranch, String title) {
+    ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnectorForGivenRepo(
+        scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), connectorRef, repoName);
     return scmClient.createPullRequestV2(decryptedConnector, sourceBranch, targetBranch, title);
   }
 
@@ -339,5 +341,15 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
         scope.getOrgIdentifier(), scope.getProjectIdentifier(), updateGitFileRequestDTO.getScmConnector());
     GitFileDetails gitFileDetails = getGitFileDetails(updateGitFileRequestDTO);
     return scmClient.updateFile(decryptedConnector, gitFileDetails);
+  }
+
+  @Override
+  public GetLatestCommitOnFileResponse getLatestCommitOnFile(
+      GetLatestCommitOnFileRequestDTO getLatestCommitOnFileRequestDTO) {
+    Scope scope = getLatestCommitOnFileRequestDTO.getScope();
+    final ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnector(scope.getAccountIdentifier(),
+        scope.getOrgIdentifier(), scope.getProjectIdentifier(), getLatestCommitOnFileRequestDTO.getScmConnector());
+    return scmClient.getLatestCommitOnFile(decryptedConnector, getLatestCommitOnFileRequestDTO.getBranchName(),
+        getLatestCommitOnFileRequestDTO.getFilePath());
   }
 }

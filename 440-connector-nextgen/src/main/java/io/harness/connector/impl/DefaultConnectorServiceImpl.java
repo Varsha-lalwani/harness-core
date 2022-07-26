@@ -36,6 +36,7 @@ import io.harness.beans.IdentifierRef;
 import io.harness.beans.SortOrder;
 import io.harness.beans.SortOrder.OrderType;
 import io.harness.common.EntityReference;
+import io.harness.connector.CombineCcmK8sConnectorResponseDTO;
 import io.harness.connector.ConnectorCatalogueResponseDTO;
 import io.harness.connector.ConnectorCategory;
 import io.harness.connector.ConnectorDTO;
@@ -60,8 +61,10 @@ import io.harness.connector.services.ConnectorService;
 import io.harness.connector.stats.ConnectorStatistics;
 import io.harness.connector.stats.ConnectorStatusStats;
 import io.harness.connector.validator.ConnectionValidator;
+import io.harness.delegate.beans.connector.CcmConnectorFilter;
 import io.harness.delegate.beans.connector.ConnectorConfigDTO;
 import io.harness.delegate.beans.connector.ConnectorType;
+import io.harness.delegate.beans.connector.cek8s.CEKubernetesClusterConfigDTO;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitConnectorDTO;
@@ -117,8 +120,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -135,6 +138,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Update;
@@ -212,6 +216,16 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       ConnectorFilterPropertiesDTO filterProperties, String orgIdentifier, String projectIdentifier,
       String filterIdentifier, String searchTerm, Boolean includeAllConnectorsAccessibleAtScope,
       Boolean getDistinctFromBranches) {
+    Page<Connector> connectors =
+        listHelper(page, size, accountIdentifier, filterProperties, orgIdentifier, projectIdentifier, filterIdentifier,
+            searchTerm, includeAllConnectorsAccessibleAtScope, getDistinctFromBranches);
+    return getResponseList(accountIdentifier, orgIdentifier, projectIdentifier, connectors);
+  }
+
+  private Page<Connector> listHelper(int page, int size, String accountIdentifier,
+      ConnectorFilterPropertiesDTO filterProperties, String orgIdentifier, String projectIdentifier,
+      String filterIdentifier, String searchTerm, Boolean includeAllConnectorsAccessibleAtScope,
+      Boolean getDistinctFromBranches) {
     boolean isBuiltInSMDisabled =
         accountSettingService.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
 
@@ -235,7 +249,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
     } else {
       connectors = connectorRepository.findAll(criteria, pageable, projectIdentifier, orgIdentifier, accountIdentifier);
     }
-    return getResponseList(accountIdentifier, orgIdentifier, projectIdentifier, connectors);
+    return connectors;
   }
 
   private ConnectorResponseDTO getResponse(
@@ -250,6 +264,45 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
     Page<ConnectorResponseDTO> connectorResponseDTOPage = connectors.map(connectorMapper::writeDTO);
     populateGitMetadata(accountIdentifier, orgIdentifier, projectIdentifier, connectorResponseDTOPage.getContent());
     return connectorResponseDTOPage;
+  }
+
+  private Page<CombineCcmK8sConnectorResponseDTO> getCcmK8sResponseList(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, Page<Connector> k8sConnectors, Page<Connector> ccmk8sConnectors) {
+    List<CombineCcmK8sConnectorResponseDTO> combineK8sConnectorResponseDTOList = new ArrayList<>();
+    Page<ConnectorResponseDTO> connectorResponseDTOPage = k8sConnectors.map(connectorMapper::writeDTO);
+    populateGitMetadata(accountIdentifier, orgIdentifier, projectIdentifier, connectorResponseDTOPage.getContent());
+
+    Page<ConnectorResponseDTO> ccmk8sConnectorResponseDTOPage = ccmk8sConnectors.map(connectorMapper::writeDTO);
+    populateGitMetadata(
+        accountIdentifier, orgIdentifier, projectIdentifier, ccmk8sConnectorResponseDTOPage.getContent());
+
+    if (!connectorResponseDTOPage.hasContent()) {
+      return new PageImpl<>(
+          combineK8sConnectorResponseDTOList, k8sConnectors.getPageable(), k8sConnectors.getTotalElements());
+    }
+
+    for (ConnectorResponseDTO k8sconnectorResponseDTO : connectorResponseDTOPage.getContent()) {
+      log.info("k8sconnectorResponseDTO is: {}", k8sconnectorResponseDTO);
+      CombineCcmK8sConnectorResponseDTO combineCcmK8SConnectorResponseDTO = new CombineCcmK8sConnectorResponseDTO();
+      combineCcmK8SConnectorResponseDTO.setK8sConnector(k8sconnectorResponseDTO);
+      combineCcmK8SConnectorResponseDTO.setCcmk8sConnector(new ArrayList<>());
+      for (ConnectorResponseDTO ccmOnlyConnectorResponseDTO : ccmk8sConnectorResponseDTOPage.getContent()) {
+        log.info("ccmOnlyConnectorResponseDTO is: {}", ccmOnlyConnectorResponseDTO);
+        CEKubernetesClusterConfigDTO ceKubernetesClusterConfigDTO =
+            (CEKubernetesClusterConfigDTO) ccmOnlyConnectorResponseDTO.getConnector().getConnectorConfig();
+        if (ceKubernetesClusterConfigDTO.getConnectorRef().equals(
+                k8sconnectorResponseDTO.getConnector().getIdentifier())) {
+          List<ConnectorResponseDTO> sConnector = combineCcmK8SConnectorResponseDTO.getCcmk8sConnector();
+          sConnector.add(ccmOnlyConnectorResponseDTO);
+          combineCcmK8SConnectorResponseDTO.setCcmk8sConnector(sConnector);
+        }
+      }
+      combineK8sConnectorResponseDTOList.add(combineCcmK8SConnectorResponseDTO);
+    }
+
+    log.info("combineK8sConnectorResponseDTOList is: {}", combineK8sConnectorResponseDTOList);
+    return new PageImpl<>(
+        combineK8sConnectorResponseDTOList, k8sConnectors.getPageable(), k8sConnectors.getTotalElements());
   }
 
   private void populateGitMetadata(String accountIdentifier, String orgIdentifier, String projectIdentifier,
@@ -593,12 +646,17 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public List<Map<String, String>> getAttributes(String accountId, String orgIdentifier, String projectIdentifier, List<String> connectorIdentifiers) {
-    Map<String, List<Connector>> connectors = getConnectors(accountId, orgIdentifier, projectIdentifier, connectorIdentifiers).stream().collect(groupingBy(Connector::getIdentifier));
+  public List<Map<String, String>> getAttributes(
+      String accountId, String orgIdentifier, String projectIdentifier, List<String> connectorIdentifiers) {
+    Map<String, List<Connector>> connectors =
+        getConnectors(accountId, orgIdentifier, projectIdentifier, connectorIdentifiers)
+            .stream()
+            .collect(groupingBy(Connector::getIdentifier));
     List<Map<String, String>> attributes = new ArrayList<>();
     for (String connectorId : connectorIdentifiers) {
       if (connectors.containsKey(connectorId)) {
-        attributes.add(ImmutableMap.of("category", ConnectorRegistryFactory.getConnectorCategory(connectors.get(connectorId).get(0).getType()).name()));
+        attributes.add(ImmutableMap.of("category",
+            ConnectorRegistryFactory.getConnectorCategory(connectors.get(connectorId).get(0).getType()).name()));
       } else {
         attributes.add(Collections.emptyMap());
       }
@@ -1070,5 +1128,31 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       }
     }
     return Boolean.TRUE;
+  }
+
+  @Override
+  public Page<CombineCcmK8sConnectorResponseDTO> listCcmK8S(int page, int size, String accountIdentifier,
+      ConnectorFilterPropertiesDTO filterProperties, String orgIdentifier, String projectIdentifier,
+      String filterIdentifier, String searchTerm, Boolean includeAllConnectorsAccessibleAtScope,
+      Boolean getDistinctFromBranches) {
+    filterProperties.setTypes(Arrays.asList(new ConnectorType[] {ConnectorType.KUBERNETES_CLUSTER}));
+    Page<Connector> k8sConnectors =
+        listHelper(page, size, accountIdentifier, filterProperties, orgIdentifier, projectIdentifier, filterIdentifier,
+            searchTerm, includeAllConnectorsAccessibleAtScope, getDistinctFromBranches);
+
+    List<String> k8sConnectorRefList = new ArrayList<>();
+    for (Connector k8sConnector : k8sConnectors) {
+      k8sConnectorRefList.add(k8sConnector.getIdentifier());
+    }
+    log.info("k8sConnectorRefList {}", k8sConnectorRefList);
+
+    filterProperties.setTypes(Arrays.asList(new ConnectorType[] {ConnectorType.CE_KUBERNETES_CLUSTER}));
+    filterProperties.setCcmConnectorFilter(CcmConnectorFilter.builder().k8sConnectorRef(k8sConnectorRefList).build());
+    Page<Connector> ccmk8sConnectors =
+        listHelper(page, size, accountIdentifier, filterProperties, orgIdentifier, projectIdentifier, filterIdentifier,
+            searchTerm, includeAllConnectorsAccessibleAtScope, getDistinctFromBranches);
+    log.info("ccmk8sConnectors count elements: {} pages: {}", ccmk8sConnectors.getTotalElements(),
+        ccmk8sConnectors.getTotalPages());
+    return getCcmK8sResponseList(accountIdentifier, orgIdentifier, projectIdentifier, k8sConnectors, ccmk8sConnectors);
   }
 }

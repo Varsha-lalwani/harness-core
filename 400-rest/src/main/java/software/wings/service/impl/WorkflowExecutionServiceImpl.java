@@ -64,7 +64,6 @@ import static io.harness.validation.Validator.notNullCheck;
 
 import static software.wings.beans.ApprovalDetails.Action.APPROVE;
 import static software.wings.beans.ApprovalDetails.Action.REJECT;
-import static software.wings.beans.ApprovalDetails.Action.ROLLBACK_PROVISIONER_AFTER_PHASES;
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
 import static software.wings.beans.ElementExecutionSummary.ElementExecutionSummaryBuilder.anElementExecutionSummary;
 import static software.wings.beans.EntityType.DEPLOYMENT;
@@ -925,6 +924,11 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     if (workflowExecution == null || workflowExecution.getPipelineExecution() == null) {
       return;
     }
+
+    if (workflowExecution.getPipelineExecution().getPipelineStageExecutions() == null) {
+      workflowExecution.getPipelineExecution().setPipelineStageExecutions(new ArrayList<>());
+    }
+
     if (ExecutionStatus.isFinalStatus(workflowExecution.getPipelineExecution().getStatus())
         && workflowExecution.getPipelineExecution()
                .getPipelineStageExecutions()
@@ -1125,6 +1129,9 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
             stageExecution.setTriggeredBy(workflowExecution2.getTriggeredBy());
           }
           stageExecution.setMessage(envStateExecutionDataLooped.getErrorMsg());
+        }
+        if (stateExecutionDataLooped instanceof ForkStateExecutionData) {
+          stageExecution.setMessage(stateExecutionDataLooped.getErrorMsg());
         }
         appendSkipCondition(pipelineStageElement, stageExecution, stateExecutionInstanceId);
         stageExecutionDataList.add(stageExecution);
@@ -3025,9 +3032,13 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       alertService.closeAlertsOfType(accountId, appId, AlertType.USAGE_LIMIT_EXCEEDED);
       return execution;
     } catch (UsageLimitExceededException e) {
-      String errMsg =
-          "Deployment rate limit reached. Some deployments may not be allowed. Please contact Harness support.";
-      log.info("Message: {}, accountId={}", e.getMessage(), accountId);
+      String errMsg;
+      if (e.getErrorType() != null) {
+        errMsg = "Deployment rate limit reached. " + e.getErrorType().getErrorMessage();
+      } else {
+        errMsg = "Deployment rate limit reached. Some deployments may not be allowed. Please contact Harness support.";
+      }
+      log.info("Exception: {}, accountId={}", e, accountId);
 
       // open alert for triggers
       if (executionArgs.getWorkflowType() == WorkflowType.ORCHESTRATION && null != trigger) {
@@ -4649,9 +4660,12 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     Workflow workflow = workflowService.readWorkflow(workflowExecution.getAppId(), workflowExecution.getWorkflowId());
     if (workflow != null && workflow.getOrchestrationWorkflow() != null) {
       List<Service> services = getResolvedServices(workflow, workflowExecution);
+      String envId = workflowService.resolveEnvironmentId(workflow,
+          workflowExecution.getExecutionArgs() != null ? workflowExecution.getExecutionArgs().getWorkflowVariables()
+                                                       : null);
       List<InfrastructureMapping> infrastructureMappings = null;
       List<InfrastructureDefinition> infrastructureDefinitions = null;
-      infrastructureDefinitions = getResolvedInfraDefinitions(workflow, workflowExecution);
+      infrastructureDefinitions = getResolvedInfraDefinitions(workflow, workflowExecution, envId);
 
       if (services != null) {
         List<InfrastructureDefinition> finalInfrastructureDefinitions = infrastructureDefinitions;
@@ -4711,11 +4725,11 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
   @Override
   public List<InfrastructureDefinition> getResolvedInfraDefinitions(
-      Workflow workflow, WorkflowExecution workflowExecution) {
+      Workflow workflow, WorkflowExecution workflowExecution, String envId) {
     Map<String, String> workflowVariables = workflowExecution.getExecutionArgs() != null
         ? workflowExecution.getExecutionArgs().getWorkflowVariables()
         : null;
-    return workflowService.getResolvedInfraDefinitions(workflow, workflowVariables);
+    return workflowService.getResolvedInfraDefinitions(workflow, workflowVariables, envId);
   }
 
   private void populateServiceSummary(
@@ -5200,6 +5214,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
             .filter(StateExecutionInstanceKeys.appId, appId)
             .filter(StateExecutionInstanceKeys.executionUuid, executionUuid)
             .filter(StateExecutionInstanceKeys.stateType, ARTIFACT_COLLECTION.name())
+            .filter(StateExecutionInstanceKeys.status, SUCCESS)
             .asList();
 
     if (isEmpty(allStateExecutionInstances)) {
@@ -5214,7 +5229,14 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
       AppManifestCollectionExecutionData executionData =
           (AppManifestCollectionExecutionData) stateExecutionInstance.fetchStateExecutionData();
-      helmCharts.add(helmChartService.get(appId, executionData.getChartId()));
+      if (EmptyPredicate.isNotEmpty(executionData.getChartId())) {
+        HelmChart helmChart = helmChartService.get(appId, executionData.getChartId());
+        if (helmChart != null) {
+          helmCharts.add(helmChart);
+        } else {
+          log.warn("StateExecutionData has helm chart id, but helm chart doesn't exist in database. Please check!");
+        }
+      }
     });
     return helmCharts;
   }
@@ -5226,6 +5248,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
             .filter(StateExecutionInstanceKeys.appId, appId)
             .filter(StateExecutionInstanceKeys.executionUuid, executionUuid)
             .filter(StateExecutionInstanceKeys.stateType, ARTIFACT_COLLECTION.name())
+            .filter(StateExecutionInstanceKeys.status, SUCCESS)
             .asList();
 
     if (isEmpty(allStateExecutionInstances)) {
@@ -5240,7 +5263,14 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
       ArtifactCollectionExecutionData artifactCollectionExecutionData =
           (ArtifactCollectionExecutionData) stateExecutionInstance.fetchStateExecutionData();
-      artifacts.add(artifactService.get(artifactCollectionExecutionData.getArtifactId()));
+      if (EmptyPredicate.isNotEmpty(artifactCollectionExecutionData.getArtifactId())) {
+        Artifact artifact = artifactService.get(artifactCollectionExecutionData.getArtifactId());
+        if (artifact != null) {
+          artifacts.add(artifact);
+        } else {
+          log.warn("StateExecutionData has artifact id, but artifact doesn't exist in database. Please check!");
+        }
+      }
     });
     return artifacts;
   }
@@ -6623,6 +6653,9 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
   public WorkflowExecution getLastSuccessfulWorkflowExecution(
       String accountId, String appId, String workflowId, String envId, String serviceId, String infraMappingId) {
+    if (isEmpty(workflowId)) {
+      return null;
+    }
     return wingsPersistence.createQuery(WorkflowExecution.class)
         .filter(WorkflowExecutionKeys.accountId, accountId)
         .filter(WorkflowExecutionKeys.appId, appId)
@@ -6651,5 +6684,12 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
         .workflowId(workflowExecution.getWorkflowId())
         .startTs(workflowExecution.getStartTs())
         .build();
+  }
+
+  @Override
+  public WorkflowExecution getWorkflowExecutionWithFailureDetails(String appId, String workflowExecutionId) {
+    WorkflowExecution workflowExecution = getWorkflowExecution(appId, workflowExecutionId);
+    workflowExecutionServiceHelper.populateFailureDetailsWithStepInfo(workflowExecution);
+    return workflowExecution;
   }
 }

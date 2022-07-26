@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.ExceptionUtils;
 import io.harness.git.model.ChangeType;
 import io.harness.gitaware.dto.GitContextRequestParams;
@@ -350,18 +351,13 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
   }
 
   @Override
-  public PipelineEntity savePipelineEntityForImportedYAML(PipelineEntity pipelineToSave, boolean pushToGit) {
+  public PipelineEntity savePipelineEntityForImportedYAML(PipelineEntity pipelineToSave) {
     String accountIdentifier = pipelineToSave.getAccountIdentifier();
     String orgIdentifier = pipelineToSave.getOrgIdentifier();
     String projectIdentifier = pipelineToSave.getProjectIdentifier();
     GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitRequestParamsInfo();
-    String yamlToPush = pipelineToSave.getYaml();
     addGitParamsToPipelineEntity(pipelineToSave, gitEntityInfo);
     return transactionHelper.performTransaction(() -> {
-      if (pushToGit) {
-        Scope scope = buildScope(pipelineToSave);
-        gitAwareEntityHelper.updateFileImportedFromGit(pipelineToSave, yamlToPush, scope);
-      }
       PipelineEntity savedPipelineEntity = mongoTemplate.save(pipelineToSave);
       checkForMetadataAndSaveIfAbsent(savedPipelineEntity);
       outboxService.save(
@@ -377,8 +373,18 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
 
   void addGitParamsToPipelineEntity(PipelineEntity pipelineToSave, GitEntityInfo gitEntityInfo) {
     pipelineToSave.setStoreType(StoreType.REMOTE);
+    if (EmptyPredicate.isEmpty(pipelineToSave.getRepoURL())) {
+      pipelineToSave.setRepoURL(gitAwareEntityHelper.getRepoUrl(
+          pipelineToSave.getAccountId(), pipelineToSave.getOrgIdentifier(), pipelineToSave.getProjectIdentifier()));
+    }
     pipelineToSave.setConnectorRef(gitEntityInfo.getConnectorRef());
     pipelineToSave.setRepo(gitEntityInfo.getRepoName());
     pipelineToSave.setFilePath(gitEntityInfo.getFilePath());
+  }
+
+  @Override
+  public Long countFileInstances(String accountId, String repoURL, String filePath) {
+    Criteria criteria = PMSPipelineFilterHelper.getCriteriaForFileUniquenessCheck(accountId, repoURL, filePath);
+    return countAllPipelines(criteria);
   }
 }

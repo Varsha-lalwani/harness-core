@@ -32,6 +32,7 @@ import static io.harness.persistence.HQuery.excludeAuthority;
 
 import static software.wings.app.ManagerCacheRegistrar.PRIMARY_CACHE_PREFIX;
 import static software.wings.app.ManagerCacheRegistrar.USER_CACHE;
+import static software.wings.beans.Account.AccountKeys;
 import static software.wings.beans.AccountRole.AccountRoleBuilder.anAccountRole;
 import static software.wings.beans.ApplicationRole.ApplicationRoleBuilder.anApplicationRole;
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
@@ -424,6 +425,51 @@ public class UserServiceImpl implements UserService {
     createSSOSettingsAndMarkAsDefaultAuthMechanism(accountId);
 
     return savedUser;
+  }
+
+  public io.harness.ng.beans.PageResponse<Account> getUserAccountsAndSupportAccounts(
+      String userId, int pageIndex, int pageSize, String searchTerm) {
+    User user = get(userId);
+    Account defaultAccount = null;
+    List<Account> userAccounts = user.getAccounts();
+    for (Account account : userAccounts) {
+      if (user.getDefaultAccountId().equals(account.getUuid())) {
+        defaultAccount = account;
+        break;
+      }
+    }
+    if (defaultAccount != null) {
+      userAccounts.remove(defaultAccount);
+      userAccounts.add(0, defaultAccount);
+    }
+    userAccounts.addAll(user.getSupportAccounts());
+    if (isNotEmpty(searchTerm)) {
+      PageRequest<Account> accountPageRequest = aPageRequest()
+                                                    .addFilter(SearchFilter.builder()
+                                                                   .fieldName(AccountKeys.accountName)
+                                                                   .op(SearchFilter.Operator.CONTAINS)
+                                                                   .fieldValues(new String[] {searchTerm})
+                                                                   .build())
+                                                    .build();
+      final List<String> accountIds =
+          accountService.getAccounts(accountPageRequest).stream().map(UuidAware::getUuid).collect(toList());
+      if (accountIds.size() > 0) {
+        userAccounts = userAccounts.stream().filter(p -> accountIds.contains(p.getUuid())).collect(Collectors.toList());
+      } else {
+        userAccounts.clear();
+      }
+    }
+    List<Account> finalAccounts = userAccounts.subList(
+        Math.min(userAccounts.size(), pageIndex), Math.min(userAccounts.size(), pageIndex + pageSize));
+
+    return io.harness.ng.beans.PageResponse.<Account>builder()
+        .content(finalAccounts)
+        .pageItemCount(finalAccounts.size())
+        .pageSize(pageSize)
+        .pageIndex(pageIndex)
+        .totalItems(userAccounts.size())
+        .totalPages((userAccounts.size() + pageSize - 1) / pageSize)
+        .build();
   }
 
   @Override

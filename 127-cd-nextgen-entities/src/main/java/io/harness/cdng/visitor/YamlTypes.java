@@ -122,7 +122,8 @@ public interface YamlTypes {
   String SERVICE_OVERRIDE_INPUTS = "serviceOverrideInputs";
   String INPUTS = "inputs";
   String REF = "ref";
-  String STARTUP_SCRIPT = "startupScript";
+  String JENKINS_BUILD = StepSpecTypeConstants.JENKINS_BUILD;
+  String STARTUP_COMMAND = "startupCommand";
   String APPLICATION_SETTINGS = "applicationSettings";
   String CONNECTION_STRINGS = "connectionStrings";
 }

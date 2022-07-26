@@ -107,10 +107,12 @@ public class EntityYamlRootNames {
   public static final String SERVERLESS_AWS_LAMBDA_ROLLBACK = "ServerlessAwsLambdaRollback";
   public static final String CLOUDFORMATION_ROLLBACK_STACK_STEP = "RollbackStack";
   public static final String INFRASTRUCTURE = "infrastructure";
+  public static final String JENKINS_BUILD = "JenkinsBuild";
   public static final String COMMAND = "Command";
   public static final String STRATEGY_NODE = "StrategyNode";
   public static final String AZURE_SLOT_DEPLOYMENT_STEP = "AzureSlotDeployment";
   public static final String AZURE_TRAFFIC_SHIFT_STEP = "AzureTrafficShift";
   public static final String AZURE_SWAP_SLOT_STEP = "AzureSwapSlot";
   public static final String AZURE_WEBAPP_ROLLBACK_STEP = "AzureWebAppRollback";
+  public static final String EMAIL = "EMAIL";
 }

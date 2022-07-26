@@ -19,11 +19,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.CDNGTestBase;
 import io.harness.cdng.azure.AzureHelperService;
-import io.harness.cdng.azure.config.StartupScriptOutcome;
+import io.harness.cdng.azure.config.StartupCommandOutcome;
 import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.yaml.GitStore;
 import io.harness.cdng.manifest.yaml.harness.HarnessStore;
-import io.harness.cdng.manifest.yaml.harness.HarnessStoreFile;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigType;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.service.steps.ServiceStepsHelper;
@@ -60,7 +59,7 @@ public class StartupScriptStepTest extends CDNGTestBase {
   @Mock private AzureHelperService azureHelperService;
   @Mock private ServiceStepsHelper serviceStepsHelper;
 
-  @InjectMocks private StartupScriptStep startupScriptStep;
+  @InjectMocks private StartupCommandStep startupScriptStep;
 
   @Before
   public void setup() {
@@ -71,7 +70,7 @@ public class StartupScriptStepTest extends CDNGTestBase {
   @Owner(developers = TMACARI)
   @Category(UnitTests.class)
   public void testGetStepParametersClass() {
-    assertThat(startupScriptStep.getStepParametersClass()).isEqualTo(StartupScriptParameters.class);
+    assertThat(startupScriptStep.getStepParametersClass()).isEqualTo(StartupCommandParameters.class);
   }
 
   @Test
@@ -81,8 +80,8 @@ public class StartupScriptStepTest extends CDNGTestBase {
     Ambiance ambiance = getAmbiance();
     StoreConfigWrapper storeConfigWrapper = getStoreConfigWrapper();
 
-    StartupScriptParameters stepParameters =
-        StartupScriptParameters.builder().startupScript(storeConfigWrapper).build();
+    StartupCommandParameters stepParameters =
+        StartupCommandParameters.builder().startupCommand(storeConfigWrapper).build();
     StepResponse response =
         startupScriptStep.executeSync(ambiance, stepParameters, getStepInputPackage(), getPassThroughData());
 
@@ -90,15 +89,16 @@ public class StartupScriptStepTest extends CDNGTestBase {
     assertThat(response.getStepOutcomes()).hasSize(1);
 
     StepResponse.StepOutcome[] stepOutcomes = response.getStepOutcomes().toArray(new StepResponse.StepOutcome[1]);
-    StartupScriptOutcome startupScriptOutcome = (StartupScriptOutcome) stepOutcomes[0].getOutcome();
+    StartupCommandOutcome startupScriptOutcome = (StartupCommandOutcome) stepOutcomes[0].getOutcome();
     assertThat(startupScriptOutcome.getStore()).isEqualTo(storeConfigWrapper.getSpec());
 
     assertThat(startupScriptOutcome.getStore().getKind()).isEqualTo(StoreConfigType.HARNESS.getDisplayName());
     HarnessStore store = (HarnessStore) startupScriptOutcome.getStore();
-    HarnessStoreFile harnessStoreFile = store.getFiles().getValue().get(0);
+    String harnessStoreFile = store.getFiles().getValue().get(0);
 
-    assertThat(harnessStoreFile.getPath().getValue()).isEqualTo(FILE_PATH);
-    verify(azureHelperService).validateSettingsStoreReferences(storeConfigWrapper, ambiance, StartupScriptStep.ENTITY_TYPE);
+    assertThat(harnessStoreFile).isEqualTo(FILE_PATH);
+    verify(azureHelperService)
+        .validateSettingsStoreReferences(storeConfigWrapper, ambiance, StartupCommandStep.ENTITY_TYPE);
   }
 
   @Test
@@ -108,8 +108,8 @@ public class StartupScriptStepTest extends CDNGTestBase {
     Ambiance ambiance = getAmbiance();
 
     StoreConfigWrapper storeConfigWrapper = getStoreConfigWrapperWithGitStore();
-    StartupScriptParameters stepParameters =
-        StartupScriptParameters.builder().startupScript(storeConfigWrapper).build();
+    StartupCommandParameters stepParameters =
+        StartupCommandParameters.builder().startupCommand(storeConfigWrapper).build();
 
     StepResponse response =
         startupScriptStep.executeSync(ambiance, stepParameters, getStepInputPackage(), getPassThroughData());
@@ -118,7 +118,7 @@ public class StartupScriptStepTest extends CDNGTestBase {
     assertThat(response.getStepOutcomes()).hasSize(1);
 
     StepResponse.StepOutcome[] stepOutcomes = response.getStepOutcomes().toArray(new StepResponse.StepOutcome[1]);
-    StartupScriptOutcome startupScriptOutcome = (StartupScriptOutcome) stepOutcomes[0].getOutcome();
+    StartupCommandOutcome startupScriptOutcome = (StartupCommandOutcome) stepOutcomes[0].getOutcome();
     assertThat(startupScriptOutcome.getStore()).isEqualTo(storeConfigWrapper.getSpec());
 
     assertThat(startupScriptOutcome.getStore().getKind()).isEqualTo(StoreConfigType.GIT.getDisplayName());
@@ -128,7 +128,8 @@ public class StartupScriptStepTest extends CDNGTestBase {
     assertThat(store.getConnectorRef().getValue()).isEqualTo(CONNECTOR_REF);
     assertThat(store.getRepoName().getValue()).isEqualTo(REPO_NAME);
 
-    verify(azureHelperService).validateSettingsStoreReferences(storeConfigWrapper, ambiance, StartupScriptStep.ENTITY_TYPE);
+    verify(azureHelperService)
+        .validateSettingsStoreReferences(storeConfigWrapper, ambiance, StartupCommandStep.ENTITY_TYPE);
   }
 
   private Ambiance getAmbiance() {
@@ -154,14 +155,12 @@ public class StartupScriptStepTest extends CDNGTestBase {
         .build();
   }
 
-  private ParameterField<List<HarnessStoreFile>> getFiles() {
+  private ParameterField<List<String>> getFiles() {
     return ParameterField.createValueField(Collections.singletonList(getHarnessFile()));
   }
 
-  private HarnessStoreFile getHarnessFile() {
-    return HarnessStoreFile.builder()
-        .path(ParameterField.createValueField(FILE_PATH))
-        .build();
+  private String getHarnessFile() {
+    return FILE_PATH;
   }
 
   private StoreConfigWrapper getStoreConfigWrapperWithGitStore() {

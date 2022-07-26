@@ -9,6 +9,7 @@ package io.harness.app;
 
 import static io.harness.AuthorizationServiceHeader.STO_MANAGER;
 import static io.harness.lock.DistributedLockImplementation.MONGO;
+import static io.harness.pms.listener.NgOrchestrationNotifyEventListener.NG_ORCHESTRATION;
 
 import io.harness.AccessControlClientModule;
 import io.harness.account.AccountClientModule;
@@ -16,6 +17,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.impl.STOYamlSchemaServiceImpl;
 import io.harness.app.intfc.STOYamlSchemaService;
+import io.harness.aws.AwsClient;
+import io.harness.aws.AwsClientImpl;
 import io.harness.callback.DelegateCallback;
 import io.harness.callback.DelegateCallbackToken;
 import io.harness.callback.MongoDatabase;
@@ -35,6 +38,7 @@ import io.harness.cistatus.service.gitlab.GitlabService;
 import io.harness.cistatus.service.gitlab.GitlabServiceImpl;
 import io.harness.concurrent.HTimeLimiter;
 import io.harness.connector.ConnectorResourceClientModule;
+import io.harness.enforcement.client.EnforcementClientModule;
 import io.harness.entitysetupusageclient.EntitySetupUsageClientModule;
 import io.harness.grpc.DelegateServiceDriverGrpcClientModule;
 import io.harness.grpc.DelegateServiceGrpcClient;
@@ -45,9 +49,9 @@ import io.harness.lock.DistributedLockImplementation;
 import io.harness.lock.PersistentLockModule;
 import io.harness.manage.ManagedScheduledExecutorService;
 import io.harness.mongo.MongoPersistence;
-import io.harness.opaclient.OpaClientModule;
 import io.harness.packages.HarnessPackages;
 import io.harness.persistence.HPersistence;
+import io.harness.pms.sdk.core.waiter.AsyncWaitEngine;
 import io.harness.redis.RedisConfig;
 import io.harness.remote.client.ClientMode;
 import io.harness.secrets.SecretDecryptor;
@@ -61,6 +65,8 @@ import io.harness.threading.ThreadPool;
 import io.harness.token.TokenClientModule;
 import io.harness.user.UserClientModule;
 import io.harness.version.VersionModule;
+import io.harness.waiter.AsyncWaitEngineImpl;
+import io.harness.waiter.WaitNotifyEngine;
 import io.harness.yaml.core.StepSpecType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -129,6 +135,12 @@ public class STOManagerServiceModule extends AbstractModule {
   }
 
   @Provides
+  @Singleton
+  public AsyncWaitEngine asyncWaitEngine(WaitNotifyEngine waitNotifyEngine) {
+    return new AsyncWaitEngineImpl(waitNotifyEngine, NG_ORCHESTRATION);
+  }
+
+  @Provides
   @Named("yaml-schema-mapper")
   @Singleton
   public ObjectMapper getYamlSchemaObjectMapper() {
@@ -171,7 +183,6 @@ public class STOManagerServiceModule extends AbstractModule {
   @Override
   protected void configure() {
     install(VersionModule.getInstance());
-    install(PrimaryVersionManagerModule.getInstance());
     bind(STOManagerConfiguration.class).toInstance(stoManagerConfiguration);
     bind(HPersistence.class).to(MongoPersistence.class).in(Singleton.class);
     bind(STOYamlSchemaService.class).to(STOYamlSchemaServiceImpl.class).in(Singleton.class);
@@ -182,6 +193,7 @@ public class STOManagerServiceModule extends AbstractModule {
     bind(BitbucketService.class).to(BitbucketServiceImpl.class);
     bind(AzureRepoService.class).to(AzureRepoServiceImpl.class);
     bind(SecretDecryptor.class).to(SecretDecryptorViaNg.class);
+    bind(AwsClient.class).to(AwsClientImpl.class);
 
     // Keeping it to 1 thread to start with. Assuming executor service is used only to
     // serve health checks. If it's being used for other tasks also, max pool size should be increased.
@@ -207,7 +219,7 @@ public class STOManagerServiceModule extends AbstractModule {
 
     install(new CIExecutionServiceModule(
         stoManagerConfiguration.getCiExecutionServiceConfig(), stoManagerConfiguration.getShouldConfigureWithPMS()));
-    install(DelegateServiceDriverModule.getInstance(false, true));
+    install(DelegateServiceDriverModule.getInstance(false, false));
     install(new DelegateServiceDriverGrpcClientModule(stoManagerConfiguration.getManagerServiceSecret(),
         stoManagerConfiguration.getManagerTarget(), stoManagerConfiguration.getManagerAuthority(), true));
 
@@ -239,14 +251,15 @@ public class STOManagerServiceModule extends AbstractModule {
     install(new SecretNGManagerClientModule(stoManagerConfiguration.getNgManagerClientConfig(),
         stoManagerConfiguration.getNgManagerServiceSecret(), "STOManager"));
     install(new CILogServiceClientModule(stoManagerConfiguration.getLogServiceConfig()));
-    install(new OpaClientModule(
-        stoManagerConfiguration.getOpaServerConfig().getBaseUrl(), stoManagerConfiguration.getJwtAuthSecret()));
     install(UserClientModule.getInstance(stoManagerConfiguration.getManagerClientConfig(),
         stoManagerConfiguration.getManagerServiceSecret(), STO_MANAGER.getServiceId()));
     install(new TIServiceClientModule(stoManagerConfiguration.getTiServiceConfig()));
     install(new STOServiceClientModule(stoManagerConfiguration.getStoServiceConfig()));
     install(new AccountClientModule(stoManagerConfiguration.getManagerClientConfig(),
         stoManagerConfiguration.getNgManagerServiceSecret(), STO_MANAGER.toString()));
+    install(EnforcementClientModule.getInstance(stoManagerConfiguration.getManagerClientConfig(),
+        stoManagerConfiguration.getNgManagerServiceSecret(), STO_MANAGER.getServiceId(),
+        stoManagerConfiguration.getEnforcementClientConfiguration()));
     install(new AbstractTelemetryModule() {
       @Override
       public TelemetryConfiguration telemetryConfiguration() {

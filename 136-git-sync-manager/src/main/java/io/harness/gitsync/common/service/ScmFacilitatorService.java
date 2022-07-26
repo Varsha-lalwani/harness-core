@@ -9,7 +9,7 @@ package io.harness.gitsync.common.service;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.gitsync.beans.GitRepoScopeParams;
+import io.harness.beans.Scope;
 import io.harness.gitsync.common.dtos.GitBranchesResponseDTO;
 import io.harness.gitsync.common.dtos.GitRepositoryResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
@@ -31,8 +31,7 @@ public interface ScmFacilitatorService {
       String connectorIdentifierRef, String repoURL, PageRequest pageRequest, String searchTerm);
 
   List<GitRepositoryResponseDTO> listReposByRefConnector(String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, String connectorRef, PageRequest pageRequest, String searchTerm,
-      GitRepoScopeParams gitRepoScopeParams);
+      String projectIdentifier, String connectorRef, PageRequest pageRequest, String searchTerm);
 
   ScmCommitFileResponseDTO createFile(ScmCreateFileRequestDTO scmCommitRequestDTO);
 
@@ -48,9 +47,10 @@ public interface ScmFacilitatorService {
   ScmGetFileResponseDTO getFileByCommitId(ScmGetFileByCommitIdRequestDTO scmGetFileByCommitIdRequestDTO);
 
   GitBranchesResponseDTO listBranchesV2(String accountIdentifier, String orgIdentifier, String projectIdentifier,
-      String connectorRef, String repoName, PageRequest pageRequest, String searchTerm,
-      GitRepoScopeParams gitRepoScopeParams);
+      String connectorRef, String repoName, PageRequest pageRequest, String searchTerm);
 
-  String getDefaultBranch(String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef,
-      String repoName, GitRepoScopeParams gitRepoScopeParams);
+  String getDefaultBranch(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoName);
+
+  String getRepoUrl(Scope scope, String connectorRef, String repoName);
 }

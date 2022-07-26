@@ -56,6 +56,10 @@ public class TokenGenerator {
     this.encrypter = makeEncrypter(accountSecret);
   }
 
+  public String getAccountId() {
+    return this.accountId;
+  }
+
   public String getToken(String scheme, String host, int port, String issuer) {
     return getToken(scheme + "://" + host + ":" + port, issuer);
   }
@@ -74,6 +78,10 @@ public class TokenGenerator {
 
     try {
       readWriteLock.writeLock().lock();
+      if (lastEncryptedJWT != null && expiryTimeOfLastJWT > System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)) {
+        return lastEncryptedJWT;
+      }
+
       Instant now = Instant.now();
       JWTClaimsSet jwtClaims = new JWTClaimsSet.Builder()
                                    .issuer(issuer)

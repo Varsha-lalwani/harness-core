@@ -44,6 +44,8 @@ public enum EntityType {
       ModuleType.CD, EntityTypeConstants.PIPELINE_STEPS, IdentifierRef.class, EntityYamlRootNames.PIPELINE_STEP),
   @JsonProperty(EntityTypeConstants.HTTP)
   HTTP_STEP(ModuleType.PMS, EntityTypeConstants.HTTP, IdentifierRef.class, EntityYamlRootNames.HTTP),
+  @JsonProperty(EntityTypeConstants.EMAIL)
+  EMAIL_STEP(ModuleType.PMS, EntityTypeConstants.EMAIL, IdentifierRef.class, EntityYamlRootNames.EMAIL),
   @JsonProperty(EntityTypeConstants.JIRA_CREATE)
   JIRA_CREATE_STEP(
       ModuleType.PMS, EntityTypeConstants.JIRA_CREATE, IdentifierRef.class, EntityYamlRootNames.JIRA_CREATE),
@@ -170,6 +172,9 @@ public enum EntityType {
   @JsonProperty(EntityTypeConstants.TEMPLATE)
   TEMPLATE(ModuleType.TEMPLATESERVICE, EntityTypeConstants.TEMPLATE, NGTemplateReference.class,
       EntityYamlRootNames.TEMPLATE),
+  @JsonProperty(EntityTypeConstants.TEMPLATE_STAGE)
+  TEMPLATE_STAGE(ModuleType.TEMPLATESERVICE, EntityTypeConstants.TEMPLATE_STAGE, NGTemplateReference.class,
+      EntityYamlRootNames.TEMPLATE),
   @JsonProperty(EntityTypeConstants.TRIGGERS)
   TRIGGERS(ModuleType.CD, EntityTypeConstants.TRIGGERS, TriggerReference.class, EntityYamlRootNames.TRIGGERS),
   @JsonProperty(EntityTypeConstants.MONITORED_SERVICE)
@@ -182,7 +187,7 @@ public enum EntityType {
   FEATURE_FLAGS(
       ModuleType.CF, EntityTypeConstants.FEATURE_FLAGS, IdentifierRef.class, EntityYamlRootNames.FEATURE_FLAGS),
   @JsonProperty(EntityTypeConstants.SERVICENOW_APPROVAL)
-  SERVICENOW_APPROVAL_STEP(ModuleType.CD, EntityTypeConstants.SERVICENOW_APPROVAL, IdentifierRef.class,
+  SERVICENOW_APPROVAL_STEP(ModuleType.PMS, EntityTypeConstants.SERVICENOW_APPROVAL, IdentifierRef.class,
       EntityYamlRootNames.SERVICENOW_APPROVAL),
   @JsonProperty(EntityTypeConstants.SERVICENOW_CREATE)
   SERVICENOW_CREATE_STEP(ModuleType.PMS, EntityTypeConstants.SERVICENOW_CREATE, IdentifierRef.class,
@@ -264,7 +269,10 @@ public enum EntityType {
       EntityYamlRootNames.AZURE_SWAP_SLOT_STEP),
   @JsonProperty(EntityTypeConstants.AZURE_WEBAPP_ROLLBACK)
   AZURE_WEBAPP_ROLLBACK_STEP(ModuleType.CD, EntityTypeConstants.AZURE_WEBAPP_ROLLBACK, IdentifierRef.class,
-      EntityYamlRootNames.AZURE_WEBAPP_ROLLBACK_STEP);
+      EntityYamlRootNames.AZURE_WEBAPP_ROLLBACK_STEP),
+  @JsonProperty(EntityTypeConstants.JENKINS_BUILD)
+  JENKINS_BUILD(
+      ModuleType.CD, EntityTypeConstants.JENKINS_BUILD, IdentifierRef.class, EntityYamlRootNames.JENKINS_BUILD);
 
   private final ModuleType moduleType;
   String yamlName;

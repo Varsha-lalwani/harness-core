@@ -19,6 +19,7 @@ import io.harness.delegate.task.scm.GitWebhookTaskType;
 import io.harness.gitsync.common.beans.InfoForGitPush;
 import io.harness.gitsync.common.dtos.CreateGitFileRequestDTO;
 import io.harness.gitsync.common.dtos.CreatePRDTO;
+import io.harness.gitsync.common.dtos.GetLatestCommitOnFileRequestDTO;
 import io.harness.gitsync.common.dtos.GitDiffResultFileListDTO;
 import io.harness.gitsync.common.dtos.GitFileChangeDTO;
 import io.harness.gitsync.common.dtos.GitFileContent;
@@ -32,6 +33,7 @@ import io.harness.product.ci.scm.proto.CreatePRResponse;
 import io.harness.product.ci.scm.proto.CreateWebhookResponse;
 import io.harness.product.ci.scm.proto.DeleteFileResponse;
 import io.harness.product.ci.scm.proto.FileContent;
+import io.harness.product.ci.scm.proto.GetLatestCommitOnFileResponse;
 import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
@@ -52,11 +54,11 @@ public interface ScmClientFacilitatorService {
   GitFileContent getFileContent(String yamlGitConfigIdentifier, String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String filePath, String branch, String commitId);
 
-  FileContent getFile(String accountIdentifier, String orgIdentifier, String projectIdentifier,
-      ScmConnector scmConnector, String repoName, String branchName, String filePath, String commitId);
+  FileContent getFile(String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef,
+      String repoName, String branchName, String filePath, String commitId);
 
   CreatePRResponse createPullRequest(
-      Scope scope, ScmConnector scmConnector, String repoName, String sourceBranch, String targetBranch, String title);
+      Scope scope, String connectorRef, String repoName, String sourceBranch, String targetBranch, String title);
 
   CreatePRDTO createPullRequest(GitPRCreateRequest gitCreatePRRequest);
 
@@ -106,4 +108,6 @@ public interface ScmClientFacilitatorService {
   CreateFileResponse createFile(CreateGitFileRequestDTO createGitFileRequestDTO);
 
   UpdateFileResponse updateFile(UpdateGitFileRequestDTO updateGitFileRequestDTO);
+
+  GetLatestCommitOnFileResponse getLatestCommitOnFile(GetLatestCommitOnFileRequestDTO getLatestCommitOnFileRequestDTO);
 }

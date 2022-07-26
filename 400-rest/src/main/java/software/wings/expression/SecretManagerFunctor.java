@@ -28,6 +28,7 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.EncryptedData;
 import io.harness.beans.FeatureName;
 import io.harness.data.encoding.EncodingUtils;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.SecretDetail;
 import io.harness.exception.FunctorException;
 import io.harness.exception.InvalidRequestException;
@@ -47,6 +48,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
 import lombok.Builder;
@@ -70,6 +72,7 @@ public class SecretManagerFunctor implements ExpressionFunctor, SecretManagerFun
   private String envId;
   private String workflowExecutionId;
   private int expressionFunctorToken;
+  private final ExecutorService expressionEvaluatorExecutor;
 
   @Default private Map<String, String> evaluatedSecrets = new HashMap<>();
   @Default private Map<String, String> evaluatedDelegateSecrets = new HashMap<>();
@@ -84,6 +87,11 @@ public class SecretManagerFunctor implements ExpressionFunctor, SecretManagerFun
       throw new FunctorException("Inappropriate usage of internal functor");
     }
     try {
+      if (expressionEvaluatorExecutor != null) {
+        // Offload expression evaluation of secrets to another threadpool.
+        return expressionEvaluatorExecutor.submit(() -> obtainInternal(secretName));
+      }
+      log.warn("Expression evaluation is being processed synchronously");
       return obtainInternal(secretName);
     } catch (Exception ex) {
       throw new FunctorException("Error occurred while evaluating the secret [" + secretName + "]", ex);
@@ -184,13 +192,22 @@ public class SecretManagerFunctor implements ExpressionFunctor, SecretManagerFun
       // Cache miss.
       encryptedDataDetails = secretManager.getEncryptionDetails(serviceVariable, appId, workflowExecutionId);
 
-      if (io.harness.data.structure.EmptyPredicate.isEmpty(encryptedDataDetails)) {
+      if (EmptyPredicate.isEmpty(encryptedDataDetails)) {
         throw new InvalidRequestException("No secret found with identifier + [" + secretName + "]", USER);
       }
-      EncryptedDataDetails objectToCache =
-          EncryptedDataDetails.builder().encryptedDataDetailList(encryptedDataDetails).build();
-      secretsCache.put(encryptedData.getUuid(), objectToCache);
-      delegateMetricsService.recordDelegateMetricsPerAccount(accountId, SECRETS_CACHE_INSERTS);
+
+      // Skip caching secrets for HashiCorp vault.
+      List<EncryptedDataDetail> encryptedDataDetailsToCache =
+          encryptedDataDetails.stream()
+              .filter(encryptedDataDetail
+                  -> encryptedDataDetail.getEncryptedData().getEncryptionType() != EncryptionType.VAULT)
+              .collect(Collectors.toList());
+      if (isNotEmpty(encryptedDataDetailsToCache)) {
+        EncryptedDataDetails objectToCache =
+            EncryptedDataDetails.builder().encryptedDataDetailList(encryptedDataDetailsToCache).build();
+        secretsCache.put(encryptedData.getUuid(), objectToCache);
+        delegateMetricsService.recordDelegateMetricsPerAccount(accountId, SECRETS_CACHE_INSERTS);
+      }
     }
 
     boolean enabled = featureFlagService.isEnabled(FeatureName.THREE_PHASE_SECRET_DECRYPTION, accountId);

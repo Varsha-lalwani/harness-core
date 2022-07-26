@@ -23,7 +23,6 @@ import io.harness.cdng.azure.config.ApplicationSettingsOutcome;
 import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.yaml.GitStore;
 import io.harness.cdng.manifest.yaml.harness.HarnessStore;
-import io.harness.cdng.manifest.yaml.harness.HarnessStoreFile;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigType;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.service.steps.ServiceStepsHelper;
@@ -95,10 +94,11 @@ public class ApplicationSettingsStepTest extends CDNGTestBase {
 
     assertThat(applicationSettingsOutcome.getStore().getKind()).isEqualTo(StoreConfigType.HARNESS.getDisplayName());
     HarnessStore store = (HarnessStore) applicationSettingsOutcome.getStore();
-    HarnessStoreFile harnessStoreFile = store.getFiles().getValue().get(0);
+    String harnessStoreFile = store.getFiles().getValue().get(0);
 
-    assertThat(harnessStoreFile.getPath().getValue()).isEqualTo(FILE_PATH);
-    verify(azureHelperService).validateSettingsStoreReferences(storeConfigWrapper, ambiance, ApplicationSettingsStep.ENTITY_TYPE);
+    assertThat(harnessStoreFile).isEqualTo(FILE_PATH);
+    verify(azureHelperService)
+        .validateSettingsStoreReferences(storeConfigWrapper, ambiance, ApplicationSettingsStep.ENTITY_TYPE);
   }
 
   @Test
@@ -127,7 +127,8 @@ public class ApplicationSettingsStepTest extends CDNGTestBase {
     assertThat(store.getCommitId().getValue()).isEqualTo(COMMIT_ID);
     assertThat(store.getConnectorRef().getValue()).isEqualTo(CONNECTOR_REF);
     assertThat(store.getRepoName().getValue()).isEqualTo(REPO_NAME);
-    verify(azureHelperService).validateSettingsStoreReferences(storeConfigWrapper, ambiance, ApplicationSettingsStep.ENTITY_TYPE);
+    verify(azureHelperService)
+        .validateSettingsStoreReferences(storeConfigWrapper, ambiance, ApplicationSettingsStep.ENTITY_TYPE);
   }
 
   private Ambiance getAmbiance() {
@@ -153,14 +154,12 @@ public class ApplicationSettingsStepTest extends CDNGTestBase {
         .build();
   }
 
-  private ParameterField<List<HarnessStoreFile>> getFiles() {
+  private ParameterField<List<String>> getFiles() {
     return ParameterField.createValueField(Collections.singletonList(getHarnessFile()));
   }
 
-  private HarnessStoreFile getHarnessFile() {
-    return HarnessStoreFile.builder()
-        .path(ParameterField.createValueField(FILE_PATH))
-        .build();
+  private String getHarnessFile() {
+    return FILE_PATH;
   }
 
   private StoreConfigWrapper getStoreConfigWrapperWithGitStore() {

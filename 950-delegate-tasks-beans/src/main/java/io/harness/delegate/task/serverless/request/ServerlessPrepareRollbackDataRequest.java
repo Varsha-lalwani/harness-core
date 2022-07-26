@@ -19,6 +19,7 @@ import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.expression.Expression;
 import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 
+import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.NonFinal;
@@ -39,6 +40,11 @@ public class ServerlessPrepareRollbackDataRequest implements ServerlessCommandRe
 
   @Override
   public ServerlessArtifactConfig getServerlessArtifactConfig() {
+    return null;
+  }
+
+  @Override
+  public Map<String, ServerlessArtifactConfig> getSidecarServerlessArtifactConfigs() {
     return null;
   }
 }

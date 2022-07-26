@@ -26,6 +26,8 @@ import io.harness.CgOrchestrationModule;
 import io.harness.SecretManagementCoreModule;
 import io.harness.accesscontrol.AccessControlAdminClientConfiguration;
 import io.harness.accesscontrol.AccessControlAdminClientModule;
+import io.harness.account.AccountClientModule;
+import io.harness.agent.AgentMtlsModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.annotations.retry.MethodExecutionHelper;
@@ -276,6 +278,7 @@ import software.wings.core.outbox.WingsOutboxEventHandler;
 import software.wings.dl.WingsMongoPersistence;
 import software.wings.dl.WingsPersistence;
 import software.wings.dl.exportimport.WingsMongoExportImport;
+import software.wings.expression.SecretManagerModule;
 import software.wings.features.ApiKeysFeature;
 import software.wings.features.ApprovalFlowFeature;
 import software.wings.features.AuditTrailFeature;
@@ -929,6 +932,8 @@ public class WingsModule extends AbstractModule implements ServersModule {
     install(new EventsFrameworkModule(configuration.getEventsFrameworkConfiguration(),
         configuration.isEventsFrameworkAvailableInOnPrem(), StartupMode.DELEGATE_SERVICE.equals(startupMode)));
     install(FeatureFlagModule.getInstance());
+    install(new AccountClientModule(configuration.getManagerServiceHttpClientConfig(),
+        configuration.getPortal().getJwtManagerServiceSecret(), MANAGER.getServiceId()));
     install(AccessControlAdminClientModule.getInstance(
         AccessControlAdminClientConfiguration.builder()
             .accessControlServiceConfig(
@@ -1297,6 +1302,7 @@ public class WingsModule extends AbstractModule implements ServersModule {
     }
 
     install(new FileServiceModule(configuration.getFileStorageMode(), configuration.getClusterName()));
+
     bind(AlertNotificationRuleChecker.class).to(AlertNotificationRuleCheckerImpl.class);
 
     bind(new TypeLiteral<NotificationDispatcher<UserGroup>>() {})
@@ -1396,6 +1402,7 @@ public class WingsModule extends AbstractModule implements ServersModule {
 
     install(new PerpetualTaskServiceModule());
     install(CESetupServiceModule.getInstance());
+    install(new SecretManagerModule());
     install(new CVNextGenCommonsServiceModule());
     try {
       install(new ConnectorResourceClientModule(configuration.getNgManagerServiceHttpClientConfig(),
@@ -1463,6 +1470,8 @@ public class WingsModule extends AbstractModule implements ServersModule {
 
     install(new ProjectClientModule(configuration.getNgManagerServiceHttpClientConfig(),
         configuration.getPortal().getJwtNextGenManagerSecret(), MANAGER.getServiceId()));
+
+    install(new AgentMtlsModule(configuration.getAgentMtlsSubdomain()));
   }
 
   private void registerOutboxEventHandlers() {

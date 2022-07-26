@@ -10,7 +10,7 @@ package io.harness.cdng.serverless;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.CDStepHelper;
-import io.harness.cdng.artifact.outcome.ArtifactOutcome;
+import io.harness.cdng.artifact.outcome.ArtifactsOutcome;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.instance.info.InstanceInfoService;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
@@ -93,10 +93,23 @@ public class ServerlessAwsLambdaDeployStep
         (ServerlessAwsLambdaStepExecutorParams) serverlessStepExecutorParams;
     final String accountId = AmbianceUtils.getAccountId(ambiance);
     ServerlessArtifactConfig serverlessArtifactConfig = null;
-    Optional<ArtifactOutcome> artifactOutcome = serverlessStepCommonHelper.resolveArtifactsOutcome(ambiance);
-    if (artifactOutcome.isPresent()) {
-      serverlessArtifactConfig = serverlessStepCommonHelper.getArtifactConfig(artifactOutcome.get(), ambiance);
+    Optional<ArtifactsOutcome> artifactsOutcome = serverlessStepCommonHelper.getArtifactsOutcome(ambiance);
+
+    Map<String, ServerlessArtifactConfig> sidecarServerlessArtifactConfigMap = new HashMap<>();
+    if (artifactsOutcome.isPresent()) {
+      if (artifactsOutcome.get().getPrimary() != null) {
+        serverlessArtifactConfig =
+            serverlessStepCommonHelper.getArtifactConfig(artifactsOutcome.get().getPrimary(), ambiance);
+      }
+      if (artifactsOutcome.get().getSidecars() != null) {
+        artifactsOutcome.get().getSidecars().forEach((key, value) -> {
+          if (value != null) {
+            sidecarServerlessArtifactConfigMap.put(key, serverlessStepCommonHelper.getArtifactConfig(value, ambiance));
+          }
+        });
+      }
     }
+
     ServerlessDeployConfig serverlessDeployConfig = serverlessStepCommonHelper.getServerlessDeployConfig(
         serverlessDeployStepParameters, serverlessAwsLambdaStepHelper);
     Map<String, Object> manifestParams = new HashMap<>();
@@ -114,6 +127,7 @@ public class ServerlessAwsLambdaDeployStep
             .serverlessDeployConfig(serverlessDeployConfig)
             .serverlessManifestConfig(serverlessManifestConfig)
             .serverlessArtifactConfig(serverlessArtifactConfig)
+            .sidecarServerlessArtifactConfigs(sidecarServerlessArtifactConfigMap)
             .commandUnitsProgress(UnitProgressDataMapper.toCommandUnitsProgress(unitProgressData))
             .timeoutIntervalInMin(CDStepHelper.getTimeoutInMin(stepElementParameters))
             .manifestContent(serverlessAwsLambdaStepExecutorParams.getManifestFileOverrideContent())
