@@ -167,6 +167,8 @@ public class RoleChangeConsumerImpl implements ChangeConsumer<RoleDBO> {
                         roleAssignmentDBO, resourceSelector, false)))));
       }
       numberOfACLsCreated += aclRepository.insertAllIgnoringDuplicates(aclsToCreate);
+      numberOfACLsCreated += aclRepository.insertAllIgnoringDuplicates(
+          changeConsumerService.getImplicitACLsForRoleAssignment(permissionsAddedToRole, roleAssignmentDBO));
 
       return new Result(numberOfACLsCreated, numberOfACLsDeleted);
     }

@@ -124,7 +124,33 @@ public class ChangeConsumerServiceImpl implements ChangeConsumerService {
   }
 
   @Override
+  public List<ACL> getImplicitACLsForRoleAssignment(Set<String> permissions, RoleAssignmentDBO roleAssignment) {
+    Set<String> principals = new HashSet<>();
+    if (USER_GROUP.equals(roleAssignment.getPrincipalType())) {
+      Scope scope = toParentScope(scopeService.buildScopeFromScopeIdentifier(roleAssignment.getScopeIdentifier()),
+          roleAssignment.getPrincipalScopeLevel());
+      String principalScopeIdentifier = scope == null ? roleAssignment.getScopeIdentifier() : scope.toString();
+      Optional<UserGroup> userGroup =
+          userGroupService.get(roleAssignment.getPrincipalIdentifier(), principalScopeIdentifier);
+      userGroup.ifPresent(group -> principals.addAll(group.getUsers()));
+    } else {
+      principals.add(roleAssignment.getPrincipalIdentifier());
+    }
+    return getImplicitACLsForRoleAssignment(roleAssignment, principals, permissions);
+  }
+
+  @Override
   public List<ACL> getImplicitACLsForRoleAssignment(RoleAssignmentDBO roleAssignment, Set<String> principals) {
+    Optional<Role> role = roleService.get(
+        roleAssignment.getRoleIdentifier(), roleAssignment.getScopeIdentifier(), ManagedFilter.NO_FILTER);
+    if (!role.isPresent()) {
+      return new ArrayList<>();
+    }
+    return getImplicitACLsForRoleAssignment(roleAssignment, principals, role.get().getPermissions());
+  }
+
+  private List<ACL> getImplicitACLsForRoleAssignment(
+      RoleAssignmentDBO roleAssignment, Set<String> principals, Set<String> permissionsFilter) {
     Optional<ResourceGroup> resourceGroup = resourceGroupService.get(
         roleAssignment.getResourceGroupIdentifier(), roleAssignment.getScopeIdentifier(), ManagedFilter.NO_FILTER);
     if (!resourceGroup.isPresent()) {
@@ -140,7 +166,7 @@ public class ChangeConsumerServiceImpl implements ChangeConsumerService {
         while (currentScope != null) {
           ResourceSelector resourceSelector =
               ResourceSelector.builder().selector(buildResourceSelector(currentScope)).build();
-          Set<String> permissions = getPermissions(currentScope, givePermissionOnChildScopes);
+          Set<String> permissions = getPermissions(currentScope, givePermissionOnChildScopes, permissionsFilter);
           for (String principalIdentifier : principals) {
             for (String permission : permissions) {
               if (SERVICE_ACCOUNT.equals(roleAssignment.getPrincipalType())) {
@@ -160,7 +186,8 @@ public class ChangeConsumerServiceImpl implements ChangeConsumerService {
     return acls;
   }
 
-  private Set<String> getPermissions(Scope scope, boolean givePermissionOnChildScopes) {
-    return implicitPermissionsByScope.get(Pair.of(scope.getLevel(), givePermissionOnChildScopes));
+  private Set<String> getPermissions(Scope scope, boolean givePermissionOnChildScopes, Set<String> permissionsFilter) {
+    Set<String> permissions = implicitPermissionsByScope.get(Pair.of(scope.getLevel(), givePermissionOnChildScopes));
+    return permissions.stream().filter(permissionsFilter::contains).collect(Collectors.toSet());
   }
 }

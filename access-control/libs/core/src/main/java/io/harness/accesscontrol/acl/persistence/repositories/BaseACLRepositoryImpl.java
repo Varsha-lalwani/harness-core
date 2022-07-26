@@ -128,8 +128,6 @@ public abstract class BaseACLRepositoryImpl implements ACLRepository {
     return mongoTemplate
         .remove(new Query(Criteria.where(ACLKeys.roleAssignmentId)
                               .is(roleAssignmentId)
-                              .and(ACL.IMPLICIT_FOR_SCOPE_KEY)
-                              .ne(true)
                               .and(ACLKeys.permissionIdentifier)
                               .in(permissions)),
             ACL.class, getCollectionName())
@@ -159,8 +157,7 @@ public abstract class BaseACLRepositoryImpl implements ACLRepository {
 
   @Override
   public List<String> getDistinctPermissionsInACLsForRoleAssignment(String roleAssignmentId) {
-    Criteria criteria =
-        Criteria.where(ACLKeys.roleAssignmentId).is(roleAssignmentId).and(ACL.IMPLICIT_FOR_SCOPE_KEY).ne(true);
+    Criteria criteria = Criteria.where(ACLKeys.roleAssignmentId).is(roleAssignmentId);
     Query query = new Query();
     query.addCriteria(criteria);
     return mongoTemplate.findDistinct(
