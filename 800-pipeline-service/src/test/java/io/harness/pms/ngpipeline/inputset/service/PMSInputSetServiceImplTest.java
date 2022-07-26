@@ -51,9 +51,11 @@ import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntityType;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetImportRequestDTO;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetListTypePMS;
+import io.harness.pms.ngpipeline.inputset.exceptions.InvalidInputSetException;
 import io.harness.pms.ngpipeline.inputset.mappers.PMSInputSetElementMapper;
 import io.harness.pms.ngpipeline.inputset.mappers.PMSInputSetFilterHelper;
 import io.harness.pms.pipeline.PipelineEntity;
+import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.repositories.inputset.PMSInputSetRepository;
 import io.harness.rule.Owner;
 import io.harness.utils.PageUtils;
@@ -90,6 +92,7 @@ public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
   @Mock private PMSInputSetRepository inputSetRepository;
   @Mock private GitSyncSdkService gitSyncSdkService;
   @Mock private GitAwareEntityHelper gitAwareEntityHelper;
+  @Mock private PMSPipelineService pipelineService;
 
   String ACCOUNT_ID = "account_id";
   String ORG_IDENTIFIER = "orgId";
@@ -439,6 +442,7 @@ public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
   @Owner(developers = NAMAN)
   @Category(UnitTests.class)
   public void testGetForOldGitSync() {
+    MockedStatic<InputSetValidationHelper> mockSettings = Mockito.mockStatic(InputSetValidationHelper.class);
     doReturn(true).when(gitSyncSdkService).isGitSyncEnabled(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER);
     doReturn(Optional.of(inputSetEntity))
         .when(inputSetRepository)
@@ -446,6 +450,30 @@ public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
             ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, INPUT_SET_IDENTIFIER, true);
     pmsInputSetServiceMock.get(
         ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, INPUT_SET_IDENTIFIER, false, null, null);
+    verify(inputSetRepository, times(1))
+        .findForOldGitSync(
+            ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, INPUT_SET_IDENTIFIER, true);
+    verify(inputSetRepository, times(0)).find(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+    mockSettings.close();
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetForOldGitSyncWithErrors() {
+    doReturn(true).when(gitSyncSdkService).isGitSyncEnabled(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER);
+    doReturn(Optional.of(inputSetEntity))
+        .when(inputSetRepository)
+        .findForOldGitSync(
+            ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, INPUT_SET_IDENTIFIER, true);
+    doThrow(new InvalidInputSetException("msg", null, inputSetEntity))
+        .when(pipelineService)
+        .get(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, false);
+    assertThatThrownBy(()
+                           -> pmsInputSetServiceMock.get(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER,
+                               PIPELINE_IDENTIFIER, INPUT_SET_IDENTIFIER, false, null, null))
+        .hasMessage("msg")
+        .isInstanceOf(InvalidInputSetException.class);
     verify(inputSetRepository, times(1))
         .findForOldGitSync(
             ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, INPUT_SET_IDENTIFIER, true);
