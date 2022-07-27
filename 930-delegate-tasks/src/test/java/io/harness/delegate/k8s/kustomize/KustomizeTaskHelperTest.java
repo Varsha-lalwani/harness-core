@@ -14,18 +14,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
 
 import io.harness.CategoryTest;
 import io.harness.beans.FileData;
 import io.harness.category.element.UnitTests;
 import io.harness.cli.CliResponse;
+import io.harness.delegate.task.k8s.K8sTaskHelperBase;
 import io.harness.exception.InvalidRequestException;
 import io.harness.kustomize.KustomizeClient;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
+import io.harness.logging.LoggingInitializer;
 import io.harness.rule.Owner;
 
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,18 +39,22 @@ import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class KustomizeTaskHelperTest extends CategoryTest {
   @Mock KustomizeClient kustomizeClient;
   @Mock LogCallback logCallback;
+  @Mock K8sTaskHelperBase k8sTaskHelperBase;
 
-  @InjectMocks KustomizeTaskHelper kustomizeTaskHelper;
-  KustomizeTaskHelper spyKustomizeTaskHelper = spy(new KustomizeTaskHelper());
+  @Inject @InjectMocks KustomizeTaskHelper kustomizeTaskHelper;
+  @Inject KustomizeTaskHelper spyKustomizeTaskHelper;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
+    LoggingInitializer.initializeLogging();
+    spyKustomizeTaskHelper = Mockito.spy(kustomizeTaskHelper);
   }
 
   @Test
