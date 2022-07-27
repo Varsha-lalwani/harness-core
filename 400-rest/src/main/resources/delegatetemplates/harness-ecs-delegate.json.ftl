@@ -82,7 +82,7 @@
         </#if>
         {
           "name": "JRE_VERSION",
-          "value": "${jreVersion}"
+          "value": "11.0.14"
         },
         {
           "name": "HELM3_PATH",

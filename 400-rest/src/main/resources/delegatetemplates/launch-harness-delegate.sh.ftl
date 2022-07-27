@@ -32,7 +32,7 @@ sudo docker run -d --restart unless-stopped --hostname="$(hostname -f | head -c 
 -e REMOTE_WATCHER_URL_CDN=${remoteWatcherUrlCdn} \
 -e CDN_URL=${cdnUrl} \
 </#if>
--e JRE_VERSION=${jreVersion} \
+-e JRE_VERSION=11.0.14 \
 -e HELM3_PATH= \
 -e HELM_PATH= \
 -e CF_CLI6_PATH= \

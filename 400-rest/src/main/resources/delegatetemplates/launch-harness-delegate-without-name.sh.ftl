@@ -32,5 +32,5 @@ sudo docker run -d --restart unless-stopped --hostname="$(hostname -f | head -c 
 -e CDN_URL=${cdnUrl} \
 -e REMOTE_WATCHER_URL_CDN=${remoteWatcherUrlCdn} \
 </#if>
--e JRE_VERSION=${jreVersion} \
+-e JRE_VERSION=11.0.14 \
 ${delegateDockerImage}

@@ -179,6 +179,7 @@ if [[ $DEPLOY_MODE != "KUBERNETES" ]]; then
   fi
 fi
 
+#should we change this as well? (IMO, NO)
 WATCHER_VERSION=$(echo $WATCHER_CURRENT_VERSION | cut -d "." -f3)
 if [ $WATCHER_VERSION -ge 75276 ]; then
   echo "using JRE11 with watcher $WATCHER_VERSION"

@@ -1483,19 +1483,8 @@ public class DelegateServiceImpl implements DelegateService {
         }
       }
 
-      JreConfig jreConfig = getJreConfig(templateParameters.getAccountId(), templateParameters.isWatcher());
-
-      Preconditions.checkNotNull(jreConfig, "jreConfig cannot be null");
-
-      params.put(JRE_VERSION_KEY, jreConfig.getVersion());
-      params.put(JRE_DIRECTORY, jreConfig.getJreDirectory());
-      params.put(JRE_MAC_DIRECTORY, jreConfig.getJreMacDirectory());
-      params.put(JRE_TAR_PATH, jreConfig.getJreTarPath());
       params.put("isJdk11Watcher", String.valueOf(isJdk11Watcher(templateParameters.getAccountId())));
 
-      if (jreConfig.getAlpnJarPath() != null) {
-        params.put(ALPN_JAR_PATH, jreConfig.getAlpnJarPath());
-      }
       params.put("enableCE", String.valueOf(templateParameters.isCeEnabled()));
 
       if (isNotBlank(templateParameters.getDelegateTags())) {
@@ -1702,6 +1691,7 @@ public class DelegateServiceImpl implements DelegateService {
    *
    * @return
    */
+  // ARPIT: clean these methods in this pr only
   private JreConfig getJreConfig(final String accountId, final boolean isWatcher) {
     final boolean enabled = !isWatcher || isJdk11Watcher(accountId);
     final String jreVersion = enabled ? mainConfiguration.getMigrateToJre() : mainConfiguration.getCurrentJre();
