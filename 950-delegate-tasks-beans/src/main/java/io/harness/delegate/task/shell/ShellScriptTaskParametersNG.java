@@ -18,7 +18,7 @@ import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.expression.Expression;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.k8s.K8sConstants;
-import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
+import io.harness.ng.core.dto.secrets.SecretSpecDTO;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.shell.ScriptType;
 
@@ -43,7 +43,7 @@ public class ShellScriptTaskParametersNG
   K8sInfraDelegateConfig k8sInfraDelegateConfig;
 
   // Target Host Specific fields
-  SSHKeySpecDTO sshKeySpecDTO;
+  SecretSpecDTO sshKeySpecDTO;
   List<EncryptedDataDetail> encryptionDetails;
   String host;
 

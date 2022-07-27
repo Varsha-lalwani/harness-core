@@ -26,6 +26,7 @@ import io.harness.delegate.task.winrm.WinRmSessionConfig.WinRmSessionConfigBuild
 import io.harness.k8s.K8sConstants;
 import io.harness.k8s.KubernetesContainerService;
 import io.harness.logging.CommandExecutionStatus;
+import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.shell.ExecuteCommandResponse;
 import io.harness.shell.ScriptProcessExecutor;
@@ -182,8 +183,13 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
   }
 
   private SshSessionConfig getSshSessionConfig(ShellScriptTaskParametersNG taskParameters) {
+    if (!(taskParameters.getSshKeySpecDTO() instanceof SSHKeySpecDTO)) {
+      throw new IllegalArgumentException(
+          String.format("Invalid secret type provided %s", taskParameters.getSshKeySpecDTO().getClass()));
+    }
+
     SshSessionConfig sshSessionConfig = sshSessionConfigMapper.getSSHSessionConfig(
-        taskParameters.getSshKeySpecDTO(), taskParameters.getEncryptionDetails());
+        (SSHKeySpecDTO) taskParameters.getSshKeySpecDTO(), taskParameters.getEncryptionDetails());
 
     sshSessionConfig.setAccountId(taskParameters.getAccountId());
     sshSessionConfig.setExecutionId(taskParameters.getExecutionId());
