@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.shell;
 
+import static io.harness.delegate.task.shell.winrm.WinRmCommandConstants.SESSION_TIMEOUT;
+
 import io.harness.connector.task.shell.SshSessionConfigMapper;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateTaskPackage;
@@ -17,6 +19,10 @@ import io.harness.delegate.beans.logstreaming.UnitProgressDataMapper;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.k8s.ContainerDeploymentDelegateBaseHelper;
+import io.harness.delegate.task.shell.winrm.WinRmConfigAuthEnhancer;
+import io.harness.delegate.task.winrm.WinRmExecutorFactoryNG;
+import io.harness.delegate.task.winrm.WinRmSessionConfig;
+import io.harness.delegate.task.winrm.WinRmSessionConfig.WinRmSessionConfigBuilder;
 import io.harness.k8s.K8sConstants;
 import io.harness.k8s.KubernetesContainerService;
 import io.harness.logging.CommandExecutionStatus;
@@ -27,6 +33,8 @@ import io.harness.shell.ScriptSshExecutor;
 import io.harness.shell.ShellExecutorConfig;
 import io.harness.shell.SshSessionConfig;
 import io.harness.shell.SshSessionManager;
+
+import software.wings.core.winrm.executors.WinRmExecutor;
 
 import com.google.inject.Inject;
 import java.util.function.BooleanSupplier;
@@ -44,6 +52,8 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
   @Inject private ContainerDeploymentDelegateBaseHelper containerDeploymentDelegateBaseHelper;
   @Inject private SecretDecryptionService secretDecryptionService;
   @Inject private SshSessionConfigMapper sshSessionConfigMapper;
+  @Inject private WinRmExecutorFactoryNG winRmExecutorFactoryNG;
+  @Inject private WinRmConfigAuthEnhancer winRmConfigAuthEnhancer;
 
   public ShellScriptTaskNG(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {
@@ -57,7 +67,20 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
 
   @Override
   public DelegateResponseData run(TaskParameters parameters) {
-    ShellScriptTaskParametersNG taskParameters = (ShellScriptTaskParametersNG) parameters;
+    ShellScriptTaskParametersNG shellScriptTaskParameters = (ShellScriptTaskParametersNG) parameters;
+
+    switch (shellScriptTaskParameters.getScriptType()) {
+      case BASH:
+        return runBashScript(shellScriptTaskParameters);
+      case POWERSHELL:
+        return runPowerShellScript(shellScriptTaskParameters);
+      default:
+        throw new IllegalArgumentException(
+            String.format("Invalid script type provided %s", shellScriptTaskParameters.getScriptType()));
+    }
+  }
+
+  private ShellScriptTaskResponseNG runBashScript(ShellScriptTaskParametersNG taskParameters) {
     CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
 
     if (taskParameters.isExecuteOnDelegate()) {
@@ -99,6 +122,46 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
       } finally {
         SshSessionManager.evictAndDisconnectCachedSession(taskParameters.getExecutionId(), taskParameters.getHost());
       }
+    }
+  }
+
+  private ShellScriptTaskResponseNG runPowerShellScript(ShellScriptTaskParametersNG taskParameters) {
+    CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
+
+    try {
+      WinRmSessionConfigBuilder configBuilder = WinRmSessionConfig.builder()
+                                                    .accountId(taskParameters.getAccountId())
+                                                    .executionId(taskParameters.getExecutionId())
+                                                    .workingDirectory(taskParameters.getWorkingDirectory())
+                                                    .commandUnitName(COMMAND_UNIT)
+                                                    .environment(taskParameters.getEnvironmentVariables())
+                                                    .hostname(taskParameters.getHost())
+                                                    .timeout(SESSION_TIMEOUT);
+
+      final boolean disableCommandEncoding = false; // from ff
+
+      //      WinRmSessionConfig config = configureAuthentication(taskParameters, configBuilder);
+      WinRmSessionConfig config = configBuilder.build();
+
+      WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(
+          config, disableCommandEncoding, this.getLogStreamingTaskClient(), commandUnitsProgress);
+
+      ExecuteCommandResponse executeCommandResponse =
+          executor.executeCommandString(taskParameters.getScript(), taskParameters.getOutputVars());
+
+      return ShellScriptTaskResponseNG.builder()
+          .executeCommandResponse(executeCommandResponse)
+          .status(executeCommandResponse.getStatus())
+          .errorMessage(getErrorMessage(executeCommandResponse.getStatus()))
+          .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
+          .build();
+    } catch (Exception e) {
+      log.error("PowerShell Script Failed to execute.", e);
+      return ShellScriptTaskResponseNG.builder()
+          .status(CommandExecutionStatus.FAILURE)
+          .errorMessage("Power Shell Script Failed to execute. Reason: " + e.getMessage())
+          .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
+          .build();
     }
   }
 
