@@ -17,13 +17,17 @@ import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
+import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.inputset.InputSetErrorWrapperDTOPMS;
 import io.harness.pms.merger.helpers.InputSetYamlHelper;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntityType;
+import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetYamlDiffDTO;
 import io.harness.pms.ngpipeline.inputset.exceptions.InvalidInputSetException;
 import io.harness.pms.ngpipeline.inputset.helpers.InputSetErrorsHelper;
+import io.harness.pms.ngpipeline.inputset.helpers.InputSetSanitizer;
+import io.harness.pms.ngpipeline.inputset.helpers.ValidateAndMergeHelper;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.pipeline.service.PipelineCRUDErrorResponse;
@@ -183,5 +187,60 @@ public class InputSetValidationHelper {
     }
     InputSetYamlHelper.confirmPipelineIdentifierInInputSet(yaml, pipelineIdentifier);
     InputSetYamlHelper.confirmOrgAndProjectIdentifier(yaml, "inputSet", orgIdentifier, projectIdentifier);
+  }
+
+  public InputSetYamlDiffDTO getYAMLDiff(GitSyncSdkService gitSyncSdkService, PMSInputSetService inputSetService,
+      PMSPipelineService pipelineService, ValidateAndMergeHelper validateAndMergeHelper, String accountId,
+      String orgIdentifier, String projectIdentifier, String pipelineIdentifier, String inputSetIdentifier,
+      String pipelineBranch, String pipelineRepoID) {
+    Optional<InputSetEntity> optionalInputSetEntity = inputSetService.getWithoutValidations(
+        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, inputSetIdentifier, false);
+    if (!optionalInputSetEntity.isPresent()) {
+      throw new InvalidRequestException(
+          String.format("InputSet with the given ID: %s does not exist or has been deleted", inputSetIdentifier));
+    }
+    InputSetEntity inputSetEntity = optionalInputSetEntity.get();
+    if (inputSetEntity.getInputSetEntityType() == InputSetEntityType.INPUT_SET) {
+      return getYAMLDiffForInputSet(
+          gitSyncSdkService, pipelineService, validateAndMergeHelper, inputSetEntity, pipelineBranch, pipelineRepoID);
+    } else {
+      return OverlayInputSetValidationHelper.getYAMLDiffForOverlayInputSet(inputSetService, inputSetEntity);
+    }
+  }
+
+  InputSetYamlDiffDTO getYAMLDiffForInputSet(GitSyncSdkService gitSyncSdkService, PMSPipelineService pipelineService,
+      ValidateAndMergeHelper validateAndMergeHelper, InputSetEntity inputSetEntity, String pipelineBranch,
+      String pipelineRepoID) {
+    String accountId = inputSetEntity.getAccountId();
+    String orgIdentifier = inputSetEntity.getOrgIdentifier();
+    String projectIdentifier = inputSetEntity.getProjectIdentifier();
+    String pipelineIdentifier = inputSetEntity.getPipelineIdentifier();
+    String inputSetYaml = inputSetEntity.getYaml();
+    boolean isOldGitSyncFlow = gitSyncSdkService.isGitSyncEnabled(accountId, orgIdentifier, projectIdentifier);
+    String pipelineYaml;
+    if (isOldGitSyncFlow) {
+      pipelineYaml = getPipelineYamlForOldGitSyncFlow(pipelineService, accountId, orgIdentifier, projectIdentifier,
+          pipelineIdentifier, pipelineBranch, pipelineRepoID);
+    } else {
+      PipelineEntity pipelineEntity =
+          getPipelineEntity(pipelineService, accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
+      pipelineYaml = pipelineEntity.getYaml();
+    }
+    String newInputSetYaml = InputSetSanitizer.sanitizeInputSetAndUpdateInputSetYAML(pipelineYaml, inputSetYaml);
+    if (EmptyPredicate.isEmpty(newInputSetYaml)) {
+      String pipelineTemplate = validateAndMergeHelper.getPipelineTemplate(
+          accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, pipelineBranch, pipelineRepoID, null);
+      if (EmptyPredicate.isEmpty(pipelineTemplate)) {
+        return InputSetYamlDiffDTO.builder().isInputSetEmpty(true).noUpdatePossible(true).build();
+      } else {
+        return InputSetYamlDiffDTO.builder().isInputSetEmpty(true).noUpdatePossible(false).build();
+      }
+    }
+    return InputSetYamlDiffDTO.builder()
+        .oldYAML(inputSetYaml)
+        .newYAML(newInputSetYaml)
+        .isInputSetEmpty(false)
+        .noUpdatePossible(false)
+        .build();
   }
 }

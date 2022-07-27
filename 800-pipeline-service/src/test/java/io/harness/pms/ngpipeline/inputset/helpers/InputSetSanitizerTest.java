@@ -9,6 +9,7 @@ package io.harness.pms.ngpipeline.inputset.helpers;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.pms.ngpipeline.inputset.helpers.InputSetSanitizer.sanitizeInputSet;
+import static io.harness.pms.ngpipeline.inputset.helpers.InputSetSanitizer.sanitizeInputSetAndUpdateInputSetYAML;
 import static io.harness.pms.ngpipeline.inputset.helpers.InputSetSanitizer.sanitizeRuntimeInput;
 import static io.harness.rule.OwnerRule.NAMAN;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
@@ -60,12 +61,17 @@ public class InputSetSanitizerTest extends CategoryTest {
     String correctYaml = readFile(correctFile).replace("\"", "");
     assertThat(sanitizedYaml1.replace("\"", "")).isEqualTo(correctYaml);
     assertThat(sanitizedYaml2.replace("\"", "")).isEqualTo(correctYaml);
+
+    String correctInputSetFile = "inputSetWrong1Sanitized.yaml";
+    String correctInputSetYaml = readFile(correctInputSetFile).replace("\"", "");
+    String sanitizedInputSetYaml = sanitizeInputSetAndUpdateInputSetYAML(yaml, inputSetWrongYaml);
+    assertThat(sanitizedInputSetYaml.replace("\"", "")).isEqualTo(correctInputSetYaml);
   }
 
   @Test
   @Owner(developers = NAMAN)
   @Category(UnitTests.class)
-  public void testSanitizeInputSetsWithAllWrongFielsd() {
+  public void testSanitizeInputSetsWithAllWrongFields() {
     String filename = "pipeline-extensive.yml";
     String yaml = readFile(filename);
 
@@ -73,6 +79,9 @@ public class InputSetSanitizerTest extends CategoryTest {
     String inputSetWrongYaml = readFile(inputSetWrongFile);
 
     String emptyAfterSanitised = sanitizeInputSet(yaml, inputSetWrongYaml);
+    assertThat(emptyAfterSanitised).isNullOrEmpty();
+
+    emptyAfterSanitised = sanitizeInputSetAndUpdateInputSetYAML(yaml, inputSetWrongYaml);
     assertThat(emptyAfterSanitised).isNullOrEmpty();
   }
 

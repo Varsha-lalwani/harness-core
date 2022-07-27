@@ -22,6 +22,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import io.harness.PipelineServiceTestBase;
 import io.harness.annotations.dev.OwnedBy;
@@ -47,12 +48,14 @@ import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetResponseDTOPMS;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetSummaryResponseDTOPMS;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateRequestDTO;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateResponseDTOPMS;
+import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetYamlDiffDTO;
 import io.harness.pms.ngpipeline.inputset.exceptions.InvalidInputSetException;
 import io.harness.pms.ngpipeline.inputset.exceptions.InvalidOverlayInputSetException;
 import io.harness.pms.ngpipeline.inputset.helpers.ValidateAndMergeHelper;
 import io.harness.pms.ngpipeline.inputset.service.InputSetValidationHelper;
 import io.harness.pms.ngpipeline.inputset.service.PMSInputSetService;
 import io.harness.pms.ngpipeline.overlayinputset.beans.resource.OverlayInputSetResponseDTOPMS;
+import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.rule.Owner;
 
 import com.google.common.io.Resources;
@@ -68,6 +71,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -80,6 +84,7 @@ import org.springframework.data.repository.support.PageableExecutionUtils;
 public class InputSetResourcePMSTest extends PipelineServiceTestBase {
   InputSetResourcePMSImpl inputSetResourcePMSImpl;
   @Mock PMSInputSetService pmsInputSetService;
+  @Mock PMSPipelineService pipelineService;
   @Mock ValidateAndMergeHelper validateAndMergeHelper;
   @Mock GitSyncSdkService gitSyncSdkService;
 
@@ -114,7 +119,7 @@ public class InputSetResourcePMSTest extends PipelineServiceTestBase {
   public void setUp() throws IOException {
     MockitoAnnotations.initMocks(this);
     inputSetResourcePMSImpl =
-        new InputSetResourcePMSImpl(pmsInputSetService, null, gitSyncSdkService, validateAndMergeHelper);
+        new InputSetResourcePMSImpl(pmsInputSetService, pipelineService, gitSyncSdkService, validateAndMergeHelper);
 
     String inputSetFilename = "inputSet1.yml";
     inputSetYaml = readFile(inputSetFilename);
@@ -527,6 +532,22 @@ public class InputSetResourcePMSTest extends PipelineServiceTestBase {
     MergeInputSetResponseDTOPMS data = responseDTO.getData();
     assertThat(data.isErrorResponse()).isTrue();
     assertThat(data.getInputSetErrorWrapper()).isEqualTo(dummyErrorResponse);
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetInputSetYAMLDiff() {
+    MockedStatic<InputSetValidationHelper> mockSettings = Mockito.mockStatic(InputSetValidationHelper.class);
+    when(InputSetValidationHelper.getYAMLDiff(gitSyncSdkService, pmsInputSetService, pipelineService,
+             validateAndMergeHelper, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, INPUT_SET_ID,
+             "branch", "repo"))
+        .thenReturn(InputSetYamlDiffDTO.builder().oldYAML("old: yaml").newYAML("new: yaml").build());
+    ResponseDTO<InputSetYamlDiffDTO> inputSetYAMLDiff = inputSetResourcePMSImpl.getInputSetYAMLDiff(
+        ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, INPUT_SET_ID, "branch", "repo", null);
+    assertThat(inputSetYAMLDiff.getData().getOldYAML()).isEqualTo("old: yaml");
+    assertThat(inputSetYAMLDiff.getData().getNewYAML()).isEqualTo("new: yaml");
+    mockSettings.close();
   }
 
   @Test

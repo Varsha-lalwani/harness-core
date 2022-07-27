@@ -41,6 +41,7 @@ import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetSanitiseRespons
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetSummaryResponseDTOPMS;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateRequestDTO;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateResponseDTOPMS;
+import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetYamlDiffDTO;
 import io.harness.pms.ngpipeline.overlayinputset.beans.resource.OverlayInputSetResponseDTOPMS;
 import io.harness.pms.pipeline.PipelineResourceConstants;
 import io.harness.pms.rbac.PipelineRbacPermissions;
@@ -462,6 +463,37 @@ public interface InputSetResourcePMS {
       String pipelineRepoID, @BeanParam GitEntityUpdateInfoDTO gitEntityInfo,
       @RequestBody(required = true,
           description = "The invalid Input Set Yaml to be sanitized") @NotNull String invalidInputSetYaml);
+
+  @GET
+  @Path("{inputSetIdentifier}/yaml-diff")
+  @ApiOperation(value = "Get sanitised YAML for an InputSet", nickname = "yamlDiffForInputSet")
+  @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_CREATE_AND_EDIT)
+  @Operation(operationId = "yamlDiffForInputSet",
+      summary = "Get sanitised YAML for an InputSet by removing invalid fields",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
+            description = "Sanitise an Input Set by removing invalid fields from the Input Set YAML")
+      })
+  @Hidden
+  ResponseDTO<InputSetYamlDiffDTO>
+  getInputSetYAMLDiff(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
+                          description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
+      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) @OrgIdentifier @Parameter(
+          description = PipelineResourceConstants.ORG_PARAM_MESSAGE) String orgIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier @Parameter(
+          description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier,
+      @Parameter(description = InputSetSchemaConstants.PIPELINE_ID_FOR_INPUT_SET_PARAM_MESSAGE) @NotNull @QueryParam(
+          NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
+      @Parameter(
+          description =
+              "Identifier for the Input Set that needs to be updated. An Input Set corresponding to this identifier should already exist.")
+      @PathParam(NGCommonEntityConstants.INPUT_SET_IDENTIFIER_KEY) String inputSetIdentifier,
+      @QueryParam("pipelineBranch") @Parameter(
+          description = "Github branch of the Pipeline for which the Input Set is to be updated") String pipelineBranch,
+      @QueryParam("pipelineRepoID")
+      @Parameter(description = "Github Repo Id of the Pipeline for which the Input Set is to be updated")
+      String pipelineRepoID, @BeanParam GitEntityUpdateInfoDTO gitEntityInfo);
 
   @POST
   @Path("/import/{inputSetIdentifier}")

@@ -11,8 +11,10 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.rule.OwnerRule.NAMAN;
 import static io.harness.rule.OwnerRule.VED;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
@@ -22,10 +24,14 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
+import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.manage.GlobalContextManager;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntityType;
+import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetYamlDiffDTO;
 import io.harness.pms.ngpipeline.inputset.exceptions.InvalidInputSetException;
+import io.harness.pms.ngpipeline.inputset.helpers.InputSetSanitizer;
+import io.harness.pms.ngpipeline.inputset.helpers.ValidateAndMergeHelper;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.pipeline.service.PipelineCRUDErrorResponse;
@@ -40,14 +46,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-@PrepareForTest({OverlayInputSetValidationHelper.class})
+@PrepareForTest({OverlayInputSetValidationHelper.class, InputSetSanitizer.class})
 @OwnedBy(PIPELINE)
 public class InputSetValidationHelperTest extends CategoryTest {
   @Mock PMSInputSetService inputSetService;
   @Mock PMSPipelineService pipelineService;
+  @Mock GitSyncSdkService gitSyncSdkService;
+  @Mock ValidateAndMergeHelper validateAndMergeHelper;
 
   String accountId = "accountId";
   String orgId = "orgId";
@@ -298,6 +308,118 @@ public class InputSetValidationHelperTest extends CategoryTest {
                            -> InputSetValidationHelper.validateInputSetForOldGitSync(
                                inputSetService, pipelineService, inputSetEntity, "", ""))
         .isInstanceOf(InvalidRequestException.class);
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetYAMLDiffForNonExistentInputSet() {
+    doReturn(Optional.empty())
+        .when(inputSetService)
+        .getWithoutValidations(accountId, orgId, projectId, pipelineId, "inputSetId", false);
+    assertThatThrownBy(()
+                           -> InputSetValidationHelper.getYAMLDiff(null, inputSetService, null, null, accountId, orgId,
+                               projectId, pipelineId, "inputSetId", null, null))
+        .hasMessageContaining("does not exist or has been deleted")
+        .isInstanceOf(InvalidRequestException.class);
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetYAMLDiffForOverlayInputSet() {
+    MockedStatic<OverlayInputSetValidationHelper> mockSettings =
+        Mockito.mockStatic(OverlayInputSetValidationHelper.class);
+    InputSetEntity overlayEntity =
+        InputSetEntity.builder().inputSetEntityType(InputSetEntityType.OVERLAY_INPUT_SET).build();
+    doReturn(Optional.of(overlayEntity))
+        .when(inputSetService)
+        .getWithoutValidations(accountId, orgId, projectId, pipelineId, "inputSetId", false);
+    when(OverlayInputSetValidationHelper.getYAMLDiffForOverlayInputSet(inputSetService, overlayEntity))
+        .thenReturn(InputSetYamlDiffDTO.builder().oldYAML("old: yaml").newYAML("new: yaml").build());
+    InputSetYamlDiffDTO yamlDiffDTO = InputSetValidationHelper.getYAMLDiff(
+        null, inputSetService, null, null, accountId, orgId, projectId, pipelineId, "inputSetId", null, null);
+    assertThat(yamlDiffDTO.getOldYAML()).isEqualTo("old: yaml");
+    assertThat(yamlDiffDTO.getNewYAML()).isEqualTo("new: yaml");
+    mockSettings.close();
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetYAMLDiffForInputSet() {
+    MockedStatic<InputSetSanitizer> mockSettings = Mockito.mockStatic(InputSetSanitizer.class);
+    doReturn(false).when(gitSyncSdkService).isGitSyncEnabled(accountId, orgId, projectId);
+    doReturn(Optional.of(PipelineEntity.builder().yaml("pipeline: yaml").build()))
+        .when(pipelineService)
+        .get(accountId, orgId, projectId, pipelineId, false);
+    when(InputSetSanitizer.sanitizeInputSetAndUpdateInputSetYAML("pipeline: yaml", "input: set"))
+        .thenReturn("input: setNew");
+    InputSetEntity inputSetEntity = InputSetEntity.builder()
+                                        .accountId(accountId)
+                                        .orgIdentifier(orgId)
+                                        .projectIdentifier(projectId)
+                                        .pipelineIdentifier(pipelineId)
+                                        .yaml("input: set")
+                                        .build();
+    InputSetYamlDiffDTO yamlDiffForInputSet = InputSetValidationHelper.getYAMLDiffForInputSet(
+        gitSyncSdkService, pipelineService, null, inputSetEntity, null, null);
+    assertThat(yamlDiffForInputSet.getOldYAML()).isEqualTo("input: set");
+    assertThat(yamlDiffForInputSet.getNewYAML()).isEqualTo("input: setNew");
+    assertThat(yamlDiffForInputSet.isInputSetEmpty()).isEqualTo(false);
+    assertThat(yamlDiffForInputSet.isNoUpdatePossible()).isEqualTo(false);
+    mockSettings.close();
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetYAMLDiffForInputSetWithNoUpdatePossible() {
+    MockedStatic<InputSetSanitizer> mockSettings = Mockito.mockStatic(InputSetSanitizer.class);
+    doReturn(false).when(gitSyncSdkService).isGitSyncEnabled(accountId, orgId, projectId);
+    doReturn(Optional.of(PipelineEntity.builder().yaml("pipeline: yaml").build()))
+        .when(pipelineService)
+        .get(accountId, orgId, projectId, pipelineId, false);
+    when(InputSetSanitizer.sanitizeInputSetAndUpdateInputSetYAML("pipeline: yaml", "input: set")).thenReturn(null);
+    InputSetEntity inputSetEntity = InputSetEntity.builder()
+                                        .accountId(accountId)
+                                        .orgIdentifier(orgId)
+                                        .projectIdentifier(projectId)
+                                        .pipelineIdentifier(pipelineId)
+                                        .yaml("input: set")
+                                        .build();
+    InputSetYamlDiffDTO yamlDiffForInputSet = InputSetValidationHelper.getYAMLDiffForInputSet(
+        gitSyncSdkService, pipelineService, validateAndMergeHelper, inputSetEntity, null, null);
+    assertThat(yamlDiffForInputSet.isInputSetEmpty()).isEqualTo(true);
+    assertThat(yamlDiffForInputSet.isNoUpdatePossible()).isEqualTo(true);
+    mockSettings.close();
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetYAMLDiffForInputSetWithUpdatePossible() {
+    MockedStatic<InputSetSanitizer> mockSettings = Mockito.mockStatic(InputSetSanitizer.class);
+    doReturn(false).when(gitSyncSdkService).isGitSyncEnabled(accountId, orgId, projectId);
+    doReturn(Optional.of(PipelineEntity.builder().yaml("pipeline: yaml").build()))
+        .when(pipelineService)
+        .get(accountId, orgId, projectId, pipelineId, false);
+    when(InputSetSanitizer.sanitizeInputSetAndUpdateInputSetYAML("pipeline: yaml", "input: set")).thenReturn(null);
+    doReturn("new: template")
+        .when(validateAndMergeHelper)
+        .getPipelineTemplate(accountId, orgId, projectId, pipelineId, null, null, null);
+    InputSetEntity inputSetEntity = InputSetEntity.builder()
+                                        .accountId(accountId)
+                                        .orgIdentifier(orgId)
+                                        .projectIdentifier(projectId)
+                                        .pipelineIdentifier(pipelineId)
+                                        .yaml("input: set")
+                                        .build();
+    InputSetYamlDiffDTO yamlDiffForInputSet = InputSetValidationHelper.getYAMLDiffForInputSet(
+        gitSyncSdkService, pipelineService, validateAndMergeHelper, inputSetEntity, null, null);
+    assertThat(yamlDiffForInputSet.isInputSetEmpty()).isEqualTo(true);
+    assertThat(yamlDiffForInputSet.isNoUpdatePossible()).isEqualTo(false);
+    mockSettings.close();
   }
 
   private String readFile(String filename) {

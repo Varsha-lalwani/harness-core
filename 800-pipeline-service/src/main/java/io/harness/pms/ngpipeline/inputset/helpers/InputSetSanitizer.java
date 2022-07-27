@@ -26,6 +26,14 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(PIPELINE)
 @UtilityClass
 public class InputSetSanitizer {
+  public String sanitizeInputSetAndUpdateInputSetYAML(String pipelineYaml, String inputSetYaml) {
+    String sanitizedRuntimeInputYaml = sanitizeInputSet(pipelineYaml, inputSetYaml, true);
+    if (EmptyPredicate.isEmpty(sanitizedRuntimeInputYaml)) {
+      return sanitizedRuntimeInputYaml;
+    }
+    return InputSetYamlHelper.setPipelineComponent(inputSetYaml, sanitizedRuntimeInputYaml);
+  }
+
   public String sanitizeInputSet(String pipelineYaml, String inputSetYaml) {
     return sanitizeInputSet(pipelineYaml, inputSetYaml, true);
   }

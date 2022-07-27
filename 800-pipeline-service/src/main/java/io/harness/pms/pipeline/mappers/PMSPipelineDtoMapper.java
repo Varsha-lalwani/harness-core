@@ -152,6 +152,9 @@ public class PMSPipelineDtoMapper {
 
   private PMSPipelineSummaryResponseDTO preparePipelineSummary(
       PipelineEntity pipelineEntity, EntityGitDetails entityGitDetails) {
+    if (pipelineEntity.getIsDraft() == null) {
+      pipelineEntity.setIsDraft(false);
+    }
     return PMSPipelineSummaryResponseDTO.builder()
         .identifier(pipelineEntity.getIdentifier())
         .description(pipelineEntity.getDescription())
@@ -169,6 +172,7 @@ public class PMSPipelineDtoMapper {
         .connectorRef(pipelineEntity.getConnectorRef())
         .gitDetails(entityGitDetails)
         .entityValidityDetails(getEntityValidityDetails(pipelineEntity))
+        .isDraft(pipelineEntity.getIsDraft())
         .build();
   }
 

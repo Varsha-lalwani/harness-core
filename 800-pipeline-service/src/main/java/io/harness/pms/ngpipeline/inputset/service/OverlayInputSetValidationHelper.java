@@ -19,6 +19,7 @@ import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.inputset.OverlayInputSetErrorWrapperDTOPMS;
 import io.harness.pms.merger.helpers.InputSetYamlHelper;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity;
+import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetYamlDiffDTO;
 import io.harness.pms.ngpipeline.inputset.exceptions.InvalidOverlayInputSetException;
 import io.harness.pms.ngpipeline.inputset.helpers.InputSetErrorsHelper;
 
@@ -92,5 +93,21 @@ public class OverlayInputSetValidationHelper {
           accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, identifier, false));
     });
     return inputSets;
+  }
+
+  public static InputSetYamlDiffDTO getYAMLDiffForOverlayInputSet(
+      PMSInputSetService inputSetService, InputSetEntity inputSetEntity) {
+    // todo: implement this, and change overlay input set validation in validateOverlayInputSet accordingly
+    /*
+    1. get references in ois
+    2. create criteria for db call
+    3. input set list call
+    4. remove non-existing references from the references in ois
+    5.1 if some references remain, return
+    5.2 if not, check if normal input sets exist for the pipeline.
+    5.2.1 if no references remain, don't allow start afresh
+    5.2.2 if remaining, allow start afresh
+     */
+    return null;
   }
 }

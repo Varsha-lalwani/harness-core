@@ -10,6 +10,7 @@ package io.harness.pms.mappers;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.rule.OwnerRule.NAMAN;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
+import static io.harness.rule.OwnerRule.SOUMYAJIT;
 
 import static java.time.LocalDate.now;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -594,5 +595,24 @@ public class PMSPipelineDtoMapperTest extends CategoryTest {
     assertThat(entityRef.getOrgIdentifier()).isEqualTo("org");
     assertThat(entityRef.getProjectIdentifier()).isEqualTo("proj");
     assertThat(entityRef.getIdentifier()).isEqualTo("id");
+  }
+  @Test
+  @Owner(developers = SOUMYAJIT)
+  @Category(UnitTests.class)
+  public void testPreparePipelineSummaryForDraft() {
+    PipelineEntity inline = PipelineEntity.builder()
+                                .name("name")
+                                .identifier("identifier")
+                                .filters(Collections.singletonMap("cd", null))
+                                .storeType(StoreType.INLINE)
+                                .build();
+    PMSPipelineSummaryResponseDTO pipelineSummaryResponse = PMSPipelineDtoMapper.preparePipelineSummary(inline);
+    assertThat(pipelineSummaryResponse.getGitDetails()).isNull();
+    assertThat(pipelineSummaryResponse.getEntityValidityDetails())
+        .isEqualTo(EntityValidityDetails.builder().valid(true).build());
+    assertThat(pipelineSummaryResponse.getName()).isEqualTo("name");
+    assertThat(pipelineSummaryResponse.getIdentifier()).isEqualTo("identifier");
+    assertThat(pipelineSummaryResponse.getIsDraft()).isEqualTo(false);
+    assertThat(pipelineSummaryResponse.getStoreType()).isEqualTo(StoreType.INLINE);
   }
 }

@@ -51,7 +51,6 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
 @Slf4j
-@Deprecated
 public class ValidateAndMergeHelper {
   private final PMSPipelineService pmsPipelineService;
   private final PMSInputSetService pmsInputSetService;
