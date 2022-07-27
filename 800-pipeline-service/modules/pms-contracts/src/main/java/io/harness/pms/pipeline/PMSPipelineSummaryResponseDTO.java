@@ -54,4 +54,5 @@ public class PMSPipelineSummaryResponseDTO {
   EntityValidityDetails entityValidityDetails;
   StoreType storeType;
   String connectorRef;
+  Boolean isDraft;
 }
