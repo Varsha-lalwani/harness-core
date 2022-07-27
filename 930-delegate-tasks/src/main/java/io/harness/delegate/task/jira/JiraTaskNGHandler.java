@@ -29,7 +29,6 @@ import io.harness.jira.JiraStatusNG;
 import io.harness.jira.JiraUserData;
 
 import com.google.inject.Singleton;
-import com.sun.corba.se.spi.ior.ObjectId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 
 @OwnedBy(CDC)
 @Singleton
