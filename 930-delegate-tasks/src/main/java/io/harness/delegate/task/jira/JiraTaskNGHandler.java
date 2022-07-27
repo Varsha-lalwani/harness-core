@@ -32,7 +32,9 @@ import com.google.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 
@@ -108,15 +110,12 @@ public class JiraTaskNGHandler {
   public JiraTaskNGResponse createIssue(JiraTaskNGParameters params) {
     JiraClient jiraClient = getJiraClient(params);
     JiraIssueNG issue = jiraClient.createIssue(params.getProjectKey(), params.getIssueType(), params.getFields(), true);
-    HashSet<String> userTypeFields = new HashSet<>();
+
+    Set<String> userTypeFields = new HashSet<>();
     if (EmptyPredicate.isNotEmpty(params.getFields())) {
       JiraIssueCreateMetadataNG createMetadata =
           jiraClient.getIssueCreateMetadata(params.getProjectKey(), params.getIssueType(), null, false, false);
       JiraProjectNG project = createMetadata.getProjects().get(params.getProjectKey());
-      if (project == null) {
-        throw new InvalidRequestException(String.format("Invalid project: %s", params.getProjectKey()));
-      }
-
       JiraIssueTypeNG issueType = project.getIssueTypes().get(params.getIssueType());
       issueType.getFields().entrySet().forEach(e -> {
         if (e.getValue().getSchema().getType().equals(JiraFieldTypeNG.USER)) {
@@ -132,14 +131,15 @@ public class JiraTaskNGHandler {
     JiraClient jiraClient = getJiraClient(params);
     JiraIssueNG issue = jiraClient.updateIssue(
         params.getIssueKey(), params.getTransitionToStatus(), params.getTransitionName(), params.getFields());
-    HashSet<String> userTypeFields = new HashSet<>();
+
     if (EmptyPredicate.isNotEmpty(params.getFields())) {
       JiraIssueUpdateMetadataNG updateMetadata = jiraClient.getIssueUpdateMetadata(params.getIssueKey());
-      updateMetadata.getFields().entrySet().forEach(e -> {
-        if (e.getValue().getSchema().getType().equals(JiraFieldTypeNG.USER)) {
-          userTypeFields.add(e.getKey());
-        }
-      });
+      Set<String> userTypeFields = updateMetadata.getFields()
+                                       .entrySet()
+                                       .stream()
+                                       .filter(e -> e.getValue().getSchema().getType().equals(JiraFieldTypeNG.USER))
+                                       .map(Map.Entry::getKey)
+                                       .collect(Collectors.toSet());
       setUserTypeCustomFieldsIfPresent(jiraClient, userTypeFields, params);
     }
     return JiraTaskNGResponse.builder().issue(issue).build();
@@ -155,27 +155,27 @@ public class JiraTaskNGHandler {
   }
 
   private void setUserTypeCustomFieldsIfPresent(
-      JiraClient jiraClient, HashSet<String> userTypeFields, JiraTaskNGParameters params) {
-    params.getFields().entrySet().forEach(userField -> {
+      JiraClient jiraClient, Set<String> userTypeFields, JiraTaskNGParameters params) {
+    params.getFields().forEach((key, value) -> {
       List<JiraUserData> userDataList = new ArrayList<>();
 
-      if (userTypeFields.contains(userField.getKey())) {
-        if (userField.getValue().startsWith("JIRAUSER")) {
-          JiraUserData userData = jiraClient.getUser(userField.getValue());
-          params.getFields().put(userField.getKey(), userData.getName());
+      if (userTypeFields.contains(key)) {
+        if (value.startsWith("JIRAUSER")) {
+          JiraUserData userData = jiraClient.getUser(value);
+          params.getFields().put(key, userData.getName());
           return;
         }
 
-        if (ObjectId.isValid(userField.getValue())) {
-          userDataList = jiraClient.getUsers(null, userField.getValue(), null);
+        if (ObjectId.isValid(value)) {
+          userDataList = jiraClient.getUsers(null, value, null);
         } else {
-          userDataList = jiraClient.getUsers(userField.getValue(), null, null);
+          userDataList = jiraClient.getUsers(value, null, null);
         }
         if (userDataList.size() != 1) {
           throw new InvalidRequestException(
               "Found " + userDataList.size() + " jira users with this query. Should be exactly 1.");
         }
-        params.getFields().put(userField.getKey(), userDataList.get(0).getAccountId());
+        params.getFields().put(key, userDataList.get(0).getAccountId());
       }
     });
   }
