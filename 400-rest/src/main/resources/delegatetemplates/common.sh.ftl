@@ -46,8 +46,7 @@ case "$OSTYPE" in
     ;;
 esac
 
-JRE_TAR_PATH = jre/openjdk-11.0.14_9/OpenJDK11U-jre_x64_${OS}_hotspot_11.0.14_9.tar.gz
-JVM_URL=${delegateStorageUrl}/$JRE_TAR_PATH
+JVM_URL=${delegateStorageUrl}/jre/openjdk-11.0.14_9/OpenJDK11U-jre_x64_${OS}_hotspot_11.0.14_9.tar.gz
 
 <#noparse>
 SOURCE="${BASH_SOURCE[0]}"

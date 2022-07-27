@@ -233,7 +233,7 @@ export CAPSULE_CACHE_DIR="$DIR/.cache"
 <#noparse>
 WATCHER_JAVA_OPTS=${WATCHER_JAVA_OPTS//UseCGroupMemoryLimitForHeap/UseContainerSupport}
 </#noparse>
-</#if>
+
 if [[ $1 == "upgrade" ]]; then
   echo "Upgrade"
   WATCHER_CURRENT_VERSION=$(jar_app_version watcher.jar)
