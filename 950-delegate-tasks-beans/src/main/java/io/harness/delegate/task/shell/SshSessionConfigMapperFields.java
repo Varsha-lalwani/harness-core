@@ -7,7 +7,7 @@
 
 package io.harness.delegate.task.shell;
 
-import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
+import io.harness.ng.core.dto.secrets.SecretSpecDTO;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import java.util.List;
@@ -17,6 +17,6 @@ public interface SshSessionConfigMapperFields {
   String getExecutionId();
   String getHost();
   String getWorkingDirectory();
-  SSHKeySpecDTO getSshKeySpecDTO();
+  SecretSpecDTO getSshKeySpecDTO();
   List<EncryptedDataDetail> getEncryptionDetails();
 }
