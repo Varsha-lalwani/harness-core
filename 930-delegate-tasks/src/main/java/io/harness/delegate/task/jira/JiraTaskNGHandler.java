@@ -30,10 +30,8 @@ import io.harness.jira.JiraUserData;
 
 import com.google.inject.Singleton;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -134,6 +132,16 @@ public class JiraTaskNGHandler {
     JiraClient jiraClient = getJiraClient(params);
     JiraIssueNG issue = jiraClient.updateIssue(
         params.getIssueKey(), params.getTransitionToStatus(), params.getTransitionName(), params.getFields());
+    HashSet<String> userTypeFields = new HashSet<>();
+    if (EmptyPredicate.isNotEmpty(params.getFields())) {
+      JiraIssueUpdateMetadataNG updateMetadata = jiraClient.getIssueUpdateMetadata(params.getIssueKey());
+      updateMetadata.getFields().entrySet().forEach(e -> {
+        if (e.getValue().getSchema().getType().equals(JiraFieldTypeNG.USER)) {
+          userTypeFields.add(e.getKey());
+        }
+      });
+      setUserTypeCustomFieldsIfPresent(jiraClient, userTypeFields, params);
+    }
     return JiraTaskNGResponse.builder().issue(issue).build();
   }
 
