@@ -11,11 +11,13 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.ScopeLevel;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ngsettings.entities.SettingConfiguration;
 import io.harness.ngsettings.entities.SettingsConfigurationState;
 import io.harness.ngsettings.services.SettingsService;
 import io.harness.repositories.ngsettings.custom.ConfigurationStateRepository;
+import io.harness.repositories.ngsettings.spring.SettingRepository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -44,12 +46,14 @@ public class SettingsCreationJob {
   private final SettingsConfig settingsConfig;
   private final SettingsService settingsService;
   private final ConfigurationStateRepository configurationStateRepository;
+  private final SettingRepository settingRepository;
   private static final String SETTINGS_YAML_PATH = "io/harness/ngsettings/settings.yml";
 
   @Inject
-  public SettingsCreationJob(
-      SettingsService settingsService, ConfigurationStateRepository configurationStateRepository) {
+  public SettingsCreationJob(SettingsService settingsService, ConfigurationStateRepository configurationStateRepository,
+      SettingRepository settingRepository) {
     this.configurationStateRepository = configurationStateRepository;
+    this.settingRepository = settingRepository;
     ObjectMapper om = new ObjectMapper(new YAMLFactory());
     URL url = getClass().getClassLoader().getResource(SETTINGS_YAML_PATH);
     try {
@@ -126,7 +130,7 @@ public class SettingsCreationJob {
     });
     Set<SettingConfiguration> upsertedSettings = new HashSet<>(latestSettings);
     upsertedSettings.removeAll(currentSettings);
-
+    deleteSettingsAtDisallowedScopes(currentSettings, upsertedSettings);
     upsertedSettings.forEach(setting -> {
       setting.setId(settingIdMap.get(setting.getIdentifier()));
       try {
@@ -143,5 +147,34 @@ public class SettingsCreationJob {
         optional.orElseGet(() -> SettingsConfigurationState.builder().identifier(settingsConfig.getName()).build());
     configurationState.setConfigVersion(settingsConfig.getVersion());
     configurationStateRepository.upsert(configurationState);
+  }
+
+  private void deleteSettingsAtDisallowedScopes(
+      Set<SettingConfiguration> currentSettings, Set<SettingConfiguration> upsertedSettings) {
+    Map<String, SettingConfiguration> settingConfigurationMap =
+        currentSettings.stream().collect(Collectors.toMap(setting -> setting.getIdentifier(), setting -> setting));
+    upsertedSettings.forEach(setting -> {
+      Set<ScopeLevel> existingScopes = settingConfigurationMap.get(setting.getIdentifier()).getAllowedScopes();
+      Set<ScopeLevel> updatedScopes = setting.getAllowedScopes();
+      Set<ScopeLevel> removedScopes = Sets.difference(existingScopes, updatedScopes);
+      removedScopes.forEach(scopeLevel -> removeSettingAtScopeLevel(setting.getIdentifier(), scopeLevel));
+    });
+  }
+
+  private void removeSettingAtScopeLevel(String identifier, ScopeLevel scopeLevel) {
+    switch (scopeLevel) {
+      case ACCOUNT:
+        settingRepository.deleteByOrgIdentifierNullAndProjectIdentifierNullAndIdentifier(identifier);
+        break;
+      case ORGANIZATION:
+        settingRepository.deleteByOrgIdentifierNotNullAndProjectIdentifierNullAndIdentifier(identifier);
+        break;
+      case PROJECT:
+        settingRepository.deleteByOrgIdentifierNotNullAndProjectIdentifierNotNullAndIdentifier(identifier);
+        break;
+      default:
+        throw new InvalidRequestException(
+            String.format("Invalid scope- %s present in the settings.yml", scopeLevel.toString()));
+    }
   }
 }
