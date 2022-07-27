@@ -9,7 +9,6 @@ package io.harness.delegate.task.jira;
 
 import io.harness.jira.JiraUserData;
 
-import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

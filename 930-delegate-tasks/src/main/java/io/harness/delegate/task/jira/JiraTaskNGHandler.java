@@ -11,22 +11,30 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.exception.WingsException.USER;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.jira.mappers.JiraRequestResponseMapper;
 import io.harness.exception.InvalidArtifactServerException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.jira.JiraClient;
 import io.harness.jira.JiraFieldNG;
 import io.harness.jira.JiraFieldTypeNG;
 import io.harness.jira.JiraIssueCreateMetadataNG;
 import io.harness.jira.JiraIssueNG;
+import io.harness.jira.JiraIssueTypeNG;
 import io.harness.jira.JiraIssueUpdateMetadataNG;
 import io.harness.jira.JiraProjectBasicNG;
+import io.harness.jira.JiraProjectNG;
 import io.harness.jira.JiraStatusNG;
 import io.harness.jira.JiraUserData;
 
 import com.google.inject.Singleton;
+import com.sun.corba.se.spi.ior.ObjectId;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 
@@ -102,6 +110,23 @@ public class JiraTaskNGHandler {
   public JiraTaskNGResponse createIssue(JiraTaskNGParameters params) {
     JiraClient jiraClient = getJiraClient(params);
     JiraIssueNG issue = jiraClient.createIssue(params.getProjectKey(), params.getIssueType(), params.getFields(), true);
+    HashSet<String> userTypeFields = new HashSet<>();
+    if (EmptyPredicate.isNotEmpty(params.getFields())) {
+      JiraIssueCreateMetadataNG createMetadata =
+          jiraClient.getIssueCreateMetadata(params.getProjectKey(), params.getIssueType(), null, false, false);
+      JiraProjectNG project = createMetadata.getProjects().get(params.getProjectKey());
+      if (project == null) {
+        throw new InvalidRequestException(String.format("Invalid project: %s", params.getProjectKey()));
+      }
+
+      JiraIssueTypeNG issueType = project.getIssueTypes().get(params.getIssueType());
+      issueType.getFields().entrySet().forEach(e -> {
+        if (e.getValue().getSchema().getType().equals(JiraFieldTypeNG.USER)) {
+          userTypeFields.add(e.getKey());
+        }
+      });
+      setUserTypeCustomFieldsIfPresent(jiraClient, userTypeFields, params);
+    }
     return JiraTaskNGResponse.builder().issue(issue).build();
   }
 
@@ -119,6 +144,32 @@ public class JiraTaskNGHandler {
     return JiraTaskNGResponse.builder()
         .jiraSearchUserData(JiraSearchUserData.builder().jiraUserDataList(jiraUserDataList).build())
         .build();
+  }
+
+  private void setUserTypeCustomFieldsIfPresent(
+      JiraClient jiraClient, HashSet<String> userTypeFields, JiraTaskNGParameters params) {
+    params.getFields().entrySet().forEach(userField -> {
+      List<JiraUserData> userDataList = new ArrayList<>();
+
+      if (userTypeFields.contains(userField.getKey())) {
+        if (userField.getValue().startsWith("JIRAUSER")) {
+          JiraUserData userData = jiraClient.getUser(userField.getValue());
+          params.getFields().put(userField.getKey(), userData.getName());
+          return;
+        }
+
+        if (ObjectId.isValid(userField.getValue())) {
+          userDataList = jiraClient.getUsers(null, userField.getValue(), null);
+        } else {
+          userDataList = jiraClient.getUsers(userField.getValue(), null, null);
+        }
+        if (userDataList.size() != 1) {
+          throw new InvalidRequestException(
+              "Found " + userDataList.size() + " jira users with this query. Should be exactly 1.");
+        }
+        params.getFields().put(userField.getKey(), userDataList.get(0).getAccountId());
+      }
+    });
   }
 
   private JiraClient getJiraClient(JiraTaskNGParameters parameters) {
