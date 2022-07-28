@@ -254,18 +254,34 @@ public class RoleAssignmentResourceImpl implements RoleAssignmentResource {
     }
     RoleAssignmentFilter filter = roleAssignmentDTOMapper.fromDTO(userIdentifier, userGroups, userRoleAssignmentFilter);
     PageResponse<RoleAssignment> pageResponse = roleAssignmentService.list(pageRequest, filter);
-    PageResponse<RoleAssignmentAggregateWithScope> roleAssignmentAggregateWithScope = pageResponse.map(response
-        -> RoleAssignmentAggregateWithScope.builder()
-               .roleAssignmentDTO(roleAssignmentDTOMapper.toResponseDTO(response))
-               .role(roleDTOMapper.toResponseDTO(
-                   roleService.get(response.getRoleIdentifier(), response.getScopeIdentifier(), NO_FILTER)
-                       .orElse(null)))
-               .resourceGroup(ResourceGroupDTOMapper.toDTO(
-                   resourceGroupService
-                       .get(response.getResourceGroupIdentifier(), response.getScopeIdentifier(), NO_FILTER)
-                       .orElse(null)))
-               .scope(getScopeName(response.getScopeIdentifier()))
-               .build());
+    PageResponse<RoleAssignmentAggregateWithScope> roleAssignmentAggregateWithScope = pageResponse.map(response -> {
+      String userGroupName = null;
+      if (USER_GROUP.equals(response.getPrincipalType())) {
+        UserGroup principal = userGroups.stream()
+                                  .filter(userGroup
+                                      -> userGroup.getIdentifier().equals(response.getPrincipalIdentifier())
+                                          && scopeService.buildScopeFromScopeIdentifier(userGroup.getScopeIdentifier())
+                                                 .getLevel()
+                                                 .toString()
+                                                 .equals(response.getPrincipalScopeLevel()))
+                                  .findAny()
+                                  .orElse(null);
+        if (principal != null) {
+          userGroupName = principal.getName();
+        }
+      }
+
+      return RoleAssignmentAggregateWithScope.builder()
+          .roleAssignmentDTO(roleAssignmentDTOMapper.toResponseDTO(response))
+          .role(roleDTOMapper.toResponseDTO(
+              roleService.get(response.getRoleIdentifier(), response.getScopeIdentifier(), NO_FILTER).orElse(null)))
+          .resourceGroup(ResourceGroupDTOMapper.toDTO(
+              resourceGroupService.get(response.getResourceGroupIdentifier(), response.getScopeIdentifier(), NO_FILTER)
+                  .orElse(null)))
+          .scope(getScopeName(response.getScopeIdentifier()))
+          .userGroupName(userGroupName)
+          .build();
+    });
 
     return ResponseDTO.newResponse(roleAssignmentAggregateWithScope);
   }

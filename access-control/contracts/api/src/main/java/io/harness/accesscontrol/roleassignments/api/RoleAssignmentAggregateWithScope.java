@@ -22,4 +22,5 @@ public class RoleAssignmentAggregateWithScope {
   RoleResponseDTO role;
   ResourceGroupDTO resourceGroup;
   ScopeNameDTO scope;
+  String userGroupName;
 }
