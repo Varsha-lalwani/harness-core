@@ -24,7 +24,7 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(CDP)
 @TypeAlias("pdcDeploymentOutcome")
 @JsonTypeName("pdcDeploymentOutcome")
-@RecasterAlias("io.harness.cdng.sshwinrm.PdcDeploymentOutcome")
-public class PdcDeploymentOutcome implements Outcome, ExecutionSweepingOutput {
+@RecasterAlias("io.harness.cdng.sshwinrm.SshWinRmDeploymentOutcome")
+public class SshWinRmDeploymentOutcome implements Outcome, ExecutionSweepingOutput {
   String host;
 }
