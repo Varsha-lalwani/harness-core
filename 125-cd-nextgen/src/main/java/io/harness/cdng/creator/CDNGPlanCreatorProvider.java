@@ -22,7 +22,7 @@ import io.harness.cdng.creator.plan.artifact.SideCarArtifactPlanCreator;
 import io.harness.cdng.creator.plan.artifact.SideCarListPlanCreator;
 import io.harness.cdng.creator.plan.azure.webapps.ApplicationSettingsPlanCreator;
 import io.harness.cdng.creator.plan.azure.webapps.ConnectionStringsPlanCreator;
-import io.harness.cdng.creator.plan.azure.webapps.StartupScriptPlanCreator;
+import io.harness.cdng.creator.plan.azure.webapps.StartupCommandPlanCreator;
 import io.harness.cdng.creator.plan.configfile.ConfigFilesPlanCreator;
 import io.harness.cdng.creator.plan.configfile.IndividualConfigFilePlanCreator;
 import io.harness.cdng.creator.plan.envGroup.EnvGroupPlanCreator;
@@ -177,7 +177,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new AzureWebAppSlotSwapSlotPlanCreator());
     planCreators.add(new AzureWebAppTrafficShiftStepPlanCreator());
     planCreators.add(new JenkinsCreateStepPlanCreator());
-    planCreators.add(new StartupScriptPlanCreator());
+    planCreators.add(new StartupCommandPlanCreator());
     planCreators.add(new ApplicationSettingsPlanCreator());
     planCreators.add(new ConnectionStringsPlanCreator());
     injectorUtils.injectMembers(planCreators);

@@ -83,6 +83,7 @@ public enum FeatureName {
   FFM_1859,
   FFM_2134_FF_PIPELINES_TRIGGER,
   FFM_3938_STALE_FLAGS_ACTIVE_CARD_HIDE_SHOW,
+  FFM_4117_INTEGRATE_SRM("Enable Feature Flags to send events to the SRM module", HarnessTeam.CF),
   WINRM_COPY_CONFIG_OPTIMIZE,
   ECS_MULTI_LBS,
   ENTITY_AUDIT_RECORD,
@@ -189,7 +190,6 @@ public enum FeatureName {
   ENABLE_LOGIN_AUDITS,
   CUSTOM_MANIFEST,
   WEBHOOK_TRIGGER_AUTHORIZATION,
-  NG_HELM_SOURCE_REPO,
   ENHANCED_GCR_CONNECTIVITY_CHECK,
   USE_TF_CLIENT,
   SERVICE_DASHBOARD_NG,
@@ -351,6 +351,7 @@ public enum FeatureName {
   ACCOUNT_BASIC_ROLE,
   CVNG_TEMPLATE_MONITORED_SERVICE,
   CVNG_TEMPLATE_VERIFY_STEP,
+  CVNG_METRIC_THRESHOLD,
   WORKFLOW_EXECUTION_ZOMBIE_MONITOR,
   PIPELINE_QUEUE_STEP,
   USE_PAGINATED_ENCRYPT_SERVICE, // To be only used by UI for safeguarding encrypt component changes in CG
@@ -383,7 +384,6 @@ public enum FeatureName {
   GIT_SIMPLIFICATION_DISABLED,
   USE_K8S_API_FOR_STEADY_STATE_CHECK,
   WINRM_ASG_ROLLBACK("Used for Collect remaining instances rollback step", HarnessTeam.CDP),
-  NG_INLINE_MANIFEST,
   NG_CUSTOM_REMOTE_MANIFEST,
   CI_DISABLE_RESOURCE_OPTIMIZATION(
       "Used for disabling the resource optimization, AXA had asked this flag", HarnessTeam.CI),
@@ -396,6 +396,7 @@ public enum FeatureName {
       HarnessTeam.SPG),
   HOSTED_BUILDS("Used to enabled Hosted builds in paid accounts", HarnessTeam.CI),
   CD_ONBOARDING_ENABLED,
+  ATTRIBUTE_TYPE_ACL_ENABLED("Enable attribute filter on NG UI for ACL", HarnessTeam.PL),
   CREATE_DEFAULT_PROJECT("Enables auto create default project after user signup", HarnessTeam.GTM);
 
   @Deprecated
