@@ -19,7 +19,7 @@ import lombok.Data;
 @Data
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-public class SshWinrmInstanceSyncPerpetualTaskResponse implements InstanceSyncPerpetualTaskResponse {
+public class PdcInstanceSyncPerpetualTaskResponse implements InstanceSyncPerpetualTaskResponse {
   private DelegateMetaInfo delegateMetaInfo;
   private List<ServerInstanceInfo> serverInstanceDetails;
   private String errorMessage;

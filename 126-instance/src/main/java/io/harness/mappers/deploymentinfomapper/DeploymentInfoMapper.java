@@ -9,7 +9,6 @@ package io.harness.mappers.deploymentinfomapper;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.dtos.deploymentinfo.AwsDeploymentInfoDTO;
 import io.harness.dtos.deploymentinfo.AzureWebAppDeploymentInfoDTO;
 import io.harness.dtos.deploymentinfo.DeploymentInfoDTO;
 import io.harness.dtos.deploymentinfo.K8sDeploymentInfoDTO;
@@ -17,7 +16,6 @@ import io.harness.dtos.deploymentinfo.NativeHelmDeploymentInfoDTO;
 import io.harness.dtos.deploymentinfo.PdcDeploymentInfoDTO;
 import io.harness.dtos.deploymentinfo.ReferenceK8sPodInfoDTO;
 import io.harness.dtos.deploymentinfo.ServerlessAwsLambdaDeploymentInfoDTO;
-import io.harness.entities.deploymentinfo.AwsDeploymentInfo;
 import io.harness.entities.deploymentinfo.AzureWebAppNGDeploymentInfo;
 import io.harness.entities.deploymentinfo.DeploymentInfo;
 import io.harness.entities.deploymentinfo.K8sDeploymentInfo;
@@ -26,7 +24,6 @@ import io.harness.entities.deploymentinfo.PdcDeploymentInfo;
 import io.harness.entities.deploymentinfo.ReferenceK8sPodInfo;
 import io.harness.entities.deploymentinfo.ServerlessAwsLambdaDeploymentInfo;
 import io.harness.exception.InvalidRequestException;
-
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(HarnessTeam.DX)
@@ -45,8 +42,6 @@ public class DeploymentInfoMapper {
       return AzureWebAppDeploymentInfoMapper.toDTO((AzureWebAppNGDeploymentInfo) deploymentInfo);
     } else if (deploymentInfo instanceof PdcDeploymentInfo) {
       return PdcDeploymentInfoMapper.toDTO((PdcDeploymentInfo) deploymentInfo);
-    } else if (deploymentInfo instanceof AwsDeploymentInfo) {
-      return AwsDeploymentInfoMapper.toDTO((AwsDeploymentInfo) deploymentInfo);
     }
     throw new InvalidRequestException("No DeploymentInfoMapper toDTO found for deploymentInfo : {}" + deploymentInfo);
   }
@@ -64,8 +59,6 @@ public class DeploymentInfoMapper {
       return AzureWebAppDeploymentInfoMapper.toEntity((AzureWebAppDeploymentInfoDTO) deploymentInfoDTO);
     } else if (deploymentInfoDTO instanceof PdcDeploymentInfoDTO) {
       return PdcDeploymentInfoMapper.toEntity((PdcDeploymentInfoDTO) deploymentInfoDTO);
-    } else if (deploymentInfoDTO instanceof AwsDeploymentInfoDTO) {
-      return AwsDeploymentInfoMapper.toEntity((AwsDeploymentInfoDTO) deploymentInfoDTO);
     }
     throw new InvalidRequestException(
         "No DeploymentInfoMapper toEntity found for deploymentInfo : {}" + deploymentInfoDTO);

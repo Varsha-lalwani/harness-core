@@ -16,13 +16,11 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.AwsCallTracker;
 import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.delegate.beans.DelegateResponseData;
-import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsListEC2InstancesTaskParamsRequest;
 import io.harness.delegate.beans.connector.awsconnector.AwsListEC2InstancesTaskResponse;
 import io.harness.exception.AwsInstanceException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.logging.CommandExecutionStatus;
-import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.api.DeploymentType;
 import software.wings.beans.AwsInstanceFilter;
@@ -44,7 +42,6 @@ import com.google.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -57,8 +54,28 @@ public class AwsListEC2InstancesDelegateTaskHelper {
   @Inject private AwsUtils awsUtils;
 
   public DelegateResponseData getInstances(AwsListEC2InstancesTaskParamsRequest awsTaskParams) {
-    List<AwsEC2Instance> result = getInstances(awsTaskParams.getAwsConnector(), awsTaskParams.getEncryptionDetails(),
-        awsTaskParams.getRegion(), awsTaskParams.getVpcIds(), awsTaskParams.getTags(), awsTaskParams.isWinRm());
+    awsUtils.decryptRequestDTOs(awsTaskParams.getAwsConnector(), awsTaskParams.getEncryptionDetails());
+    AwsInternalConfig awsInternalConfig =
+        awsUtils.getAwsInternalConfig(awsTaskParams.getAwsConnector(), awsTaskParams.getRegion());
+
+    AwsInstanceFilterBuilder awsInstanceFilterBuilder = AwsInstanceFilter.builder().vpcIds(awsTaskParams.getVpcIds());
+
+    if (awsTaskParams.getTags() != null) {
+      List<Tag> tags = awsTaskParams.getTags()
+                           .entrySet()
+                           .stream()
+                           .map(entry -> Tag.builder().key(entry.getKey()).value(entry.getValue()).build())
+                           .collect(toList());
+      awsInstanceFilterBuilder.tags(tags);
+    }
+
+    DeploymentType deploymentType = awsTaskParams.isWinRm() ? DeploymentType.WINRM : DeploymentType.SSH;
+    List<Filter> filters = awsUtils.getFilters(deploymentType, awsInstanceFilterBuilder.build());
+
+    Function<String, DescribeInstancesRequest> createDescribeInstancesRequest =
+        nextToken -> new DescribeInstancesRequest().withNextToken(nextToken).withFilters(filters);
+    List<AwsEC2Instance> result = executeEc2ListInstancesTask(
+        awsInternalConfig, awsTaskParams.getRegion(), createDescribeInstancesRequest, !awsTaskParams.isWinRm());
 
     return AwsListEC2InstancesTaskResponse.builder()
         .instances(result)
@@ -66,41 +83,11 @@ public class AwsListEC2InstancesDelegateTaskHelper {
         .build();
   }
 
-  public List<AwsEC2Instance> getInstances(AwsConnectorDTO awsConnector, List<EncryptedDataDetail> encryptionDetails,
-      String region, List<String> vpcIds, Map<String, String> tagsMap, boolean isWinRm) {
-    awsUtils.decryptRequestDTOs(awsConnector, encryptionDetails);
-    AwsInternalConfig awsInternalConfig = awsUtils.getAwsInternalConfig(awsConnector, region);
-
-    AwsInstanceFilterBuilder awsInstanceFilterBuilder = AwsInstanceFilter.builder().vpcIds(vpcIds);
-
-    if (tagsMap != null) {
-      List<Tag> tags = tagsMap.entrySet()
-                           .stream()
-                           .map(entry -> Tag.builder().key(entry.getKey()).value(entry.getValue()).build())
-                           .collect(toList());
-      awsInstanceFilterBuilder.tags(tags);
-    }
-
-    DeploymentType deploymentType = isWinRm ? DeploymentType.WINRM : DeploymentType.SSH;
-    List<Filter> filters = awsUtils.getFilters(deploymentType, awsInstanceFilterBuilder.build());
-
-    Function<String, DescribeInstancesRequest> createDescribeInstancesRequest =
-        nextToken -> new DescribeInstancesRequest().withNextToken(nextToken).withFilters(filters);
-
-    return executeEc2ListInstancesTask(awsInternalConfig, region, createDescribeInstancesRequest, !isWinRm);
-  }
-
   public List<AwsEC2Instance> getInstances(
       AwsInternalConfig awsInternalConfig, String region, List<String> instanceIds) {
-    return getInstances(awsInternalConfig, region, instanceIds, false);
-  }
-
-  public List<AwsEC2Instance> getInstances(
-      AwsInternalConfig awsInternalConfig, String region, List<String> instanceIds, boolean excludeWinRmInstances) {
     Function<String, DescribeInstancesRequest> createDescribeInstancesRequest =
         nextToken -> new DescribeInstancesRequest().withNextToken(nextToken).withInstanceIds(instanceIds);
-    return executeEc2ListInstancesTask(
-        awsInternalConfig, region, createDescribeInstancesRequest, excludeWinRmInstances);
+    return executeEc2ListInstancesTask(awsInternalConfig, region, createDescribeInstancesRequest, false);
   }
 
   private List<AwsEC2Instance> convertToList(DescribeInstancesResult result, boolean excludeWinRm) {
