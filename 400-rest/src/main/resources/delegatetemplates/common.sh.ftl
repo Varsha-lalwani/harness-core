@@ -58,8 +58,6 @@ JVM_URL=$DELEGATE_STORAGE_URL/jre/openjdk-11.0.14_9/OpenJDK11U-jre_x64_${OS}_hot
 </#noparse>
 </#if>
 
-JVM_URL=${delegateStorageUrl}/jre/openjdk-11.0.14_9/OpenJDK11U-jre_x64_${OS}_hotspot_11.0.14_9.tar.gz
-
 <#noparse>
 SOURCE="${BASH_SOURCE[0]}"
 </#noparse>
