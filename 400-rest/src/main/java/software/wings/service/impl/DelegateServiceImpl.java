@@ -226,7 +226,6 @@ import software.wings.service.intfc.security.SecretManager;
 
 import com.github.zafarkhaja.semver.Version;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -1686,32 +1685,6 @@ public class DelegateServiceImpl implements DelegateService {
     return Optional.ofNullable(sysenv.get(ENV_ENV_VAR)).orElse("local");
   }
 
-  /**
-   * Returns JreConfig for a given account Id on the basis of UPGRADE_JRE and USE_CDN_FOR_STORAGE_FILES FeatureFlags.
-   *
-   * @return
-   */
-  // ARPIT: clean these methods in this pr only
-  private JreConfig getJreConfig(final String accountId, final boolean isWatcher) {
-    final boolean enabled = !isWatcher || isJdk11Watcher(accountId);
-    final String jreVersion = enabled ? mainConfiguration.getMigrateToJre() : mainConfiguration.getCurrentJre();
-    JreConfig jreConfig = mainConfiguration.getJreConfigs().get(jreVersion);
-    final CdnConfig cdnConfig = mainConfiguration.getCdnConfig();
-
-    if (mainConfiguration.useCdnForDelegateStorage() && cdnConfig != null) {
-      final String tarPath = cdnConfig.getCdnJreTarPaths().get(jreVersion);
-      final String alpnJarPath = cdnConfig.getAlpnJarPath();
-      jreConfig = JreConfig.builder()
-                      .version(jreConfig.getVersion())
-                      .jreDirectory(jreConfig.getJreDirectory())
-                      .jreMacDirectory(jreConfig.getJreMacDirectory())
-                      .jreTarPath(tarPath)
-                      .alpnJarPath(enabled ? null : alpnJarPath)
-                      .build();
-    }
-    return jreConfig;
-  }
-
   private boolean isJdk11Watcher(final String accountId) {
     if (DeployMode.isOnPrem(mainConfiguration.getDeployMode().name())) {
       return true;
@@ -1737,7 +1710,9 @@ public class DelegateServiceImpl implements DelegateService {
    * @return
    */
   private String getTargetJreVersion(final String accountId) {
-    return getJreConfig(accountId, false).getVersion();
+    final String jreVersion = mainConfiguration.getMigrateToJre();
+    JreConfig jreConfig = mainConfiguration.getJreConfigs().get(jreVersion);
+    return jreConfig.getVersion();
   }
 
   private String getDelegateBuildVersion(String delegateVersion) {

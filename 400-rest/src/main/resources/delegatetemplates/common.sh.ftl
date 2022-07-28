@@ -46,6 +46,18 @@ case "$OSTYPE" in
     ;;
 esac
 
+DELEGATE_STORAGE_URL=${delegateStorageUrl}
+
+<#if useCdn == "true">
+<#noparse>
+JVM_URL=$DELEGATE_STORAGE_URL/public/shared/jre/openjdk-11.0.14_9/OpenJDK11U-jre_x64_${OS}_hotspot_11.0.14_9.tar.gz
+</#noparse>
+<#else>
+<#noparse>
+JVM_URL=$DELEGATE_STORAGE_URL/jre/openjdk-11.0.14_9/OpenJDK11U-jre_x64_${OS}_hotspot_11.0.14_9.tar.gz
+</#noparse>
+</#if>
+
 JVM_URL=${delegateStorageUrl}/jre/openjdk-11.0.14_9/OpenJDK11U-jre_x64_${OS}_hotspot_11.0.14_9.tar.gz
 
 <#noparse>
