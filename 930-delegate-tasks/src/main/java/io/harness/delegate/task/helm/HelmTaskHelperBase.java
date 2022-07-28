@@ -586,18 +586,14 @@ public class HelmTaskHelperBase {
   }
 
   private String getCacheDir(HelmChartManifestDelegateConfig manifest, String repoName) {
-    String cacheDir = "";
     if (manifest.isUseCache()) {
-      cacheDir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
-    } else {
-      cacheDir =
-          Paths
-              .get(RESOURCE_DIR_BASE, repoName, RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT), "cache")
-              .toAbsolutePath()
-              .normalize()
-              .toString();
+      return Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
     }
-    return cacheDir;
+    return Paths
+        .get(RESOURCE_DIR_BASE, repoName, RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT), "cache")
+        .toAbsolutePath()
+        .normalize()
+        .toString();
   }
 
   public void downloadChartFilesUsingChartMuseum(

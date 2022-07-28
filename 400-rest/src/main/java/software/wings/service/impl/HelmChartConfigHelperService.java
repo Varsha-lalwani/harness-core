@@ -177,13 +177,8 @@ public class HelmChartConfigHelperService {
       instead of connector id as before. Details here:
       https://harness.atlassian.net/wiki/spaces/CDP/pages/21134344193/Helm+FFs+cleanup
      */
-    String repoId = "";
     boolean useCache = !featureFlagService.isEnabled(FeatureName.HELM_CACHE_TIED_TO_EXECUTION, context.getAccountId());
-    if (useCache) {
-      repoId = context.fetchInfraMappingId();
-    } else {
-      repoId = context.getWorkflowExecutionId();
-    }
+    String repoId = useCache ? context.fetchInfraMappingId() : context.getWorkflowExecutionId();
 
     String repoName = convertBase64UuidToCanonicalForm(repoId);
 

@@ -874,15 +874,14 @@ public class K8sHelmCommonStepHelper {
   public String getRepoName(Ambiance ambiance) {
     InfrastructureOutcome infrastructureOutcome = cdStepHelper.getInfrastructureOutcome(ambiance);
 
+    /*
+      going forward, we will be creating repoName based on service + env (infraMapping id)
+      instead of connector id as before. Details here:
+      https://harness.atlassian.net/wiki/spaces/CDP/pages/21134344193/Helm+FFs+cleanup
+     */
     boolean useCache =
         !cdFeatureFlagHelper.isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.HELM_CACHE_TIED_TO_EXECUTION);
-
-    String repoId = "";
-    if (useCache) {
-      repoId = infrastructureOutcome.getInfrastructureKey();
-    } else {
-      repoId = ambiance.getPlanExecutionId();
-    }
+    String repoId = useCache ? infrastructureOutcome.getInfrastructureKey() : ambiance.getPlanExecutionId();
 
     return convertBase64UuidToCanonicalForm(repoId);
   }
