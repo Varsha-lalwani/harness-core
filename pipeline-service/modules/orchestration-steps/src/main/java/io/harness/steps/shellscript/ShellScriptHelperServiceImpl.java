@@ -20,9 +20,9 @@ import io.harness.delegate.task.shell.ShellScriptTaskParametersNG.ShellScriptTas
 import io.harness.exception.InvalidRequestException;
 import io.harness.k8s.K8sConstants;
 import io.harness.ng.core.NGAccess;
-import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
+import io.harness.ng.core.dto.secrets.SecretSpecDTO;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
@@ -139,7 +139,7 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
       }
       SecretDTOV2 secret = secretResponseWrapper.getSecret();
 
-      SSHKeySpecDTO secretSpec = (SSHKeySpecDTO) secret.getSpec();
+      SecretSpecDTO secretSpec = secret.getSpec();
       NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
       List<EncryptedDataDetail> sshKeyEncryptionDetails =
           sshKeySpecDTOHelper.getSSHKeyEncryptionDetails(secretSpec, ngAccess);
