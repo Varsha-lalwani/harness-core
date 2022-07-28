@@ -109,7 +109,6 @@ public class JiraTaskNGHandler {
 
   public JiraTaskNGResponse createIssue(JiraTaskNGParameters params) {
     JiraClient jiraClient = getJiraClient(params);
-    JiraIssueNG issue = jiraClient.createIssue(params.getProjectKey(), params.getIssueType(), params.getFields(), true);
 
     Set<String> userTypeFields = new HashSet<>();
     if (EmptyPredicate.isNotEmpty(params.getFields())) {
@@ -124,13 +123,12 @@ public class JiraTaskNGHandler {
       });
       setUserTypeCustomFieldsIfPresent(jiraClient, userTypeFields, params);
     }
+    JiraIssueNG issue = jiraClient.createIssue(params.getProjectKey(), params.getIssueType(), params.getFields(), true);
     return JiraTaskNGResponse.builder().issue(issue).build();
   }
 
   public JiraTaskNGResponse updateIssue(JiraTaskNGParameters params) {
     JiraClient jiraClient = getJiraClient(params);
-    JiraIssueNG issue = jiraClient.updateIssue(
-        params.getIssueKey(), params.getTransitionToStatus(), params.getTransitionName(), params.getFields());
 
     if (EmptyPredicate.isNotEmpty(params.getFields())) {
       JiraIssueUpdateMetadataNG updateMetadata = jiraClient.getIssueUpdateMetadata(params.getIssueKey());
@@ -142,6 +140,8 @@ public class JiraTaskNGHandler {
                                        .collect(Collectors.toSet());
       setUserTypeCustomFieldsIfPresent(jiraClient, userTypeFields, params);
     }
+    JiraIssueNG issue = jiraClient.updateIssue(
+        params.getIssueKey(), params.getTransitionToStatus(), params.getTransitionName(), params.getFields());
     return JiraTaskNGResponse.builder().issue(issue).build();
   }
 
