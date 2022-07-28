@@ -141,8 +141,7 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
 
       final boolean disableCommandEncoding = false; // from ff
 
-      //      WinRmSessionConfig config = configureAuthentication(taskParameters, configBuilder);
-      WinRmSessionConfig config = configBuilder.build();
+      WinRmSessionConfig config = winRmConfigAuthEnhancer.configureAuthentication2(taskParameters, configBuilder);
 
       WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(
           config, disableCommandEncoding, this.getLogStreamingTaskClient(), commandUnitsProgress);

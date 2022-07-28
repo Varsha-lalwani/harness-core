@@ -7,6 +7,7 @@
 
 package io.harness.delegate.task.shell.winrm;
 
+import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
 import io.harness.delegate.task.shell.WinrmTaskParameters;
 import io.harness.delegate.task.ssh.WinRmInfraDelegateConfig;
 import io.harness.delegate.task.winrm.AuthenticationScheme;
@@ -15,9 +16,11 @@ import io.harness.delegate.task.winrm.WinRmSessionConfig.WinRmSessionConfigBuild
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.dto.secrets.KerberosWinRmConfigDTO;
 import io.harness.ng.core.dto.secrets.NTLMConfigDTO;
+import io.harness.ng.core.dto.secrets.SecretSpecDTO;
 import io.harness.ng.core.dto.secrets.TGTKeyTabFilePathSpecDTO;
 import io.harness.ng.core.dto.secrets.TGTPasswordSpecDTO;
 import io.harness.ng.core.dto.secrets.WinRmAuthDTO;
+import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.SecretDecryptionService;
 
@@ -56,6 +59,32 @@ public class WinRmConfigAuthEnhancer {
         KerberosWinRmConfigDTO kerberosWinRmConfigDTO = (KerberosWinRmConfigDTO) winRmAuthDTO.getSpec();
         return generateWinRmSessionConfigForKerberos(kerberosWinRmConfigDTO, builder, encryptionDetails, port,
             winRmCommandTaskParameters.isUseWinRMKerberosUniqueCacheFile());
+      default:
+        throw new IllegalArgumentException("Invalid authSchema provided:" + winRmAuthDTO.getAuthScheme());
+    }
+  }
+
+  public WinRmSessionConfig configureAuthentication2(
+      ShellScriptTaskParametersNG winRmCommandTaskParameters, WinRmSessionConfigBuilder builder) {
+    final SecretSpecDTO secretSpecDTO = winRmCommandTaskParameters.getSshKeySpecDTO();
+    final List<EncryptedDataDetail> encryptionDetails = winRmCommandTaskParameters.getEncryptionDetails();
+    final boolean useWinRMKerberosUniqueCacheFile = true; // from ff
+
+    WinRmCredentialsSpecDTO winRmCredentialsSpecDTO = (WinRmCredentialsSpecDTO) secretSpecDTO;
+    if (winRmCredentialsSpecDTO == null) {
+      throw new InvalidRequestException("TODO");
+    }
+
+    WinRmAuthDTO winRmAuthDTO = winRmCredentialsSpecDTO.getAuth();
+    int port = winRmCredentialsSpecDTO.getPort();
+    switch (winRmAuthDTO.getAuthScheme()) {
+      case NTLM:
+        NTLMConfigDTO ntlmConfigDTO = (NTLMConfigDTO) winRmAuthDTO.getSpec();
+        return generateWinRmSessionConfigForNTLM(ntlmConfigDTO, builder, encryptionDetails, port);
+      case Kerberos:
+        KerberosWinRmConfigDTO kerberosWinRmConfigDTO = (KerberosWinRmConfigDTO) winRmAuthDTO.getSpec();
+        return generateWinRmSessionConfigForKerberos(
+            kerberosWinRmConfigDTO, builder, encryptionDetails, port, useWinRMKerberosUniqueCacheFile);
       default:
         throw new IllegalArgumentException("Invalid authSchema provided:" + winRmAuthDTO.getAuthScheme());
     }
