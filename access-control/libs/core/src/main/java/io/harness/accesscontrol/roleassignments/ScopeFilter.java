@@ -2,7 +2,6 @@ package io.harness.accesscontrol.roleassignments;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
-import io.harness.accesscontrol.roleassignments.validator.ValidRoleAssignmentFilter;
 import io.harness.annotations.dev.OwnedBy;
 
 import io.swagger.annotations.ApiModelProperty;

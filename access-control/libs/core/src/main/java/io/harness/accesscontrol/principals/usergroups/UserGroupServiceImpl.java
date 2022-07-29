@@ -8,11 +8,9 @@
 package io.harness.accesscontrol.principals.usergroups;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.accesscontrol.principals.Principal;
 import io.harness.accesscontrol.principals.PrincipalType;
-import io.harness.accesscontrol.principals.usergroups.persistence.UserGroupDBO;
 import io.harness.accesscontrol.principals.usergroups.persistence.UserGroupDao;
 import io.harness.accesscontrol.roleassignments.RoleAssignmentFilter;
 import io.harness.accesscontrol.roleassignments.RoleAssignmentService;
@@ -35,7 +33,6 @@ import javax.validation.executable.ValidateOnExecution;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 

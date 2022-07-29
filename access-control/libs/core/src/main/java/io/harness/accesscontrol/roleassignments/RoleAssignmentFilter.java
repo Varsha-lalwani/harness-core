@@ -29,7 +29,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.validator.constraints.NotEmpty;
 
 @OwnedBy(PL)
 @Getter
