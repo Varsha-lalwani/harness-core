@@ -47,6 +47,10 @@ public class ShellScriptTaskParametersNG
   List<EncryptedDataDetail> encryptionDetails;
   String host;
 
+  // WinRm specific fields
+  boolean disableCommandEncoding;
+  boolean useWinRMKerberosUniqueCacheFile;
+
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
     List<ExecutionCapability> capabilities = new ArrayList<>();

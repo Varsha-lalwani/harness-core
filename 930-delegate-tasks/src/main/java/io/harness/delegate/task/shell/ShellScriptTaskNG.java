@@ -140,15 +140,12 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
                                                     .hostname(taskParameters.getHost())
                                                     .timeout(SESSION_TIMEOUT);
 
-      final boolean disableCommandEncoding = false; // from ff
-      final boolean useWinRMKerberosUniqueCacheFile = true; // from ff
-
       WinRmSessionConfig config =
           winRmConfigAuthEnhancer.configureAuthentication((WinRmCredentialsSpecDTO) taskParameters.getSshKeySpecDTO(),
-              taskParameters.getEncryptionDetails(), configBuilder, useWinRMKerberosUniqueCacheFile);
+              taskParameters.getEncryptionDetails(), configBuilder, taskParameters.isUseWinRMKerberosUniqueCacheFile());
 
       WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(
-          config, disableCommandEncoding, this.getLogStreamingTaskClient(), commandUnitsProgress);
+          config, taskParameters.isDisableCommandEncoding(), this.getLogStreamingTaskClient(), commandUnitsProgress);
 
       ExecuteCommandResponse executeCommandResponse =
           executor.executeCommandString(taskParameters.getScript(), taskParameters.getOutputVars());

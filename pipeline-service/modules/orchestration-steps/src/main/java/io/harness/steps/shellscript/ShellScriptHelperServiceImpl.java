@@ -214,6 +214,11 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
     ParameterField<String> workingDirectory = (shellScriptStepParameters.getExecutionTarget() != null)
         ? shellScriptStepParameters.getExecutionTarget().getWorkingDirectory()
         : ParameterField.ofNull();
+
+    if (ShellType.PowerShell.equals(shellScriptStepParameters.getShell())) {
+      taskParametersNGBuilder.useWinRMKerberosUniqueCacheFile(false).disableCommandEncoding(false);
+    }
+
     return taskParametersNGBuilder.accountId(AmbianceUtils.getAccountId(ambiance))
         .executeOnDelegate(shellScriptStepParameters.onDelegate.getValue())
         .environmentVariables(
