@@ -30,7 +30,7 @@
       },
       "timeout": {
         "type": "string",
-        "pattern": "^(([1-9])+\\d+[s])|(((([1-9])+\\d*[mhwd])+([\\s]?\\d+[smhwd])*)|(<\\+input>.*)|(.*<\\+.*>.*))$"
+        "pattern": "^(([1-9])+\\d+[s])|(((([1-9])+\\d*[mhwd])+([\\s]?\\d+[smhwd])*)|(<\\+input>.*)|(.*<\\+.*>.*)|(^$))$"
       },
       "type": {
         "type": "string",
@@ -215,7 +215,7 @@
             },
             "timeout": {
               "type": "string",
-              "pattern": "^(([1-9])+\\d+[s])|(((([1-9])+\\d*[mhwd])+([\\s]?\\d+[smhwd])*)|(<\\+input>.*)|(.*<\\+.*>.*))$"
+              "pattern": "^(([1-9])+\\d+[s])|(((([1-9])+\\d*[mhwd])+([\\s]?\\d+[smhwd])*)|(<\\+input>.*)|(.*<\\+.*>.*)|(^$))$"
             },
             "type": {
               "type": "string",
@@ -583,7 +583,7 @@
                     },
                     {
                       "type": "string",
-                      "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                      "pattern": "^<\\+input>((\\.)((executionInput\\(\\))|(allowedValues|default|regex)\\(.+?\\)))*$",
                       "minLength": 1
                     }
                   ]

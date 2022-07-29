@@ -7,8 +7,6 @@
 
 package io.harness.beans;
 
-import static io.harness.annotations.dev.HarnessTeam.PL;
-
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag.Scope;
@@ -19,7 +17,7 @@ import lombok.Getter;
  * Add your feature name here. When the feature is fully launched and no longer needs to be flagged,
  * delete the feature name.
  */
-@OwnedBy(PL)
+@OwnedBy(HarnessTeam.PL)
 public enum FeatureName {
   DEPRECATE_K8S_STEADY_STATE_CHECK_STEP,
   NG_GITOPS,
@@ -85,6 +83,7 @@ public enum FeatureName {
   FFM_1859,
   FFM_2134_FF_PIPELINES_TRIGGER,
   FFM_3938_STALE_FLAGS_ACTIVE_CARD_HIDE_SHOW,
+  FFM_4117_INTEGRATE_SRM("Enable Feature Flags to send events to the SRM module", HarnessTeam.CF),
   WINRM_COPY_CONFIG_OPTIMIZE,
   ECS_MULTI_LBS,
   ENTITY_AUDIT_RECORD,
@@ -168,9 +167,7 @@ public enum FeatureName {
   ENABLE_CERT_VALIDATION,
   RESOURCE_CONSTRAINT_MAX_QUEUE,
   RESOURCE_CONSTRAINT_SCOPE_PIPELINE_ENABLED,
-  HIDE_SCOPE_COMMAND_OPTION,
   AWS_OVERRIDE_REGION,
-  SHOW_TASK_SETUP_ABSTRACTIONS,
   CLEAN_UP_OLD_MANAGER_VERSIONS(Scope.PER_ACCOUNT),
   ECS_AUTOSCALAR_REDESIGN,
   SAVE_SHELL_SCRIPT_PROVISION_OUTPUTS_TO_SWEEPING_OUTPUT,
@@ -193,7 +190,6 @@ public enum FeatureName {
   ENABLE_LOGIN_AUDITS,
   CUSTOM_MANIFEST,
   WEBHOOK_TRIGGER_AUTHORIZATION,
-  NG_HELM_SOURCE_REPO,
   ENHANCED_GCR_CONNECTIVITY_CHECK,
   USE_TF_CLIENT,
   SERVICE_DASHBOARD_NG,
@@ -203,7 +199,6 @@ public enum FeatureName {
   ECS_BG_DOWNSIZE,
   LIMITED_ACCESS_FOR_HARNESS_USER_GROUP,
   REMOVE_STENCIL_MANUAL_INTERVENTION,
-  CI_OVERVIEW_PAGE,
   SKIP_BASED_ON_STACK_STATUSES,
   WF_VAR_MULTI_SELECT_ALLOWED_VALUES,
   LDAP_GROUP_SYNC_JOB_ITERATOR,
@@ -238,7 +233,6 @@ public enum FeatureName {
   NG_TEMPLATES,
   NEW_KUSTOMIZE_BINARY,
   KUSTOMIZE_PATCHES_CG,
-  CVNG_VERIFY_STEP_TO_SINGLE_ACTIVITY,
   SSH_JSCH_LOGS,
   RESOLVE_DEPLOYMENT_TAGS_BEFORE_EXECUTION,
   LDAP_USER_ID_SYNC,
@@ -323,7 +317,6 @@ public enum FeatureName {
   APPLICATION_DROPDOWN_MULTISELECT,
   NG_AZURE,
   NG_GIT_EXPERIENCE,
-  CLOUDFORMATION_NG,
   CIE_HOSTED_BUILDS,
   LDAP_SECRET_AUTH,
   WORKFLOW_EXECUTION_REFRESH_STATUS,
@@ -353,12 +346,12 @@ public enum FeatureName {
   ENABLE_DEFAULT_TIMEFRAME_IN_DEPLOYMENTS,
   EXPORT_TF_PLAN_JSON_NG,
   ADD_MANIFEST_COLLECTION_STEP,
-  JDK11_WATCHER("Upgrade watcher to java11", HarnessTeam.DEL),
   NG_CUSTOM_APPROVAL,
   NG_FILE_STORE,
   ACCOUNT_BASIC_ROLE,
   CVNG_TEMPLATE_MONITORED_SERVICE,
   CVNG_TEMPLATE_VERIFY_STEP,
+  CVNG_METRIC_THRESHOLD,
   WORKFLOW_EXECUTION_ZOMBIE_MONITOR,
   PIPELINE_QUEUE_STEP,
   USE_PAGINATED_ENCRYPT_SERVICE, // To be only used by UI for safeguarding encrypt component changes in CG
@@ -383,7 +376,7 @@ public enum FeatureName {
   YAML_APIS_GRANULAR_PERMISSION,
   JENKINS_BUILD,
   ENABLE_DEFAULT_NG_EXPERIENCE_FOR_ONPREM,
-  NG_SETTINGS("Enable Settings at various scopes in NG", PL),
+  NG_SETTINGS("Enable Settings at various scopes in NG", HarnessTeam.PL),
   QUEUED_COUNT_FOR_QUEUEKEY("Used to display the count of the queue in CG git sync", HarnessTeam.SPG),
   NG_EMAIL_STEP,
   PRUNE_KUBERNETES_RESOURCES_NG,
@@ -391,7 +384,6 @@ public enum FeatureName {
   GIT_SIMPLIFICATION_DISABLED,
   USE_K8S_API_FOR_STEADY_STATE_CHECK,
   WINRM_ASG_ROLLBACK("Used for Collect remaining instances rollback step", HarnessTeam.CDP),
-  NG_INLINE_MANIFEST,
   NG_CUSTOM_REMOTE_MANIFEST,
   CI_DISABLE_RESOURCE_OPTIMIZATION(
       "Used for disabling the resource optimization, AXA had asked this flag", HarnessTeam.CI),
@@ -404,7 +396,11 @@ public enum FeatureName {
       HarnessTeam.SPG),
   HOSTED_BUILDS("Used to enabled Hosted builds in paid accounts", HarnessTeam.CI),
   CD_ONBOARDING_ENABLED,
-  REMOVE_APPROLE_TOKEN_RENEWAL("Removing token renewal in appRole method of auth in HashiCorp Vault", PL);
+  ATTRIBUTE_TYPE_ACL_ENABLED("Enable attribute filter on NG UI for ACL", HarnessTeam.PL),
+  CREATE_DEFAULT_PROJECT("Enables auto create default project after user signup", HarnessTeam.GTM),
+  ANALYSE_TF_PLAN_SUMMARY(
+      "Enables parsing of the Terraform plan/apply/destroy summary [add/change/destroy] and exposing them as expressions",
+      HarnessTeam.CDP);
 
   @Deprecated
   FeatureName() {
