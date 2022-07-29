@@ -383,6 +383,7 @@ public enum FeatureName {
   CI_STEP_GROUP_ENABLED,
   GIT_SIMPLIFICATION_DISABLED,
   USE_K8S_API_FOR_STEADY_STATE_CHECK,
+  REMOVE_APPROLE_TOKEN_RENEWAL("Removing token renewal in appRole method of auth in HashiCorp Vault", HarnessTeam.PL),
   WINRM_ASG_ROLLBACK("Used for Collect remaining instances rollback step", HarnessTeam.CDP),
   NG_CUSTOM_REMOTE_MANIFEST,
   CI_DISABLE_RESOURCE_OPTIMIZATION(
