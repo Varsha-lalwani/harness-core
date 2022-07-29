@@ -61,5 +61,5 @@ public class InfrastructureMapping {
   private String connectorRef;
   private String envId;
   private String serviceId;
-  @FdUniqueIndex private String infrastructureKey;
+  private String infrastructureKey;
 }
