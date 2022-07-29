@@ -26,4 +26,10 @@ public interface SettingsService {
   List<SettingConfiguration> listDefaultSettings();
   void removeSettingFromConfiguration(String identifier);
   SettingConfiguration upsertSettingConfiguration(SettingConfiguration settingConfiguration);
+
+  void deleteByOrgIdentifierNullAndProjectIdentifierNullAndIdentifier(String identifier);
+
+  void deleteByOrgIdentifierNotNullAndProjectIdentifierNullAndIdentifier(String identifier);
+
+  void deleteByOrgIdentifierNotNullAndProjectIdentifierNotNullAndIdentifier(String identifier);
 }

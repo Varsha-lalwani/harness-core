@@ -208,6 +208,21 @@ public class SettingsServiceImpl implements SettingsService {
     return settingConfigurationRepository.save(settingConfiguration);
   }
 
+  @Override
+  public void deleteByOrgIdentifierNullAndProjectIdentifierNullAndIdentifier(String identifier) {
+    settingRepository.deleteByOrgIdentifierNullAndProjectIdentifierNullAndIdentifier(identifier);
+  }
+
+  @Override
+  public void deleteByOrgIdentifierNotNullAndProjectIdentifierNullAndIdentifier(String identifier) {
+    settingRepository.deleteByOrgIdentifierNotNullAndProjectIdentifierNullAndIdentifier(identifier);
+  }
+
+  @Override
+  public void deleteByOrgIdentifierNotNullAndProjectIdentifierNotNullAndIdentifier(String identifier) {
+    settingRepository.deleteByOrgIdentifierNotNullAndProjectIdentifierNotNullAndIdentifier(identifier);
+  }
+
   private Map<Pair<String, Scope>, Setting> getSettings(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, SettingCategory category, String groupIdentifier) {
     List<Setting> settings;

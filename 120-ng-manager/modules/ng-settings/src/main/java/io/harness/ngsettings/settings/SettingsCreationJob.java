@@ -17,7 +17,6 @@ import io.harness.ngsettings.entities.SettingConfiguration;
 import io.harness.ngsettings.entities.SettingsConfigurationState;
 import io.harness.ngsettings.services.SettingsService;
 import io.harness.repositories.ngsettings.custom.ConfigurationStateRepository;
-import io.harness.repositories.ngsettings.spring.SettingRepository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -46,14 +45,12 @@ public class SettingsCreationJob {
   private final SettingsConfig settingsConfig;
   private final SettingsService settingsService;
   private final ConfigurationStateRepository configurationStateRepository;
-  private final SettingRepository settingRepository;
   private static final String SETTINGS_YAML_PATH = "io/harness/ngsettings/settings.yml";
 
   @Inject
-  public SettingsCreationJob(SettingsService settingsService, ConfigurationStateRepository configurationStateRepository,
-      SettingRepository settingRepository) {
+  public SettingsCreationJob(
+      SettingsService settingsService, ConfigurationStateRepository configurationStateRepository) {
     this.configurationStateRepository = configurationStateRepository;
-    this.settingRepository = settingRepository;
     ObjectMapper om = new ObjectMapper(new YAMLFactory());
     URL url = getClass().getClassLoader().getResource(SETTINGS_YAML_PATH);
     try {
@@ -164,13 +161,13 @@ public class SettingsCreationJob {
   private void removeSettingAtScopeLevel(String identifier, ScopeLevel scopeLevel) {
     switch (scopeLevel) {
       case ACCOUNT:
-        settingRepository.deleteByOrgIdentifierNullAndProjectIdentifierNullAndIdentifier(identifier);
+        settingsService.deleteByOrgIdentifierNullAndProjectIdentifierNullAndIdentifier(identifier);
         break;
       case ORGANIZATION:
-        settingRepository.deleteByOrgIdentifierNotNullAndProjectIdentifierNullAndIdentifier(identifier);
+        settingsService.deleteByOrgIdentifierNotNullAndProjectIdentifierNullAndIdentifier(identifier);
         break;
       case PROJECT:
-        settingRepository.deleteByOrgIdentifierNotNullAndProjectIdentifierNotNullAndIdentifier(identifier);
+        settingsService.deleteByOrgIdentifierNotNullAndProjectIdentifierNotNullAndIdentifier(identifier);
         break;
       default:
         throw new InvalidRequestException(
