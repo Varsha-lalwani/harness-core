@@ -144,7 +144,7 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
       final boolean useWinRMKerberosUniqueCacheFile = true; // from ff
 
       WinRmSessionConfig config =
-          winRmConfigAuthEnhancer.configureAuthentication2((WinRmCredentialsSpecDTO) taskParameters.getSshKeySpecDTO(),
+          winRmConfigAuthEnhancer.configureAuthentication((WinRmCredentialsSpecDTO) taskParameters.getSshKeySpecDTO(),
               taskParameters.getEncryptionDetails(), configBuilder, useWinRMKerberosUniqueCacheFile);
 
       WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(

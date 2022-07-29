@@ -7,8 +7,6 @@
 
 package io.harness.delegate.task.shell.winrm;
 
-import io.harness.delegate.task.shell.WinrmTaskParameters;
-import io.harness.delegate.task.ssh.WinRmInfraDelegateConfig;
 import io.harness.delegate.task.winrm.AuthenticationScheme;
 import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.delegate.task.winrm.WinRmSessionConfig.WinRmSessionConfigBuilder;
@@ -34,39 +32,11 @@ public class WinRmConfigAuthEnhancer {
     this.secretDecryptionService = secretDecryptionService;
   }
 
-  public WinRmSessionConfig configureAuthentication(
-      WinrmTaskParameters winRmCommandTaskParameters, WinRmSessionConfigBuilder builder) {
-    WinRmInfraDelegateConfig winRmInfraDelegateConfig = winRmCommandTaskParameters.getWinRmInfraDelegateConfig();
-    if (winRmInfraDelegateConfig == null) {
-      throw new InvalidRequestException("Task parameters must include WinRm Infra Delegate config.");
-    }
-
-    if (winRmInfraDelegateConfig.getWinRmCredentials() == null) {
-      throw new InvalidRequestException(
-          "Task parameters must include WinRm Infra Delegate config with configured WinRm credentials.");
-    }
-
-    WinRmAuthDTO winRmAuthDTO = winRmInfraDelegateConfig.getWinRmCredentials().getAuth();
-    List<EncryptedDataDetail> encryptionDetails = winRmInfraDelegateConfig.getEncryptionDataDetails();
-    int port = winRmInfraDelegateConfig.getWinRmCredentials().getPort();
-    switch (winRmAuthDTO.getAuthScheme()) {
-      case NTLM:
-        NTLMConfigDTO ntlmConfigDTO = (NTLMConfigDTO) winRmAuthDTO.getSpec();
-        return generateWinRmSessionConfigForNTLM(ntlmConfigDTO, builder, encryptionDetails, port);
-      case Kerberos:
-        KerberosWinRmConfigDTO kerberosWinRmConfigDTO = (KerberosWinRmConfigDTO) winRmAuthDTO.getSpec();
-        return generateWinRmSessionConfigForKerberos(kerberosWinRmConfigDTO, builder, encryptionDetails, port,
-            winRmCommandTaskParameters.isUseWinRMKerberosUniqueCacheFile());
-      default:
-        throw new IllegalArgumentException("Invalid authSchema provided:" + winRmAuthDTO.getAuthScheme());
-    }
-  }
-
-  public WinRmSessionConfig configureAuthentication2(WinRmCredentialsSpecDTO winRmCredentialsSpecDTO,
+  public WinRmSessionConfig configureAuthentication(WinRmCredentialsSpecDTO winRmCredentialsSpecDTO,
       List<EncryptedDataDetail> encryptionDetails, WinRmSessionConfigBuilder builder,
       boolean useWinRMKerberosUniqueCacheFile) {
     if (winRmCredentialsSpecDTO == null) {
-      throw new InvalidRequestException("TODO");
+      throw new InvalidRequestException("WinRm credentials are not specified.");
     }
 
     WinRmAuthDTO winRmAuthDTO = winRmCredentialsSpecDTO.getAuth();
