@@ -7,7 +7,6 @@
 
 package io.harness.delegate.task.shell.winrm;
 
-import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
 import io.harness.delegate.task.shell.WinrmTaskParameters;
 import io.harness.delegate.task.ssh.WinRmInfraDelegateConfig;
 import io.harness.delegate.task.winrm.AuthenticationScheme;
@@ -16,7 +15,6 @@ import io.harness.delegate.task.winrm.WinRmSessionConfig.WinRmSessionConfigBuild
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.dto.secrets.KerberosWinRmConfigDTO;
 import io.harness.ng.core.dto.secrets.NTLMConfigDTO;
-import io.harness.ng.core.dto.secrets.SecretSpecDTO;
 import io.harness.ng.core.dto.secrets.TGTKeyTabFilePathSpecDTO;
 import io.harness.ng.core.dto.secrets.TGTPasswordSpecDTO;
 import io.harness.ng.core.dto.secrets.WinRmAuthDTO;
@@ -64,13 +62,9 @@ public class WinRmConfigAuthEnhancer {
     }
   }
 
-  public WinRmSessionConfig configureAuthentication2(
-      ShellScriptTaskParametersNG winRmCommandTaskParameters, WinRmSessionConfigBuilder builder) {
-    final SecretSpecDTO secretSpecDTO = winRmCommandTaskParameters.getSshKeySpecDTO();
-    final List<EncryptedDataDetail> encryptionDetails = winRmCommandTaskParameters.getEncryptionDetails();
-    final boolean useWinRMKerberosUniqueCacheFile = true; // from ff
-
-    WinRmCredentialsSpecDTO winRmCredentialsSpecDTO = (WinRmCredentialsSpecDTO) secretSpecDTO;
+  public WinRmSessionConfig configureAuthentication2(WinRmCredentialsSpecDTO winRmCredentialsSpecDTO,
+      List<EncryptedDataDetail> encryptionDetails, WinRmSessionConfigBuilder builder,
+      boolean useWinRMKerberosUniqueCacheFile) {
     if (winRmCredentialsSpecDTO == null) {
       throw new InvalidRequestException("TODO");
     }

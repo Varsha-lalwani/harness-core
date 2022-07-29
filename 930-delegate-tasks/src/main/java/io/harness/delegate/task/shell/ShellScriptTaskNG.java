@@ -27,6 +27,7 @@ import io.harness.k8s.K8sConstants;
 import io.harness.k8s.KubernetesContainerService;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
+import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.shell.ExecuteCommandResponse;
 import io.harness.shell.ScriptProcessExecutor;
@@ -140,8 +141,11 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
                                                     .timeout(SESSION_TIMEOUT);
 
       final boolean disableCommandEncoding = false; // from ff
+      final boolean useWinRMKerberosUniqueCacheFile = true; // from ff
 
-      WinRmSessionConfig config = winRmConfigAuthEnhancer.configureAuthentication2(taskParameters, configBuilder);
+      WinRmSessionConfig config =
+          winRmConfigAuthEnhancer.configureAuthentication2((WinRmCredentialsSpecDTO) taskParameters.getSshKeySpecDTO(),
+              taskParameters.getEncryptionDetails(), configBuilder, useWinRMKerberosUniqueCacheFile);
 
       WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(
           config, disableCommandEncoding, this.getLogStreamingTaskClient(), commandUnitsProgress);
