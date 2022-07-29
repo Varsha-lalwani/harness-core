@@ -41,7 +41,15 @@ public class InfrastructureMapping {
                  .field(InfrastructureMappingNGKeys.accountIdentifier)
                  .field(InfrastructureMappingNGKeys.orgIdentifier)
                  .field(InfrastructureMappingNGKeys.projectIdentifier)
-                 .build())
+                 .build(),
+            CompoundMongoIndex.builder()
+                .unique(true)
+                .name("unique_accountId_orgId_projectId_infrakey")
+                .field(InfrastructureMappingNGKeys.accountIdentifier)
+                .field(InfrastructureMappingNGKeys.orgIdentifier)
+                .field(InfrastructureMappingNGKeys.projectIdentifier)
+                .field(InfrastructureMappingNGKeys.infrastructureKey)
+                .build())
         .build();
   }
 
