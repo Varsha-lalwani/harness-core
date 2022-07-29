@@ -185,7 +185,7 @@ public class HelmChartConfigHelperService {
     helmChartConfigParamsBuilder.helmRepoConfig(helmRepoConfig)
         .useCache(useCache)
         .encryptedDataDetails(encryptionDataDetails)
-        .repoDisplayName(settingAttribute.getName() + " " + context.fetchInfraMappingElement().getName())
+        .repoDisplayName(settingAttribute.getName())
         .repoName(repoName)
         .bypassHelmFetch(featureFlagService.isEnabled(FeatureName.BYPASS_HELM_FETCH, context.getAccountId()))
         .basePath(context.renderExpression(helmChartConfig.getBasePath()));
