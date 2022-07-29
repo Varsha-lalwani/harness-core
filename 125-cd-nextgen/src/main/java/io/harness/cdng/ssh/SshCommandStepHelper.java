@@ -110,7 +110,7 @@ public class SshCommandStepHelper extends CDStepHelper {
     }
   }
 
-  public SshCommandTaskParameters buildSshCommandTaskParameters(
+  private SshCommandTaskParameters buildSshCommandTaskParameters(
       @Nonnull Ambiance ambiance, @Nonnull CommandStepParameters commandStepParameters) {
     OptionalSweepingOutput optionalInfraOutput = executionSweepingOutputService.resolveOptional(ambiance,
         RefObjectUtils.getSweepingOutputRefObject(OutputExpressionConstants.SSH_INFRA_DELEGATE_CONFIG_OUTPUT_NAME));
