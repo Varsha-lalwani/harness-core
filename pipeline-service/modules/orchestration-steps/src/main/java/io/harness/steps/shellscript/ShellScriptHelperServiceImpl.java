@@ -216,6 +216,7 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
         : ParameterField.ofNull();
 
     if (ShellType.PowerShell.equals(shellScriptStepParameters.getShell())) {
+      // TODO: from ff
       taskParametersNGBuilder.useWinRMKerberosUniqueCacheFile(false).disableCommandEncoding(false);
     }
 
