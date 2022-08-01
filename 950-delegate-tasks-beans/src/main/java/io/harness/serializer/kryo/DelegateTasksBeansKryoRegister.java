@@ -252,6 +252,7 @@ import io.harness.delegate.beans.gitapi.GitApiTaskParams;
 import io.harness.delegate.beans.gitapi.GitApiTaskResponse;
 import io.harness.delegate.beans.gitapi.GitRepoType;
 import io.harness.delegate.beans.instancesync.info.AwsServerInstanceInfo;
+import io.harness.delegate.beans.instancesync.info.AzureSshWinrmServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.info.K8sServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.info.PdcServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.info.ServerlessAwsLambdaServerInstanceInfo;
@@ -1646,5 +1647,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(PdcServerInstanceInfo.class, 55501);
     kryo.register(AwsServerInstanceInfo.class, 55502);
     kryo.register(AwsSshWinrmInfraDelegateConfig.class, 55503);
+    kryo.register(AzureSshWinrmServerInstanceInfo.class, 55504);
   }
 }

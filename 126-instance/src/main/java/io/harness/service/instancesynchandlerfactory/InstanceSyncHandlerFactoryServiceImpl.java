@@ -13,6 +13,7 @@ import io.harness.exception.UnexpectedException;
 import io.harness.ng.core.infrastructure.InfrastructureKind;
 import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.service.instancesynchandler.AbstractInstanceSyncHandler;
+import io.harness.service.instancesynchandler.AwsInstanceSyncHandler;
 import io.harness.service.instancesynchandler.AzureWebAppInstanceSyncHandler;
 import io.harness.service.instancesynchandler.GitOpsInstanceSyncHandler;
 import io.harness.service.instancesynchandler.K8sInstanceSyncHandler;
@@ -34,6 +35,8 @@ public class InstanceSyncHandlerFactoryServiceImpl implements InstanceSyncHandle
   private final ServerlessAwsLambdaInstanceSyncHandler serverlessAwsLambdaInstanceSyncHandler;
   private final AzureWebAppInstanceSyncHandler azureWebAppInstanceSyncHandler;
   private final PdcInstanceSyncHandler pdcInstanceSyncHandler;
+  private final AwsInstanceSyncHandler awsInstanceSyncHandler;
+  //  private final PdcInstanceSyncHandler pdcInstanceSyncHandler;
 
   @Override
   public AbstractInstanceSyncHandler getInstanceSyncHandler(final String deploymentType, String infraKind) {
@@ -60,6 +63,8 @@ public class InstanceSyncHandlerFactoryServiceImpl implements InstanceSyncHandle
     switch (infraKind) {
       case InfrastructureKind.PDC:
         return pdcInstanceSyncHandler;
+      case InfrastructureKind.SSH_WINRM_AWS:
+        return awsInstanceSyncHandler;
       default:
         throw new UnexpectedException("No instance sync handler registered for infraKind: " + infraKind);
     }

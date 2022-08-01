@@ -7,6 +7,8 @@
 
 package io.harness.service.instancesyncperpetualtask;
 
+import static io.harness.perpetualtask.PerpetualTaskType.AWS_INSTANCE_SYNC_NG;
+import static io.harness.perpetualtask.PerpetualTaskType.AZURE_SSH_WINRM_INSTANCE_SYNC_NG;
 import static io.harness.perpetualtask.PerpetualTaskType.AZURE_WEB_APP_NG_INSTANCE_SYNC;
 import static io.harness.perpetualtask.PerpetualTaskType.K8S_INSTANCE_SYNC;
 import static io.harness.perpetualtask.PerpetualTaskType.NATIVE_HELM_INSTANCE_SYNC;
@@ -17,6 +19,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.UnexpectedException;
 import io.harness.service.instancesyncperpetualtask.instancesyncperpetualtaskhandler.InstanceSyncPerpetualTaskHandler;
+import io.harness.service.instancesyncperpetualtask.instancesyncperpetualtaskhandler.aws.AwsInstanceSyncPerpetualTaskHandler;
+import io.harness.service.instancesyncperpetualtask.instancesyncperpetualtaskhandler.azure.AzureSshWinrmInstanceSyncPerpetualTaskHandler;
 import io.harness.service.instancesyncperpetualtask.instancesyncperpetualtaskhandler.azure.AzureWebAppInstanceSyncPerpetualTaskHandler;
 import io.harness.service.instancesyncperpetualtask.instancesyncperpetualtaskhandler.helm.NativeHelmInstanceSyncPerpetualTaskHandler;
 import io.harness.service.instancesyncperpetualtask.instancesyncperpetualtaskhandler.k8s.K8SInstanceSyncPerpetualTaskHandler;
@@ -36,6 +40,9 @@ public final class InstanceSyncPerpetualTaskServiceRegister {
   private final ServerlessAwsLambdaInstanceSyncPerpetualTaskHandler serverlessAwsLambdaInstanceSyncPerpetualTaskHandler;
   private final AzureWebAppInstanceSyncPerpetualTaskHandler azureWebAppInstanceSyncPerpetualTaskHandler;
   private final PdcInstanceSyncPerpetualTaskHandler pdcInstanceSyncPerpetualTaskHandler;
+  private final AwsInstanceSyncPerpetualTaskHandler awsInstanceSyncPerpetualTaskHandler;
+  private final AzureSshWinrmInstanceSyncPerpetualTaskHandler azureSshWinrmInstanceSyncPerpetualTaskHandler;
+
   public InstanceSyncPerpetualTaskHandler getInstanceSyncPerpetualService(String perpetualTaskType) {
     switch (perpetualTaskType) {
       case K8S_INSTANCE_SYNC:
@@ -48,6 +55,10 @@ public final class InstanceSyncPerpetualTaskServiceRegister {
         return azureWebAppInstanceSyncPerpetualTaskHandler;
       case PDC_INSTANCE_SYNC_NG:
         return pdcInstanceSyncPerpetualTaskHandler;
+      case AWS_INSTANCE_SYNC_NG:
+        return awsInstanceSyncPerpetualTaskHandler;
+      case AZURE_SSH_WINRM_INSTANCE_SYNC_NG:
+        return azureSshWinrmInstanceSyncPerpetualTaskHandler;
       default:
         throw new UnexpectedException(
             "No instance sync service registered for perpetual task type: " + perpetualTaskType);
