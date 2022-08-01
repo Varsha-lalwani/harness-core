@@ -85,7 +85,8 @@ public class NGVaultSecretManagerRenewalHandler implements Handler<VaultConnecto
     SecurityContextBuilder.setContext(new ServicePrincipal(NG_MANAGER.getServiceId()));
     if (isRenewalNotNeeded(vaultConnector)) {
       log.info(
-          "Vault {} configured with Vault-Agent or Aws Iam Auth. It does not need renewal", vaultConnector.getUuid());
+          "Vault {} configured with Vault-Agent or Aws Iam Auth or AppRole(if FF is enabled). It does not need renewal",
+          vaultConnector.getUuid());
       return;
     }
     vaultConnector = mongoTemplate.findById(vaultConnector.getId(), VaultConnector.class);
