@@ -284,7 +284,6 @@ public class HelmTaskHelper {
     ChartmuseumClient chartmuseumClient = null;
     ChartMuseumServer chartMuseumServer = null;
     String resourceDirectory = null;
-    boolean useRepoFlags = false;
     /*
      repoName will be a combination of the connectorId and bucket name;
      this way, parallel deployments with charts in different buckets will work fine
@@ -445,7 +444,7 @@ public class HelmTaskHelper {
     }
   }
 
-  private String getCacheDir(String repoName, boolean useCache) {
+  public String getCacheDir(String repoName, boolean useCache) {
     if (useCache) {
       return Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
     }
@@ -456,7 +455,7 @@ public class HelmTaskHelper {
         .toString();
   }
 
-  private String getCacheDirForManifestCollection(String repoName, boolean useCache) throws IOException {
+  public String getCacheDirForManifestCollection(String repoName, boolean useCache) throws IOException {
     if (useCache) {
       return Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
     }
