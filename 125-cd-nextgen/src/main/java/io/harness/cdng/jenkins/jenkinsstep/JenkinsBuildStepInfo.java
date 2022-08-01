@@ -35,6 +35,7 @@ import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -60,9 +61,11 @@ public class JenkinsBuildStepInfo implements CDStepInfo, WithConnectorRef, WithD
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> jobName;
 
-  @YamlSchemaTypes(value = {runtime}) List<JenkinsParameterField> jobParameter;
+  @ApiModelProperty(dataType = SwaggerConstants.JENKINS_PARAMETER_FIELD_CLASSPATH)
+  @YamlSchemaTypes(value = {runtime})
+  ParameterField<List<JenkinsParameterField>> jobParameter;
   boolean unstableStatusAsSuccess;
-  boolean captureEnvironmentVariable;
+  boolean useConnectorUrlForJobExecution;
 
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   @YamlSchemaTypes(value = {runtime})
@@ -82,10 +85,10 @@ public class JenkinsBuildStepInfo implements CDStepInfo, WithConnectorRef, WithD
   public SpecParameters getSpecParameters() {
     return JenkinsBuildSpecParameters.builder()
         .connectorRef(connectorRef)
-        .fields(JenkinsBuildStepUtils.processJenkinsFieldsList(jobParameter))
+        .fields(JenkinsBuildStepUtils.processJenkinsFieldsList(jobParameter.getValue()))
         .jobName(jobName)
         .unstableStatusAsSuccess(unstableStatusAsSuccess)
-        .captureEnvironmentVariable(captureEnvironmentVariable)
+        .useConnectorUrlForJobExecution(useConnectorUrlForJobExecution)
         .delegateSelectors(delegateSelectors)
         .build();
   }

@@ -23,4 +23,5 @@ public interface SwaggerConstants {
   String INFRASTRUCTURE_DEFINITION_YAML_NODE_LIST_CLASSPATH =
       "[Lio.harness.cdng.infra.yaml.InfraStructureDefinitionYaml;";
   String CLUSTER_YAML_NODE_LIST_CLASSPATH = "[Lio.harness.cdng.gitops.yaml.ClusterYaml;";
+  String JENKINS_PARAMETER_FIELD_CLASSPATH = "[Lio.harness.cdng.jenkins.jenkinsstep.JenkinsParameterField;";
 }
