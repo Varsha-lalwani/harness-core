@@ -166,8 +166,7 @@ public class ConnectorServiceImpl implements ConnectorService {
     return createInternal(connector, accountIdentifier, gitChangeType);
   }
 
-  private ConnectorResponseDTO createInternal(
-      ConnectorDTO connectorDTO, String accountIdentifier, ChangeType gitChangeType) {
+  private void skipAppRoleRenewalForVaultConnector(ConnectorDTO connectorDTO, String accountIdentifier) {
     if (ngFeatureFlagHelperService.isEnabled(accountIdentifier, REMOVE_APPROLE_TOKEN_RENEWAL)
         && (connectorDTO.getConnectorInfo().getConnectorConfig() instanceof VaultConnectorDTO)) {
       ConnectorInfoDTO connectorInfoDTO = connectorDTO.getConnectorInfo();
@@ -178,6 +177,11 @@ public class ConnectorServiceImpl implements ConnectorService {
         connectorDTO.setConnectorInfo(connectorInfoDTO);
       }
     }
+  }
+
+  private ConnectorResponseDTO createInternal(
+      ConnectorDTO connectorDTO, String accountIdentifier, ChangeType gitChangeType) {
+    skipAppRoleRenewalForVaultConnector(connectorDTO, accountIdentifier);
     PerpetualTaskId connectorHeartbeatTaskId = null;
     try (AutoLogContext ignore1 = new NgAutoLogContext(connectorDTO.getConnectorInfo().getProjectIdentifier(),
              connectorDTO.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);
@@ -280,16 +284,7 @@ public class ConnectorServiceImpl implements ConnectorService {
 
   @Override
   public ConnectorResponseDTO update(ConnectorDTO connectorDTO, String accountIdentifier, ChangeType gitChangeType) {
-    if (ngFeatureFlagHelperService.isEnabled(accountIdentifier, REMOVE_APPROLE_TOKEN_RENEWAL)
-        && (connectorDTO.getConnectorInfo().getConnectorConfig() instanceof VaultConnectorDTO)) {
-      ConnectorInfoDTO connectorInfoDTO = connectorDTO.getConnectorInfo();
-      VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfoDTO.getConnectorConfig();
-      if (AccessType.APP_ROLE.equals(vaultConnectorDTO.getAccessType())) {
-        vaultConnectorDTO.setDoNotRenewAppRoleToken(true);
-        connectorInfoDTO.setConnectorConfig(vaultConnectorDTO);
-        connectorDTO.setConnectorInfo(connectorInfoDTO);
-      }
-    }
+    skipAppRoleRenewalForVaultConnector(connectorDTO, accountIdentifier);
     try (AutoLogContext ignore1 = new NgAutoLogContext(connectorDTO.getConnectorInfo().getProjectIdentifier(),
              connectorDTO.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);
          AutoLogContext ignore2 =

@@ -86,35 +86,35 @@ public class NGVaultSecretManagerRenewalHandler implements Handler<VaultConnecto
     if (isRenewalNotNeeded(vaultConnector)) {
       log.info(
           "Vault {} configured with Vault-Agent or Aws Iam Auth. It does not need renewal", vaultConnector.getUuid());
-    } else {
-      vaultConnector = mongoTemplate.findById(vaultConnector.getId(), VaultConnector.class);
-      try {
-        long renewalInterval = vaultConnector.getRenewalIntervalMinutes();
+      return;
+    }
+    vaultConnector = mongoTemplate.findById(vaultConnector.getId(), VaultConnector.class);
+    try {
+      assert vaultConnector != null;
+      long renewalInterval = vaultConnector.getRenewalIntervalMinutes();
 
-        if (renewalInterval <= 0) {
-          log.info("Vault {} not configured for renewal.", vaultConnector.getUuid());
-          return;
-        }
-        if (!checkIfEligibleForRenewal(vaultConnector.getRenewedAt(), renewalInterval)) {
-          log.info("Vault config {} renewed at {} not renewing now", vaultConnector.getUuid(),
-              vaultConnector.getRenewedAt());
-          return;
-        }
-        if (vaultConnector.getAccessType() == APP_ROLE) {
-          if (!vaultConnector.getDoNotRenewAppRoleToken()) {
-            vaultService.renewAppRoleClientToken(vaultConnector);
-          }
-        } else {
-          vaultService.renewToken(vaultConnector);
-        }
-      } catch (Exception e) {
-        log.info("Failed to renew vault token for vault id {}", vaultConnector.getUuid(), e);
+      if (renewalInterval <= 0) {
+        log.info("Vault {} not configured for renewal.", vaultConnector.getUuid());
+        return;
       }
+      if (!checkIfEligibleForRenewal(vaultConnector.getRenewedAt(), renewalInterval)) {
+        log.info(
+            "Vault config {} renewed at {} not renewing now", vaultConnector.getUuid(), vaultConnector.getRenewedAt());
+        return;
+      }
+      if (vaultConnector.getAccessType() == APP_ROLE) {
+        vaultService.renewAppRoleClientToken(vaultConnector);
+      } else {
+        vaultService.renewToken(vaultConnector);
+      }
+    } catch (Exception e) {
+      log.info("Failed to renew vault token for vault id {}", vaultConnector.getUuid(), e);
     }
   }
 
   private boolean isRenewalNotNeeded(VaultConnector vaultConnector) {
-    return vaultConnector.isUseVaultAgent() || vaultConnector.getUseAwsIam() || vaultConnector.getUseK8sAuth();
+    return vaultConnector.isUseVaultAgent() || vaultConnector.getUseAwsIam() || vaultConnector.getUseK8sAuth()
+        || (APP_ROLE.equals(vaultConnector.getAccessType()) && vaultConnector.getDoNotRenewAppRoleToken());
   }
 
   private SpringFilterExpander getFilterQuery() {
