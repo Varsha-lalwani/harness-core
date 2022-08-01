@@ -16,6 +16,7 @@ import static io.harness.beans.FeatureName.ANALYSE_TF_PLAN_SUMMARY;
 import static io.harness.beans.FeatureName.GIT_HOST_CONNECTIVITY;
 import static io.harness.beans.FeatureName.SAVE_TERRAFORM_APPLY_SWEEPING_OUTPUT_TO_WORKFLOW;
 import static io.harness.beans.FeatureName.TERRAFORM_AWS_CP_AUTHENTICATION;
+import static io.harness.beans.FeatureName.TERRAFORM_REMOTE_BACKEND_CONFIG;
 import static io.harness.beans.OrchestrationWorkflowType.BUILD;
 import static io.harness.context.ContextElementType.TERRAFORM_INHERIT_PLAN;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -23,11 +24,21 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.beans.FileBucket.TERRAFORM_STATE;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.provision.TerraformConstants.BACKEND_CONFIGS_KEY;
+import static io.harness.provision.TerraformConstants.BACKEND_CONFIG_KEY;
 import static io.harness.provision.TerraformConstants.ENCRYPTED_BACKEND_CONFIGS_KEY;
+import static io.harness.provision.TerraformConstants.ENCRYPTED_BACKEND_CONFIG_KEY;
 import static io.harness.provision.TerraformConstants.ENCRYPTED_ENVIRONMENT_VARS_KEY;
 import static io.harness.provision.TerraformConstants.ENCRYPTED_VARIABLES_KEY;
 import static io.harness.provision.TerraformConstants.ENVIRONMENT_VARS_KEY;
+import static io.harness.provision.TerraformConstants.LOCAL_STORE_TYPE;
 import static io.harness.provision.TerraformConstants.QUALIFIER_APPLY;
+import static io.harness.provision.TerraformConstants.REMOTE_BE_CONFIG_GIT_BRANCH_KEY;
+import static io.harness.provision.TerraformConstants.REMOTE_BE_CONFIG_GIT_COMMIT_ID_KEY;
+import static io.harness.provision.TerraformConstants.REMOTE_BE_CONFIG_GIT_CONNECTOR_ID_KEY;
+import static io.harness.provision.TerraformConstants.REMOTE_BE_CONFIG_GIT_FILE_PATH_KEY;
+import static io.harness.provision.TerraformConstants.REMOTE_BE_CONFIG_GIT_REPO_NAME_KEY;
+import static io.harness.provision.TerraformConstants.REMOTE_BE_CONFIG_GIT_USE_BRANCH_KEY;
+import static io.harness.provision.TerraformConstants.REMOTE_STORE_TYPE;
 import static io.harness.provision.TerraformConstants.TARGETS_KEY;
 import static io.harness.provision.TerraformConstants.TF_APPLY_VAR_NAME;
 import static io.harness.provision.TerraformConstants.TF_DESTROY_NAME_PREFIX;
@@ -123,6 +134,7 @@ import software.wings.beans.NameValuePair;
 import software.wings.beans.PhaseStep;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TemplateExpression;
+import software.wings.beans.TerraformBackendConfig;
 import software.wings.beans.TerraformInfrastructureProvisioner;
 import software.wings.beans.command.Command.Builder;
 import software.wings.beans.command.CommandType;
@@ -224,6 +236,13 @@ public abstract class TerraformProvisionState extends State {
   @Getter
   @Setter
   private List<NameValuePair> backendConfigs;
+
+  @Attributes(title = "Backend Config")
+  @FieldNameConstants.Include
+  @Getter
+  @Setter
+  private TerraformBackendConfig backendConfig;
+
   @FieldNameConstants.Include @Getter @Setter private List<NameValuePair> environmentVariables;
   @Getter @Setter private List<String> targets;
 
@@ -311,6 +330,18 @@ public abstract class TerraformProvisionState extends State {
     }
     saveTerraformPlanJson(terraformExecutionData, context, command());
 
+    GitFileConfig remoteBackendConfig = null;
+    String backendConfigStoreType = null;
+    if (featureFlagService.isEnabled(TERRAFORM_REMOTE_BACKEND_CONFIG, context.getAccountId())
+        && terraformExecutionData.getRemoteBackendConfig() != null) {
+      backendConfigStoreType = LOCAL_STORE_TYPE;
+      backendConfigs = terraformExecutionData.getBackendConfigs();
+      if (REMOTE_STORE_TYPE.equals(terraformExecutionData.getBackendConfigStoreType())) {
+        backendConfigStoreType = REMOTE_STORE_TYPE;
+        remoteBackendConfig = terraformExecutionData.getRemoteBackendConfig().getGitFileConfig();
+      }
+    }
+
     TerraformProvisionInheritPlanElement inheritPlanElement =
         TerraformProvisionInheritPlanElement.builder()
             .entityId(generateEntityId(context, terraformExecutionData.getWorkspace(), terraformProvisioner, true))
@@ -323,6 +354,8 @@ public abstract class TerraformProvisionState extends State {
             .sourceRepoReference(terraformExecutionData.getSourceRepoReference())
             .variables(terraformExecutionData.getVariables())
             .backendConfigs(terraformExecutionData.getBackendConfigs())
+            .backendConfigStoreType(backendConfigStoreType)
+            .remoteBackendConfig(remoteBackendConfig)
             .environmentVariables(terraformExecutionData.getEnvironmentVariables())
             .workspace(terraformExecutionData.getWorkspace())
             // In case of OPTIMIZED_TF_PLAN FF enabled we don't want to store encryptedTfPlan record in context element
@@ -578,8 +611,29 @@ public abstract class TerraformProvisionState extends State {
     if (!(this instanceof DestroyTerraformProvisionState)) {
       others.put("qualifier", QUALIFIER_APPLY);
       collectVariables(others, terraformExecutionData.getVariables(), VARIABLES_KEY, ENCRYPTED_VARIABLES_KEY, true);
-      collectVariables(others, terraformExecutionData.getBackendConfigs(), BACKEND_CONFIGS_KEY,
-          ENCRYPTED_BACKEND_CONFIGS_KEY, false);
+
+      if (featureFlagService.isEnabled(TERRAFORM_REMOTE_BACKEND_CONFIG, context.getAccountId())) {
+        if (backendConfig != null) {
+          if (LOCAL_STORE_TYPE.equals(getBackendConfig().getStoreType())) {
+            collectVariables(others, terraformExecutionData.getBackendConfigs(), BACKEND_CONFIG_KEY,
+                ENCRYPTED_BACKEND_CONFIG_KEY, false);
+          } else {
+            // remote backend config
+            if (backendConfig.getRemoteBackendConfig() != null) {
+              GitFileConfig gitFileConfig = backendConfig.getRemoteBackendConfig();
+              others.put(REMOTE_BE_CONFIG_GIT_BRANCH_KEY, gitFileConfig.getBranch());
+              others.put(REMOTE_BE_CONFIG_GIT_CONNECTOR_ID_KEY, gitFileConfig.getConnectorId());
+              others.put(REMOTE_BE_CONFIG_GIT_COMMIT_ID_KEY, gitFileConfig.getCommitId());
+              others.put(REMOTE_BE_CONFIG_GIT_FILE_PATH_KEY, gitFileConfig.getFilePath());
+              others.put(REMOTE_BE_CONFIG_GIT_REPO_NAME_KEY, gitFileConfig.getRepoName());
+              others.put(REMOTE_BE_CONFIG_GIT_USE_BRANCH_KEY, gitFileConfig.isUseBranch());
+            }
+          }
+        }
+      } else {
+        collectVariables(others, terraformExecutionData.getBackendConfigs(), BACKEND_CONFIGS_KEY,
+            ENCRYPTED_BACKEND_CONFIGS_KEY, false);
+      }
       collectVariables(others, terraformExecutionData.getEnvironmentVariables(), ENVIRONMENT_VARS_KEY,
           ENCRYPTED_ENVIRONMENT_VARS_KEY, false);
 
@@ -670,8 +724,14 @@ public abstract class TerraformProvisionState extends State {
     ensureNoDuplicateVars(getBackendConfigs());
     ensureNoDuplicateVars(getEnvironmentVariables());
     ensureNoDuplicateVars(getVariables());
-
     boolean areVariablesValid = areKeysMongoCompliant(getVariables(), getBackendConfigs(), getEnvironmentVariables());
+
+    if (getBackendConfig() != null && LOCAL_STORE_TYPE.equals(getBackendConfig().getStoreType())
+        && !isEmpty(getBackendConfig().getInlineBackendConfig())) {
+      List<NameValuePair> inlineBackendConfig = getBackendConfig().getInlineBackendConfig();
+      ensureNoDuplicateVars(inlineBackendConfig);
+      areVariablesValid = areVariablesValid && areKeysMongoCompliant(inlineBackendConfig);
+    }
     if (!areVariablesValid) {
       throw new InvalidRequestException("The following characters are not allowed in terraform "
           + "variable names: . and $");
@@ -778,10 +838,28 @@ public abstract class TerraformProvisionState extends State {
     List<NameValuePair> allBackendConfigs = element.getBackendConfigs();
     Map<String, String> backendConfigs = null;
     Map<String, EncryptedDataDetail> encryptedBackendConfigs = null;
-    if (isNotEmpty(allBackendConfigs)) {
-      backendConfigs = infrastructureProvisionerService.extractTextVariables(allBackendConfigs, context);
-      encryptedBackendConfigs = infrastructureProvisionerService.extractEncryptedTextVariables(
-          allBackendConfigs, context.getAppId(), context.getWorkflowExecutionId());
+    String storeType = null;
+    TfVarGitSource remoteBackendConfig = null;
+
+    if (featureFlagService.isEnabled(TERRAFORM_REMOTE_BACKEND_CONFIG, context.getAccountId())) {
+      storeType = element.getBackendConfigStoreType();
+      TerraformBackendConfig inhertiedConfig = new TerraformBackendConfig();
+      inhertiedConfig.setStoreType(storeType != null ? storeType : LOCAL_STORE_TYPE);
+      inhertiedConfig.setRemoteBackendConfig(element.getRemoteBackendConfig());
+      if (REMOTE_STORE_TYPE.equals(storeType)) {
+        setBackendConfig(inhertiedConfig);
+        remoteBackendConfig = fetchRemoteConfigGitSource(context);
+      } else {
+        backendConfigs = infrastructureProvisionerService.extractTextVariables(element.getBackendConfigs(), context);
+        encryptedBackendConfigs = infrastructureProvisionerService.extractEncryptedTextVariables(
+            element.getBackendConfigs(), context.getAppId(), context.getWorkflowExecutionId());
+      }
+    } else {
+      if (isNotEmpty(allBackendConfigs)) {
+        backendConfigs = infrastructureProvisionerService.extractTextVariables(allBackendConfigs, context);
+        encryptedBackendConfigs = infrastructureProvisionerService.extractEncryptedTextVariables(
+            allBackendConfigs, context.getAppId(), context.getWorkflowExecutionId());
+      }
     }
 
     List<NameValuePair> allVariables = element.getVariables();
@@ -846,6 +924,8 @@ public abstract class TerraformProvisionState extends State {
             .encryptedVariables(encryptedTextVariables)
             .backendConfigs(backendConfigs)
             .encryptedBackendConfigs(encryptedBackendConfigs)
+            .remoteBackendConfig(remoteBackendConfig)
+            .backendConfigStoreType(storeType)
             .environmentVariables(envVars)
             .encryptedEnvironmentVariables(encryptedEnvVars)
             .targets(targets)
@@ -972,10 +1052,23 @@ public abstract class TerraformProvisionState extends State {
     Map<String, String> environmentVars = null;
     Map<String, EncryptedDataDetail> encryptedEnvironmentVars = null;
     List<NameValuePair> rawVariablesList = new ArrayList<>();
+    String backendConfigStoreType = null;
+    TfVarGitSource remoteBackendGitFileConfig = null;
 
     validateTerraformVariables();
 
-    if (isNotEmpty(this.variables) || isNotEmpty(this.backendConfigs) || isNotEmpty(this.environmentVariables)) {
+    List<NameValuePair> inlineBackendConfig = this.backendConfigs;
+    if (featureFlagService.isEnabled(TERRAFORM_REMOTE_BACKEND_CONFIG, context.getAccountId())
+        && this.backendConfig != null) {
+      backendConfigStoreType = getBackendConfig().getStoreType();
+      if (LOCAL_STORE_TYPE.equals(backendConfigStoreType)) {
+        inlineBackendConfig = this.backendConfig.getInlineBackendConfig();
+      } else {
+        remoteBackendGitFileConfig = fetchRemoteConfigGitSource(context, this.backendConfig.getRemoteBackendConfig());
+      }
+    }
+
+    if (isNotEmpty(this.variables) || isNotEmpty(inlineBackendConfig) || isNotEmpty(this.environmentVariables)) {
       List<NameValuePair> validVariables = isNotEmpty(getVariables()) ? getVariables() : new ArrayList<>();
       rawVariablesList.addAll(validVariables);
 
@@ -983,10 +1076,10 @@ public abstract class TerraformProvisionState extends State {
       encryptedVariables = infrastructureProvisionerService.extractEncryptedTextVariables(
           validVariables, context.getAppId(), context.getWorkflowExecutionId());
 
-      if (this.backendConfigs != null) {
-        backendConfigs = infrastructureProvisionerService.extractTextVariables(this.backendConfigs, context);
+      if (inlineBackendConfig != null) {
+        backendConfigs = infrastructureProvisionerService.extractTextVariables(inlineBackendConfig, context);
         encryptedBackendConfigs = infrastructureProvisionerService.extractEncryptedTextVariables(
-            this.backendConfigs, context.getAppId(), context.getWorkflowExecutionId());
+            inlineBackendConfig, context.getAppId(), context.getWorkflowExecutionId());
       }
 
       if (this.environmentVariables != null) {
@@ -1052,6 +1145,25 @@ public abstract class TerraformProvisionState extends State {
             setTfVarFiles(tfVarFiles);
           }
 
+          if (featureFlagService.isEnabled(TERRAFORM_REMOTE_BACKEND_CONFIG, context.getAccountId())
+              && backendConfig != null) {
+            backendConfigStoreType = backendConfig.getStoreType();
+            String gitFileConnectorId = (String) fileMetadata.getMetadata().get(REMOTE_BE_CONFIG_GIT_CONNECTOR_ID_KEY);
+            if (isNotEmpty(gitFileConnectorId)) {
+              GitFileConfig gitFileConfig =
+                  GitFileConfig.builder()
+                      .connectorId(gitFileConnectorId)
+                      .filePath((String) fileMetadata.getMetadata().get(REMOTE_BE_CONFIG_GIT_FILE_PATH_KEY))
+                      .branch((String) fileMetadata.getMetadata().get(REMOTE_BE_CONFIG_GIT_BRANCH_KEY))
+                      .commitId((String) fileMetadata.getMetadata().get(REMOTE_BE_CONFIG_GIT_COMMIT_ID_KEY))
+                      .useBranch((boolean) fileMetadata.getMetadata().get(REMOTE_BE_CONFIG_GIT_USE_BRANCH_KEY))
+                      .repoName((String) fileMetadata.getMetadata().get(REMOTE_BE_CONFIG_GIT_REPO_NAME_KEY))
+                      .build();
+              backendConfig.setRemoteBackendConfig(gitFileConfig);
+              remoteBackendGitFileConfig = fetchRemoteConfigGitSource(context);
+            }
+          }
+
           String tfVarGitFileConnectorId = (String) fileMetadata.getMetadata().get(TF_VAR_FILES_GIT_CONNECTOR_ID_KEY);
           if (isNotEmpty(tfVarGitFileConnectorId)) {
             GitFileConfig gitFileConfig =
@@ -1105,6 +1217,8 @@ public abstract class TerraformProvisionState extends State {
             .rawVariables(rawVariablesList)
             .encryptedVariables(encryptedVariables)
             .backendConfigs(backendConfigs)
+            .remoteBackendConfig(remoteBackendGitFileConfig)
+            .backendConfigStoreType(backendConfigStoreType)
             .encryptedBackendConfigs(encryptedBackendConfigs)
             .environmentVariables(environmentVars)
             .encryptedEnvironmentVariables(encryptedEnvironmentVars)
@@ -1166,6 +1280,37 @@ public abstract class TerraformProvisionState extends State {
   }
 
   @VisibleForTesting
+  TfVarGitSource fetchRemoteConfigGitSource(ExecutionContext context, GitFileConfig config) {
+    GitConfig remoteBackendGitConfig = gitUtilsManager.getGitConfig(config.getConnectorId());
+    gitConfigHelperService.renderGitConfig(context, remoteBackendGitConfig);
+    gitFileConfigHelperService.renderGitFileConfig(context, config);
+
+    gitConfigHelperService.convertToRepoGitConfig(
+        remoteBackendGitConfig, context.renderExpression(config.getRepoName()));
+    List<EncryptedDataDetail> encryptionDetails =
+        secretManager.getEncryptionDetails(remoteBackendGitConfig, GLOBAL_APP_ID, context.getWorkflowExecutionId());
+
+    String filePath = config.getFilePath();
+
+    if (isNotEmpty(filePath)) {
+      List<String> multipleFiles = splitCommaSeparatedFilePath(filePath);
+      config.setFilePathList(multipleFiles);
+    }
+
+    return TfVarGitSource.builder()
+        .gitConfig(remoteBackendGitConfig)
+        .encryptedDataDetails(encryptionDetails)
+        .gitFileConfig(config)
+        .build();
+  }
+
+  @VisibleForTesting
+  TfVarGitSource fetchRemoteConfigGitSource(ExecutionContext context) {
+    GitFileConfig config = backendConfig.getRemoteBackendConfig();
+    return fetchRemoteConfigGitSource(context, config);
+  }
+
+  @VisibleForTesting
   TfVarGitSource fetchTfVarGitSource(ExecutionContext context) {
     GitConfig tfVarGitConfig = gitUtilsManager.getGitConfig(tfVarGitFileConfig.getConnectorId());
     gitConfigHelperService.renderGitConfig(context, tfVarGitConfig);
@@ -1210,7 +1355,14 @@ public abstract class TerraformProvisionState extends State {
   }
 
   private Map<String, String> extractBackendConfigs(ExecutionContext context, FileMetadata fileMetadata) {
-    Map<String, Object> rawBackendConfigs = (Map<String, Object>) fileMetadata.getMetadata().get(BACKEND_CONFIGS_KEY);
+    Map<String, Object> rawBackendConfigs = null;
+    if (featureFlagService.isEnabled(TERRAFORM_REMOTE_BACKEND_CONFIG, context.getAccountId())) {
+      if (LOCAL_STORE_TYPE.equals(getBackendConfig().getStoreType())) {
+        rawBackendConfigs = (Map<String, Object>) fileMetadata.getMetadata().get(BACKEND_CONFIG_KEY);
+      }
+    } else {
+      rawBackendConfigs = (Map<String, Object>) fileMetadata.getMetadata().get(BACKEND_CONFIGS_KEY);
+    }
     if (isNotEmpty(rawBackendConfigs)) {
       return infrastructureProvisionerService.extractTextVariables(
           extractVariables(rawBackendConfigs, "TEXT"), context);
@@ -1256,6 +1408,11 @@ public abstract class TerraformProvisionState extends State {
         ? ((TfVarGitSource) tfVarSource).getGitFileConfig()
         : null;
 
+    GitFileConfig remoteBackendConfig = null;
+    if (executionData.getRemoteBackendConfig() != null) {
+      remoteBackendConfig = executionData.getRemoteBackendConfig().getGitFileConfig();
+    }
+
     TerraformConfig terraformConfig =
         TerraformConfig.builder()
             .entityId(generateEntityId(context, executionData.getWorkspace(), provisioner, true))
@@ -1264,6 +1421,8 @@ public abstract class TerraformProvisionState extends State {
             .variables(executionData.getVariables())
             .delegateTag(executionData.getDelegateTag())
             .backendConfigs(executionData.getBackendConfigs())
+            .remoteBackendConfig(remoteBackendConfig)
+            .backendConfigStoreType(executionData.getBackendConfigStoreType())
             .environmentVariables(executionData.getEnvironmentVariables())
             .tfVarFiles(executionData.getTfVarFiles())
             .tfVarGitFileConfig(gitFileConfig)

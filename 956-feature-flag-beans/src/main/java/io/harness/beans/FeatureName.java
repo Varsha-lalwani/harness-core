@@ -385,6 +385,9 @@ public enum FeatureName {
   USE_K8S_API_FOR_STEADY_STATE_CHECK,
   REMOVE_APPROLE_TOKEN_RENEWAL("Removing token renewal in appRole method of auth in HashiCorp Vault", HarnessTeam.PL),
   WINRM_ASG_ROLLBACK("Used for Collect remaining instances rollback step", HarnessTeam.CDP),
+
+  SAVE_ARTIFACT_TO_DB("Saves artifact to db and proceed in artifact collection step if not found", HarnessTeam.CDC),
+  NG_INLINE_MANIFEST,
   NG_CUSTOM_REMOTE_MANIFEST,
   CI_DISABLE_RESOURCE_OPTIMIZATION(
       "Used for disabling the resource optimization, AXA had asked this flag", HarnessTeam.CI),
@@ -401,7 +404,9 @@ public enum FeatureName {
   CREATE_DEFAULT_PROJECT("Enables auto create default project after user signup", HarnessTeam.GTM),
   ANALYSE_TF_PLAN_SUMMARY(
       "Enables parsing of the Terraform plan/apply/destroy summary [add/change/destroy] and exposing them as expressions",
-      HarnessTeam.CDP);
+      HarnessTeam.CDP),
+  TERRAFORM_REMOTE_BACKEND_CONFIG("Enables storing Terraform backend configuration in a remote repo", HarnessTeam.CDP),
+  NG_OPTIMIZE_FETCH_FILES_KUSTOMIZE("Used to Optimize kustomize Manifest files fetch in NG", HarnessTeam.CDP);
 
   @Deprecated
   FeatureName() {

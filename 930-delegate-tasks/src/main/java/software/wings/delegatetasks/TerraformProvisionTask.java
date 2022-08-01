@@ -17,6 +17,7 @@ import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 import static io.harness.logging.LogLevel.WARN;
+import static io.harness.provision.TerraformConstants.REMOTE_STORE_TYPE;
 import static io.harness.provision.TerraformConstants.RESOURCE_READY_WAIT_TIME_SECONDS;
 import static io.harness.provision.TerraformConstants.TERRAFORM_APPLY_PLAN_FILE_VAR_NAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_BACKEND_CONFIGS_FILE_NAME;
@@ -26,6 +27,7 @@ import static io.harness.provision.TerraformConstants.TERRAFORM_INTERNAL_FOLDER;
 import static io.harness.provision.TerraformConstants.TERRAFORM_PLAN_FILE_OUTPUT_NAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_STATE_FILE_NAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_VARIABLES_FILE_NAME;
+import static io.harness.provision.TerraformConstants.TF_BACKEND_CONFIG_DIR;
 import static io.harness.provision.TerraformConstants.TF_PLAN_RESOURCES_ADD;
 import static io.harness.provision.TerraformConstants.TF_PLAN_RESOURCES_CHANGE;
 import static io.harness.provision.TerraformConstants.TF_PLAN_RESOURCES_DESTROY;
@@ -241,10 +243,16 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
             parameters.getAccountId(), String.valueOf(parameters.getEntityId().hashCode()));
     String tfVarDirectory = Paths.get(baseDir, TF_VAR_FILES_DIR).toString();
     String workingDir = Paths.get(baseDir, TF_SCRIPT_DIR).toString();
+    String backendConfigsDir = Paths.get(baseDir, TF_BACKEND_CONFIG_DIR).toString();
 
     if (null != parameters.getTfVarSource()
         && parameters.getTfVarSource().getTfVarSourceType() == TfVarSourceType.GIT) {
       fetchTfVarGitSource(parameters, tfVarDirectory, logCallback);
+    }
+
+    if (REMOTE_STORE_TYPE.equals(parameters.getBackendConfigStoreType()) && parameters.getRemoteBackendConfig() != null
+        && parameters.getRemoteBackendConfig().getGitFileConfig() != null) {
+      fetchBackendConfigGitFiles(parameters, backendConfigsDir, logCallback);
     }
 
     try {
@@ -307,7 +315,15 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
       String inlineVarParams = varParams;
       String uiLogs = inlineUILogBuffer.toString();
 
-      if (isNotEmpty(parameters.getBackendConfigs()) || isNotEmpty(parameters.getEncryptedBackendConfigs())) {
+      String tfBackendConfigFilePath = tfBackendConfigsFile.exists() ? tfBackendConfigsFile.getAbsolutePath() : null;
+      if (REMOTE_STORE_TYPE.equals(parameters.getBackendConfigStoreType())
+          && parameters.getRemoteBackendConfig() != null
+          && parameters.getRemoteBackendConfig().getGitFileConfig() != null) {
+        String filePath = parameters.getRemoteBackendConfig().getGitFileConfig().getFilePath();
+        if (!isEmpty(filePath)) {
+          tfBackendConfigFilePath = Paths.get(System.getProperty(USER_DIR_KEY), backendConfigsDir, filePath).toString();
+        }
+      } else if (isNotEmpty(parameters.getBackendConfigs()) || isNotEmpty(parameters.getEncryptedBackendConfigs())) {
         try (BufferedWriter writer =
                  new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tfBackendConfigsFile), "UTF-8"))) {
           if (isNotEmpty(parameters.getBackendConfigs())) {
@@ -341,7 +357,7 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
       if (parameters.isUseTfClient()) {
         try {
           log.info(format("Using TFClient for Running Terraform Commands for account %s", parameters.getAccountId()));
-          TerraformStepResponse terraformStepResponse = executeWithTerraformClient(parameters, tfBackendConfigsFile,
+          TerraformStepResponse terraformStepResponse = executeWithTerraformClient(parameters, tfBackendConfigFilePath,
               tfOutputsFile, scriptDirectory, workingDir, tfVarDirectory, inlineVarParams, uiLogs, envVars, logCallback,
               planJsonLogOutputStream, planLogOutputStream);
           code = terraformStepResponse.getCliResponse().getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS
@@ -356,8 +372,7 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
         switch (parameters.getCommand()) {
           case APPLY: {
             String command = format("terraform init %s",
-                tfBackendConfigsFile.exists() ? format("-backend-config=%s", tfBackendConfigsFile.getAbsolutePath())
-                                              : "");
+                tfBackendConfigFilePath != null ? format("-backend-config=%s", tfBackendConfigFilePath) : "");
             String commandToLog = command;
             /**
              * echo "no" is to prevent copying of state from local to remote by suppressing the
@@ -439,8 +454,7 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
           }
           case DESTROY: {
             String command = format("terraform init -input=false %s",
-                tfBackendConfigsFile.exists() ? format("-backend-config=%s", tfBackendConfigsFile.getAbsolutePath())
-                                              : "");
+                tfBackendConfigFilePath != null ? format("-backend-config=%s", tfBackendConfigFilePath) : "");
             String commandToLog = command;
             saveExecutionLog(commandToLog, CommandExecutionStatus.RUNNING, INFO, logCallback);
             code = executeShellCommand(command, scriptDirectory, parameters, envVars, activityLogOutputStream);
@@ -624,6 +638,8 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
               .sourceRepoReference(sourceRepoReference)
               .variables(parameters.getRawVariables())
               .backendConfigs(backendConfigs)
+              .backendConfigStoreType(parameters.getBackendConfigStoreType())
+              .remoteBackendConfig(parameters.getRemoteBackendConfig())
               .environmentVariables(environmentVars)
               .targets(parameters.getTargets())
               .tfVarFiles(parameters.getTfVarFiles())
@@ -774,15 +790,15 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
   }
 
   private TerraformStepResponse executeWithTerraformClient(TerraformProvisionParameters parameters,
-      File tfBackendConfigsFile, File tfOutputsFile, String scriptDirectory, String workingDir, String tfVarDirectory,
-      String varParams, String uiLogs, Map<String, String> envVars, LogCallback logCallback,
+      String tfBackendConfigsFilePath, File tfOutputsFile, String scriptDirectory, String workingDir,
+      String tfVarDirectory, String varParams, String uiLogs, Map<String, String> envVars, LogCallback logCallback,
       PlanJsonLogOutputStream planJsonLogOutputStream, PlanLogOutputStream planLogOutputStream)
       throws InterruptedException, IOException, TimeoutException, TerraformCommandExecutionException {
     TerraformStepResponse terraformStepResponse;
 
     TerraformExecuteStepRequest terraformExecuteStepRequest =
         TerraformExecuteStepRequest.builder()
-            .tfBackendConfigsFile(tfBackendConfigsFile.getAbsolutePath())
+            .tfBackendConfigsFile(tfBackendConfigsFilePath)
             .tfOutputsFile(tfOutputsFile.getAbsolutePath())
             .tfVarFilePaths(TerraformTaskUtils.fetchAndBuildAllTfVarFilesPaths(
                 System.getProperty(USER_DIR_KEY), parameters.getTfVarSource(), workingDir, tfVarDirectory))
@@ -852,6 +868,31 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
       saveExecutionLog(
           format("TfVar Git directory: [%s]", tfVarDirectory), CommandExecutionStatus.RUNNING, INFO, logCallback);
     }
+  }
+
+  private void fetchBackendConfigGitFiles(
+      TerraformProvisionParameters parameters, String configDirectory, LogCallback logCallback) {
+    TfVarGitSource remotefileConfig = parameters.getRemoteBackendConfig();
+    saveExecutionLog(
+        format("Fetching BackendConfig files from Git repository: [%s]", remotefileConfig.getGitConfig().getRepoUrl()),
+        CommandExecutionStatus.RUNNING, INFO, logCallback);
+
+    encryptionService.decrypt(remotefileConfig.getGitConfig(), remotefileConfig.getEncryptedDataDetails(), false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+        remotefileConfig.getGitConfig(), remotefileConfig.getEncryptedDataDetails());
+    gitClient.downloadFiles(remotefileConfig.getGitConfig(),
+        GitFetchFilesRequest.builder()
+            .branch(remotefileConfig.getGitFileConfig().getBranch())
+            .commitId(remotefileConfig.getGitFileConfig().getCommitId())
+            .filePaths(remotefileConfig.getGitFileConfig().getFilePathList())
+            .useBranch(remotefileConfig.getGitFileConfig().isUseBranch())
+            .gitConnectorId(remotefileConfig.getGitFileConfig().getConnectorId())
+            .recursive(true)
+            .build(),
+        configDirectory, false);
+
+    saveExecutionLog(format("Remote backends Git directory: [%s]", remotefileConfig), CommandExecutionStatus.RUNNING,
+        INFO, logCallback);
   }
 
   private boolean shouldSkipRefresh(TerraformProvisionParameters parameters) {

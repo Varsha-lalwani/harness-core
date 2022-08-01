@@ -5,17 +5,21 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.engine.pms.execution.strategy.identitynode;
+package io.harness.engine.pms.execution.strategy.identity;
 
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.logging.LoggingInitializer.initializeLogging;
 import static io.harness.pms.contracts.plan.TriggerType.MANUAL;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
+import static io.harness.rule.OwnerRule.SHALINI;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,13 +32,14 @@ import io.harness.category.element.UnitTests;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanService;
+import io.harness.engine.pms.advise.AdviseHandlerFactory;
+import io.harness.engine.pms.advise.handlers.NextStepHandler;
 import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.pms.data.PmsSweepingOutputService;
-import io.harness.engine.pms.execution.strategy.identity.IdentityNodeExecutionStrategy;
-import io.harness.engine.pms.execution.strategy.identity.IdentityNodeResumeHelper;
 import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
+import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
 import io.harness.pms.contracts.advisers.AdviserResponse;
@@ -54,6 +59,7 @@ import io.harness.waiter.WaitNotifyEngine;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,6 +83,9 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
   @Mock private PmsSweepingOutputService pmsSweepingOutputService;
   @Mock private OrchestrationEngine orchestrationEngine;
   @Mock private IdentityNodeResumeHelper identityNodeResumeHelper;
+  @Mock private PmsGraphStepDetailsService pmsGraphStepDetailsService;
+  @Mock private AdviseHandlerFactory adviseHandlerFactory;
+  @Mock private NextStepHandler nextStepHandler;
 
   @Inject @InjectMocks @Spy IdentityNodeExecutionStrategy executionStrategy;
 
@@ -333,5 +342,78 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
     return ImmutableMap.of("accountId", "kmpySmUISimoRrJL6NL73w", "appId", "XEsfW6D_RJm1IaGpDidD3g", "userId",
         triggeredBy.getUuid(), "userName", triggeredBy.getIdentifier(), "userEmail",
         triggeredBy.getExtraInfoOrThrow("email"));
+  }
+
+  @Test
+  @Owner(developers = SHALINI)
+  @Category(UnitTests.class)
+  public void testCreateNodeExecution() {
+    long startTs = System.currentTimeMillis();
+    String uuid = generateUuid();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(Level.newBuilder().setStartTs(startTs).setRuntimeId(uuid).build())
+                            .build();
+    IdentityPlanNode node = IdentityPlanNode.builder().originalNodeExecutionId("OID").build();
+    NodeExecution nodeExecution = NodeExecution.builder()
+                                      .uuid(uuid)
+                                      .planNode(node)
+                                      .ambiance(ambiance)
+                                      .levelCount(1)
+                                      .status(Status.QUEUED)
+                                      .unitProgresses(new ArrayList<>())
+                                      .startTs(startTs)
+                                      .originalNodeExecutionId("OID")
+                                      .notifyId("NID")
+                                      .parentId("PaID")
+                                      .previousId("PrID")
+                                      .build();
+    when(nodeExecutionService.get(anyString())).thenReturn(NodeExecution.builder().uuid(generateUuid()).build());
+    when(nodeExecutionService.save(any(NodeExecution.class))).thenReturn(nodeExecution);
+    doNothing().when(pmsGraphStepDetailsService).copyStepDetailsForRetry(anyString(), anyString(), anyString());
+    NodeExecution nodeExecution1 = executionStrategy.createNodeExecution(ambiance, node, null, "NID", "PaID", "PrID");
+    assertEquals(nodeExecution1, nodeExecution);
+    verify(pmsGraphStepDetailsService, times(1)).copyStepDetailsForRetry(anyString(), anyString(), anyString());
+    ArgumentCaptor<NodeExecution> mCaptor = ArgumentCaptor.forClass(NodeExecution.class);
+    verify(nodeExecutionService).save(mCaptor.capture());
+    assertThat(mCaptor.getValue().toString()).isEqualTo(nodeExecution.toString());
+  }
+
+  @Test
+  @Owner(developers = SHALINI)
+  @Category(UnitTests.class)
+  public void testProcessAdviserResponseWithNullAdviserResponse() {
+    Ambiance ambiance =
+        Ambiance.newBuilder().addLevels(Level.newBuilder().setRuntimeId(generateUuid()).build()).build();
+    doNothing().when(executionStrategy).endNodeExecution(ambiance);
+    executionStrategy.processAdviserResponse(ambiance, null);
+    verify(executionStrategy, times(1)).endNodeExecution(ambiance);
+  }
+
+  @Test
+  @Owner(developers = SHALINI)
+  @Category(UnitTests.class)
+  public void testProcessAdviserResponse() {
+    String uuid = generateUuid();
+    Ambiance ambiance = Ambiance.newBuilder().addLevels(Level.newBuilder().setRuntimeId(uuid).build()).build();
+    AdviserResponse adviserResponse = AdviserResponse.newBuilder().build();
+    doNothing().when(executionStrategy).endNodeExecution(ambiance);
+    executionStrategy.processAdviserResponse(ambiance, adviserResponse);
+    verify(executionStrategy, times(1)).endNodeExecution(ambiance);
+    adviserResponse = AdviserResponse.newBuilder().setType(AdviseType.NEXT_STEP).build();
+    doReturn(NodeExecution.builder().build()).when(nodeExecutionService).get(uuid);
+    doReturn(nextStepHandler).when(adviseHandlerFactory).obtainHandler(AdviseType.NEXT_STEP);
+    doNothing().when(nextStepHandler).handleAdvise(any(), any());
+    executionStrategy.processAdviserResponse(ambiance, adviserResponse);
+    verify(nextStepHandler, times(1)).handleAdvise(any(), any());
+  }
+
+  @Test
+  @Owner(developers = SHALINI)
+  @Category(UnitTests.class)
+  public void testHandleLeafNodes() {
+    doNothing().when(executionStrategy).processAdviserResponse(any(), any());
+    executionStrategy.handleLeafNodes(Ambiance.newBuilder().build(), NodeExecution.builder().build(), Status.ABORTED);
+    verify(executionStrategy, times(1)).processAdviserResponse(any(), any());
   }
 }
