@@ -12,7 +12,6 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import static java.lang.Long.parseLong;
 import static javax.ws.rs.core.HttpHeaders.IF_MATCH;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.isNumeric;
 
 import io.harness.NGCommonEntityConstants;
@@ -705,10 +704,10 @@ public class NGTemplateResource {
     if (templateEntity.getTemplateEntityType().getOwnerTeam().equals(PIPELINE)) {
       VariablesServiceRequestV2.Builder requestBuilder = VariablesServiceRequestV2.newBuilder();
       requestBuilder.setAccountId(accountId);
-      if (isNotEmpty(orgId)) {
+      if (EmptyPredicate.isNotEmpty(orgId)) {
         requestBuilder.setOrgId(orgId);
       }
-      if (isNotEmpty(projectId)) {
+      if (EmptyPredicate.isNotEmpty(projectId)) {
         requestBuilder.setProjectId(projectId);
       }
       requestBuilder.setYaml(entityYaml);
