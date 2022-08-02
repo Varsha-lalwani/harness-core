@@ -8,5 +8,7 @@
 package io.harness.delegate.task.ecs;
 
 public enum EcsCommandTypeNG {
-  ECS_ROLLING_DEPLOY
+  ECS_ROLLING_DEPLOY,
+  ECS_PREPARE_ROLLBACK_DATA,
+  ECS_ROLLING_ROLLBACK
 }

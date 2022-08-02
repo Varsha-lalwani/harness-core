@@ -6,7 +6,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.pipeline.CDStepInfo;
-import io.harness.cdng.visitor.helpers.cdstepinfo.EcsRollingDeployStepInfoVisitorHelper;
+import io.harness.cdng.visitor.helpers.cdstepinfo.EcsRollingRollbackStepInfoVisitorHelper;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
@@ -30,11 +30,11 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@SimpleVisitorHelper(helperClass = EcsRollingDeployStepInfoVisitorHelper.class)
-@JsonTypeName(StepSpecTypeConstants.ECS_ROLLING_DEPLOY)
-@TypeAlias("ecsRollingDeployStepInfo")
-@RecasterAlias("io.harness.cdng.ecs.EcsRollingDeployStepInfo")
-public class EcsRollingDeployStepInfo extends EcsRollingDeployBaseStepInfo implements CDStepInfo, Visitable {
+@SimpleVisitorHelper(helperClass = EcsRollingRollbackStepInfoVisitorHelper.class)
+@JsonTypeName(StepSpecTypeConstants.ECS_ROLLING_ROLLBACK)
+@TypeAlias("ecsRollingRollbackStepInfo")
+@RecasterAlias("io.harness.cdng.ecs.EcsRollingRollbackStepInfo")
+public class EcsRollingRollbackStepInfo extends EcsRollingRollbackBaseStepInfo implements CDStepInfo, Visitable {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
@@ -43,23 +43,23 @@ public class EcsRollingDeployStepInfo extends EcsRollingDeployBaseStepInfo imple
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
   @Builder(builderMethodName = "infoBuilder")
-  public EcsRollingDeployStepInfo(
-          ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    super(delegateSelectors);
+  public EcsRollingRollbackStepInfo(
+          ParameterField<List<TaskSelectorYaml>> delegateSelectors, String ecsRollingRollbackFnq) {
+    super(delegateSelectors, ecsRollingRollbackFnq);
   }
   @Override
   public StepType getStepType() {
-    return EcsRollingDeployStep.STEP_TYPE;
+    return EcsRollingRollbackStep.STEP_TYPE;
   }
 
   @Override
   public String getFacilitatorType() {
-    return OrchestrationFacilitatorType.TASK_CHAIN;
+    return OrchestrationFacilitatorType.TASK;
   }
 
   @Override
   public SpecParameters getSpecParameters() {
-    return EcsRollingDeployStepParameters.infoBuilder()
+    return EcsRollingRollbackStepParameters.infoBuilder()
             .delegateSelectors(this.getDelegateSelectors())
             .build();
   }

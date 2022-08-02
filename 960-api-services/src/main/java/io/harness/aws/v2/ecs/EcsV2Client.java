@@ -59,7 +59,7 @@ public interface EcsV2Client {
     DescribeScalingPoliciesResponse listScalingPolicies(AwsInternalConfig awsConfig, DescribeScalingPoliciesRequest describeScalingPoliciesRequest,
                                                         String region);
 
-    Optional<Service> getService(AwsInternalConfig awsConfig, String clusterName, String serviceName, String region);
+    DescribeServicesResponse describeService(AwsInternalConfig awsConfig, String clusterName, String serviceName, String region);
 
     TaskDefinition getTaskDefinitionForService(AwsInternalConfig awsConfig, Service service, String region);
 

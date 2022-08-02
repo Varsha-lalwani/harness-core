@@ -21,7 +21,6 @@ import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.ecs.request.EcsGitFetchRequest;
 import io.harness.delegate.task.ecs.response.EcsGitFetchResponse;
-import io.harness.delegate.task.git.GitFetchResponse;
 import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.serverless.ServerlessGitFetchTaskHelper;
 import io.harness.ecs.EcsCommandUnitConstants;
@@ -80,7 +79,7 @@ public class EcsGitFetchTask extends AbstractDelegateRunnableTask {
       log.info("Running Ecs Git Fetch Task for activityId {}", ecsGitFetchRequest.getActivityId());
 
       LogCallback executionLogCallback =
-              new NGDelegateLogCallback(getLogStreamingTaskClient(), EcsCommandUnitConstants.fetchFiles.toString(),
+              new NGDelegateLogCallback(getLogStreamingTaskClient(), EcsCommandUnitConstants.fetchManifests.toString(),
                       ecsGitFetchRequest.isShouldOpenLogStream(), commandUnitsProgress);
 
       // Fetch Ecs Task Definition

@@ -107,4 +107,5 @@ public interface EntityTypeConstants {
   String QUEUE = "Queue";
   String JENKINS_BUILD = "JenkinsBuild";
   String ECS_ROLLING_DEPLOY = "EcsRollingDeploy";
+  String ECS_ROLLING_ROLLBACK = "EcsRollingRollback";
 }

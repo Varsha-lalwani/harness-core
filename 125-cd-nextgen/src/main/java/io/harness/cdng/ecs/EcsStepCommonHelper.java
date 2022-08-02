@@ -4,8 +4,11 @@ import com.google.inject.Inject;
 import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.ecs.beans.EcsExecutionPassThroughData;
 import io.harness.cdng.ecs.beans.EcsGitFetchFailurePassThroughData;
+import io.harness.cdng.ecs.beans.EcsGitFetchPassThroughData;
+import io.harness.cdng.ecs.beans.EcsRollingRollbackDataOutcome;
 import io.harness.cdng.ecs.beans.EcsStepExceptionPassThroughData;
 import io.harness.cdng.ecs.beans.EcsStepExecutorParams;
+import io.harness.cdng.ecs.beans.EcsPrepareRollbackDataPassThroughData;
 import io.harness.cdng.expressions.CDExpressionResolveFunctor;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.manifest.ManifestStoreType;
@@ -14,13 +17,11 @@ import io.harness.cdng.manifest.steps.ManifestsOutcome;
 import io.harness.cdng.manifest.yaml.GitStoreConfig;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
-import io.harness.cdng.serverless.ServerlessStepCommonHelper;
-import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
-import io.harness.cdng.serverless.beans.ServerlessGitFetchFailurePassThroughData;
 import io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.data.structure.HarnessStringUtils;
 import io.harness.delegate.beans.TaskData;
+import io.harness.delegate.beans.ecs.EcsPrepareRollbackDataResult;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.ecs.EcsGitFetchFileConfig;
@@ -29,13 +30,14 @@ import io.harness.delegate.task.ecs.request.EcsCommandRequest;
 import io.harness.delegate.task.ecs.request.EcsGitFetchRequest;
 import io.harness.delegate.task.ecs.response.EcsCommandResponse;
 import io.harness.delegate.task.ecs.response.EcsGitFetchResponse;
+import io.harness.delegate.task.ecs.response.EcsPrepareRollbackDataResponse;
 import io.harness.delegate.task.git.TaskStatus;
-import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.ExpressionEvaluatorUtils;
 import io.harness.git.model.FetchFilesResult;
+import io.harness.logging.CommandExecutionStatus;
 import io.harness.ng.core.NGAccess;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
@@ -50,7 +52,9 @@ import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.expression.EngineExpressionService;
 import io.harness.pms.sdk.core.data.OptionalOutcome;
+import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
 import io.harness.pms.sdk.core.resolver.RefObjectUtils;
+import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
@@ -58,6 +62,7 @@ import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepHelper;
 import io.harness.supplier.ThrowingSupplier;
 import io.harness.tasks.ResponseData;
+import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.validator.constraints.NotEmpty;
 import software.wings.beans.TaskType;
 
@@ -79,17 +84,28 @@ public class EcsStepCommonHelper extends EcsStepUtils {
   @Inject private EcsEntityHelper ecsEntityHelper;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private StepHelper stepHelper;
+  @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
+
 
   public TaskChainResponse startChainLink(
           Ambiance ambiance, StepElementParameters stepElementParameters, EcsStepHelper ecsStepHelper) {
+    // Get ManifestsOutcome
     ManifestsOutcome manifestsOutcome = resolveEcsManifestsOutcome(ambiance);
+
+    // Get InfrastructureOutcome
     InfrastructureOutcome infrastructureOutcome = (InfrastructureOutcome) outcomeService.resolve(
             ambiance, RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.INFRASTRUCTURE_OUTCOME));
+
+    // Update expressions in ManifestsOutcome
     ExpressionEvaluatorUtils.updateExpressions(
             manifestsOutcome, new CDExpressionResolveFunctor(engineExpressionService, ambiance));
+
+    // Validate ManifestsOutcome
     validateManifestsOutcome(ambiance, manifestsOutcome);
+
     List<ManifestOutcome> ecsManifestOutcome =
             getEcsManifestOutcome(manifestsOutcome.values(), ecsStepHelper);
+
     return prepareEcsManifestGitFetchTask(
             ambiance, stepElementParameters, infrastructureOutcome, ecsManifestOutcome, ecsStepHelper);
   }
@@ -119,25 +135,47 @@ public class EcsStepCommonHelper extends EcsStepUtils {
                                                            StepElementParameters stepElementParameters, InfrastructureOutcome infrastructureOutcome,
                                                            List<ManifestOutcome> ecsManifestOutcomes, EcsStepHelper ecsStepHelper) {
 
+    // Get EcsGitFetchFileConfig for task definition
     ManifestOutcome ecsTaskDefinitionManifestOutcome =   ecsStepHelper.getEcsTaskDefinitionManifestOutcome(ecsManifestOutcomes);
+
     EcsGitFetchFileConfig ecsTaskDefinitionGitFetchFileConfig = getEcsGitFetchFilesConfigFromManifestOutcome(ecsTaskDefinitionManifestOutcome, ambiance, ecsStepHelper);
 
+    // Get EcsGitFetchFileConfig for service definition
     ManifestOutcome ecsServiceDefinitionManifestOutcome =   ecsStepHelper.getEcsServiceDefinitionManifestOutcome(ecsManifestOutcomes);
+
     EcsGitFetchFileConfig ecsServiceDefinitionGitFetchFileConfig = getEcsGitFetchFilesConfigFromManifestOutcome(ecsServiceDefinitionManifestOutcome, ambiance, ecsStepHelper);
 
-    List<EcsGitFetchFileConfig> ecsScalableTargetGitFetchFileConfigs = ecsStepHelper.getManifestOutcomesByType(ecsManifestOutcomes, ManifestType.EcsScalableTargetDefinition).stream()
-            .map(manifestOutcome -> getEcsGitFetchFilesConfigFromManifestOutcome(manifestOutcome, ambiance, ecsStepHelper)).collect(Collectors.toList());
+    // Get EcsGitFetchFileConfig list for scalable targets if present
+    List<EcsGitFetchFileConfig> ecsScalableTargetGitFetchFileConfigs = null;
 
-    List<EcsGitFetchFileConfig> ecsScalingPolicyGitFetchFileConfigs = ecsStepHelper.getManifestOutcomesByType(ecsManifestOutcomes, ManifestType.EcsScalingPolicyDefinition).stream()
-            .map(manifestOutcome -> getEcsGitFetchFilesConfigFromManifestOutcome(manifestOutcome, ambiance, ecsStepHelper)).collect(Collectors.toList());
+    List<ManifestOutcome> ecsScalableTargetManifestOutcomes = ecsStepHelper.getManifestOutcomesByType(ecsManifestOutcomes, ManifestType.EcsScalableTargetDefinition);
 
-    EcsStepPassThroughData ecsStepPassThroughData = EcsStepPassThroughData.builder()
-            .ecsManifestOutcomes(ecsManifestOutcomes)
+    if (CollectionUtils.isNotEmpty(ecsScalableTargetManifestOutcomes)) {
+
+      ecsScalableTargetGitFetchFileConfigs = ecsScalableTargetManifestOutcomes.stream()
+              .map(manifestOutcome -> getEcsGitFetchFilesConfigFromManifestOutcome(manifestOutcome, ambiance, ecsStepHelper)).collect(Collectors.toList());
+
+
+    }
+
+    // Get EcsGitFetchFileConfig list for scaling policies if present
+    List<EcsGitFetchFileConfig> ecsScalingPolicyGitFetchFileConfigs = null;
+
+    List<ManifestOutcome> ecsScalingPolicyManifestOutcomes = ecsStepHelper.getManifestOutcomesByType(ecsManifestOutcomes, ManifestType.EcsScalingPolicyDefinition);
+
+    if (CollectionUtils.isNotEmpty(ecsScalingPolicyManifestOutcomes)) {
+
+      ecsScalingPolicyGitFetchFileConfigs = ecsScalingPolicyManifestOutcomes.stream()
+              .map(manifestOutcome -> getEcsGitFetchFilesConfigFromManifestOutcome(manifestOutcome, ambiance, ecsStepHelper)).collect(Collectors.toList());
+
+    }
+
+    EcsGitFetchPassThroughData ecsGitFetchPassThroughData = EcsGitFetchPassThroughData.builder()
             .infrastructureOutcome(infrastructureOutcome)
             .build();
 
     return getGitFetchFileTaskResponse(
-            ambiance, true, stepElementParameters, ecsStepPassThroughData, ecsTaskDefinitionGitFetchFileConfig,
+            ambiance, true, stepElementParameters, ecsGitFetchPassThroughData, ecsTaskDefinitionGitFetchFileConfig,
             ecsServiceDefinitionGitFetchFileConfig, ecsScalableTargetGitFetchFileConfigs, ecsScalingPolicyGitFetchFileConfigs);
   }
 
@@ -163,7 +201,7 @@ public class EcsStepCommonHelper extends EcsStepUtils {
   }
 
   private TaskChainResponse getGitFetchFileTaskResponse(Ambiance ambiance, boolean shouldOpenLogStream,
-                                                        StepElementParameters stepElementParameters, EcsStepPassThroughData ecsStepPassThroughData,
+                                                        StepElementParameters stepElementParameters, EcsGitFetchPassThroughData ecsGitFetchPassThroughData,
                                                         EcsGitFetchFileConfig ecsTaskDefinitionGitFetchFileConfig,
                                                         EcsGitFetchFileConfig ecsServiceDefinitionGitFetchFileConfig,
                                                         List<EcsGitFetchFileConfig> ecsScalableTargetGitFetchFileConfigs,
@@ -200,7 +238,7 @@ public class EcsStepCommonHelper extends EcsStepUtils {
     return TaskChainResponse.builder()
             .chainEnd(false)
             .taskRequest(taskRequest)
-            .passThroughData(ecsStepPassThroughData)
+            .passThroughData(ecsGitFetchPassThroughData)
             .build();
   }
 
@@ -209,16 +247,28 @@ public class EcsStepCommonHelper extends EcsStepUtils {
                                            StepElementParameters stepElementParameters, PassThroughData passThroughData,
                                            ThrowingSupplier<ResponseData> responseDataSupplier, EcsStepHelper ecsStepHelper) throws Exception {
     ResponseData responseData = responseDataSupplier.get();
-    EcsStepPassThroughData ecsStepPassThroughData = (EcsStepPassThroughData) passThroughData;
     UnitProgressData unitProgressData = null;
+    TaskChainResponse taskChainResponse = null;
     try {
-      if (responseData instanceof EcsGitFetchResponse) {
-        EcsGitFetchResponse serverlessGitFetchResponse = (EcsGitFetchResponse) responseData;
-        return handleEcsGitFetchFilesResponse(serverlessGitFetchResponse, ecsStepExecutor, ambiance,
-                stepElementParameters, ecsStepPassThroughData, ecsStepHelper);
+      if (responseData instanceof EcsGitFetchResponse) { // if EcsGitFetchResponse is received
+
+        EcsGitFetchResponse ecsGitFetchResponse = (EcsGitFetchResponse) responseData;
+        EcsGitFetchPassThroughData ecsGitFetchPassThroughData = (EcsGitFetchPassThroughData) passThroughData;
+
+        taskChainResponse = handleEcsGitFetchFilesResponse(ecsGitFetchResponse, ecsStepExecutor, ambiance,
+                stepElementParameters, ecsGitFetchPassThroughData, ecsStepHelper);
+
+      } else if (responseData instanceof EcsPrepareRollbackDataResponse) { // if EcsPrepareRollbackDataResponse is received
+
+        EcsPrepareRollbackDataResponse ecsPrepareRollbackDataResponse =
+                (EcsPrepareRollbackDataResponse) responseData;
+        EcsPrepareRollbackDataPassThroughData ecsStepPassThroughData = (EcsPrepareRollbackDataPassThroughData) passThroughData;
+
+        taskChainResponse = handleEcsPrepareRollbackDataResponse(ecsPrepareRollbackDataResponse,
+                ecsStepExecutor, ambiance, stepElementParameters, ecsStepPassThroughData);
       }
     } catch (Exception e) {
-      return TaskChainResponse.builder()
+      taskChainResponse = TaskChainResponse.builder()
               .chainEnd(true)
               .passThroughData(ServerlessStepExceptionPassThroughData.builder()
                       .errorMessage(ExceptionUtils.getMessage(e))
@@ -226,7 +276,8 @@ public class EcsStepCommonHelper extends EcsStepUtils {
                       .build())
               .build();
     }
-    return null;
+
+    return taskChainResponse;
   }
 
   public EcsInfraConfig getEcsInfraConfig(InfrastructureOutcome infrastructure, Ambiance ambiance) {
@@ -236,7 +287,8 @@ public class EcsStepCommonHelper extends EcsStepUtils {
 
   private TaskChainResponse handleEcsGitFetchFilesResponse(EcsGitFetchResponse ecsGitFetchResponse,
                                                                   EcsStepExecutor ecsStepExecutor, Ambiance ambiance, StepElementParameters stepElementParameters,
-                                                                  EcsStepPassThroughData ecsStepPassThroughData, EcsStepHelper ecsStepHelper) {
+                                                                  EcsGitFetchPassThroughData ecsGitFetchPassThroughData,
+                                                                  EcsStepHelper ecsStepHelper) {
     if (ecsGitFetchResponse.getTaskStatus() != TaskStatus.SUCCESS) {
       EcsGitFetchFailurePassThroughData ecsGitFetchFailurePassThroughData =
               EcsGitFetchFailurePassThroughData.builder()
@@ -249,28 +301,116 @@ public class EcsStepCommonHelper extends EcsStepUtils {
               .build();
     }
 
+    // Get ecsTaskDefinitionFileContent from ecsGitFetchResponse
+    FetchFilesResult ecsTaskDefinitionFetchFileResult = ecsGitFetchResponse.getEcsTaskDefinitionFetchFilesResult();
+    String ecsTaskDefinitionFileContent = ecsTaskDefinitionFetchFileResult.getFiles().get(0).getFileContent();
+    ecsTaskDefinitionFileContent = engineExpressionService.renderExpression(ambiance, ecsTaskDefinitionFileContent);
+
+
+    // Get ecsServiceDefinitionFetchFileResult from ecsGitFetchResponse
+    FetchFilesResult ecsServiceDefinitionFetchFileResult = ecsGitFetchResponse.getEcsServiceDefinitionFetchFilesResult();
+    String ecsServiceDefinitionFileContent = ecsServiceDefinitionFetchFileResult.getFiles().get(0).getFileContent();
+    ecsServiceDefinitionFileContent = engineExpressionService.renderExpression(ambiance, ecsServiceDefinitionFileContent);
+
+    // Get ecsScalableTargetManifestContentList from ecsGitFetchResponse if present
+    List<String> ecsScalableTargetManifestContentList = null;
+    List<FetchFilesResult> ecsScalableTargetFetchFilesResults = ecsGitFetchResponse.getEcsScalableTargetFetchFilesResults();
+
+    if (CollectionUtils.isNotEmpty(ecsScalableTargetFetchFilesResults)) {
+
+      ecsScalableTargetManifestContentList = ecsScalableTargetFetchFilesResults.stream()
+              .map(ecsScalableTargetFetchFilesResult -> ecsScalableTargetFetchFilesResult.getFiles().get(0).getFileContent())
+              .collect(Collectors.toList());
+
+      ecsScalableTargetManifestContentList.stream().map(ecsScalableTargetManifestContent ->
+              engineExpressionService.renderExpression(ambiance, ecsScalableTargetManifestContent)).collect(Collectors.toList());
+
+    }
+
+    // Get ecsScalingPolicyManifestContentList from ecsGitFetchResponse if present
+    List<String> ecsScalingPolicyManifestContentList = null;
+    List<FetchFilesResult> ecsScalingPolicyFetchFilesResults = ecsGitFetchResponse.getEcsScalingPolicyFetchFilesResults();
+
+    if (CollectionUtils.isNotEmpty(ecsScalingPolicyFetchFilesResults)) {
+
+      ecsScalingPolicyManifestContentList = ecsScalingPolicyFetchFilesResults.stream()
+              .map(ecsScalingPolicyFetchFilesResult -> ecsScalingPolicyFetchFilesResult.getFiles().get(0).getFileContent())
+              .collect(Collectors.toList());
+
+      ecsScalingPolicyManifestContentList.stream().map(ecsScalingPolicyManifestContent ->
+              engineExpressionService.renderExpression(ambiance, ecsScalingPolicyManifestContent)).collect(Collectors.toList());
+
+    }
+
+    EcsPrepareRollbackDataPassThroughData ecsPrepareRollbackDataPassThroughData = EcsPrepareRollbackDataPassThroughData.builder()
+        .infrastructureOutcome(ecsGitFetchPassThroughData.getInfrastructureOutcome())
+        .ecsTaskDefinitionManifestContent(ecsTaskDefinitionFileContent)
+        .ecsServiceDefinitionManifestContent(ecsServiceDefinitionFileContent)
+        .ecsScalableTargetManifestContentList(ecsScalableTargetManifestContentList)
+        .ecsScalingPolicyManifestContentList(ecsScalingPolicyManifestContentList)
+        .build();
+
+
+    return ecsStepExecutor.executeEcsPrepareRollbackTask(
+            ambiance, stepElementParameters,
+            ecsPrepareRollbackDataPassThroughData, ecsGitFetchResponse.getUnitProgressData());
+
+  }
+
+  private TaskChainResponse handleEcsPrepareRollbackDataResponse(
+          EcsPrepareRollbackDataResponse ecsPrepareRollbackDataResponse,
+          EcsStepExecutor ecsStepExecutor, Ambiance ambiance, StepElementParameters stepElementParameters,
+          EcsPrepareRollbackDataPassThroughData ecsStepPassThroughData) {
+    if (ecsPrepareRollbackDataResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
+      EcsStepExceptionPassThroughData ecsStepExceptionPassThroughData =
+              EcsStepExceptionPassThroughData.builder()
+                      .errorMessage(ecsPrepareRollbackDataResponse.getErrorMessage())
+                      .unitProgressData(ecsPrepareRollbackDataResponse.getUnitProgressData())
+                      .build();
+      return TaskChainResponse.builder().passThroughData(ecsStepExceptionPassThroughData).chainEnd(true).build();
+    }
+
+    if (ecsStepExecutor instanceof EcsRollingDeployStep) {
+      EcsPrepareRollbackDataResult ecsPrepareRollbackDataResult =
+              ecsPrepareRollbackDataResponse.getEcsPrepareRollbackDataResult();
+      EcsRollingRollbackDataOutcome.EcsRollingRollbackDataOutcomeBuilder ecsRollbackDataOutcomeBuilder =
+              EcsRollingRollbackDataOutcome.builder();
+      ecsRollbackDataOutcomeBuilder.createServiceRequestBuilderString(
+              ecsPrepareRollbackDataResult.getCreateServiceRequestBuilderString());
+      ecsRollbackDataOutcomeBuilder.isFirstDeployment(
+              ecsPrepareRollbackDataResult.isFirstDeployment());
+      ecsRollbackDataOutcomeBuilder.registerScalableTargetRequestBuilderStrings(
+              ecsPrepareRollbackDataResult.getRegisterScalableTargetRequestBuilderStrings());
+      ecsRollbackDataOutcomeBuilder.registerScalingPolicyRequestBuilderStrings(
+              ecsPrepareRollbackDataResult.getRegisterScalingPolicyRequestBuilderStrings());
+
+      executionSweepingOutputService.consume(ambiance,
+              OutcomeExpressionConstants.ECS_ROLLING_ROLLBACK_OUTCOME,
+              ecsRollbackDataOutcomeBuilder.build(), StepOutcomeGroup.STEP.name());
+    }
+
     EcsExecutionPassThroughData ecsExecutionPassThroughData = EcsExecutionPassThroughData.builder()
             .infrastructure(ecsStepPassThroughData.getInfrastructureOutcome())
-            .lastActiveUnitProgressData(ecsGitFetchResponse.getUnitProgressData())
+            .lastActiveUnitProgressData(ecsPrepareRollbackDataResponse.getUnitProgressData())
             .build();
 
-    FetchFilesResult ecsTaskDefinitionFetchFileResult = ecsGitFetchResponse.getEcsTaskDefinitionFetchFilesResult();
-    FetchFilesResult ecsServiceDefinitionFetchFileResult = ecsGitFetchResponse.getEcsServiceDefinitionFetchFilesResult();
+    String ecsTaskDefinitionFileContent = ecsStepPassThroughData.getEcsTaskDefinitionManifestContent();
 
+    String ecsServiceDefinitionFileContent = ecsStepPassThroughData.getEcsServiceDefinitionManifestContent();
 
-    String ecsTaskDefinitionFileContent = ecsTaskDefinitionFetchFileResult.getFiles().get(0).getFileContent();
-    String ecsServiceDefinitionFileContent = ecsServiceDefinitionFetchFileResult.getFiles().get(0).getFileContent();
+    List<String> ecsScalableTargetManifestContentList = ecsStepPassThroughData.getEcsScalableTargetManifestContentList();
 
-    ecsTaskDefinitionFileContent = engineExpressionService.renderExpression(ambiance, ecsTaskDefinitionFileContent);
-    ecsServiceDefinitionFileContent = engineExpressionService.renderExpression(ambiance, ecsServiceDefinitionFileContent);
+    List<String> ecsScalingPolicyManifestContentList = ecsStepPassThroughData.getEcsScalingPolicyManifestContentList();
 
     EcsStepExecutorParams ecsStepExecutorParams = EcsStepExecutorParams.builder()
             .shouldOpenFetchFilesLogStream(false)
             .ecsTaskDefinitionManifestContent(ecsTaskDefinitionFileContent)
             .ecsServiceDefinitionManifestContent(ecsServiceDefinitionFileContent)
+            .ecsScalableTargetManifestContentList(ecsScalableTargetManifestContentList)
+            .ecsScalingPolicyManifestContentList(ecsScalingPolicyManifestContentList)
             .build();
 
-    return ecsStepExecutor.executeEcsTask(ambiance, stepElementParameters, ecsExecutionPassThroughData, ecsGitFetchResponse.getUnitProgressData(), ecsStepExecutorParams);
+    return ecsStepExecutor.executeEcsTask(ambiance, stepElementParameters, ecsExecutionPassThroughData, ecsPrepareRollbackDataResponse.getUnitProgressData(), ecsStepExecutorParams);
   }
 
   public TaskChainResponse queueEcsTask(StepElementParameters stepElementParameters,

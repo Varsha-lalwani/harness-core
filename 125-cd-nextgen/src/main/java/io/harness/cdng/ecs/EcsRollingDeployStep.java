@@ -8,21 +8,16 @@ import io.harness.cdng.ecs.beans.EcsExecutionPassThroughData;
 import io.harness.cdng.ecs.beans.EcsGitFetchFailurePassThroughData;
 import io.harness.cdng.ecs.beans.EcsStepExceptionPassThroughData;
 import io.harness.cdng.ecs.beans.EcsStepExecutorParams;
+import io.harness.cdng.ecs.beans.EcsPrepareRollbackDataPassThroughData;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
-import io.harness.cdng.serverless.ServerlessStepCommonHelper;
-import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
-import io.harness.cdng.serverless.beans.ServerlessGitFetchFailurePassThroughData;
-import io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
-import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.delegate.beans.logstreaming.UnitProgressDataMapper;
 import io.harness.delegate.exception.EcsNGException;
-import io.harness.delegate.exception.ServerlessNGException;
 import io.harness.delegate.task.ecs.EcsCommandTypeNG;
+import io.harness.delegate.task.ecs.request.EcsPrepareRollbackDataRequest;
 import io.harness.delegate.task.ecs.request.EcsRollingDeployRequest;
 import io.harness.delegate.task.ecs.response.EcsRollingDeployResponse;
-import io.harness.delegate.task.serverless.response.ServerlessDeployResponse;
 import io.harness.exception.ExceptionUtils;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.CommandExecutionStatus;
@@ -41,8 +36,6 @@ import io.harness.supplier.ThrowingSupplier;
 import io.harness.tasks.ResponseData;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
 public class EcsRollingDeployStep extends TaskChainExecutableWithRollbackAndRbac implements EcsStepExecutor {
@@ -53,6 +46,8 @@ public class EcsRollingDeployStep extends TaskChainExecutableWithRollbackAndRbac
           .build();
 
   private final String ECS_ROLLING_DEPLOY_COMMAND_NAME = "EcsRollingDeploy";
+  private final String ECS_PREPARE_ROLLBACK_COMMAND_NAME = "EcsPrepareRollback";
+
 
   @Inject
   private EcsStepCommonHelper ecsStepCommonHelper;
@@ -121,7 +116,7 @@ public class EcsRollingDeployStep extends TaskChainExecutableWithRollbackAndRbac
 
   @Override
   public Class<StepElementParameters> getStepParametersClass() {
-    return null;
+    return StepElementParameters.class;
   }
 
   @Override
@@ -144,5 +139,23 @@ public class EcsRollingDeployStep extends TaskChainExecutableWithRollbackAndRbac
 
     return ecsStepCommonHelper.queueEcsTask(
             stepElementParameters, ecsRollingDeployRequest, ambiance, executionPassThroughData, true);
+  }
+
+  @Override
+  public TaskChainResponse executeEcsPrepareRollbackTask(Ambiance ambiance, StepElementParameters stepElementParameters, EcsPrepareRollbackDataPassThroughData ecsPrepareRollbackDataPassThroughData, UnitProgressData unitProgressData) {
+    InfrastructureOutcome infrastructureOutcome = ecsPrepareRollbackDataPassThroughData.getInfrastructureOutcome();
+    final String accountId = AmbianceUtils.getAccountId(ambiance);
+    EcsPrepareRollbackDataRequest ecsPrepareRollbackDataRequest =
+            EcsPrepareRollbackDataRequest.builder()
+                    .commandName(ECS_PREPARE_ROLLBACK_COMMAND_NAME)
+                    .accountId(accountId)
+                    .ecsCommandType(EcsCommandTypeNG.ECS_PREPARE_ROLLBACK_DATA)
+                    .ecsInfraConfig(ecsStepCommonHelper.getEcsInfraConfig(infrastructureOutcome, ambiance))
+                    .ecsServiceDefinitionManifestContent(ecsPrepareRollbackDataPassThroughData.getEcsServiceDefinitionManifestContent())
+                    .commandUnitsProgress(UnitProgressDataMapper.toCommandUnitsProgress(unitProgressData))
+                    .timeoutIntervalInMin(CDStepHelper.getTimeoutInMin(stepElementParameters))
+                    .build();
+    return ecsStepCommonHelper.queueEcsTask(
+            stepElementParameters, ecsPrepareRollbackDataRequest, ambiance, ecsPrepareRollbackDataPassThroughData, false);
   }
 }

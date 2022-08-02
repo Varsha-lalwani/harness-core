@@ -212,7 +212,7 @@ public class EcsV2ClientImpl implements EcsV2Client {
         catch(Exception exception) {
             awsApiV2ExceptionHandler.handleException(exception);
         }
-        return DescribeScalableTargetsResponse.builder().build();
+        return null;
     }
 
     @Override
@@ -235,14 +235,13 @@ public class EcsV2ClientImpl implements EcsV2Client {
     }
 
     @Override
-    public Optional<Service> getService(AwsInternalConfig awsConfig, String clusterName, String serviceName, String region) {
+    public DescribeServicesResponse describeService(AwsInternalConfig awsConfig, String clusterName, String serviceName, String region) {
         DescribeServicesRequest describeServicesRequest = DescribeServicesRequest.builder()
                 .services(Collections.singletonList(serviceName))
                 .cluster(clusterName)
                 .build();
         try(EcsClient ecsClient = getEcsClient(awsConfig, region)) {
-            List<Service> services =  ecsClient.describeServices(describeServicesRequest).services();
-            return (services.isEmpty())? Optional.empty() :  Optional.of(services.get(0));
+            return ecsClient.describeServices(describeServicesRequest);
         }
         catch(AwsServiceException awsServiceException) {
             awsApiV2ExceptionHandler.handleAwsServiceException(awsServiceException);
@@ -253,7 +252,7 @@ public class EcsV2ClientImpl implements EcsV2Client {
         catch(Exception exception) {
             awsApiV2ExceptionHandler.handleException(exception);
         }
-        return Optional.empty();
+        return null;
     }
 
     @Override

@@ -19,14 +19,19 @@ import static io.harness.exception.WingsException.USER;
 public class EcsStepHelperImpl implements EcsStepHelper {
   @Override
   public List<ManifestOutcome> getEcsManifestOutcome(Collection<ManifestOutcome> manifestOutcomes) {
+
+    // Filter only ecs supported manifest types
     List<ManifestOutcome> ecsManifests =
             manifestOutcomes.stream()
                     .filter(manifestOutcome -> ManifestType.ECS_SUPPORTED_MANIFEST_TYPES.contains(manifestOutcome.getType()))
                     .collect(Collectors.toList());
+
+    // Check if ECS Manifests are empty
     if (isEmpty(ecsManifests)) {
       throw new InvalidRequestException("Manifests are mandatory for Ecs step", USER);
     }
 
+    // Get ECS Task definition manifests and validate
     List<ManifestOutcome> ecsTaskDefinitions = ecsManifests.stream().filter(ecsManifest -> ManifestType.EcsTaskDefinition.equals(ecsManifest.getType())).collect(Collectors.toList());
 
     if (isEmpty(ecsTaskDefinitions)) {
@@ -35,6 +40,7 @@ public class EcsStepHelperImpl implements EcsStepHelper {
       throw new InvalidRequestException("Only one Ecs Task Definition is expected. Found more.", USER);
     }
 
+    // Get ECS Service definition manifests and validate
     List<ManifestOutcome> ecsServiceDefinitions = ecsManifests.stream().filter(ecsManifest -> ManifestType.EcsServiceDefinition.equals(ecsManifest.getType())).collect(Collectors.toList());
 
     if (isEmpty(ecsServiceDefinitions)) {

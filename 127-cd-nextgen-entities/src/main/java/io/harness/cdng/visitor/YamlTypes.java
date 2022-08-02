@@ -52,6 +52,7 @@ public interface YamlTypes {
   String COMMAND = StepSpecTypeConstants.COMMAND;
 
   String ECS_ROLLING_DEPLOY = StepSpecTypeConstants.ECS_ROLLING_DEPLOY;
+  String ECS_ROLLING_ROLLBACK = StepSpecTypeConstants.ECS_ROLLING_ROLLBACK;
 
   String AZURE_SLOT_DEPLOYMENT = StepSpecTypeConstants.AZURE_SLOT_DEPLOYMENT;
   String AZURE_TRAFFIC_SHIFT = StepSpecTypeConstants.AZURE_TRAFFIC_SHIFT;

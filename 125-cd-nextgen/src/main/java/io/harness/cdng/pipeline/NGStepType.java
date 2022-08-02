@@ -130,6 +130,10 @@ public enum NGStepType {
   ECS_ROLLING_DEPLOY("Ecs Rolling Deploy",
           Arrays.asList(ServiceDefinitionType.ECS), "ECS",
           StepSpecTypeConstants.ECS_ROLLING_DEPLOY),
+  @JsonProperty(StepSpecTypeConstants.ECS_ROLLING_ROLLBACK)
+  ECS_ROLLING_ROLLBACK("Ecs Rolling Rollback",
+          Arrays.asList(ServiceDefinitionType.ECS), "ECS",
+          StepSpecTypeConstants.ECS_ROLLING_ROLLBACK),
   // ssh steps
   @JsonProperty(StepSpecTypeConstants.COMMAND)
   COMMAND("Command", Arrays.asList(ServiceDefinitionType.SSH, ServiceDefinitionType.WINRM), "Command",

@@ -93,7 +93,9 @@ import io.harness.delegate.cf.PcfRunPluginCommandTaskHandler;
 import io.harness.delegate.cf.PcfValidationCommandTaskHandler;
 import io.harness.delegate.configuration.DelegateConfiguration;
 import io.harness.delegate.ecs.EcsCommandTaskNGHandler;
+import io.harness.delegate.ecs.EcsPrepareRollbackCommandTaskHandler;
 import io.harness.delegate.ecs.EcsRollingDeployCommandTaskHandler;
+import io.harness.delegate.ecs.EcsRollingRollbackCommandTaskHandler;
 import io.harness.delegate.exceptionhandler.handler.AmazonClientExceptionHandler;
 import io.harness.delegate.exceptionhandler.handler.AmazonServiceExceptionHandler;
 import io.harness.delegate.exceptionhandler.handler.AuthenticationExceptionHandler;
@@ -1759,6 +1761,11 @@ public class DelegateModule extends AbstractModule {
             MapBinder.newMapBinder(binder(), String.class, EcsCommandTaskNGHandler.class);
     ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_ROLLING_DEPLOY.name())
             .to(EcsRollingDeployCommandTaskHandler.class);
+    ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_PREPARE_ROLLBACK_DATA.name())
+            .to(EcsPrepareRollbackCommandTaskHandler.class);
+    ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_ROLLING_ROLLBACK.name())
+                    .to(EcsRollingRollbackCommandTaskHandler.class);
+
 
     mapBinder.addBinding(TaskType.ECS_GIT_FETCH_TASK_NG).toInstance(EcsGitFetchTask.class);
     mapBinder.addBinding(TaskType.ECS_COMMAND_TASK_NG).toInstance(EcsCommandTaskNG.class);

@@ -1,13 +1,13 @@
-package io.harness.cdng.ecs;
+package io.harness.cdng.visitor.helpers.cdstepinfo;
 
+import io.harness.cdng.ecs.EcsRollingRollbackStepInfo;
 import io.harness.walktree.visitor.validation.ConfigValidator;
 import io.harness.walktree.visitor.validation.ValidationVisitor;
 
-public class EcsRollingDeployStepInfoVisitorHelper implements ConfigValidator {
+public class EcsRollingRollbackStepInfoVisitorHelper implements ConfigValidator {
   @Override
   public Object createDummyVisitableElement(Object originalElement) {
-    //return EcsRollingDeployStepInfo.infoBuilder().build();
-    return null;
+    return EcsRollingRollbackStepInfo.infoBuilder().build();
   }
 
   @Override

@@ -9,12 +9,17 @@ package io.harness.delegate.beans.ecs;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.serverless.ServerlessRollbackResult;
 import lombok.Builder;
 import lombok.Data;
-
 
 @Data
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-public class EcsRollingDeployResult {
+public class EcsRollingRollbackResult {
+  private String service;
+  private String region;
+  private String stage;
+  private String errorMessage;
+  private String rollbackTimeStamp;
 }

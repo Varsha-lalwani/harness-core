@@ -1,10 +1,9 @@
-package io.harness.cdng.ecs;
+package io.harness.cdng.ecs.beans;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
-import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import lombok.Builder;
 import lombok.Value;
@@ -15,9 +14,12 @@ import java.util.List;
 @OwnedBy(HarnessTeam.CDP)
 @Value
 @Builder
-@TypeAlias("ecsStepPassThroughData")
-@RecasterAlias("io.harness.cdng.ecs.EcsStepPassThroughData")
-public class EcsStepPassThroughData implements PassThroughData {
-  List<ManifestOutcome> ecsManifestOutcomes;
+@TypeAlias("ecsPrepareRollbackDataPassThroughData")
+@RecasterAlias("io.harness.cdng.ecs.beans.EcsPrepareRollbackDataPassThroughData")
+public class EcsPrepareRollbackDataPassThroughData implements PassThroughData {
+  String ecsTaskDefinitionManifestContent;
+  String ecsServiceDefinitionManifestContent;
+  List<String> ecsScalableTargetManifestContentList;
+  List<String> ecsScalingPolicyManifestContentList;
   InfrastructureOutcome infrastructureOutcome;
 }

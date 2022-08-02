@@ -206,7 +206,9 @@ import io.harness.delegate.beans.connector.servicenow.connection.ServiceNowTestC
 import io.harness.delegate.beans.connector.splunkconnector.SplunkConnectionTaskParams;
 import io.harness.delegate.beans.connector.splunkconnector.SplunkConnectionTaskResponse;
 import io.harness.delegate.beans.connector.vaultconnector.VaultValidationParams;
-import io.harness.delegate.beans.ecs.EcsDeployResult;
+import io.harness.delegate.beans.ecs.EcsPrepareRollbackDataResult;
+import io.harness.delegate.beans.ecs.EcsRollingDeployResult;
+import io.harness.delegate.beans.ecs.EcsRollingRollbackResult;
 import io.harness.delegate.beans.executioncapability.AlwaysFalseValidationCapability;
 import io.harness.delegate.beans.executioncapability.AwsCliInstallationCapability;
 import io.harness.delegate.beans.executioncapability.AwsRegionCapability;
@@ -431,9 +433,13 @@ import io.harness.delegate.task.ecs.EcsGitFetchFileConfig;
 import io.harness.delegate.task.ecs.EcsInfraConfig;
 import io.harness.delegate.task.ecs.EcsInfraType;
 import io.harness.delegate.task.ecs.request.EcsGitFetchRequest;
+import io.harness.delegate.task.ecs.request.EcsPrepareRollbackDataRequest;
 import io.harness.delegate.task.ecs.request.EcsRollingDeployRequest;
+import io.harness.delegate.task.ecs.request.EcsRollingRollbackRequest;
 import io.harness.delegate.task.ecs.response.EcsGitFetchResponse;
+import io.harness.delegate.task.ecs.response.EcsPrepareRollbackDataResponse;
 import io.harness.delegate.task.ecs.response.EcsRollingDeployResponse;
+import io.harness.delegate.task.ecs.response.EcsRollingRollbackResponse;
 import io.harness.delegate.task.gcp.GcpTaskType;
 import io.harness.delegate.task.gcp.request.GcpListBucketsRequest;
 import io.harness.delegate.task.gcp.request.GcpListClustersRequest;
@@ -1642,7 +1648,13 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EcsCommandTypeNG.class, 573506);
     kryo.register(EcsInfraConfig.class, 573507);
     kryo.register(EcsInfraType.class, 573508);
-    kryo.register(EcsDeployResult.class, 573509);
+    kryo.register(EcsRollingDeployResult.class, 573509);
     kryo.register(EcsNGException.class, 573510);
+    kryo.register(EcsPrepareRollbackDataRequest.class, 573511);
+    kryo.register(EcsPrepareRollbackDataResponse.class, 573512);
+    kryo.register(EcsPrepareRollbackDataResult.class, 573513);
+    kryo.register(EcsRollingRollbackRequest.class, 573514);
+    kryo.register(EcsRollingRollbackResponse.class, 573515);
+    kryo.register(EcsRollingRollbackResult.class, 573516);
   }
 }

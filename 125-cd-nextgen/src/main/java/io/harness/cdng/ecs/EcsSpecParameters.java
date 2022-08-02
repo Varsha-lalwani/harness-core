@@ -26,6 +26,8 @@ public interface EcsSpecParameters extends SpecParameters {
   @Nonnull
   @JsonIgnore
   default List<String> getCommandUnits() {
-    return Arrays.asList(EcsCommandUnitConstants.fetchFiles.toString(), EcsCommandUnitConstants.deploy.toString());
+    return Arrays.asList(EcsCommandUnitConstants.fetchManifests.toString(),
+            EcsCommandUnitConstants.prepareRollbackData.toString(),
+            EcsCommandUnitConstants.deploy.toString());
   }
 }

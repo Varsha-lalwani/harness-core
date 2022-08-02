@@ -275,7 +275,10 @@ public enum EntityType {
       ModuleType.CD, EntityTypeConstants.JENKINS_BUILD, IdentifierRef.class, EntityYamlRootNames.JENKINS_BUILD),
   @JsonProperty(EntityTypeConstants.ECS_ROLLING_DEPLOY)
   ECS_ROLLING_DEPLOY_STEP(ModuleType.CD, EntityTypeConstants.ECS_ROLLING_DEPLOY,
-          IdentifierRef.class, EntityYamlRootNames.ECS_ROLLING_DEPLOY);
+          IdentifierRef.class, EntityYamlRootNames.ECS_ROLLING_DEPLOY),
+  @JsonProperty(EntityTypeConstants.ECS_ROLLING_ROLLBACK)
+  ECS_ROLLING_ROLLBACK_STEP(ModuleType.CD, EntityTypeConstants.ECS_ROLLING_ROLLBACK,
+          IdentifierRef.class, EntityYamlRootNames.ECS_ROLLING_ROLLBACK);
 
   private final ModuleType moduleType;
   String yamlName;

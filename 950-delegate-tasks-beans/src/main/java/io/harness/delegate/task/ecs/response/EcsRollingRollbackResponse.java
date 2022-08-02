@@ -10,7 +10,7 @@ package io.harness.delegate.task.ecs.response;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.DelegateMetaInfo;
-import io.harness.delegate.beans.ecs.EcsRollingDeployResult;
+import io.harness.delegate.beans.ecs.EcsRollingRollbackResult;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.logging.CommandExecutionStatus;
 import lombok.Builder;
@@ -20,12 +20,12 @@ import lombok.experimental.NonFinal;
 @Value
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-public class EcsRollingDeployResponse implements EcsCommandResponse {
+public class EcsRollingRollbackResponse implements EcsCommandResponse {
   @NonFinal DelegateMetaInfo delegateMetaInfo;
   @NonFinal UnitProgressData unitProgressData;
   CommandExecutionStatus commandExecutionStatus;
   String errorMessage;
-  EcsRollingDeployResult ecsRollingDeployResult;
+  EcsRollingRollbackResult ecsRollingRollbackResult;
 
   @Override
   public void setDelegateMetaInfo(DelegateMetaInfo metaInfo) {

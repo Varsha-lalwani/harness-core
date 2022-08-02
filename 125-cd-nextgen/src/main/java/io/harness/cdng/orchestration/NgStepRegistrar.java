@@ -25,6 +25,7 @@ import io.harness.cdng.configfile.steps.ConfigFilesStep;
 import io.harness.cdng.configfile.steps.IndividualConfigFileStep;
 import io.harness.cdng.creator.plan.environment.steps.EnvironmentStepV2;
 import io.harness.cdng.ecs.EcsRollingDeployStep;
+import io.harness.cdng.ecs.EcsRollingRollbackStep;
 import io.harness.cdng.gitops.CreatePRStep;
 import io.harness.cdng.gitops.MergePRStep;
 import io.harness.cdng.gitops.steps.GitopsClustersStep;
@@ -141,7 +142,9 @@ public class NgStepRegistrar {
     engineSteps.putAll(NGCommonUtilStepsRegistrar.getEngineSteps());
     engineSteps.put(GitopsClustersStep.STEP_TYPE, GitopsClustersStep.class);
     engineSteps.put(JenkinsBuildStep.STEP_TYPE, JenkinsBuildStep.class);
+    // ECS
     engineSteps.put(EcsRollingDeployStep.STEP_TYPE, EcsRollingDeployStep.class);
+    engineSteps.put(EcsRollingRollbackStep.STEP_TYPE, EcsRollingRollbackStep.class);
     return engineSteps;
   }
 }

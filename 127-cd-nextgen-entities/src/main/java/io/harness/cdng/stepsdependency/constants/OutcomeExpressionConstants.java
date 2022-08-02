@@ -41,4 +41,5 @@ public class OutcomeExpressionConstants {
   public final String STARTUP_SCRIPT = "startupScript";
   public final String APPLICATION_SETTINGS = "applicationSettings";
   public final String CONNECTION_STRINGS = "connectionStrings";
+  public final String ECS_ROLLING_ROLLBACK_OUTCOME = "ecsRollingRollbackOutcome";
 }

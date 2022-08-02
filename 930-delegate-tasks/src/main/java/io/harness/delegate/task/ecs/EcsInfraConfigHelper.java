@@ -12,8 +12,10 @@ import com.google.inject.Singleton;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
+import io.harness.delegate.beans.connector.awsconnector.AwsCredentialDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsCredentialType;
 import io.harness.delegate.beans.connector.awsconnector.AwsManualConfigSpecDTO;
+import io.harness.delegate.task.serverless.ServerlessAwsLambdaInfraConfig;
 import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.SecretDecryptionService;
@@ -37,6 +39,11 @@ public class EcsInfraConfigHelper {
       secretDecryptionService.decrypt(awsCredentialSpecDTO, encryptedDataDetails);
       ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsCredentialSpecDTO, encryptedDataDetails);
     }
+  }
+
+  public String getEcsCredentialType(EcsInfraConfig ecsInfraConfig) {
+    AwsCredentialDTO awsCredentialDTO = ecsInfraConfig.getAwsConnectorDTO().getCredential();
+    return awsCredentialDTO.getAwsCredentialType().name();
   }
 
 }
