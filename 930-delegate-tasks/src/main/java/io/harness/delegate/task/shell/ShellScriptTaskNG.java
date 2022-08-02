@@ -61,7 +61,7 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
     CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
 
     if (taskParameters.isExecuteOnDelegate()) {
-      ShellExecutorConfig shellExecutorConfig = getShellExecutorConfigWithoutKubernetes(taskParameters);
+      ShellExecutorConfig shellExecutorConfig = getShellExecutorConfig(taskParameters);
       ScriptProcessExecutor executor =
           shellExecutorFactory.getExecutor(shellExecutorConfig, this.getLogStreamingTaskClient(), commandUnitsProgress);
       // TODO: check later
@@ -130,8 +130,11 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
     return sshSessionConfig;
   }
 
-  private ShellExecutorConfig getShellExecutorConfigWithoutKubernetes(ShellScriptTaskParametersNG taskParameters) {
-    String kubeConfigFileContent = "";
+  private ShellExecutorConfig getShellExecutorConfig(ShellScriptTaskParametersNG taskParameters) {
+    String kubeConfigFileContent = taskParameters.getScript().contains(K8sConstants.HARNESS_KUBE_CONFIG_PATH)
+            && taskParameters.getK8sInfraDelegateConfig() != null
+        ? containerDeploymentDelegateBaseHelper.getKubeconfigFileContent(taskParameters.getK8sInfraDelegateConfig())
+        : "";
 
     return ShellExecutorConfig.builder()
         .accountId(taskParameters.getAccountId())
