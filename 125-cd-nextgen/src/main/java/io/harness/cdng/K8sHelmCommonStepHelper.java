@@ -900,7 +900,6 @@ public class K8sHelmCommonStepHelper {
     throw new UnsupportedOperationException(format("Unsupported Store Config type: [%s]", storeConfig.getKind()));
   }
 
-<<<<<<< HEAD
   public String getRepoName(Ambiance ambiance) {
     InfrastructureOutcome infrastructureOutcome = cdStepHelper.getInfrastructureOutcome(ambiance);
 
