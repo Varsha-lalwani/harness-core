@@ -72,6 +72,7 @@ roles:
         - core_template_access
         - core_template_delete
         - core_template_edit
+        - core_template_copy
         - core_template_view
         - core_governancePolicySets_view
         - core_governancePolicySets_edit
@@ -241,6 +242,7 @@ roles:
         - core_template_access
         - core_template_delete
         - core_template_edit
+        - core_template_copy
         - core_template_view
         - core_governancePolicySets_view
         - core_governancePolicySets_edit
@@ -441,6 +443,7 @@ roles:
         - core_template_access
         - core_template_delete
         - core_template_edit
+        - core_template_copy
         - core_template_view
         - core_governancePolicySets_view
         - core_governancePolicySets_edit
