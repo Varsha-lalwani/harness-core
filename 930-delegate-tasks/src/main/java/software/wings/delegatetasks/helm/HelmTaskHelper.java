@@ -624,7 +624,6 @@ public class HelmTaskHelper {
             helmChartCollectionParams.getHelmChartConfigParams().getChartName());
       }
     } finally {
-      // We do remove repo only when the useFlags FF is on.
       deleteDirectoryAndItsContentIfExists(workingDirectory + "/helm");
       if (!helmChartConfigParams.isUseCache()) {
         deleteQuietlyWithErrorLog(cacheDir);
