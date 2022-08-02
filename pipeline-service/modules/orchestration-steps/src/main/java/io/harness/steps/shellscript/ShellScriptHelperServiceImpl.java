@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static java.util.Collections.emptyList;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.beans.IdentifierRef;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
@@ -25,6 +26,7 @@ import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
 import io.harness.ng.core.dto.secrets.SecretSpecDTO;
 import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
+import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
@@ -59,6 +61,7 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
   @Inject private SshKeySpecDTOHelper sshKeySpecDTOHelper;
   @Inject private WinRmCredentialsSpecDTOHelper winRmCredentialsSpecDTOHelper;
   @Inject private ShellScriptHelperService shellScriptHelperService;
+  @Inject private PmsFeatureFlagService pmsFeatureFlagService;
 
   @Override
   public Map<String, String> getEnvironmentVariables(Map<String, Object> inputVariables) {
@@ -216,8 +219,11 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
         : ParameterField.ofNull();
 
     if (ShellType.PowerShell.equals(shellScriptStepParameters.getShell())) {
-      // TODO: from ff
-      taskParametersNGBuilder.useWinRMKerberosUniqueCacheFile(false).disableCommandEncoding(false);
+      taskParametersNGBuilder
+          .useWinRMKerberosUniqueCacheFile(pmsFeatureFlagService.isEnabled(
+              AmbianceUtils.getAccountId(ambiance), FeatureName.WINRM_KERBEROS_CACHE_UNIQUE_FILE))
+          .disableCommandEncoding(pmsFeatureFlagService.isEnabled(
+              AmbianceUtils.getAccountId(ambiance), FeatureName.DISABLE_WINRM_COMMAND_ENCODING));
     }
 
     return taskParametersNGBuilder.accountId(AmbianceUtils.getAccountId(ambiance))
