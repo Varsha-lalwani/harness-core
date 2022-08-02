@@ -8,6 +8,7 @@
 package io.harness.steps.shellscript;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.rule.OwnerRule.FILIP;
 import static io.harness.rule.OwnerRule.VAIBHAV_SI;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +29,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
+import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.plan.execution.SetupAbstractionKeys;
@@ -75,6 +77,7 @@ public class ShellScriptHelperServiceImplTest extends CategoryTest {
   @Mock private SecretNGManagerClient secretManagerClient;
   @Mock private SshKeySpecDTOHelper sshKeySpecDTOHelper;
   @Mock private ShellScriptHelperService shellScriptHelperService;
+  @Mock private PmsFeatureFlagService pmsFeatureFlagService;
 
   @InjectMocks private ShellScriptHelperServiceImpl shellScriptHelperServiceImpl;
 
@@ -316,6 +319,51 @@ public class ShellScriptHelperServiceImplTest extends CategoryTest {
     assertThat(taskParams.getScript()).isEqualTo(script);
     assertThat(taskParams.getK8sInfraDelegateConfig()).isEqualTo(k8sInfraDelegateConfig);
     assertThat(taskParams.getWorkingDirectory()).isEqualTo("/tmp");
+    assertThat(taskParams.getOutputVars()).isEqualTo(taskOutputVars);
+    assertThat(taskParams.getEnvironmentVariables()).isEqualTo(taskEnvVariables);
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testBuildPowerShellScriptTaskParametersNG() {
+    // given
+    Ambiance ambiance = buildAmbiance();
+    Map<String, Object> inputVars = new LinkedHashMap<>();
+    inputVars.put("in1", "val1");
+    Map<String, Object> outputVars = new LinkedHashMap<>();
+    outputVars.put("out1", "val1");
+    ShellScriptStepParameters stepParameters = ShellScriptStepParameters.infoBuilder()
+                                                   .shellType(ShellType.PowerShell)
+                                                   .onDelegate(ParameterField.createValueField(false))
+                                                   .environmentVariables(inputVars)
+                                                   .outputVariables(outputVars)
+                                                   .build();
+    String script = "echo hey";
+    DirectK8sInfraDelegateConfig k8sInfraDelegateConfig = DirectK8sInfraDelegateConfig.builder().build();
+    Map<String, String> taskEnvVariables = new LinkedHashMap<>();
+    inputVars.put("key1", "val1");
+    List<String> taskOutputVars = Arrays.asList("key1", "key2");
+
+    doReturn(script).when(shellScriptHelperService).getShellScript(stepParameters);
+    doNothing()
+        .when(shellScriptHelperService)
+        .prepareTaskParametersForExecutionTarget(eq(ambiance), eq(stepParameters), any());
+    doReturn(k8sInfraDelegateConfig).when(shellScriptHelperService).getK8sInfraDelegateConfig(ambiance, script);
+    doReturn(taskEnvVariables).when(shellScriptHelperService).getEnvironmentVariables(inputVars);
+    doReturn(taskOutputVars).when(shellScriptHelperService).getOutputVars(outputVars);
+    doReturn("C:\\tmp")
+        .when(shellScriptHelperService)
+        .getWorkingDirectory(ParameterField.ofNull(), ScriptType.POWERSHELL, stepParameters.onDelegate.getValue());
+
+    // when
+    ShellScriptTaskParametersNG taskParams =
+        shellScriptHelperServiceImpl.buildShellScriptTaskParametersNG(ambiance, stepParameters);
+
+    // then
+    assertThat(taskParams.getScript()).isEqualTo(script);
+    assertThat(taskParams.getK8sInfraDelegateConfig()).isEqualTo(k8sInfraDelegateConfig);
+    assertThat(taskParams.getWorkingDirectory()).isEqualTo("C:\\tmp");
     assertThat(taskParams.getOutputVars()).isEqualTo(taskOutputVars);
     assertThat(taskParams.getEnvironmentVariables()).isEqualTo(taskEnvVariables);
   }
