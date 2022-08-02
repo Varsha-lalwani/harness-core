@@ -44,6 +44,7 @@ import io.harness.jira.JiraIssueTypeNG;
 import io.harness.jira.JiraProjectBasicNG;
 import io.harness.jira.JiraProjectNG;
 import io.harness.jira.JiraStatusNG;
+import io.harness.jira.JiraUserData;
 import io.harness.rule.Owner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,9 +52,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.tomakehurst.wiremock.core.Options;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.api.client.util.Lists;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -300,9 +303,21 @@ public class JiraTaskNGHandlerTest extends CategoryTest {
 
     JiraClient jiraClient = Mockito.mock(JiraClient.class);
     PowerMockito.whenNew(JiraClient.class).withAnyArguments().thenReturn(jiraClient);
-    when(jiraClient.getIssueCreateMetadata(any(), any(), any(), any(), any())).thenReturn(jiraIssueCreateMetadataNG);
+    when(jiraClient.getIssueCreateMetadata("TJI", "Bug", null, false, false)).thenReturn(jiraIssueCreateMetadataNG);
+    JiraUserData jiraUserData = new JiraUserData("accountId", "assignee", true);
+    when(jiraClient.getUsers("your-jira-account-id", null, null)).thenReturn(Arrays.asList(jiraUserData));
 
+    JiraIssueNG jiraIssueNG = Mockito.mock(JiraIssueNG.class);
+    Map<String, String> fields1 = new HashMap<>();
+    fields1.put("QE Assignee", "accountId");
+    fields1.put("Test Summary", "No test added");
+    when(jiraClient.createIssue("TJI", "Bug", fields1, true)).thenReturn(jiraIssueNG);
     JiraTaskNGResponse jiraTaskNGResponse = jiraTaskNGHandler.createIssue(jiraTaskNGParameters);
+
+    assertThat(jiraTaskNGResponse.getIssue()).isNotNull();
+    assertThat(jiraTaskNGResponse).isNotNull();
+    assertThat(jiraTaskNGResponse.getIssue()).isEqualTo(jiraIssueNG);
+    assertThat(jiraTaskNGParameters.getFields()).isEqualTo(fields1);
   }
 
   @Test
