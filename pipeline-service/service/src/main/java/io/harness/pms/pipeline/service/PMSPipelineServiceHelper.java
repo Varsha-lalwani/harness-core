@@ -41,6 +41,7 @@ import io.harness.governance.PolicySetMetadata;
 import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.ng.core.template.exception.NGTemplateResolveExceptionV2;
+import io.harness.ng.core.template.TemplateReferenceSummary;
 import io.harness.opaclient.model.OpaConstants;
 import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.governance.ExpansionRequestMetadata;
@@ -76,6 +77,7 @@ import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -144,6 +146,15 @@ public class PMSPipelineServiceHelper {
     if (isNotEmpty(filtersAndStageCount.getFilters())) {
       filtersAndStageCount.getFilters().forEach((key, value) -> newEntity.getFilters().put(key, Document.parse(value)));
     }
+
+    if (isNotEmpty(pipelineEntity.getTemplateModules())) {
+      for (String module : pipelineEntity.getTemplateModules()) {
+        if (!newEntity.getFilters().containsKey(module)) {
+          newEntity.getFilters().put(module, Document.parse("{}"));
+        }
+      }
+    }
+
     return newEntity;
   }
 
@@ -239,6 +250,14 @@ public class PMSPipelineServiceHelper {
         pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity, checkAgainstOPAPolicies);
     String resolveTemplateRefsInPipeline = templateMergeResponseDTO.getMergedPipelineYaml();
     pmsYamlSchemaService.validateYamlSchema(accountId, orgIdentifier, projectIdentifier, resolveTemplateRefsInPipeline);
+
+    // Add Template Module Info temporarily to Pipeline Entity
+    HashSet<String> templateModuleInfo = new HashSet<>();
+    for (TemplateReferenceSummary templateReferenceSummary : templateMergeResponseDTO.getTemplateReferenceSummaries()) {
+      templateModuleInfo.addAll(templateReferenceSummary.getModuleInfo());
+    }
+    pipelineEntity.setTemplateModules(templateModuleInfo);
+
     // validate unique fqn in resolveTemplateRefsInPipeline
     pmsYamlSchemaService.validateUniqueFqn(resolveTemplateRefsInPipeline);
     if (checkAgainstOPAPolicies) {
