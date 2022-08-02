@@ -15,6 +15,7 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.beans.Scope;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitaware.dto.GitContextRequestParams;
@@ -451,6 +452,10 @@ public class NGTemplateRepositoryCustomImpl implements NGTemplateRepositoryCusto
 
   private void addGitParamsToTemplateEntity(TemplateEntity templateEntity, GitEntityInfo gitEntityInfo) {
     templateEntity.setStoreType(StoreType.REMOTE);
+    if (EmptyPredicate.isEmpty(templateEntity.getRepoURL())) {
+      templateEntity.setRepoURL(gitAwareEntityHelper.getRepoUrl(
+          templateEntity.getAccountId(), templateEntity.getOrgIdentifier(), templateEntity.getProjectIdentifier()));
+    }
     templateEntity.setConnectorRef(gitEntityInfo.getConnectorRef());
     templateEntity.setRepo(gitEntityInfo.getRepoName());
     templateEntity.setFilePath(gitEntityInfo.getFilePath());
