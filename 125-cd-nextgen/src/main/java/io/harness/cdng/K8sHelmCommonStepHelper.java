@@ -578,6 +578,8 @@ public class K8sHelmCommonStepHelper {
                 AmbianceUtils.getAccountId(ambiance), FeatureName.HELM_CACHE_TIED_TO_EXECUTION))
             .checkIncorrectChartVersion(cdFeatureFlagHelper.isEnabled(
                 AmbianceUtils.getAccountId(ambiance), FeatureName.HELM_CHART_VERSION_STRICT_MATCH))
+            .useRepoFlags(true)
+            .deleteRepoCacheDir(true)
             .build();
 
       case ManifestType.Kustomize:

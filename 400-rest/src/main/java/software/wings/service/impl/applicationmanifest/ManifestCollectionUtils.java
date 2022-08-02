@@ -156,6 +156,8 @@ public class ManifestCollectionUtils {
             .useLatestChartMuseumVersion(
                 featureFlagService.isEnabled(FeatureName.USE_LATEST_CHARTMUSEUM_VERSION, accountId))
             .bypassHelmFetch(featureFlagService.isEnabled(FeatureName.BYPASS_HELM_FETCH, accountId))
+            .useRepoFlags(true)
+            .deleteRepoCacheDir(true)
             .useCache(!featureFlagService.isEnabled(FeatureName.HELM_CACHE_TIED_TO_EXECUTION, accountId))
             .helmRepoConfig(helmRepoConfig);
 
