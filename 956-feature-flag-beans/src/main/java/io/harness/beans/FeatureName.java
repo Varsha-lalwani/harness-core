@@ -406,8 +406,9 @@ public enum FeatureName {
       HarnessTeam.CDP),
   TERRAFORM_REMOTE_BACKEND_CONFIG("Enables storing Terraform backend configuration in a remote repo", HarnessTeam.CDP),
   NG_OPTIMIZE_FETCH_FILES_KUSTOMIZE("Used to Optimize kustomize Manifest files fetch in NG", HarnessTeam.CDP),
-  INPUT_SET_RECONCILE("Used to enable the new input set error experience, will be removed once dev work is complete",
-      HarnessTeam.PIPELINE);
+  FIXED_INSTANCE_ZERO_ALLOW("To allow user to set the fixed instance count to 0 for ECS Deployments", HarnessTeam.CDP),
+  USE_PAGINATED_ENCRYPT_FOR_VARIABLE_OVERRIDES(
+      "Enables PaginatedComponent & Formik for VariableOverrides in CG-UI", HarnessTeam.PL);
 
   @Deprecated
   FeatureName() {

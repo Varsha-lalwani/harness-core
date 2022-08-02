@@ -5,13 +5,15 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package software.wings.delegatetasks.azure.common;
+package io.harness.delegate.task.azure.common;
 
+import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.azure.model.AzureConstants.UNIX_SEPARATOR;
 import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
 
 import static java.lang.String.format;
 
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.exception.InvalidRequestException;
 import io.harness.filesystem.FileIo;
@@ -20,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import org.apache.commons.io.FilenameUtils;
 
+@OwnedBy(CDP)
 public class AutoCloseableWorkingDirectory implements AutoCloseable {
   private File workingDir;
 

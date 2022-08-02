@@ -43,7 +43,9 @@ import software.wings.beans.TaskType;
 import com.google.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @OwnedBy(CDP)
 public class CommandStep extends TaskExecutableWithRollbackAndRbac<CommandTaskResponse> {
   public static final StepType STEP_TYPE =
