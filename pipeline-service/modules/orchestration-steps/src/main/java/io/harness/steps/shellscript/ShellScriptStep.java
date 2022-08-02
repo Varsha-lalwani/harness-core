@@ -43,7 +43,7 @@ import io.harness.supplier.ThrowingSupplier;
 import software.wings.beans.TaskType;
 
 import com.google.inject.Inject;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
@@ -80,9 +80,10 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
             .timeout(StepUtils.getTimeoutMillis(stepParameters.getTimeout(), StepUtils.DEFAULT_STEP_TIMEOUT))
             .build();
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
-        CollectionUtils.emptyIfNull(StepUtils.generateLogKeys(
-            StepUtils.generateLogAbstractions(ambiance), Collections.singletonList(ShellScriptTaskNG.COMMAND_UNIT))),
-        null, null, TaskSelectorYaml.toTaskSelector(shellScriptStepParameters.getDelegateSelectors()),
+        CollectionUtils.emptyIfNull(StepUtils.generateLogKeys(StepUtils.generateLogAbstractions(ambiance),
+            Arrays.asList(ShellScriptTaskNG.INIT_UNIT, ShellScriptTaskNG.COMMAND_UNIT))),
+        Arrays.asList(ShellScriptTaskNG.INIT_UNIT, ShellScriptTaskNG.COMMAND_UNIT), null,
+        TaskSelectorYaml.toTaskSelector(shellScriptStepParameters.getDelegateSelectors()),
         stepHelper.getEnvironmentType(ambiance));
   }
 

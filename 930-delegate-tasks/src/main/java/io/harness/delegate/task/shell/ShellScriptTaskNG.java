@@ -7,7 +7,10 @@
 
 package io.harness.delegate.task.shell;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.task.shell.winrm.WinRmCommandConstants.SESSION_TIMEOUT;
+
+import static software.wings.common.Constants.WINDOWS_HOME_DIR;
 
 import io.harness.connector.task.shell.SshSessionConfigMapper;
 import io.harness.delegate.beans.DelegateResponseData;
@@ -47,6 +50,7 @@ import org.apache.commons.lang3.NotImplementedException;
 @Slf4j
 public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
   public static final String COMMAND_UNIT = "Execute";
+  public static final String INIT_UNIT = "Initialize";
 
   @Inject private ShellExecutorFactoryNG shellExecutorFactory;
   @Inject private SshExecutorFactoryNG sshExecutorFactoryNG;
@@ -131,31 +135,14 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
     CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
 
     try {
-      WinRmSessionConfigBuilder configBuilder = WinRmSessionConfig.builder()
-                                                    .accountId(taskParameters.getAccountId())
-                                                    .executionId(taskParameters.getExecutionId())
-                                                    .workingDirectory(taskParameters.getWorkingDirectory())
-                                                    .commandUnitName(COMMAND_UNIT)
-                                                    .environment(taskParameters.getEnvironmentVariables())
-                                                    .hostname(taskParameters.getHost())
-                                                    .timeout(SESSION_TIMEOUT);
+      ShellScriptTaskResponseNG initStatus =
+          executeInit(taskParameters, commandUnitsProgress, this.getLogStreamingTaskClient());
 
-      WinRmSessionConfig config =
-          winRmConfigAuthEnhancer.configureAuthentication((WinRmCredentialsSpecDTO) taskParameters.getSshKeySpecDTO(),
-              taskParameters.getEncryptionDetails(), configBuilder, taskParameters.isUseWinRMKerberosUniqueCacheFile());
+      if (CommandExecutionStatus.FAILURE.equals(initStatus.getStatus())) {
+        return initStatus;
+      }
 
-      WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(
-          config, taskParameters.isDisableCommandEncoding(), this.getLogStreamingTaskClient(), commandUnitsProgress);
-
-      ExecuteCommandResponse executeCommandResponse =
-          executor.executeCommandString(taskParameters.getScript(), taskParameters.getOutputVars());
-
-      return ShellScriptTaskResponseNG.builder()
-          .executeCommandResponse(executeCommandResponse)
-          .status(executeCommandResponse.getStatus())
-          .errorMessage(getErrorMessage(executeCommandResponse.getStatus()))
-          .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
-          .build();
+      return executeCommand(taskParameters, commandUnitsProgress, this.getLogStreamingTaskClient());
     } catch (Exception e) {
       log.error("PowerShell Script Failed to execute.", e);
       return ShellScriptTaskResponseNG.builder()
@@ -164,6 +151,63 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
           .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
           .build();
     }
+  }
+
+  private ShellScriptTaskResponseNG executeInit(ShellScriptTaskParametersNG taskParameters,
+      CommandUnitsProgress commandUnitsProgress, ILogStreamingTaskClient logStreamingTaskClient) {
+    WinRmSessionConfigBuilder configBuilder = WinRmSessionConfig.builder()
+                                                  .accountId(taskParameters.getAccountId())
+                                                  .executionId(taskParameters.getExecutionId())
+                                                  .workingDirectory(WINDOWS_HOME_DIR)
+                                                  .commandUnitName(INIT_UNIT)
+                                                  .environment(taskParameters.getEnvironmentVariables())
+                                                  .hostname(taskParameters.getHost())
+                                                  .timeout(SESSION_TIMEOUT);
+
+    WinRmSessionConfig config =
+        winRmConfigAuthEnhancer.configureAuthentication((WinRmCredentialsSpecDTO) taskParameters.getSshKeySpecDTO(),
+            taskParameters.getEncryptionDetails(), configBuilder, taskParameters.isUseWinRMKerberosUniqueCacheFile());
+
+    WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(
+        config, taskParameters.isDisableCommandEncoding(), logStreamingTaskClient, commandUnitsProgress);
+
+    CommandExecutionStatus commandExecutionStatus =
+        executor.executeCommandString(getInitCommand(taskParameters.getWorkingDirectory()), true);
+
+    return ShellScriptTaskResponseNG.builder()
+        .status(commandExecutionStatus)
+        .errorMessage(getErrorMessage(commandExecutionStatus))
+        .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
+        .build();
+  }
+
+  private ShellScriptTaskResponseNG executeCommand(ShellScriptTaskParametersNG taskParameters,
+      CommandUnitsProgress commandUnitsProgress, ILogStreamingTaskClient logStreamingTaskClient) {
+    WinRmSessionConfigBuilder configBuilder = WinRmSessionConfig.builder()
+                                                  .accountId(taskParameters.getAccountId())
+                                                  .executionId(taskParameters.getExecutionId())
+                                                  .workingDirectory(taskParameters.getWorkingDirectory())
+                                                  .commandUnitName(COMMAND_UNIT)
+                                                  .environment(taskParameters.getEnvironmentVariables())
+                                                  .hostname(taskParameters.getHost())
+                                                  .timeout(SESSION_TIMEOUT);
+
+    WinRmSessionConfig config =
+        winRmConfigAuthEnhancer.configureAuthentication((WinRmCredentialsSpecDTO) taskParameters.getSshKeySpecDTO(),
+            taskParameters.getEncryptionDetails(), configBuilder, taskParameters.isUseWinRMKerberosUniqueCacheFile());
+
+    WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(
+        config, taskParameters.isDisableCommandEncoding(), logStreamingTaskClient, commandUnitsProgress);
+
+    ExecuteCommandResponse executeCommandResponse =
+        executor.executeCommandString(taskParameters.getScript(), taskParameters.getOutputVars());
+
+    return ShellScriptTaskResponseNG.builder()
+        .executeCommandResponse(executeCommandResponse)
+        .status(executeCommandResponse.getStatus())
+        .errorMessage(getErrorMessage(executeCommandResponse.getStatus()))
+        .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
+        .build();
   }
 
   private String getErrorMessage(CommandExecutionStatus status) {
@@ -214,5 +258,20 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
         .kubeConfigContent(kubeConfigFileContent)
         .scriptType(taskParameters.getScriptType())
         .build();
+  }
+
+  private String getInitCommand(String workingDirectory) {
+    String script = "$RUNTIME_PATH=[System.Environment]::ExpandEnvironmentVariables(\"%s\")%n"
+        + "if(!(Test-Path \"$RUNTIME_PATH\"))%n"
+        + "{%n"
+        + "    New-Item -ItemType Directory -Path \"$RUNTIME_PATH\"%n"
+        + "    Write-Host \"$RUNTIME_PATH Folder Created Successfully.\"%n"
+        + "}%n"
+        + "else%n"
+        + "{%n"
+        + "    Write-Host \"${RUNTIME_PATH} Folder already exists.\"%n"
+        + "}";
+
+    return String.format(script, isNotEmpty(workingDirectory) ? workingDirectory : WINDOWS_HOME_DIR);
   }
 }
