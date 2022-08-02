@@ -10,6 +10,7 @@ package io.harness.delegate.task.jira;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.rule.OwnerRule.ALEXEI;
 import static io.harness.rule.OwnerRule.MOUNIK;
+import static io.harness.rule.OwnerRule.YUVRAJ;
 import static io.harness.rule.OwnerRule.vivekveman;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -19,6 +20,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
@@ -29,10 +32,17 @@ import io.harness.delegate.task.jira.JiraTaskNGParameters.JiraTaskNGParametersBu
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.HintException;
 import io.harness.jackson.JsonNodeUtils;
+import io.harness.jira.JiraActionNG;
 import io.harness.jira.JiraClient;
+import io.harness.jira.JiraFieldNG;
+import io.harness.jira.JiraFieldSchemaNG;
+import io.harness.jira.JiraFieldTypeNG;
 import io.harness.jira.JiraInternalConfig;
+import io.harness.jira.JiraIssueCreateMetadataNG;
 import io.harness.jira.JiraIssueNG;
+import io.harness.jira.JiraIssueTypeNG;
 import io.harness.jira.JiraProjectBasicNG;
+import io.harness.jira.JiraProjectNG;
 import io.harness.jira.JiraStatusNG;
 import io.harness.rule.Owner;
 
@@ -54,11 +64,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import wiremock.org.checkerframework.checker.units.qual.C;
 
 @OwnedBy(CDC)
 @RunWith(PowerMockRunner.class)
@@ -73,6 +85,10 @@ public class JiraTaskNGHandlerTest extends CategoryTest {
   private static String url;
   public static JiraClient jiraClient;
   private final JiraTaskNGHandler jiraTaskNGHandler = new JiraTaskNGHandler();
+  private static final String MULTI = "multi";
+  private static final String ISSUE_TYPE = "Issue Type";
+  private static final String ISSUE_ID = "IssueId";
+  private static final String CUSTOMFIELD_OPTION = "customfield_option";
   String JSON_RESOURCE = "testJson.json";
   ObjectNode jsonNode;
   ObjectNode jsonstatusNode;
@@ -232,6 +248,67 @@ public class JiraTaskNGHandlerTest extends CategoryTest {
                                        .build()))
         .isEqualTo(jiraTaskNGResponse);
   }
+
+  @Test
+  @Owner(developers = YUVRAJ)
+  @Category(UnitTests.class)
+  public void testcreateIssue() throws Exception {
+    Map<String, String> fields = new HashMap<>();
+    fields.put("QE Assignee", "your-jira-account-id");
+    fields.put("Test Summary", "No test added");
+    JiraConnectorDTO jiraConnectorDTO =
+        JiraConnectorDTO.builder()
+            .jiraUrl("https://harness.atlassian.net/")
+            .username("username")
+            .passwordRef(SecretRefData.builder().decryptedValue(new char[] {'3', '4', 'f', '5', '1'}).build())
+            .build();
+    JiraTaskNGParameters jiraTaskNGParameters = JiraTaskNGParameters.builder()
+                                                    .jiraConnectorDTO(jiraConnectorDTO)
+                                                    .action(JiraActionNG.CREATE_ISSUE)
+                                                    .projectKey("TJI")
+                                                    .issueType("Bug")
+                                                    .fields(fields)
+                                                    .fetchStatus(false)
+                                                    .ignoreComment(false)
+                                                    .build();
+    JiraIssueCreateMetadataNG jiraIssueCreateMetadataNG = Mockito.mock(JiraIssueCreateMetadataNG.class);
+
+    JiraProjectNG jiraProjectNG = Mockito.mock(JiraProjectNG.class);
+    Map<String, JiraProjectNG> project = new HashMap<>();
+    project.put("TJI", jiraProjectNG);
+    when(jiraIssueCreateMetadataNG.getProjects()).thenReturn(project);
+
+    JiraIssueTypeNG jiraIssueTypeNG = Mockito.mock(JiraIssueTypeNG.class);
+    Map<String, JiraIssueTypeNG> issueType = new HashMap<>();
+    issueType.put("Bug", jiraIssueTypeNG);
+    when(jiraProjectNG.getIssueTypes()).thenReturn(issueType);
+
+    Map<String, JiraFieldNG> fieldsMap = new HashMap<>();
+    JiraFieldNG jiraFieldNG1 = JiraFieldNG.builder().build();
+    jiraFieldNG1.setKey("QE Assignee");
+    jiraFieldNG1.setName("field1");
+    jiraFieldNG1.setSchema(JiraFieldSchemaNG.builder().type(JiraFieldTypeNG.USER).build());
+
+    JiraFieldNG jiraFieldNG2 = JiraFieldNG.builder().build();
+    jiraFieldNG2.setKey("Test Summary");
+    jiraFieldNG2.setName("field2");
+    jiraFieldNG2.setSchema(JiraFieldSchemaNG.builder().type(JiraFieldTypeNG.STRING).build());
+
+    fieldsMap.put("QE Assignee", jiraFieldNG1);
+    fieldsMap.put("Test Summary", jiraFieldNG2);
+    when(jiraIssueTypeNG.getFields()).thenReturn(fieldsMap);
+
+    JiraClient jiraClient = Mockito.mock(JiraClient.class);
+    PowerMockito.whenNew(JiraClient.class).withAnyArguments().thenReturn(jiraClient);
+    when(jiraClient.getIssueCreateMetadata(any(), any(), any(), any(), any())).thenReturn(jiraIssueCreateMetadataNG);
+
+    JiraTaskNGResponse jiraTaskNGResponse = jiraTaskNGHandler.createIssue(jiraTaskNGParameters);
+  }
+
+  @Test
+  @Owner(developers = YUVRAJ)
+  @Category(UnitTests.class)
+  public void testupdateIssue() {}
 
   private JiraTaskNGParametersBuilder createJiraTaskParametersBuilder() {
     JiraConnectorDTO jiraConnectorDTO =
