@@ -10,8 +10,11 @@ package io.harness.mappers;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.dtos.InstanceDTO;
+import io.harness.dtos.instanceinfo.AzureWebAppInstanceInfoDTO;
+import io.harness.dtos.instanceinfo.GitOpsInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.K8sInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.NativeHelmInstanceInfoDTO;
+import io.harness.dtos.instanceinfo.PdcInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.ServerlessAwsLambdaInstanceInfoDTO;
 import io.harness.models.InstanceDetailsDTO;
 import io.harness.ng.core.k8s.ServiceSpecType;
@@ -40,8 +43,8 @@ public class InstanceDetailsMapper {
   }
 
   private InstanceDetailsDTO toInstanceDetailsDTO(InstanceDTO instanceDTO) {
-    AbstractInstanceSyncHandler instanceSyncHandler =
-        instanceSyncHandlerFactoryService.getInstanceSyncHandler(getInstanceInfoDTOType(instanceDTO));
+    AbstractInstanceSyncHandler instanceSyncHandler = instanceSyncHandlerFactoryService.getInstanceSyncHandler(
+        getInstanceInfoDTOType(instanceDTO), instanceDTO.getInfrastructureKind());
     return InstanceDetailsDTO.builder()
         .artifactName(instanceDTO.getPrimaryArtifact().getTag())
         .connectorRef(instanceDTO.getConnectorRef())
@@ -63,6 +66,12 @@ public class InstanceDetailsMapper {
       return ServiceSpecType.SERVERLESS_AWS_LAMBDA;
     } else if (instanceDTO.getInstanceInfoDTO() instanceof NativeHelmInstanceInfoDTO) {
       return ServiceSpecType.NATIVE_HELM;
+    } else if (instanceDTO.getInstanceInfoDTO() instanceof AzureWebAppInstanceInfoDTO) {
+      return ServiceSpecType.AZURE_WEBAPP;
+    } else if (instanceDTO.getInstanceInfoDTO() instanceof GitOpsInstanceInfoDTO) {
+      return ServiceSpecType.GITOPS;
+    } else if (instanceDTO.getInstanceInfoDTO() instanceof PdcInstanceInfoDTO) {
+      return ((PdcInstanceInfoDTO) instanceDTO.getInstanceInfoDTO()).getServiceType();
     }
     return null;
   }

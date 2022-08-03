@@ -19,6 +19,7 @@ import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.expression.Expression;
 
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.NonFinal;
@@ -42,6 +43,11 @@ public class ServerlessInstanceSyncRequest implements ServerlessCommandRequest {
 
   @Override
   public ServerlessArtifactConfig getServerlessArtifactConfig() {
+    return null;
+  }
+
+  @Override
+  public Map<String, ServerlessArtifactConfig> getSidecarServerlessArtifactConfigs() {
     return null;
   }
 }

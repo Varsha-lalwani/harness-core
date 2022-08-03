@@ -39,6 +39,9 @@ public interface AzureConstants {
   String ACTIVITY_ID = "activityId";
   int NUMBER_OF_LATEST_VERSIONS_TO_KEEP = 3;
   String STEADY_STATE_TIMEOUT_REGEX = "w|d|h|m|s|ms";
+  String ZIP_EXTENSION = ".zip";
+  String JAR_EXTENSION = ".jar";
+  String FILE_RENAME_FAILURE = "Failed to rename the file - [%s] to [%s]";
 
   // VMSS Tags names and values
   String HARNESS_AUTOSCALING_GROUP_TAG_NAME = "HARNESS_REVISION";
@@ -165,6 +168,7 @@ public interface AzureConstants {
   String REPOSITORY_NAME_BLANK_VALIDATION_MSG = "Parameter repositoryName cannot be null or empty";
   String REGISTRY_HOST_BLANK_VALIDATION_MSG = "Parameter registryHost cannot be null or empty";
   String REGISTRY_NAME_BLANK_VALIDATION_MSG = "Parameter registryName cannot be null or empty";
+  String OS_TYPE_NULL_VALIDATION_MSG = "Parameter osType is required and cannot be null";
 
   // Patterns
   String GALLERY_IMAGE_ID_PATTERN =
@@ -253,6 +257,7 @@ public interface AzureConstants {
 
   String REQUEST_TRAFFIC_SHIFT = "Sending request to shift [%.2f] traffic to deployment slot: [%s]";
   String SUCCESS_TRAFFIC_SHIFT = "Traffic percentage updated successfully";
+  String NO_TRAFFIC_SHIFT_REQUIRED = "Traffic percentage update not required";
 
   String UPDATE_STARTUP_COMMAND = "Start updating slot configuration with startup command, %n"
       + "App name: [%s]%nSlot name: [%s]";
@@ -282,15 +287,19 @@ public interface AzureConstants {
   String START_DEPLOYMENT_SLOT = "Start Slot";
   String SLOT_TRAFFIC_PERCENTAGE = "Update Slot Traffic Percentage";
   String SLOT_SWAP = "Swap Slots";
+  String FETCH_ARTIFACT_FILE = "Download artifact file";
   long SLOT_STARTING_STATUS_CHECK_INTERVAL = TimeUnit.SECONDS.toSeconds(15);
   long SLOT_STOPPING_STATUS_CHECK_INTERVAL = TimeUnit.SECONDS.toSeconds(15);
   long ARM_DEPLOYMENT_STATUS_CHECK_INTERVAL = TimeUnit.SECONDS.toSeconds(15);
 
   // Azure Docker Registry Type
   String ACR = "ACR";
+  String ECR = "ECR";
+  String GCR = "GCR";
   String DOCKER_HUB_PRIVATE = "DOCKER_HUB_PRIVATE";
   String DOCKER_HUB_PUBLIC = "DOCKER_HUB_PUBLIC";
   String ARTIFACTORY_PRIVATE_REGISTRY = "ARTIFACTORY_PRIVATE_REGISTRY";
+  String NEXUS_PRIVATE_REGISTRY = "NEXUS_PRIVATE_REGISTRY";
 
   // Web App Instance STATUS
   String WEB_APP_INSTANCE_STATUS_RUNNING = "Running";
@@ -365,4 +374,7 @@ public interface AzureConstants {
   String KUBECFG_CLIENT_ID = "client-id";
   String KUBECFG_CONFIG_MODE = "config-mode";
   String KUBECFG_TENANT_ID = "tenant-id";
+  String ACR_DEFAULT_DOCKER_USERNAME = "00000000-0000-0000-0000-000000000000";
+
+  String ACR_SCOPE = "https://management.azure.com/.default";
 }

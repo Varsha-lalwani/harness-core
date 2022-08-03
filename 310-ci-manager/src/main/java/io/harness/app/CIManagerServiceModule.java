@@ -17,6 +17,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.impl.CIYamlSchemaServiceImpl;
 import io.harness.app.intfc.CIYamlSchemaService;
+import io.harness.aws.AwsClient;
+import io.harness.aws.AwsClientImpl;
 import io.harness.callback.DelegateCallback;
 import io.harness.callback.DelegateCallbackToken;
 import io.harness.callback.MongoDatabase;
@@ -51,7 +53,6 @@ import io.harness.lock.DistributedLockImplementation;
 import io.harness.lock.PersistentLockModule;
 import io.harness.manage.ManagedScheduledExecutorService;
 import io.harness.mongo.MongoPersistence;
-import io.harness.opaclient.OpaClientModule;
 import io.harness.persistence.HPersistence;
 import io.harness.pms.sdk.core.waiter.AsyncWaitEngine;
 import io.harness.redis.RedisConfig;
@@ -205,6 +206,7 @@ public class CIManagerServiceModule extends AbstractModule {
                 .setNameFormat("ci-telemetry-publisher-Thread-%d")
                 .setPriority(Thread.NORM_PRIORITY)
                 .build()));
+    bind(AwsClient.class).to(AwsClientImpl.class);
 
     try {
       bind(TimeScaleDBService.class)
@@ -281,8 +283,6 @@ public class CIManagerServiceModule extends AbstractModule {
     install(new SecretNGManagerClientModule(ciManagerConfiguration.getNgManagerClientConfig(),
         ciManagerConfiguration.getNgManagerServiceSecret(), "CIManager"));
     install(new CILogServiceClientModule(ciManagerConfiguration.getLogServiceConfig()));
-    install(new OpaClientModule(
-        ciManagerConfiguration.getOpaServerConfig().getBaseUrl(), ciManagerConfiguration.getJwtAuthSecret()));
     install(UserClientModule.getInstance(ciManagerConfiguration.getManagerClientConfig(),
         ciManagerConfiguration.getManagerServiceSecret(), CI_MANAGER.getServiceId()));
     install(new TIServiceClientModule(ciManagerConfiguration.getTiServiceConfig()));
@@ -298,5 +298,6 @@ public class CIManagerServiceModule extends AbstractModule {
         return ciManagerConfiguration.getSegmentConfiguration();
       }
     });
+    install(new CICacheRegistrar());
   }
 }

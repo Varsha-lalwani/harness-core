@@ -129,8 +129,8 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
     builder.taskType(TFTaskType.PLAN)
         .terraformCommandUnit(TerraformCommandUnit.Plan)
         .entityId(entityId)
-        .tfModuleSourceInheritSSH(helper.isExportCredentialForSourceModule(
-            ambiance, configuration.getConfigFiles(), stepElementParameters.getType()))
+        .tfModuleSourceInheritSSH(
+            helper.isExportCredentialForSourceModule(configuration.getConfigFiles(), stepElementParameters.getType()))
         .currentStateFileId(helper.getLatestFileId(entityId))
         .workspace(ParameterFieldHelper.getParameterFieldValue(configuration.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(
@@ -150,7 +150,8 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
         .terraformCommand(TerraformPlanCommand.APPLY == planStepParameters.getConfiguration().getCommand()
                 ? TerraformCommand.APPLY
                 : TerraformCommand.DESTROY)
-        .planName(helper.getTerraformPlanName(planStepParameters.getConfiguration().getCommand(), ambiance))
+        .planName(helper.getTerraformPlanName(planStepParameters.getConfiguration().getCommand(), ambiance,
+            planStepParameters.getProvisionerIdentifier().getValue()))
         .timeoutInMillis(
             StepUtils.getTimeoutMillis(stepElementParameters.getTimeout(), TerraformConstants.DEFAULT_TIMEOUT));
 

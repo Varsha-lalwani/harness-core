@@ -1,6 +1,6 @@
 # Any edit in this file should accompany an increment in version.
 name: permissionsConfiguration
-version: 29
+version: 33
 permissions:
   - identifier: core_project_delete
     name: Delete Project
@@ -322,6 +322,14 @@ permissions:
       - account
       - organization
       - project
+  - identifier: core_environmentgroup_access
+    name: Access Environment Group
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
   - identifier: core_audit_view
     name: View Audits
     status: ACTIVE
@@ -420,6 +428,12 @@ permissions:
       - project
   - identifier: core_license_view
     name: View Licenses
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+  - identifier: core_license_edit
+    name: Edit Licenses
     status: ACTIVE
     includeInAllRoles: false
     allowedScopeLevels:
@@ -881,42 +895,56 @@ permissions:
     includeInAllRoles: false
     allowedScopeLevels:
       - account
+      - organization
+      - project
   - identifier: sto_testtarget_edit
     name: Edit test targets
     status: ACTIVE
     includeInAllRoles: false
     allowedScopeLevels:
       - account
-  - identifier: sto_exception_view
-    name: View exceptions
+      - organization
+      - project
+  - identifier: sto_exemption_view
+    name: View exemptions
     status: ACTIVE
     includeInAllRoles: false
     allowedScopeLevels:
       - account
-  - identifier: sto_exception_create
-    name: Create exception
+      - organization
+      - project
+  - identifier: sto_exemption_create
+    name: Create exemption
     status: ACTIVE
     includeInAllRoles: false
     allowedScopeLevels:
       - account
-  - identifier: sto_exception_approve
-    name: Approve exception
+      - organization
+      - project
+  - identifier: sto_exemption_approve
+    name: Approve exemption
     status: ACTIVE
     includeInAllRoles: false
     allowedScopeLevels:
       - account
+      - organization
+      - project
   - identifier: sto_issue_view
     name: View security issue
     status: ACTIVE
     includeInAllRoles: false
     allowedScopeLevels:
       - account
+      - organization
+      - project
   - identifier: sto_scan_view
     name: View security scan
     status: ACTIVE
     includeInAllRoles: false
     allowedScopeLevels:
       - account
+      - organization
+      - project
   - identifier: core_file_view
     name: View Files
     status: ACTIVE
@@ -1057,6 +1085,22 @@ permissions:
     name: Delete a Chaos Workflow
     status: ACTIVE
     includedInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: core_setting_view
+    name: View Settings
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: core_setting_edit
+    name: Edit a Setting
+    status: ACTIVE
+    includeInAllRoles: false
     allowedScopeLevels:
       - account
       - organization

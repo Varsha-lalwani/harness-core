@@ -15,8 +15,10 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.pms.yaml.ParameterField;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -56,18 +58,6 @@ public class ParameterFieldHelper {
     return isNull(fieldValue.getValue()) ? "" : fieldValue.getValue();
   }
 
-  public ParameterField<String> getParameterFieldHandleValueNull(ParameterField<String> fieldValue) {
-    if (isNull(fieldValue)) {
-      return null;
-    }
-
-    if (isNull(fieldValue.getValue())) {
-      fieldValue.setValue("");
-    }
-
-    return fieldValue;
-  }
-
   public Optional<String> getParameterFieldFinalValue(ParameterField<String> fieldValue) {
     if (fieldValue == null) {
       return Optional.empty();
@@ -98,5 +88,19 @@ public class ParameterFieldHelper {
     }
 
     return isNotEmpty(getParameterFieldValue(parameterField));
+  }
+
+  public List<String> getParameterFieldListValue(
+      ParameterField<List<String>> parameterFieldList, boolean allowGenericExpression) {
+    if (!hasListValue(parameterFieldList, false)) {
+      return Collections.emptyList();
+    }
+
+    List<String> parameterFieldListValue = getParameterFieldValue(parameterFieldList);
+    return allowGenericExpression
+        ? parameterFieldListValue
+        : parameterFieldListValue.stream()
+              .filter(listItem -> !NGExpressionUtils.matchesGenericExpressionPattern(listItem))
+              .collect(Collectors.toList());
   }
 }

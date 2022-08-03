@@ -19,6 +19,7 @@ import static io.harness.rule.OwnerRule.TMACARI;
 import static io.harness.rule.OwnerRule.VAIBHAV_SI;
 import static io.harness.rule.OwnerRule.VITALIE;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,7 +27,9 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +37,7 @@ import static org.mockito.Mockito.when;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.common.beans.SetupAbstractionKeys;
 import io.harness.cdng.environment.yaml.EnvironmentYaml;
 import io.harness.cdng.infra.beans.InfraMapping;
@@ -52,21 +56,18 @@ import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.infra.yaml.SshWinRmAwsInfrastructure;
 import io.harness.cdng.infra.yaml.SshWinRmAwsInfrastructure.SshWinRmAwsInfrastructureBuilder;
 import io.harness.cdng.infra.yaml.SshWinRmAzureInfrastructure;
-import io.harness.cdng.k8s.K8sStepHelper;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;
-import io.harness.connector.ConnectorResponseDTO;
-import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorCredentialDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpCredentialType;
 import io.harness.delegate.beans.connector.gcpconnector.GcpManualDetailsDTO;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.delegate.task.ssh.PdcSshInfraDelegateConfig;
+import io.harness.delegate.task.ssh.PdcWinRmInfraDelegateConfig;
 import io.harness.exception.InvalidRequestException;
-import io.harness.gitsync.sdk.EntityValidityDetails;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogLevel;
 import io.harness.logstreaming.NGLogCallback;
@@ -75,7 +76,7 @@ import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.ng.core.environment.services.EnvironmentService;
 import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.pms.contracts.ambiance.Ambiance;
-import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
+import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outcome.OutcomeService;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
@@ -87,6 +88,7 @@ import io.harness.rule.Owner;
 import io.harness.steps.OutputExpressionConstants;
 import io.harness.steps.environment.EnvironmentOutcome;
 import io.harness.steps.shellscript.SshInfraDelegateConfigOutput;
+import io.harness.steps.shellscript.WinRmInfraDelegateConfigOutput;
 
 import com.google.inject.name.Named;
 import java.util.Arrays;
@@ -94,7 +96,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -108,12 +109,11 @@ import org.mockito.junit.MockitoRule;
 public class InfrastructureStepTest extends CategoryTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
   @Mock EnvironmentService environmentService;
-  @Mock ConnectorService connectorService;
   @InjectMocks private InfrastructureStep infrastructureStep;
 
   @Mock ExecutionSweepingOutputService executionSweepingOutputService;
   @Mock OutcomeService outcomeService;
-  @Mock K8sStepHelper k8sStepHelper;
+  @Mock CDStepHelper cdStepHelper;
   @Mock K8sInfraDelegateConfig k8sInfraDelegateConfig;
   @Mock InfrastructureStepHelper infrastructureStepHelper;
   @Mock NGLogCallback ngLogCallback;
@@ -136,7 +136,7 @@ public class InfrastructureStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testExecSyncAfterRbac() {
     Ambiance ambiance = Ambiance.newBuilder().putSetupAbstractions(SetupAbstractionKeys.accountId, ACCOUNT_ID).build();
-
+    ParameterField<String> connectorRef = ParameterField.createValueField("account.gcp-sa");
     GcpConnectorDTO gcpConnectorServiceAccount =
         GcpConnectorDTO.builder()
             .credential(GcpConnectorCredentialDTO.builder()
@@ -144,15 +144,13 @@ public class InfrastructureStepTest extends CategoryTest {
                             .config(GcpManualDetailsDTO.builder().build())
                             .build())
             .build();
-    doReturn(Optional.of(ConnectorResponseDTO.builder()
-                             .connector(ConnectorInfoDTO.builder().connectorConfig(gcpConnectorServiceAccount).build())
-                             .entityValidityDetails(EntityValidityDetails.builder().valid(true).build())
-                             .build()))
-        .when(connectorService)
-        .get(any(), any(), any(), eq("gcp-sa"));
+
+    doReturn(ConnectorInfoDTO.builder().connectorConfig(gcpConnectorServiceAccount).build())
+        .when(infrastructureStepHelper)
+        .validateAndGetConnector(eq(connectorRef), eq(ambiance), eq(ngLogCallback));
 
     Infrastructure infrastructureSpec = K8sGcpInfrastructure.builder()
-                                            .connectorRef(ParameterField.createValueField("account.gcp-sa"))
+                                            .connectorRef(connectorRef)
                                             .namespace(ParameterField.createValueField("namespace"))
                                             .releaseName(ParameterField.createValueField("releaseName"))
                                             .cluster(ParameterField.createValueField("cluster"))
@@ -166,7 +164,7 @@ public class InfrastructureStepTest extends CategoryTest {
         .thenReturn(EnvironmentOutcome.builder().build());
     when(outcomeService.resolve(any(), eq(RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.SERVICE))))
         .thenReturn(ServiceStepOutcome.builder().type(ServiceSpecType.KUBERNETES).build());
-    when(k8sStepHelper.getK8sInfraDelegateConfig(any(), eq(ambiance))).thenReturn(k8sInfraDelegateConfig);
+    when(cdStepHelper.getK8sInfraDelegateConfig(any(), eq(ambiance))).thenReturn(k8sInfraDelegateConfig);
 
     infrastructureStep.executeSyncAfterRbac(ambiance, infrastructureSpec, StepInputPackage.builder().build(), null);
 
@@ -180,7 +178,7 @@ public class InfrastructureStepTest extends CategoryTest {
 
     // Verifies `getInfrastructureLogCallback` is called without `shouldOpenStream` for 3 times -> internal method calls
     // Verifies `ngLogCallback` is used at least 2 times for the static logs
-    verify(infrastructureStepHelper, atLeast(3)).getInfrastructureLogCallback(ambiance);
+    verify(infrastructureStepHelper, atLeast(2)).getInfrastructureLogCallback(ambiance);
     verify(ngLogCallback, atLeast(2)).saveExecutionLog(anyString());
   }
 
@@ -201,7 +199,7 @@ public class InfrastructureStepTest extends CategoryTest {
         .thenReturn(EnvironmentOutcome.builder().build());
     when(outcomeService.resolve(any(), eq(RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.SERVICE))))
         .thenReturn(ServiceStepOutcome.builder().type(ServiceSpecType.SSH).build());
-    when(k8sStepHelper.getSshInfraDelegateConfig(any(), eq(ambiance))).thenReturn(pdcSshInfraDelegateConfig);
+    when(cdStepHelper.getSshInfraDelegateConfig(any(), eq(ambiance))).thenReturn(pdcSshInfraDelegateConfig);
 
     infrastructureStep.executeSyncAfterRbac(ambiance, infrastructureSpec, StepInputPackage.builder().build(), null);
 
@@ -209,10 +207,41 @@ public class InfrastructureStepTest extends CategoryTest {
         ArgumentCaptor.forClass(SshInfraDelegateConfigOutput.class);
     verify(executionSweepingOutputService, times(1))
         .consume(eq(ambiance), eq(OutputExpressionConstants.SSH_INFRA_DELEGATE_CONFIG_OUTPUT_NAME),
-            pdcConfigOutputCaptor.capture(), eq(StepOutcomeGroup.STAGE.name()));
-    SshInfraDelegateConfigOutput k8sInfraDelegateConfigOutput = pdcConfigOutputCaptor.getValue();
-    assertThat(k8sInfraDelegateConfigOutput).isNotNull();
-    assertThat(k8sInfraDelegateConfigOutput.getSshInfraDelegateConfig()).isEqualTo(pdcSshInfraDelegateConfig);
+            pdcConfigOutputCaptor.capture(), eq(StepCategory.STAGE.name()));
+    SshInfraDelegateConfigOutput pdcInfraDelegateConfigOutput = pdcConfigOutputCaptor.getValue();
+    assertThat(pdcInfraDelegateConfigOutput).isNotNull();
+    assertThat(pdcInfraDelegateConfigOutput.getSshInfraDelegateConfig()).isEqualTo(pdcSshInfraDelegateConfig);
+  }
+
+  @Test
+  @Owner(developers = ACASIAN)
+  @Category(UnitTests.class)
+  public void testExecSyncAfterRbacWithPdcInfraWinRm() {
+    Ambiance ambiance = Ambiance.newBuilder().putSetupAbstractions(SetupAbstractionKeys.accountId, ACCOUNT_ID).build();
+
+    PdcWinRmInfraDelegateConfig pdcWinRmInfraDelegateConfig = PdcWinRmInfraDelegateConfig.builder().build();
+    Infrastructure infrastructureSpec = PdcInfrastructure.builder()
+                                            .credentialsRef(ParameterField.createValueField("sshKeyRef"))
+                                            .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2")))
+                                            .build();
+
+    when(executionSweepingOutputService.resolve(
+             any(), eq(RefObjectUtils.getSweepingOutputRefObject(OutputExpressionConstants.ENVIRONMENT))))
+        .thenReturn(EnvironmentOutcome.builder().build());
+    when(outcomeService.resolve(any(), eq(RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.SERVICE))))
+        .thenReturn(ServiceStepOutcome.builder().type(ServiceSpecType.WINRM).build());
+    when(cdStepHelper.getWinRmInfraDelegateConfig(any(), eq(ambiance))).thenReturn(pdcWinRmInfraDelegateConfig);
+
+    infrastructureStep.executeSyncAfterRbac(ambiance, infrastructureSpec, StepInputPackage.builder().build(), null);
+
+    ArgumentCaptor<WinRmInfraDelegateConfigOutput> pdcConfigOutputCaptor =
+        ArgumentCaptor.forClass(WinRmInfraDelegateConfigOutput.class);
+    verify(executionSweepingOutputService, times(1))
+        .consume(eq(ambiance), eq(OutputExpressionConstants.WINRM_INFRA_DELEGATE_CONFIG_OUTPUT_NAME),
+            pdcConfigOutputCaptor.capture(), eq(StepCategory.STAGE.name()));
+    WinRmInfraDelegateConfigOutput pdcInfraDelegateConfigOutput = pdcConfigOutputCaptor.getValue();
+    assertThat(pdcInfraDelegateConfigOutput).isNotNull();
+    assertThat(pdcInfraDelegateConfigOutput.getWinRmInfraDelegateConfig()).isEqualTo(pdcWinRmInfraDelegateConfig);
   }
 
   @Test
@@ -409,7 +438,12 @@ public class InfrastructureStepTest extends CategoryTest {
     k8SDirectInfrastructureBuilder.connectorRef(ParameterField.createValueField("connector"));
     infrastructureStep.validateInfrastructure(k8SDirectInfrastructureBuilder.build(), null);
 
-    k8SDirectInfrastructureBuilder.connectorRef(new ParameterField<>(null, null, true, "expression1", null, true));
+    ParameterField param = new ParameterField<>(null, null, true, "expression1", null, true);
+    k8SDirectInfrastructureBuilder.connectorRef(param);
+    doThrow(new InvalidRequestException("Unresolved Expression : [expression1]"))
+        .when(infrastructureStepHelper)
+        .validateExpression(eq(param), any());
+
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(k8SDirectInfrastructureBuilder.build(), null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Unresolved Expression : [expression1]");
@@ -431,11 +465,15 @@ public class InfrastructureStepTest extends CategoryTest {
   @Owner(developers = FILIP)
   @Category(UnitTests.class)
   public void testValidatePdcInfrastructureSshKeyExpression() {
-    PdcInfrastructure infrastructure =
-        PdcInfrastructure.builder()
-            .credentialsRef(new ParameterField<>(null, null, true, "expression1", null, true))
-            .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2")))
-            .build();
+    ParameterField credentialsRef = new ParameterField<>(null, null, true, "expression1", null, true);
+    PdcInfrastructure infrastructure = PdcInfrastructure.builder()
+                                           .credentialsRef(credentialsRef)
+                                           .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2")))
+                                           .build();
+
+    doThrow(new InvalidRequestException("Unresolved Expression : [expression1]"))
+        .when(infrastructureStepHelper)
+        .validateExpression(eq(credentialsRef));
 
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure, null))
         .isInstanceOf(InvalidRequestException.class)
@@ -446,12 +484,16 @@ public class InfrastructureStepTest extends CategoryTest {
   @Owner(developers = FILIP)
   @Category(UnitTests.class)
   public void testValidatePdcInfrastructureHostsAndConnectorAreExpressions() {
+    ParameterField<String> credentialsRef = ParameterField.createValueField("ssh-key-ref");
+    ParameterField hosts = new ParameterField<>(null, null, true, "expression1", null, true);
+    ParameterField connectorRef = new ParameterField<>(null, null, true, "expression2", null, true);
     PdcInfrastructure infrastructure =
-        PdcInfrastructure.builder()
-            .credentialsRef(ParameterField.createValueField("ssh-key-ref"))
-            .hosts(new ParameterField<>(null, null, true, "expression1", null, true))
-            .connectorRef(new ParameterField<>(null, null, true, "expression2", null, true))
-            .build();
+        PdcInfrastructure.builder().credentialsRef(credentialsRef).hosts(hosts).connectorRef(connectorRef).build();
+
+    doNothing().when(infrastructureStepHelper).validateExpression(eq(credentialsRef));
+    doThrow(new InvalidRequestException("Unresolved Expressions : [expression1] , [expression2]"))
+        .when(infrastructureStepHelper)
+        .requireOne(eq(hosts), eq(connectorRef));
 
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure, null))
         .isInstanceOf(InvalidRequestException.class)
@@ -476,14 +518,17 @@ public class InfrastructureStepTest extends CategoryTest {
   @Owner(developers = FILIP)
   @Category(UnitTests.class)
   public void testValidateSshWinRmAzureInfrastructureCredentialsIsExpression() {
-    SshWinRmAzureInfrastructure infrastructure =
-        SshWinRmAzureInfrastructure.builder()
-            .credentialsRef(new ParameterField<>(null, null, true, "expression1", null, true))
-            .connectorRef(ParameterField.createValueField("connector-ref"))
-            .subscriptionId(ParameterField.createValueField("subscription-id"))
-            .resourceGroup(ParameterField.createValueField("resource-group"))
-            .build();
+    ParameterField credentialsRef = new ParameterField<>(null, null, true, "expression1", null, true);
+    SshWinRmAzureInfrastructure infrastructure = SshWinRmAzureInfrastructure.builder()
+                                                     .credentialsRef(credentialsRef)
+                                                     .connectorRef(ParameterField.createValueField("connector-ref"))
+                                                     .subscriptionId(ParameterField.createValueField("subscription-id"))
+                                                     .resourceGroup(ParameterField.createValueField("resource-group"))
+                                                     .build();
 
+    doThrow(new InvalidRequestException("Unresolved Expression : [expression1]"))
+        .when(infrastructureStepHelper)
+        .validateExpression(any(), any(), any(), eq(credentialsRef));
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure, null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Unresolved Expression : [expression1]");
@@ -493,14 +538,17 @@ public class InfrastructureStepTest extends CategoryTest {
   @Owner(developers = FILIP)
   @Category(UnitTests.class)
   public void testValidateSshWinRmAzureInfrastructureConnectorIsExpression() {
-    SshWinRmAzureInfrastructure infrastructure =
-        SshWinRmAzureInfrastructure.builder()
-            .credentialsRef(ParameterField.createValueField("credentials-ref"))
-            .connectorRef(new ParameterField<>(null, null, true, "expression1", null, true))
-            .subscriptionId(ParameterField.createValueField("subscription-id"))
-            .resourceGroup(ParameterField.createValueField("resource-group"))
-            .build();
+    ParameterField connectorRef = new ParameterField<>(null, null, true, "expression1", null, true);
+    SshWinRmAzureInfrastructure infrastructure = SshWinRmAzureInfrastructure.builder()
+                                                     .credentialsRef(ParameterField.createValueField("credentials-ref"))
+                                                     .connectorRef(connectorRef)
+                                                     .subscriptionId(ParameterField.createValueField("subscription-id"))
+                                                     .resourceGroup(ParameterField.createValueField("resource-group"))
+                                                     .build();
 
+    doThrow(new InvalidRequestException("Unresolved Expression : [expression1]"))
+        .when(infrastructureStepHelper)
+        .validateExpression(eq(connectorRef), any(), any(), any());
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure, null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Unresolved Expression : [expression1]");
@@ -510,14 +558,17 @@ public class InfrastructureStepTest extends CategoryTest {
   @Owner(developers = FILIP)
   @Category(UnitTests.class)
   public void testValidateSshWinRmAzureInfrastructureSubscriptionIsExpression() {
-    SshWinRmAzureInfrastructure infrastructure =
-        SshWinRmAzureInfrastructure.builder()
-            .credentialsRef(ParameterField.createValueField("credentials-ref"))
-            .connectorRef(ParameterField.createValueField("connector-ref"))
-            .subscriptionId(new ParameterField<>(null, null, true, "expression2", null, true))
-            .resourceGroup(ParameterField.createValueField("resource-group"))
-            .build();
+    ParameterField subscriptionId = new ParameterField<>(null, null, true, "expression2", null, true);
+    SshWinRmAzureInfrastructure infrastructure = SshWinRmAzureInfrastructure.builder()
+                                                     .credentialsRef(ParameterField.createValueField("credentials-ref"))
+                                                     .connectorRef(ParameterField.createValueField("connector-ref"))
+                                                     .subscriptionId(subscriptionId)
+                                                     .resourceGroup(ParameterField.createValueField("resource-group"))
+                                                     .build();
 
+    doThrow(new InvalidRequestException("Unresolved Expression : [expression2]"))
+        .when(infrastructureStepHelper)
+        .validateExpression(any(), eq(subscriptionId), any(), any());
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure, null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Unresolved Expression : [expression2]");
@@ -527,14 +578,17 @@ public class InfrastructureStepTest extends CategoryTest {
   @Owner(developers = FILIP)
   @Category(UnitTests.class)
   public void testValidateSshWinRmAzureInfrastructureResourceGroupIsExpression() {
-    SshWinRmAzureInfrastructure infrastructure =
-        SshWinRmAzureInfrastructure.builder()
-            .credentialsRef(ParameterField.createValueField("credentials-ref"))
-            .connectorRef(ParameterField.createValueField("connector-ref"))
-            .subscriptionId(ParameterField.createValueField("subscription-id"))
-            .resourceGroup(new ParameterField<>(null, null, true, "expression2", null, true))
-            .build();
+    ParameterField resourceGroup = new ParameterField<>(null, null, true, "expression2", null, true);
+    SshWinRmAzureInfrastructure infrastructure = SshWinRmAzureInfrastructure.builder()
+                                                     .credentialsRef(ParameterField.createValueField("credentials-ref"))
+                                                     .connectorRef(ParameterField.createValueField("connector-ref"))
+                                                     .subscriptionId(ParameterField.createValueField("subscription-id"))
+                                                     .resourceGroup(resourceGroup)
+                                                     .build();
 
+    doThrow(new InvalidRequestException("Unresolved Expression : [expression2]"))
+        .when(infrastructureStepHelper)
+        .validateExpression(any(), any(), eq(resourceGroup), any());
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure, null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Unresolved Expression : [expression2]");
@@ -544,6 +598,11 @@ public class InfrastructureStepTest extends CategoryTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testValidateConnector() {
+    ParameterField<String> gcpSaConnectorRef = ParameterField.createValueField("account.gcp-sa");
+    ParameterField<String> gcpDelegateConnectorRef = ParameterField.createValueField("account.gcp-delegate");
+    ParameterField<String> missingConnectorRef = ParameterField.createValueField("account.missing");
+
+    Ambiance ambiance = Ambiance.newBuilder().putSetupAbstractions(SetupAbstractionKeys.accountId, ACCOUNT_ID).build();
     GcpConnectorDTO gcpConnectorServiceAccount =
         GcpConnectorDTO.builder()
             .credential(GcpConnectorCredentialDTO.builder()
@@ -556,30 +615,31 @@ public class InfrastructureStepTest extends CategoryTest {
             .credential(
                 GcpConnectorCredentialDTO.builder().gcpCredentialType(GcpCredentialType.INHERIT_FROM_DELEGATE).build())
             .build();
-    doReturn(Optional.empty()).when(connectorService).get(any(), any(), any(), eq("missing"));
-    doReturn(Optional.of(ConnectorResponseDTO.builder()
-                             .entityValidityDetails(EntityValidityDetails.builder().valid(true).build())
-                             .connector(ConnectorInfoDTO.builder().connectorConfig(gcpConnectorServiceAccount).build())
-                             .build()))
-        .when(connectorService)
-        .get(any(), any(), any(), eq("gcp-sa"));
-    doReturn(
-        Optional.of(ConnectorResponseDTO.builder()
-                        .entityValidityDetails(EntityValidityDetails.builder().valid(true).build())
-                        .connector(ConnectorInfoDTO.builder().connectorConfig(gcpConnectorInheritFromDelegate).build())
-                        .build()))
-        .when(connectorService)
-        .get(any(), any(), any(), eq("gcp-delegate"));
 
-    assertConnectorValidationMessage(
-        K8sGcpInfrastructure.builder().connectorRef(ParameterField.createValueField("account.missing")).build(),
+    doThrow(new InvalidRequestException(
+                format("Connector not found for identifier : [%s]", missingConnectorRef.getValue())))
+        .when(infrastructureStepHelper)
+        .validateAndGetConnector(eq(missingConnectorRef), eq(ambiance), any());
+
+    doReturn(ConnectorInfoDTO.builder().connectorConfig(gcpConnectorServiceAccount).build())
+        .when(infrastructureStepHelper)
+        .validateAndGetConnector(eq(gcpSaConnectorRef), eq(ambiance), any());
+
+    doReturn(ConnectorInfoDTO.builder().connectorConfig(gcpConnectorInheritFromDelegate).build())
+        .when(infrastructureStepHelper)
+        .validateAndGetConnector(eq(gcpDelegateConnectorRef), eq(ambiance), any());
+
+    assertConnectorValidationMessage(K8sGcpInfrastructure.builder().connectorRef(missingConnectorRef).build(),
         "Connector not found for identifier : [account.missing]");
 
-    assertThatCode(
-        ()
-            -> infrastructureStep.validateConnector(
-                K8sGcpInfrastructure.builder().connectorRef(ParameterField.createValueField("account.gcp-sa")).build(),
-                Ambiance.newBuilder().putSetupAbstractions(SetupAbstractionKeys.accountId, ACCOUNT_ID).build()))
+    assertThatCode(()
+                       -> infrastructureStep.validateConnector(
+                           K8sGcpInfrastructure.builder().connectorRef(gcpSaConnectorRef).build(), ambiance))
+        .doesNotThrowAnyException();
+
+    assertThatCode(()
+                       -> infrastructureStep.validateConnector(
+                           K8sGcpInfrastructure.builder().connectorRef(gcpDelegateConnectorRef).build(), ambiance))
         .doesNotThrowAnyException();
   }
 
@@ -661,18 +721,24 @@ public class InfrastructureStepTest extends CategoryTest {
     SshWinRmAwsInfrastructureBuilder builder = SshWinRmAwsInfrastructure.builder();
 
     infrastructureStep.validateInfrastructure(builder.build(), null);
+    ParameterField credentialsRef = new ParameterField<>(null, null, true, "expression1", null, true);
+    builder.credentialsRef(credentialsRef).connectorRef(ParameterField.createValueField("value")).build();
 
-    builder.credentialsRef(new ParameterField<>(null, null, true, "expression1", null, true))
-        .connectorRef(ParameterField.createValueField("value"))
-        .build();
+    doThrow(new InvalidRequestException("Unresolved Expression : [expression1]"))
+        .when(infrastructureStepHelper)
+        .validateExpression(any(), eq(credentialsRef), any());
 
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(builder.build(), null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Unresolved Expression : [expression1]");
 
+    ParameterField connectorRef2 = new ParameterField<>(null, null, true, "expression2", null, true);
     builder.connectorRef(new ParameterField<>(null, null, true, "expression2", null, true))
         .credentialsRef(ParameterField.createValueField("value"))
         .build();
+    doThrow(new InvalidRequestException("Unresolved Expression : [expression2]"))
+        .when(infrastructureStepHelper)
+        .validateExpression(eq(connectorRef2), any(), any());
 
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(builder.build(), null))
         .isInstanceOf(InvalidRequestException.class)
@@ -687,8 +753,6 @@ public class InfrastructureStepTest extends CategoryTest {
                                                    .connectorRef(ParameterField.createValueField("connector-ref"))
                                                    .subscriptionId(ParameterField.createValueField("subscription-id"))
                                                    .resourceGroup(ParameterField.createValueField("resource-group"))
-                                                   .webApp(ParameterField.createValueField("webApp"))
-                                                   .deploymentSlot(ParameterField.createValueField("deployment-slot"))
                                                    .build();
 
     infrastructureStep.validateInfrastructure(infrastructure, null);

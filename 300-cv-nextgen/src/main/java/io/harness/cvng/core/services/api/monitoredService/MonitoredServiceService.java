@@ -66,6 +66,8 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
 
   List<MonitoredService> list(@NonNull ProjectParams projectParams, List<String> identifiers);
 
+  List<MonitoredService> listWithFilter(@NonNull ProjectParams projectParams, List<String> identifiers, String filter);
+
   PageResponse<MonitoredServiceListItemDTO> list(ProjectParams projectParams, String environmentIdentifiers,
       Integer offset, Integer pageSize, String filter, boolean servicesAtRiskFilter);
 
@@ -105,7 +107,7 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
 
   List<MonitoredServiceChangeDetailSLO> getMonitoredServiceChangeDetails(
       ProjectParams projectParams, String monitoredServiceIdentifier, Long startTime, Long endTime);
-  void sendNotification(MonitoredService monitoredService);
+  void handleNotification(MonitoredService monitoredService);
   PageResponse<NotificationRuleResponse> getNotificationRules(
       ProjectParams projectParams, String monitoredServiceIdentifier, PageParams pageParams);
   void beforeNotificationRuleDelete(ProjectParams projectParams, String notificationRuleRef);

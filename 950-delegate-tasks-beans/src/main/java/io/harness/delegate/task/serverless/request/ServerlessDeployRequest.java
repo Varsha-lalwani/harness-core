@@ -20,6 +20,7 @@ import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.expression.Expression;
 import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 
+import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.NonFinal;
@@ -32,6 +33,7 @@ public class ServerlessDeployRequest implements ServerlessCommandRequest, Nested
   ServerlessCommandType serverlessCommandType;
   String commandName;
   @NonFinal @Expression(ALLOW_SECRETS) ServerlessArtifactConfig serverlessArtifactConfig;
+  @NonFinal @Expression(ALLOW_SECRETS) Map<String, ServerlessArtifactConfig> sidecarServerlessArtifactConfigs;
   CommandUnitsProgress commandUnitsProgress;
   @NonFinal @Expression(ALLOW_SECRETS) ServerlessManifestConfig serverlessManifestConfig;
   @NonFinal @Expression(ALLOW_SECRETS) ServerlessInfraConfig serverlessInfraConfig;
