@@ -612,6 +612,7 @@ roles:
         - core_variable_view
         - core_template_view
         - core_template_access
+        - core_template_copy
         - core_setting_view
       allowedScopeLevels:
         - project
