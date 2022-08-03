@@ -30,7 +30,7 @@ import org.springframework.data.annotation.TypeAlias;
 @FieldNameConstants(innerTypeName = "CustomSecretManagerConnectorKeys")
 @Entity(value = "connectors", noClassnameStored = true)
 @Persistent
-@TypeAlias("CustomSecretManagerConnector")
+@TypeAlias("io.harness.connector.entities.embedded.customsecretmanager.CustomSecretManagerConnector")
 public class CustomSecretManagerConnector extends Connector {
   private boolean onDelegate;
   private boolean isDefault;
