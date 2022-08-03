@@ -68,6 +68,7 @@ import io.harness.connector.service.scm.ScmDelegateClient;
 import io.harness.connector.task.ConnectorValidationHandler;
 import io.harness.connector.task.NotSupportedValidationHandler;
 import io.harness.connector.task.artifactory.ArtifactoryValidationHandler;
+import io.harness.connector.task.NotSupportedValidationHandler;
 import io.harness.connector.task.aws.AwsValidationHandler;
 import io.harness.connector.task.azure.AzureValidationHandler;
 import io.harness.connector.task.docker.DockerValidationHandler;
