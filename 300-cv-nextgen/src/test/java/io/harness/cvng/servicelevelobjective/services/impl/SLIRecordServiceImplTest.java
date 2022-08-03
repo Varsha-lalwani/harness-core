@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
+import io.harness.cvng.core.entities.EntityDisableTime;
 import io.harness.cvng.core.utils.DateTimeUtils;
 import io.harness.cvng.servicelevelobjective.beans.SLIMissingDataType;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardWidget.Point;
@@ -32,6 +33,7 @@ import io.harness.cvng.servicelevelobjective.entities.SLIRecord;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIRecordKeys;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIRecordParam;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIState;
+import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 
@@ -44,6 +46,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -55,14 +58,19 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
   @Spy @Inject private SLIRecordServiceImpl sliRecordService;
   @Inject private Clock clock;
   @Inject private HPersistence hPersistence;
+
+  //@Inject BuilderFactory builderFactory;
   private String verificationTaskId;
   private String sliId;
+
+  private ServiceLevelIndicator serviceLevelIndicator;
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
     SLIRecordServiceImpl.MAX_NUMBER_OF_POINTS = 5;
     verificationTaskId = generateUuid();
     sliId = generateUuid();
+    serviceLevelIndicator = null; // builderFactory.ratioServiceLevelIndicatorBuilder().uuid(sliId).build();
   }
   @Test
   @Owner(developers = KAMAL)
@@ -207,7 +215,8 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testGetGraphData_noData() {
     assertThat(
-        sliRecordService.getGraphData(generateUuid(), clock.instant(), clock.instant(), 10, SLIMissingDataType.GOOD, 0)
+        sliRecordService
+            .getGraphData(serviceLevelIndicator, clock.instant(), clock.instant(), 10, SLIMissingDataType.GOOD, 0)
             .getSloPerformanceTrend())
         .isEmpty();
   }
@@ -221,8 +230,8 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
     createData(startTime, sliStates);
 
     assertThat(sliRecordService
-                   .getGraphData(sliId, startTime.minus(Duration.ofHours(1)), startTime.plus(Duration.ofMinutes(11)),
-                       10, SLIMissingDataType.GOOD, 0)
+                   .getGraphData(serviceLevelIndicator, startTime.minus(Duration.ofHours(1)),
+                       startTime.plus(Duration.ofMinutes(11)), 10, SLIMissingDataType.GOOD, 0)
                    .getSloPerformanceTrend())
         .hasSize(6);
   }
@@ -236,8 +245,8 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
     createData(startTime, sliStates);
 
     assertThat(sliRecordService
-                   .getGraphData(sliId, startTime.minus(Duration.ofHours(10)), startTime.plus(Duration.ofMinutes(1000)),
-                       10, SLIMissingDataType.GOOD, 0)
+                   .getGraphData(serviceLevelIndicator, startTime.minus(Duration.ofHours(10)),
+                       startTime.plus(Duration.ofMinutes(1000)), 10, SLIMissingDataType.GOOD, 0)
                    .getSloPerformanceTrend())
         .hasSize(6);
   }
@@ -250,10 +259,10 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
     List<SLIState> sliStates = Arrays.asList(BAD, GOOD, GOOD, NO_DATA, GOOD, GOOD, BAD, BAD, BAD, BAD);
     createData(startTime, sliStates);
 
-    assertThat(
-        sliRecordService
-            .getGraphData(sliId, startTime, startTime.plus(Duration.ofMinutes(20)), 10, SLIMissingDataType.GOOD, 1)
-            .isRecalculatingSLI())
+    assertThat(sliRecordService
+                   .getGraphData(serviceLevelIndicator, startTime, startTime.plus(Duration.ofMinutes(20)), 10,
+                       SLIMissingDataType.GOOD, 1)
+                   .isRecalculatingSLI())
         .isTrue();
   }
 
@@ -384,6 +393,102 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
     assertThat(errorBudgetBurnRate).isCloseTo(3.333, offset(0.001));
   }
 
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetDisabledMinBetweenRecords_minDataWithLargeRange() {
+    long startTime = 1659345900000L;
+    long endTime = 1659345960000L;
+    List<EntityDisableTime> disableTimes = new ArrayList<>();
+    disableTimes.add(EntityDisableTime.builder().startTime(1659345900000L).endTime(1659345980000L).build());
+    Pair<Long, Long> result = sliRecordService.getDisabledMinBetweenRecords(startTime, endTime, 0, disableTimes);
+    assertThat(result.getLeft()).isEqualTo(1);
+    assertThat(result.getRight()).isEqualTo(0);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetDisabledMinBetweenRecords_minDataWithSmallRange() {
+    long startTime = 1659345900000L;
+    long endTime = 1659345960000L;
+    List<EntityDisableTime> disableTimes = new ArrayList<>();
+    disableTimes.add(EntityDisableTime.builder().startTime(1659345900000L).endTime(1659345950000L).build());
+    Pair<Long, Long> result = sliRecordService.getDisabledMinBetweenRecords(startTime, endTime, 0, disableTimes);
+    assertThat(result.getLeft()).isEqualTo(0);
+    assertThat(result.getRight()).isEqualTo(1);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetDisabledMinBetweenRecords_minDataWithExactRange() {
+    long startTime = 1659345900000L;
+    long endTime = 1659345960000L;
+    List<EntityDisableTime> disableTimes = new ArrayList<>();
+    disableTimes.add(EntityDisableTime.builder().startTime(1659345900000L).endTime(1659345960000L).build());
+    Pair<Long, Long> result = sliRecordService.getDisabledMinBetweenRecords(startTime, endTime, 0, disableTimes);
+    assertThat(result.getLeft()).isEqualTo(1);
+    assertThat(result.getRight()).isEqualTo(1);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetDisabledMinBetweenRecords_minDataWithExtraRanges() {
+    long startTime = 1659345900000L;
+    long endTime = 1659345960000L;
+    List<EntityDisableTime> disableTimes = new ArrayList<>();
+    disableTimes.add(EntityDisableTime.builder().startTime(1659344900000L).endTime(1659345680000L).build());
+    disableTimes.add(EntityDisableTime.builder().startTime(1659345700000L).endTime(1659345780000L).build());
+    disableTimes.add(EntityDisableTime.builder().startTime(1659345800000L).endTime(1659345880000L).build());
+    disableTimes.add(EntityDisableTime.builder().startTime(1659345900000L).endTime(1659345940000L).build());
+    disableTimes.add(EntityDisableTime.builder().startTime(1659345950000L).endTime(1659345980000L).build());
+    disableTimes.add(EntityDisableTime.builder().startTime(1659346500000L).endTime(1659346580000L).build());
+    Pair<Long, Long> result = sliRecordService.getDisabledMinBetweenRecords(startTime, endTime, 0, disableTimes);
+    assertThat(result.getLeft()).isEqualTo(1);
+    assertThat(result.getRight()).isEqualTo(5);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetDisabledMinBetweenRecords_withLargeRange() {
+    long startTime = 1659345900000L;
+    long endTime = 1659346500000L;
+    List<EntityDisableTime> disableTimes = new ArrayList<>();
+    disableTimes.add(EntityDisableTime.builder().startTime(1659345900000L).endTime(1659346600000L).build());
+    Pair<Long, Long> result = sliRecordService.getDisabledMinBetweenRecords(startTime, endTime, 0, disableTimes);
+    assertThat(result.getLeft()).isEqualTo(10);
+    assertThat(result.getRight()).isEqualTo(0);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetDisabledMinBetweenRecords_withSmallRange() {
+    long startTime = 1659345900000L;
+    long endTime = 1659346500000L;
+    List<EntityDisableTime> disableTimes = new ArrayList<>();
+    disableTimes.add(EntityDisableTime.builder().startTime(1659345900000L).endTime(1659346300000L).build());
+    Pair<Long, Long> result = sliRecordService.getDisabledMinBetweenRecords(startTime, endTime, 0, disableTimes);
+    assertThat(result.getLeft()).isEqualTo(6);
+    assertThat(result.getRight()).isEqualTo(1);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetDisabledMinBetweenRecords_withExactRange() {
+    long startTime = 1659345900000L;
+    long endTime = 1659346500000L;
+    List<EntityDisableTime> disableTimes = new ArrayList<>();
+    disableTimes.add(EntityDisableTime.builder().startTime(1659345900000L).endTime(1659346500000L).build());
+    Pair<Long, Long> result = sliRecordService.getDisabledMinBetweenRecords(startTime, endTime, 0, disableTimes);
+    assertThat(result.getLeft()).isEqualTo(10);
+    assertThat(result.getRight()).isEqualTo(1);
+  }
+
   private void createData(Instant startTime, List<SLIState> sliStates) {
     List<SLIRecordParam> sliRecordParams = getSLIRecordParam(startTime, sliStates);
     sliRecordService.create(sliRecordParams, sliId, verificationTaskId, 0);
@@ -428,9 +533,9 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
     Instant customStartTime = startTime.plus(Duration.ofMinutes(customMinutesStart));
     Instant customEndTime = startTime.plus(Duration.ofMinutes(sliStates.size() - customMinutesEnd + 1));
 
-    SLOGraphData sloGraphData =
-        sliRecordService.getGraphData(sliId, startTime, startTime.plus(Duration.ofMinutes(sliStates.size() + 1)), 100,
-            sliMissingDataType, 0, TimeRangeParams.builder().startTime(customStartTime).endTime(customEndTime).build());
+    SLOGraphData sloGraphData = sliRecordService.getGraphData(serviceLevelIndicator, startTime,
+        startTime.plus(Duration.ofMinutes(sliStates.size() + 1)), 100, sliMissingDataType, 0,
+        TimeRangeParams.builder().startTime(customStartTime).endTime(customEndTime).build());
     Duration duration = Duration.between(customStartTime, customEndTime);
     if (customMinutesEnd == 0) {
       assertThat(sloGraphData.getSloPerformanceTrend()).hasSize((int) duration.toMinutes() - 1);

@@ -81,6 +81,11 @@ public class CVNGMigrationServiceImpl implements CVNGMigrationService {
       });
     }
   }
+  @Override
+  public int getCVNGSchemaVersion() {
+    CVNGSchema cvngSchema = hPersistence.createQuery(CVNGSchema.class).get();
+    return cvngSchema.getVersion();
+  }
 
   private void initializeGlobalDbEntriesIfNeeded() {
     try {
