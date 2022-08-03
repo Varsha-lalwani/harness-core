@@ -100,6 +100,7 @@ import java.util.List;
       @JsonSubTypes.Type(value = PhysicalDataCenterConnectorDTO.class, name = "Pdc"),
       @JsonSubTypes.Type(value = JenkinsConnectorDTO.class, name = "Jenkins"),
       @JsonSubTypes.Type(value = OciHelmConnectorDTO.class, name = "OciHelmRepo"),
+      // Custom secret manager connector as subtype of Connector Config
       @JsonSubTypes.Type(value = CustomSecretManagerConnectorDTO.class, name = "CustomSecretManager")
 })
 @OwnedBy(DX)
