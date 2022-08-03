@@ -68,7 +68,6 @@ import io.harness.connector.service.scm.ScmDelegateClient;
 import io.harness.connector.task.ConnectorValidationHandler;
 import io.harness.connector.task.NotSupportedValidationHandler;
 import io.harness.connector.task.git.GitValidationHandler;
-import io.harness.connector.validator.SecretManagerConnectorValidator;
 import io.harness.cvng.CVNGDataCollectionDelegateServiceImpl;
 import io.harness.cvng.K8InfoDataServiceImpl;
 import io.harness.cvng.connectiontask.CVNGConnectorValidationDelegateTask;
