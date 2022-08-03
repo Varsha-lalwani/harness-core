@@ -23,17 +23,25 @@ import static org.mockito.Mockito.when;
 
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.BuilderFactory;
+import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.entities.EntityDisableTime;
+import io.harness.cvng.core.entities.MonitoredService;
+import io.harness.cvng.core.services.api.EntityDisabledTimeService;
+import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.core.utils.DateTimeUtils;
 import io.harness.cvng.servicelevelobjective.beans.SLIMissingDataType;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardWidget.Point;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardWidget.SLOGraphData;
+import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorDTO;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIRecordKeys;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIRecordParam;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIState;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
+import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 
@@ -45,6 +53,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
@@ -59,18 +68,29 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
   @Inject private Clock clock;
   @Inject private HPersistence hPersistence;
 
-  //@Inject BuilderFactory builderFactory;
+  @Inject private ServiceLevelIndicatorService serviceLevelIndicatorService;
+  @Inject private MonitoredServiceService monitoredServiceService;
+  @Inject private EntityDisabledTimeService entityDisabledTimeService;
+
   private String verificationTaskId;
   private String sliId;
 
+  private BuilderFactory builderFactory;
+
   private ServiceLevelIndicator serviceLevelIndicator;
+
+  private MonitoredService monitoredService;
+
   @Before
   public void setup() {
+    builderFactory = BuilderFactory.getDefault();
     MockitoAnnotations.initMocks(this);
     SLIRecordServiceImpl.MAX_NUMBER_OF_POINTS = 5;
     verificationTaskId = generateUuid();
-    sliId = generateUuid();
-    serviceLevelIndicator = null; // builderFactory.ratioServiceLevelIndicatorBuilder().uuid(sliId).build();
+    /*sliId = generateUuid();*/
+    monitoredService = createMonitoredService();
+    sliId = createServiceLevelIndicator();
+    serviceLevelIndicator = getServiceLevelIndicator();
   }
   @Test
   @Owner(developers = KAMAL)
@@ -79,11 +99,11 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
     Instant startTime = Instant.parse("2020-07-27T10:50:00Z").minus(Duration.ofMinutes(10));
     List<SLIState> sliStates = Arrays.asList(BAD, GOOD, GOOD, NO_DATA, GOOD, GOOD, BAD, BAD, BAD, BAD);
     createData(startTime, sliStates);
-    SLIRecord lastRecord = getLastRecord(sliId);
+    SLIRecord lastRecord = getLastRecord(serviceLevelIndicator.getUuid());
     assertThat(lastRecord.getRunningBadCount()).isEqualTo(5);
     assertThat(lastRecord.getRunningGoodCount()).isEqualTo(4);
     createData(startTime.plus(Duration.ofMinutes(10)), sliStates);
-    lastRecord = getLastRecord(sliId);
+    lastRecord = getLastRecord(serviceLevelIndicator.getUuid());
     assertThat(lastRecord.getRunningBadCount()).isEqualTo(10);
     assertThat(lastRecord.getRunningGoodCount()).isEqualTo(8);
   }
@@ -313,6 +333,27 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
   @Test
   @Owner(developers = ARPITJ)
   @Category(UnitTests.class)
+  public void testGetGraphData_withDisabledTimes() {
+    SLIRecordServiceImpl.MAX_NUMBER_OF_POINTS = 15;
+    List<SLIState> sliStates =
+        Arrays.asList(GOOD, NO_DATA, BAD, GOOD, GOOD, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA, GOOD);
+    List<Double> expectedSLITrend =
+        Lists.newArrayList(100.0, 100.0, 66.66, 75.0, 80.0, 83.33, 83.33, 83.33, 83.33, 83.33, 83.33, 85.71);
+    List<Double> expectedBurndown =
+        Lists.newArrayList(100.0, 100.0, 99.0, 99.0, 99.0, 99.0, 99.0, 99.0, 99.0, 99.0, 99.0, 99.0);
+    entityDisabledTimeService.save(EntityDisableTime.builder()
+                                       .entityUUID(monitoredService.getUuid())
+                                       .accountId(monitoredService.getAccountId())
+                                       .startTime(clock.instant().minus(Duration.ofMinutes(6)).toEpochMilli())
+                                       .endTime(clock.instant().minus(Duration.ofMinutes(2)).toEpochMilli())
+                                       .build());
+
+    testGraphCalculation(sliStates, SLIMissingDataType.GOOD, expectedSLITrend, expectedBurndown, 99, 0, 0);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
   public void testGetGraphData_AllGood() {
     SLIRecordServiceImpl.MAX_NUMBER_OF_POINTS = 100;
     List<SLIState> sliStates = new ArrayList<>();
@@ -389,7 +430,8 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
     Instant startTime = Instant.parse("2020-07-27T10:50:00Z").minus(Duration.ofMinutes(10));
     List<SLIState> sliStates = Arrays.asList(BAD, GOOD, GOOD, NO_DATA, GOOD, GOOD, BAD, BAD, BAD, BAD);
     createData(startTime, sliStates);
-    double errorBudgetBurnRate = sliRecordService.getErrorBudgetBurnRate(sliId, Duration.ofMinutes(10).toMillis(), 120);
+    double errorBudgetBurnRate = sliRecordService.getErrorBudgetBurnRate(
+        serviceLevelIndicator.getUuid(), Duration.ofMinutes(10).toMillis(), 120);
     assertThat(errorBudgetBurnRate).isCloseTo(3.333, offset(0.001));
   }
 
@@ -403,7 +445,7 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
     disableTimes.add(EntityDisableTime.builder().startTime(1659345900000L).endTime(1659345980000L).build());
     Pair<Long, Long> result = sliRecordService.getDisabledMinBetweenRecords(startTime, endTime, 0, disableTimes);
     assertThat(result.getLeft()).isEqualTo(1);
-    assertThat(result.getRight()).isEqualTo(0);
+    assertThat(result.getRight()).isEqualTo(1);
   }
 
   @Test
@@ -491,7 +533,7 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
 
   private void createData(Instant startTime, List<SLIState> sliStates) {
     List<SLIRecordParam> sliRecordParams = getSLIRecordParam(startTime, sliStates);
-    sliRecordService.create(sliRecordParams, sliId, verificationTaskId, 0);
+    sliRecordService.create(sliRecordParams, serviceLevelIndicator.getUuid(), verificationTaskId, 0);
   }
 
   private List<SLIRecordParam> getSLIRecordParam(Instant startTime, List<SLIState> sliStates) {
@@ -558,5 +600,28 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
         .isCloseTo(expectedBurndown.get(errorBudgetBurndown.size() - 1), offset(0.01));
     assertThat(sloGraphData.getErrorBudgetRemaining()).isEqualTo(expectedErrorBudgetRemaining);
     assertThat(sloGraphData.isRecalculatingSLI()).isFalse();
+  }
+
+  private MonitoredService createMonitoredService() {
+    MonitoredServiceDTO monitoredServiceDTO =
+        builderFactory.monitoredServiceDTOBuilder().identifier("monitoredServiceIdentifier").build();
+    monitoredServiceDTO.setSources(MonitoredServiceDTO.Sources.builder().build());
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+    return monitoredServiceService.getMonitoredService(
+        MonitoredServiceParams.builderWithProjectParams(builderFactory.getProjectParams())
+            .monitoredServiceIdentifier("monitoredServiceIdentifier")
+            .build());
+  }
+
+  private String createServiceLevelIndicator() {
+    ServiceLevelIndicatorDTO serviceLevelIndicatorDTO =
+        builderFactory.getThresholdServiceLevelIndicatorDTOBuilder().build();
+    List<String> sliId = serviceLevelIndicatorService.create(builderFactory.getProjectParams(),
+        Collections.singletonList(serviceLevelIndicatorDTO), "slo", "monitoredServiceIdentifier", null);
+    return sliId.get(0);
+  }
+
+  private ServiceLevelIndicator getServiceLevelIndicator() {
+    return serviceLevelIndicatorService.getServiceLevelIndicator(builderFactory.getProjectParams(), sliId);
   }
 }

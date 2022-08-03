@@ -68,6 +68,7 @@ import io.harness.cvng.core.entities.MonitoredService.MonitoredServiceKeys;
 import io.harness.cvng.core.handler.monitoredService.BaseMonitoredServiceHandler;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.CVNGLogService;
+import io.harness.cvng.core.services.api.EntityDisabledTimeService;
 import io.harness.cvng.core.services.api.FeatureFlagService;
 import io.harness.cvng.core.services.api.SetupUsageEventService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
@@ -214,6 +215,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
       notificationRuleConditionTypeTemplateDataGeneratorMap;
 
   @Inject private CVNGMigrationService cvngMigrationService;
+
+  @Inject private EntityDisabledTimeService entityDisabledTimeService;
 
   @Override
   public MonitoredServiceResponse create(String accountId, MonitoredServiceDTO monitoredServiceDTO) {
@@ -1248,12 +1251,12 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
     serviceLevelIndicatorService.setMonitoredServiceSLIsEnableFlag(
         projectParams, monitoredService.getIdentifier(), enable);
     if (enable && cvngMigrationService.getCVNGSchemaVersion() == 51) {
-      hPersistence.save(EntityDisableTime.builder()
-                            .entityUUID(monitoredService.getUuid())
-                            .accountId(monitoredService.getAccountId())
-                            .startTime(monitoredService.getLastDisabledAt())
-                            .endTime(clock.millis())
-                            .build());
+      entityDisabledTimeService.save(EntityDisableTime.builder()
+                                         .entityUUID(monitoredService.getUuid())
+                                         .accountId(monitoredService.getAccountId())
+                                         .startTime(monitoredService.getLastDisabledAt())
+                                         .endTime(clock.millis())
+                                         .build());
     }
     hPersistence.update(
         hPersistence.createQuery(MonitoredService.class).filter(MonitoredServiceKeys.uuid, monitoredService.getUuid()),

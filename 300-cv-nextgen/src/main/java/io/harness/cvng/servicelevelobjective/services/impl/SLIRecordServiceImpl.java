@@ -15,6 +15,7 @@ import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.entities.EntityDisableTime;
 import io.harness.cvng.core.entities.MonitoredService;
+import io.harness.cvng.core.services.api.EntityDisabledTimeService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.servicelevelobjective.beans.SLIMissingDataType;
 import io.harness.cvng.servicelevelobjective.beans.SLIValue;
@@ -54,6 +55,8 @@ public class SLIRecordServiceImpl implements SLIRecordService {
   @Inject Clock clock;
 
   @Inject MonitoredServiceService monitoredServiceService;
+
+  @Inject EntityDisabledTimeService entityDisabledTimeService;
 
   @Override
   public void create(List<SLIRecordParam> sliRecordParamList, String sliId, String verificationTaskId, int sliVersion) {
@@ -167,7 +170,7 @@ public class SLIRecordServiceImpl implements SLIRecordService {
 
     MonitoredService monitoredService = monitoredServiceService.getMonitoredService(monitoredServiceParams);
     List<EntityDisableTime> disableTimes =
-        getDisabledTimes(monitoredService.getUuid(), monitoredService.getAccountId());
+        entityDisabledTimeService.get(monitoredService.getUuid(), monitoredService.getAccountId());
     int currentDisabledRange = 0;
     long disabledMinutesFromStart = 0;
     int currentSLIRecord = 0;
@@ -249,6 +252,7 @@ public class SLIRecordServiceImpl implements SLIRecordService {
         .build();
   }
 
+  @VisibleForTesting
   public Pair<Long, Long> getDisabledMinBetweenRecords(
       long startTime, long endTime, int currentRange, List<EntityDisableTime> disableTimes) {
     long extra = 0;
@@ -392,13 +396,5 @@ public class SLIRecordServiceImpl implements SLIRecordService {
         .filter(SLIRecordKeys.sliId, sliId)
         .order(Sort.descending(SLIRecordKeys.timestamp))
         .get();
-  }
-
-  private List<EntityDisableTime> getDisabledTimes(String monitoredServiceUuid, String accountID) {
-    return hPersistence.createQuery(EntityDisableTime.class, excludeAuthorityCount)
-        .filter(EntityDisableTime.EntityDisabledTimeKeys.entityUUID, monitoredServiceUuid)
-        .filter(EntityDisableTime.EntityDisabledTimeKeys.accountId, accountID)
-        .order(Sort.ascending(EntityDisableTime.EntityDisabledTimeKeys.startTime))
-        .asList();
   }
 }
