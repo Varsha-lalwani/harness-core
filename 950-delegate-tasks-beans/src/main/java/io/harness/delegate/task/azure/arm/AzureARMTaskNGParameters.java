@@ -23,7 +23,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 
 @Data
 @NoArgsConstructor
