@@ -7,41 +7,42 @@
 
 package io.harness.cdng.provision.azure;
 
-import io.harness.annotation.RecasterAlias;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
-import io.harness.validation.Validator;
+import io.harness.yaml.YamlSchemaTypes;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.List;
 import javax.validation.constraints.NotNull;
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
-import lombok.experimental.FieldDefaults;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.TypeAlias;
 
+@OwnedBy(HarnessTeam.CDP)
 @Data
 @Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@OwnedBy(HarnessTeam.CDP)
-@RecasterAlias("io.harness.cdng.provision.azure.AzureManagementSpec")
-public class AzureManagementSpec implements AzureScopeType {
+@NoArgsConstructor
+@AllArgsConstructor
+@TypeAlias("CreateBPBaseStepInfo")
+public class AzureCreateBPBaseStepInfo {
+  @NotNull
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
+  private ParameterField<String> provisionerIdentifier;
+  @YamlSchemaTypes(value = {runtime})
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
   String uuid;
-
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> managementGroupId;
-
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> location;
-
-  @Override
-  public void validateParams() {
-    Validator.notNullCheck("managementGroupId can't be null", managementGroupId);
-    Validator.notNullCheck("deploymentDataLocation can't be null", location);
-  }
 }

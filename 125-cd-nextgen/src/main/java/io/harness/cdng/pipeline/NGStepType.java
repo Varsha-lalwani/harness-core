@@ -8,6 +8,7 @@
 package io.harness.cdng.pipeline;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.executions.steps.StepSpecTypeConstants.AZURE_CREATE_BP_RESOURCE;
 import static io.harness.executions.steps.StepSpecTypeConstants.AZURE_CREATE_ARM_RESOURCE;
 import static io.harness.executions.steps.StepSpecTypeConstants.CLOUDFORMATION_CREATE_STACK;
 import static io.harness.executions.steps.StepSpecTypeConstants.CLOUDFORMATION_DELETE_STACK;
@@ -137,7 +138,10 @@ public enum NGStepType {
   // Azure ARM/BP
   @JsonProperty(StepSpecTypeConstants.AZURE_CREATE_ARM_RESOURCE)
   AZ_CREATE_RESOURCE("Azure ARM/BP", Arrays.asList(ServiceDefinitionType.values()),
-      "Infrastructure Provisioners/Azure ARM", AZURE_CREATE_ARM_RESOURCE);
+      "Infrastructure Provisioners/Azure ARM", AZURE_CREATE_ARM_RESOURCE),
+  @JsonProperty(StepSpecTypeConstants.AZURE_CREATE_BP_RESOURCE)
+  AZ_CREATE_BP_RESOURCE("Azure Blueprint", Arrays.asList(ServiceDefinitionType.values()),
+      "Infrastructure Provisioners/Azure Blueprint", AZURE_CREATE_BP_RESOURCE);
 
   private String displayName;
   private List<ServiceDefinitionType> serviceDefinitionTypes;

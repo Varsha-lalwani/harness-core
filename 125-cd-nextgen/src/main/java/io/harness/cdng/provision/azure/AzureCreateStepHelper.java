@@ -214,9 +214,8 @@ public class AzureCreateStepHelper {
     if (filesFromMultipleRepo.get(TEMPLATE_FILE_IDENTIFIER) != null) {
       templateBody = filesFromMultipleRepo.get(TEMPLATE_FILE_IDENTIFIER).getFiles().get(0).getFileContent();
     } else {
-      if (Objects.equals(
-              spec.getConfiguration().getTemplateFile().getStore().getSpec().getKind(), HARNESS_STORE_TYPE)) {
-        // TODO: Add harness store logic
+      if (Objects.equals(spec.getConfiguration().getTemplateFile().getStore().getSpec().getKind(), HARNESS_STORE_TYPE)) {
+       //TODO: Add harness store logic
       }
     }
     populatePassThroughData((AzureCreatePassThroughData) passThroughData, templateBody, parametersBody);

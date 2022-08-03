@@ -26,14 +26,14 @@ import lombok.NonNull;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@RecasterAlias("io.harness.cdng.provision.azure.CreateStepParameters")
+@RecasterAlias("io.harness.cdng.provision.azure.CreateStepBPParameters")
+public class AzureCreateBPStepParameters extends AzureCreateBPBaseStepInfo implements SpecParameters {
+  @NonNull AzureCreateBPStepConfigurationParameters configuration;
 
-public class AzureCreateStepParameters extends AzureCreateStepBaseStepInfo implements SpecParameters {
-    @NonNull AzureCreateStepConfigurationParameters configuration;
   @Builder(builderMethodName = "infoBuilder")
-  public AzureCreateStepParameters(ParameterField<String> provisionerIdentifier,
+  public AzureCreateBPStepParameters(ParameterField<String> provisionerIdentifier,
       ParameterField<List<TaskSelectorYaml>> delegateSelectors, String uuid,
-      @NonNull AzureCreateStepConfigurationParameters configuration) {
+      @NonNull AzureCreateBPStepConfigurationParameters configuration) {
     super(provisionerIdentifier, delegateSelectors, uuid);
     this.configuration = configuration;
   }

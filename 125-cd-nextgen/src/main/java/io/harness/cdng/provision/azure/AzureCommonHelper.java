@@ -86,14 +86,14 @@ public class AzureCommonHelper {
           .manifestType("Azure Template")
           .identifier(TEMPLATE_FILE_IDENTIFIER)
           .gitStoreDelegateConfig(getGitStoreDelegateConfig(
-              azureCreateTemplateFile.getStore().getSpec(), ambiance, AzureDeploymentTypes.ARM))
+                  azureCreateTemplateFile.getStore().getSpec(), ambiance, AzureDeploymentTypes.ARM))
           .build();
     } else {
       return GitFetchFilesConfig.builder()
           .manifestType("Azure BluePrint Folder")
           .identifier(BLUEPRINT_IDENTIFIER)
           .gitStoreDelegateConfig(getGitStoreDelegateConfig(
-              azureCreateTemplateFile.getStore().getSpec(), ambiance, AzureDeploymentTypes.BLUEPRINT))
+                  azureCreateTemplateFile.getStore().getSpec(), ambiance, AzureDeploymentTypes.BLUEPRINT))
           .build();
     }
   }
@@ -140,7 +140,11 @@ public class AzureCommonHelper {
 
   public boolean hasGitStoredParameters(AzureCreateARMStepConfigurationParameters stepConfigurationParameters) {
     return stepConfigurationParameters.getParameters() != null
-        && ManifestStoreType.isInGitSubset(stepConfigurationParameters.getParameters().getStore().getSpec().getKind());
+        && ManifestStoreType.isInGitSubset(
+            stepConfigurationParameters.getParameters()
+                .getStore()
+                .getSpec()
+                .getKind());
   }
   public AzureConnectorDTO getAzureConnectorConfig(Ambiance ambiance, ParameterField<String> connectorRef) {
     return (AzureConnectorDTO) cdStepHelper.getConnector(getParameterFieldValue(connectorRef), ambiance)

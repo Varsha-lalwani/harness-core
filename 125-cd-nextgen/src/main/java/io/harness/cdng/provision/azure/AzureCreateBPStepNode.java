@@ -31,30 +31,30 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@JsonTypeName(StepSpecTypeConstants.AZURE_CREATE_RESOURCE)
-@TypeAlias("CreateAzureResource")
+@JsonTypeName(StepSpecTypeConstants.AZURE_CREATE_BP_RESOURCE)
+@TypeAlias("azureCreateBPStepNode")
 @OwnedBy(CDP)
-@RecasterAlias("io.harness.cdng.provision.azure.CreateStepNode")
-public class AzureCreateStepNode extends CdAbstractStepNode {
-    @JsonProperty("type") @NotNull StepType type = StepType.AzureCreateResource;
+@RecasterAlias("io.harness.cdng.provision.azure.CreateBPStepNode")
+public class AzureCreateBPStepNode extends CdAbstractStepNode {
+  @JsonProperty("type") @NotNull StepType type = StepType.AzureCreateBPResource;
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
-  AzureCreateStepInfo createStepNodeStepInfo;
+  AzureCreateBPStepInfo createStepBPNodeStepInfo;
   @Override
   public String getType() {
-    return StepSpecTypeConstants.AZURE_CREATE_RESOURCE;
+    return StepSpecTypeConstants.AZURE_CREATE_BP_RESOURCE;
   }
 
-    @Override
-    public StepSpecType getStepSpecType() {
-        return createStepNodeStepInfo;
-    }
+  @Override
+  public StepSpecType getStepSpecType() {
+    return createStepBPNodeStepInfo;
+  }
 
-    enum StepType {
-        AzureCreateResource(StepSpecTypeConstants.AZURE_CREATE_RESOURCE);
-        @Getter String name;
-        StepType(String name) {
-            this.name = name;
-        }
+  enum StepType {
+    AzureCreateBPResource(StepSpecTypeConstants.AZURE_CREATE_BP_RESOURCE);
+    @Getter String name;
+    StepType(String name) {
+      this.name = name;
     }
+  }
 }

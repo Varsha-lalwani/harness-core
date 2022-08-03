@@ -13,6 +13,6 @@ import io.harness.annotations.dev.OwnedBy;
 
 @OwnedBy(CDP)
 public interface AzureDeploymentTypes {
-  String ARM = "ARM";
-  String BLUEPRINT = "Blueprint";
+    String ARM = "ARM";
+    String BLUEPRINT = "Blueprint";
 }
