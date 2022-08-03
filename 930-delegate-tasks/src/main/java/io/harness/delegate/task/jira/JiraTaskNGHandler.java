@@ -86,16 +86,6 @@ public class JiraTaskNGHandler {
     JiraIssueCreateMetadataNG createMetadata = jiraClient.getIssueCreateMetadata(params.getProjectKey(),
         params.getIssueType(), params.getExpand(), params.isFetchStatus(), params.isIgnoreComment());
 
-    // TECHDEBIT: we need to remove user type fields only from calls NG until we add support. After that we need to
-    // remove this block of code.
-    /*   Set<JiraFieldNG> jiraUserFields = new HashSet<>();
-       createMetadata.getProjects().values().forEach(proj
-           -> proj.getIssueTypes().values().forEach(issueType -> issueType.getFields().values().stream().forEach(field
-       -> { if (field.getSchema().getType() == JiraFieldTypeNG.USER) { jiraUserFields.add(field);
-         }
-       })));
-       jiraUserFields.forEach(field -> createMetadata.removeField(field.getName()));*/
-
     return JiraTaskNGResponse.builder().issueCreateMetadata(createMetadata).build();
   }
 

@@ -45,6 +45,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
 import io.harness.utils.IdentifierRefHelper;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -138,7 +139,8 @@ public class JiraResourceServiceImpl implements JiraResourceService {
     return jiraTaskNGResponse.getJiraSearchUserData();
   }
 
-  private JiraTaskNGResponse obtainJiraTaskNGResponse(
+  @VisibleForTesting
+  JiraTaskNGResponse obtainJiraTaskNGResponse(
       IdentifierRef jiraConnectionRef, String orgId, String projectId, JiraTaskNGParametersBuilder paramsBuilder) {
     JiraConnectorDTO connector = getConnector(jiraConnectionRef);
     BaseNGAccess baseNGAccess = getBaseNGAccess(jiraConnectionRef, orgId, projectId);

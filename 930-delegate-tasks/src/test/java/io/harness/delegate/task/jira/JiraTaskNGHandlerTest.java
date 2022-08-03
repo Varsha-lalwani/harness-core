@@ -368,8 +368,8 @@ public class JiraTaskNGHandlerTest extends CategoryTest {
     Map<String, String> fields1 = new HashMap<>();
     fields1.put("QE Assignee", "accountId");
     fields1.put("Test Summary", "No test added");
-    when(jiraClient.updateIssue(jiraTaskNGParameters.getIssueKey(), jiraTaskNGParameters.getTransitionToStatus(), "",
-             jiraTaskNGParameters.getFields()))
+    when(jiraClient.updateIssue(
+             jiraTaskNGParameters.getIssueKey(), jiraTaskNGParameters.getTransitionToStatus(), null, fields1))
         .thenReturn(jiraIssueNG);
     JiraTaskNGResponse jiraTaskNGResponse = jiraTaskNGHandler.updateIssue(jiraTaskNGParameters);
 

@@ -115,7 +115,7 @@ public class JiraResource {
 
   @GET
   @Path("searchUser")
-  @ApiOperation(hidden = true, value = "Get jira usernames for the jira connector", nickname = "jiraUserSearch")
+  @ApiOperation(value = "Get jira usernames for the jira connector", nickname = "jiraUserSearch")
   public ResponseDTO<List<JiraUserData>> getUserSearch(
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
