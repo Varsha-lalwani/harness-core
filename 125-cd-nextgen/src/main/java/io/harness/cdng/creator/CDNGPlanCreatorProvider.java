@@ -35,6 +35,7 @@ import io.harness.cdng.creator.plan.service.ServiceDefinitionPlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreatorV2;
 import io.harness.cdng.creator.plan.stage.DeploymentStagePMSPlanCreatorV2;
+import io.harness.cdng.creator.plan.steps.AzureCreateResourceStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreator;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreatorV2;
 import io.harness.cdng.creator.plan.steps.CloudformationCreateStackStepPlanCreator;
@@ -83,6 +84,7 @@ import io.harness.cdng.creator.variables.ServerlessAwsLambdaDeployStepVariableCr
 import io.harness.cdng.creator.variables.ServerlessAwsLambdaRollbackStepVariableCreator;
 import io.harness.cdng.jenkins.jenkinsstep.JenkinsBuildStepVariableCreator;
 import io.harness.cdng.jenkins.jenkinsstep.JenkinsCreateStepPlanCreator;
+import io.harness.cdng.provision.azure.variablecreator.AzureCreateStepVariableCreator;
 import io.harness.cdng.provision.cloudformation.variablecreator.CloudformationCreateStepVariableCreator;
 import io.harness.cdng.provision.cloudformation.variablecreator.CloudformationDeleteStepVariableCreator;
 import io.harness.cdng.provision.cloudformation.variablecreator.CloudformationRollbackStepVariableCreator;
@@ -123,6 +125,9 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
   private static final String CLOUDFORMATION_STEP_METADATA = "Cloudformation";
   private static final List<String> TERRAFORM_CATEGORY = Arrays.asList("Kubernetes", "Provisioner", "Helm");
 
+  private static final List<String> AZURE_RESOURCE_CATEGORY =
+      Arrays.asList("Kubernetes", "Provisioner", "Azure", "Helm");
+  private static final String AZURE_RESOURCE_STEP_METADATA = "Azure";
   @Inject InjectorUtils injectorUtils;
   @Inject DeploymentStageVariableCreator deploymentStageVariableCreator;
 
@@ -181,6 +186,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new StartupCommandPlanCreator());
     planCreators.add(new ApplicationSettingsPlanCreator());
     planCreators.add(new ConnectionStringsPlanCreator());
+    planCreators.add(new AzureCreateResourceStepPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
@@ -231,6 +237,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     variableCreators.add(new AzureWebAppRollbackStepVariableCreator());
     variableCreators.add(new JenkinsBuildStepVariableCreator());
     variableCreators.add(new StrategyVariableCreator());
+    variableCreators.add(new AzureCreateStepVariableCreator());
     return variableCreators;
   }
 
@@ -481,6 +488,17 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                                         .setFeatureFlag(FeatureName.JENKINS_ARTIFACT.name())
                                         .build();
 
+    StepInfo azureCreateResources = StepInfo.newBuilder()
+                                        .setName("Create Azure ARM Resources")
+                                        .setType(StepSpecTypeConstants.AZURE_CREATE_RESOURCE)
+                                        .setFeatureRestrictionName(FeatureRestrictionName.AZURE_CREATE_RESOURCE.name())
+                                        .setStepMetaData(StepMetaData.newBuilder()
+                                                             .addAllCategory(AZURE_RESOURCE_CATEGORY)
+                                                             .addFolderPaths(AZURE_RESOURCE_STEP_METADATA)
+                                                             .build())
+                                        .setFeatureFlag(FeatureName.AZURE_ARM_NG.name())
+                                        .build();
+
     List<StepInfo> stepInfos = new ArrayList<>();
 
     stepInfos.add(gitOpsCreatePR);
@@ -511,6 +529,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     stepInfos.add(azureWebAppSwapSlot);
     stepInfos.add(azureWebAppRollback);
     stepInfos.add(jenkinsBuildStepInfo);
+    stepInfos.add(azureCreateResources);
     return stepInfos;
   }
 }
