@@ -166,7 +166,7 @@ public class AzureCommonHelper {
         .build();
   }
 
-  boolean isTemplateStoredOnGit(AzureCreateARMResourceTemplateFile azureCreateTemplateFileSpec) {
+  boolean isTemplateStoredOnGit(AzureTemplateFile azureCreateTemplateFileSpec) {
     return ManifestStoreType.isInGitSubset(azureCreateTemplateFileSpec.getStore().getSpec().getKind());
   }
 

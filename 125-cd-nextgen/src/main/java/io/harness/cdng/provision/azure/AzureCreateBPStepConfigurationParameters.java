@@ -18,10 +18,10 @@ import lombok.Data;
 @Data
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-@RecasterAlias("io.harness.cdng.provision.azure.AzureCreateARMResourceStepConfigurationParameters")
-public class AzureCreateARMResourceStepConfigurationParameters {
+@RecasterAlias("io.harness.cdng.provision.azure.AzureCreateBPStepConfigurationParameters")
+public class AzureCreateBPStepConfigurationParameters {
   ParameterField<String> connectorRef;
+  ParameterField<String> assignmentName;
+  AzureBPScopes scope;
   AzureTemplateFile templateFile;
-  AzureCreateARMResourceParameterFile parameters;
-  AzureCreateARMResourceStepScope scope;
 }

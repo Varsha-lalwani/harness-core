@@ -398,3 +398,9 @@ io.harness.cdng.provision.azure.AzureCreateARMResourceStepNode
 io.harness.cdng.provision.azure.AzureCreateARMResourceStepConfiguration
 io.harness.cdng.provision.azure.AzureCreateARMResourceStepScope
 io.harness.cdng.provision.azure.AzureCreateARMResourceStepParameters
+io.harness.cdng.provision.azure.AzureCreateBPStepNode
+io.harness.cdng.provision.azure.AzureCreateBPStepInfo
+io.harness.cdng.provision.azure.AzureCreateBPStepConfiguration
+io.harness.cdng.provision.azure.AzureCreateBPStepConfigurationParameters
+io.harness.cdng.provision.azure.AzureCreateBPStepParameters
+io.harness.cdng.provision.azure.beans.AzureCreateBPPassThroughData

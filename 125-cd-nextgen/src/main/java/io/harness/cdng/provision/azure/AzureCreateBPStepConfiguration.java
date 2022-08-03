@@ -28,20 +28,29 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @OwnedBy(HarnessTeam.CDP)
-@RecasterAlias("io.harness.cdng.provision.azure.AzureManagementSpec")
-public class AzureManagementSpec implements AzureScopeType {
+@RecasterAlias("io.harness.cdng.provision.azure.AzureCreateBPStepConfiguration")
+public class AzureCreateBPStepConfiguration {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
   String uuid;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> assignmentName;
+  AzureBPScopes scope;
+  @NotNull AzureTemplateFile template;
 
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> managementGroupId;
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
 
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> location;
+  public AzureCreateBPStepConfigurationParameters toStepParameters() {
+    return AzureCreateBPStepConfigurationParameters.builder()
+        .assignmentName(assignmentName)
+        .scope(scope)
+        .templateFile(template)
+        .connectorRef(connectorRef)
+        .build();
+  }
 
-  @Override
   public void validateParams() {
-    Validator.notNullCheck("managementGroupId can't be null", managementGroupId);
-    Validator.notNullCheck("deploymentDataLocation can't be null", location);
+    Validator.notNullCheck("Template file can't be empty", template);
+    Validator.notNullCheck("Connector ref can't be empty", connectorRef);
   }
 }

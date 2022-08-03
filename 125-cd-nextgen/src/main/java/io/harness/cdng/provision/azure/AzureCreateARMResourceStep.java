@@ -106,7 +106,7 @@ public class AzureCreateARMResourceStep extends TaskChainExecutableWithRollbackA
     // Template file connector
     AzureCreateARMResourceStepConfigurationParameters spec =
         ((AzureCreateARMResourceStepParameters) stepParameters.getSpec()).getConfigurationParameters();
-    AzureCreateARMResourceTemplateFile azureCreateTemplateFile = spec.getTemplateFile();
+    AzureTemplateFile azureCreateTemplateFile = spec.getTemplateFile();
 
     if (ManifestStoreType.isInGitSubset(azureCreateTemplateFile.getStore().getSpec().getKind())) {
       String connectorRef =
@@ -149,7 +149,7 @@ public class AzureCreateARMResourceStep extends TaskChainExecutableWithRollbackA
 
     List<GitFetchFilesConfig> gitFetchFilesConfigs =
         azureCommonHelper.getParametersGitFetchFileConfigs(ambiance, stepConfigurationParameters);
-    AzureCreateARMResourceTemplateFile azureCreateTemplateFile = stepConfigurationParameters.getTemplateFile();
+    AzureTemplateFile azureCreateTemplateFile = stepConfigurationParameters.getTemplateFile();
     if (azureCommonHelper.isTemplateStoredOnGit(azureCreateTemplateFile)) {
       gitFetchFilesConfigs.add(getTemplateGitFetchFileConfig(ambiance, stepConfigurationParameters.getTemplateFile()));
     }
@@ -350,7 +350,7 @@ public class AzureCreateARMResourceStep extends TaskChainExecutableWithRollbackA
   }
 
   private GitFetchFilesConfig getTemplateGitFetchFileConfig(
-      Ambiance ambiance, AzureCreateARMResourceTemplateFile azureCreateTemplateFile) {
+      Ambiance ambiance, AzureTemplateFile azureCreateTemplateFile) {
     GitStoreConfig gitStoreConfig = (GitStoreConfig) azureCreateTemplateFile.getStore().getSpec();
     List<String> paths = new ArrayList<>(ParameterFieldHelper.getParameterFieldValue(gitStoreConfig.getPaths()));
     return GitFetchFilesConfig.builder()
