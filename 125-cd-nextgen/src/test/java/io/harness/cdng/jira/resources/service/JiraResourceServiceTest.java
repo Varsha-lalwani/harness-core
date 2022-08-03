@@ -33,11 +33,10 @@ import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.jira.JiraConnectorDTO;
 import io.harness.delegate.task.jira.JiraSearchUserData;
 import io.harness.delegate.task.jira.JiraSearchUserParams;
-import io.harness.delegate.task.jira.JiraTaskNGParameters;
+import io.harness.delegate.task.jira.JiraTaskNGParameters.JiraTaskNGParametersBuilder;
 import io.harness.delegate.task.jira.JiraTaskNGResponse;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.HarnessJiraException;
-import io.harness.ff.FeatureFlagService;
 import io.harness.jira.JiraIssueCreateMetadataNG;
 import io.harness.jira.JiraProjectBasicNG;
 import io.harness.rule.Owner;
@@ -75,7 +74,6 @@ public class JiraResourceServiceTest extends CategoryTest {
   @Mock ConnectorService connectorService;
   @Mock SecretManagerClientService secretManagerClientService;
   @Mock DelegateGrpcClientWrapper delegateGrpcClientWrapper;
-  @Mock FeatureFlagService featureFlagService;
   @Mock CDFeatureFlagHelper cdFeatureFlagHelper;
 
   @Spy @InjectMocks JiraResourceServiceImpl jiraResourceService;
@@ -138,8 +136,7 @@ public class JiraResourceServiceTest extends CategoryTest {
     String offset = "0";
     JiraSearchUserParams jiraSearchUserParams =
         JiraSearchUserParams.builder().accountId(ACCOUNT_ID).userQuery("search").startAt(offset).build();
-    ArgumentCaptor<JiraTaskNGParameters.JiraTaskNGParametersBuilder> captor =
-        ArgumentCaptor.forClass(JiraTaskNGParameters.JiraTaskNGParametersBuilder.class);
+    ArgumentCaptor<JiraTaskNGParametersBuilder> captor = ArgumentCaptor.forClass(JiraTaskNGParametersBuilder.class);
 
     JiraSearchUserData jiraSearchUserData = JiraSearchUserData.builder().build();
     JiraTaskNGResponse jiraTaskNGResponse = JiraTaskNGResponse.builder().jiraSearchUserData(jiraSearchUserData).build();
