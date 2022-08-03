@@ -105,7 +105,7 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
   private String getErrorMessage(CommandExecutionStatus status) {
     switch (status) {
       case QUEUED:
-        return "Shell Script execution queued.";
+        return "Shell Script execution queued."; // bkhagsbgkhabk
       case FAILURE:
         return "Shell Script execution failed. Please check execution logs.";
       case RUNNING:
