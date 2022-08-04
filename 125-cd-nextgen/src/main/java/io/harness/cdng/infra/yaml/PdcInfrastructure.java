@@ -37,20 +37,19 @@ import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
 import lombok.experimental.Wither;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.data.annotation.TypeAlias;
 
 @OwnedBy(CDP)
 @Value
 @Builder
 @JsonTypeName(InfrastructureKind.PDC)
-@OneOfSet(fields = {"hosts", "connectorRef", "connectorRef, hostFilter"},
-    requiredFieldNames = {"hosts", "connectorRef", "hostFilter"})
+@OneOfSet(fields = {"hosts", "connectorRef"}, requiredFieldNames = {"hosts", "connectorRef"})
 @SimpleVisitorHelper(helperClass = ConnectorRefExtractorHelper.class)
 @TypeAlias("PdcInfrastructure")
 @RecasterAlias("io.harness.cdng.infra.yaml.PdcInfrastructure")
@@ -74,6 +73,8 @@ public class PdcInfrastructure
 
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> connectorRef;
 
+  @NotNull
+  @NotEmpty
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = SwaggerConstants.INFRASTRUCTURE_DEFINITION_YAML_HOST_FILTER_CLASSPATH)
   @Wither

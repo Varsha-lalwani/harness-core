@@ -8,7 +8,7 @@
 package io.harness.delegate.beans.connector.pdcconnector;
 
 public enum HostFilterType {
-
+  ALL,
   HOST_NAMES,
   HOST_ATTRIBUTES
 
