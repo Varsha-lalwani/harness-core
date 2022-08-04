@@ -18,11 +18,14 @@ import io.harness.azure.model.AzureConfig;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
+import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.azure.AzureTaskExecutionResponse;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
+import io.harness.delegate.task.azure.common.AzureLogCallbackProvider;
+import io.harness.delegate.task.azure.common.AzureLogCallbackProviderFactory;
 
 import software.wings.delegatetasks.azure.AzureSecretHelper;
 import software.wings.service.impl.azure.manager.AzureTaskExecutionRequest;
@@ -38,6 +41,7 @@ import org.apache.commons.lang3.NotImplementedException;
 public class AzureARMTask extends AbstractDelegateRunnableTask {
   @Inject private AzureSecretHelper azureSecretHelper;
   @Inject private AzureARMTaskFactory azureARMTaskFactory;
+  @Inject protected AzureLogCallbackProviderFactory logCallbackProviderFactory;
 
   public AzureARMTask(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {

@@ -1,0 +1,200 @@
+{
+  "pipeline": {
+    "name": "ARM",
+    "identifier": "NGPipeAutoS3GithubPipelinebyvaY6znXK",
+    "tags": {
+      "__uuid": "ysmL4LaHQpacUaCL6FvcuQ"
+    },
+    "stages": [
+      {
+        "stage": {
+          "name": "cf-stage-test",
+          "identifier": "cfstagetest",
+          "description": "",
+          "type": "Deployment",
+          "spec": {
+            "serviceConfig": {
+              "service": {
+                "name": "service-test",
+                "identifier": "service-test",
+                "__uuid": "afmPP0rRTgWf6aXRMhAalw"
+              },
+              "serviceDefinition": {
+                "type": "Kubernetes",
+                "spec": {
+                  "variables": [
+                    {
+                      "name": "Email",
+                      "type": "String",
+                      "value": "envVariableEmailTo@harness.io",
+                      "__uuid": "_AlMt06zRKSamPwQxcpB_Q"
+                    }
+                  ],
+                  "manifest": [],
+                  "__uuid": "yFKdAE5iQUSjbpENMx9FIg"
+                },
+                "__uuid": "X4KMvyQWQlSGlIZAwWMwgg"
+              },
+              "__uuid": "Jztu-NcATNuquA-j6PT2ng"
+            },
+            "infrastructure": {
+              "environment": {
+                "name": "environment-test",
+                "identifier": "environment-test",
+                "description": "",
+                "type": "PreProduction",
+                "__uuid": "_nSYWfe6Qn23iO1j0ACOhg"
+              },
+              "infrastructureDefinition": {
+                "type": "KubernetesDirect",
+                "spec": {
+                  "connectorRef": "org.KubernetesConnectorForAutomationTest",
+                  "namespace": "cdp-k8s-qa-sanity",
+                  "releaseName": "releasename-933006",
+                  "__uuid": "fuRc6519QemkHJ7uWX0gpg"
+                },
+                "provisioner": {
+                  "steps": [
+                    {
+                      "step": {
+                        "type": "AzureCreateResource",
+                        "name": "Create AzureResources",
+                        "identifier": "asdf",
+                        "timeout": "10m",
+                        "spec": {
+                          "provisionerIdentifier": "foobar",
+                          "configuration": {
+                            "connectorRef": "azureConnector",
+                            "azureCreateDeployment": {
+                              "type": "ARM",
+                              "spec": {
+                                "subscription": "5aef6b46-7daa-45ea-a8d0-783aab69dea3",
+                                "resourceGroup": "nasserTest",
+                                "mode": "Incremental",
+                                "scope": "RESOURCE_GROUP",
+                                "templateFile": {
+                                  "type": "Remote",
+                                  "spec": {
+                                    "store": {
+                                      "type": "Github",
+                                      "spec": {
+                                        "gitFetchType": "Branch",
+                                        "connectorRef": "foo",
+                                        "branch": "main",
+                                        "paths": [
+                                          "infra/azure.json"
+                                        ],
+                                        "__uuid": "1WJIikIZQxeIxERIV3tYVw"
+                                      },
+                                      "__uuid": "VF6BZs7hTBS35DXswZdGTA"
+                                    },
+                                    "__uuid": "rt-SHtoXQ2i8gvxI7diJiw"
+                                  },
+                                  "__uuid": "ZaIyVxcQSDizdiv0VJV93Q"
+                                },
+                                "parameters": {
+                                  "type": "Remote",
+                                  "spec": {
+                                    "identifier": "parameters",
+                                    "store": {
+                                      "type": "Github",
+                                      "spec": {
+                                        "gitFetchType": "Branch",
+                                        "connectorRef": "foo",
+                                        "branch": "main",
+                                        "paths": [
+                                          "infra/parametersAzure.json"
+                                        ],
+                                        "__uuid": "LcGH7zoFTh-miWaGx4agAA"
+                                      },
+                                      "__uuid": "H8UqCCHgS06ydWIgWcCoyw"
+                                    },
+                                    "__uuid": "Z7wQnNO8Rf2K3Rzlj3yNOg"
+                                  },
+                                  "__uuid": "6B4tBSiJRsmPeRg9YFgFNg"
+                                },
+                                "__uuid": "G8XBeRm3TiezHvIfL6bT5w"
+                              },
+                              "__uuid": "TH2cCYj9QPGfx2dAnJHbdA"
+                            },
+                            "__uuid": "RWQyaNalT--NI_FBlhZj-A"
+                          },
+                          "__uuid": "cOmW4EbESYCFbuPp_9ZXLA"
+                        },
+                        "__uuid": "ifvo9UItSceI-dJ4_LRdDg"
+                      },
+                      "__uuid": "xSzR1iMMQ5aIt97HJX7Qew"
+                    }
+                  ],
+                  "__uuid": "qC0I_WguTGqEu0vCC3isYw"
+                },
+                "__uuid": "dd-XRa8KTQ2_UM1t_HP-qA"
+              },
+              "allowSimultaneousDeployments": true,
+              "__uuid": "Ln0DMmvkRCSh_bS0f8Qabg"
+            },
+            "execution": {
+              "steps": [
+                {
+                  "step": {
+                    "type": "ShellScript",
+                    "name": "echo",
+                    "identifier": "echo",
+                    "spec": {
+                      "shell": "Bash",
+                      "onDelegate": true,
+                      "source": {
+                        "type": "Inline",
+                        "spec": {
+                          "script": "echo test",
+                          "__uuid": "EXt9DY9JTCurBZMjDzJ2fg"
+                        },
+                        "__uuid": "20RI5rsgT6WMX3E9c03cMg"
+                      },
+                      "environmentVariables": [],
+                      "outputVariables": [],
+                      "executionTarget": {
+                        "__uuid": "dFKGNC16Tp2AL3MCBmWeQA"
+                      },
+                      "__uuid": "hCfIdZ7STViG_EV2H4SQJw"
+                    },
+                    "timeout": "10m",
+                    "__uuid": "Mpv8ohbgTxOGk8XH9wW06Q"
+                  },
+                  "__uuid": "jJBMy9YMQ6W2oKzpevV_tg"
+                }
+              ],
+              "rollbackSteps": [],
+              "__uuid": "6hm2QaJeRLOjGj8q6uj2zg"
+            },
+            "__uuid": "amaxn5wJQDa6kZBq55koxQ"
+          },
+          "tags": {
+            "__uuid": "Gaxr0JXATPmEt3vAqlz5DQ"
+          },
+          "failureStrategies": [
+            {
+              "onFailure": {
+                "errors": [
+                  "AllErrors"
+                ],
+                "action": {
+                  "type": "StageRollback",
+                  "__uuid": "gFqmLtjTQV-9j26pWWf25A"
+                },
+                "__uuid": "iyagHAJzRmWkSSa91hwOiA"
+              },
+              "__uuid": "VGF418lGRgiga7BP1BGT9A"
+            }
+          ],
+          "__uuid": "6gllBI6uS8SGR0nxsMAjjA"
+        },
+        "__uuid": "NQmsrJr7T5msFloqIWzMCw"
+      }
+    ],
+    "projectIdentifier": "NGPipeAutoDemoProUsF9qDyXU8",
+    "orgIdentifier": "CF_PipelineOrg",
+    "__uuid": "D2tOihILStSeUioLXyKLrA"
+  },
+  "__uuid": "ESLMeQ5TSX6FPpxS1o4B8A"
+}

@@ -384,6 +384,7 @@ public enum FeatureName {
   GIT_SIMPLIFICATION_DISABLED,
   USE_K8S_API_FOR_STEADY_STATE_CHECK,
   WINRM_ASG_ROLLBACK("Used for Collect remaining instances rollback step", HarnessTeam.CDP),
+  AZURE_ARM_NG,
 
   SAVE_ARTIFACT_TO_DB("Saves artifact to db and proceed in artifact collection step if not found", HarnessTeam.CDC),
   NG_INLINE_MANIFEST,
