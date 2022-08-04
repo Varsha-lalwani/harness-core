@@ -31,6 +31,7 @@ import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.api.AggregateUserGroupService;
 import io.harness.ng.core.api.UserGroupService;
 import io.harness.ng.core.dto.RoleAssignmentMetadataDTO;
+import io.harness.ng.core.dto.ScopeSelector;
 import io.harness.ng.core.dto.UserGroupAggregateDTO;
 import io.harness.ng.core.user.entities.UserGroup;
 import io.harness.ng.core.user.remote.dto.UserMetadataDTO;
@@ -118,6 +119,37 @@ public class AggregateUserGroupServiceImpl implements AggregateUserGroupService 
                   .of(userGroup.getAccountIdentifier(), userGroup.getOrgIdentifier(), userGroup.getProjectIdentifier())
                   .toString()
                   .toLowerCase())))
+          .users(users)
+          .lastModifiedAt(userGroup.getLastModifiedAt())
+          .build();
+    }));
+  }
+
+  @Override
+  public PageResponse<UserGroupAggregateDTO> listAggregateUserGroupsForUser(PageRequest pageRequest,
+      List<ScopeSelector> scopeFilter, String userIdentifier, String searchTerm, int userSize) {
+    Page<UserGroup> userGroupPageResponse =
+        userGroupService.list(scopeFilter, userIdentifier, searchTerm, getPageRequest(pageRequest));
+
+    List<String> userIdentifiers = userGroupPageResponse.stream()
+                                       .map(ug -> getLastNElementsReversed(ug.getUsers(), userSize))
+                                       .flatMap(List::stream)
+                                       .filter(Objects::nonNull)
+                                       .distinct()
+                                       .collect(Collectors.toList());
+    Map<String, UserMetadataDTO> userMetadataMap =
+        ngUserService.getUserMetadata(userIdentifiers)
+            .stream()
+            .collect(Collectors.toMap(UserMetadataDTO::getUuid, Function.identity()));
+
+    return PageUtils.getNGPageResponse(userGroupPageResponse.map(userGroup -> {
+      List<UserMetadataDTO> users = getLastNElementsReversed(userGroup.getUsers(), userSize)
+                                        .stream()
+                                        .map(userMetadataMap::get)
+                                        .filter(Objects::nonNull)
+                                        .collect(toList());
+      return UserGroupAggregateDTO.builder()
+          .userGroupDTO(UserGroupMapper.toDTO(userGroup))
           .users(users)
           .lastModifiedAt(userGroup.getLastModifiedAt())
           .build();
