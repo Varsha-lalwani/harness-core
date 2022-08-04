@@ -51,6 +51,7 @@ import io.harness.beans.quantity.unit.StorageQuantityUnit;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.CIStepInfoType;
+import io.harness.beans.steps.stepinfo.GitCloneStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
@@ -364,6 +365,11 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         return createPluginCompatibleStepContainerDefinition((PluginCompatibleStep) ciStepInfo, integrationStage,
             ciExecutionArgs, portFinder, stepIndex, stepElement.getIdentifier(), stepElement.getName(),
             stepElement.getType(), timeout, accountId, os);
+      case GIT_CLONE:
+        PluginStepInfo pluginStepInfo = InitializeStepUtils.createPluginStepInfo(((GitCloneStepInfo) ciStepInfo),
+                ciExecutionConfigService, accountId, os);
+        return createPluginStepContainerDefinition(pluginStepInfo, integrationStage, ciExecutionArgs,
+                portFinder, stepIndex, stepElement.getIdentifier(), stepElement.getName(), accountId, os);
       case PLUGIN:
         return createPluginStepContainerDefinition((PluginStepInfo) ciStepInfo, integrationStage, ciExecutionArgs,
             portFinder, stepIndex, stepElement.getIdentifier(), stepElement.getName(), accountId, os);
@@ -792,6 +798,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
       case SAVE_CACHE_S3:
       case SAVE_CACHE_GCS:
       case SECURITY:
+      case GIT_CLONE:
         return getContainerMemoryLimit(((PluginCompatibleStep) ciStepInfo).getResources(), stepElement.getType(),
             stepElement.getIdentifier(), accountId);
       default:
@@ -858,6 +865,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
       case SAVE_CACHE_S3:
       case SAVE_CACHE_GCS:
       case SECURITY:
+      case GIT_CLONE:
         return getContainerCpuLimit(((PluginCompatibleStep) ciStepInfo).getResources(), stepElement.getType(),
             stepElement.getIdentifier(), accountId);
       default:

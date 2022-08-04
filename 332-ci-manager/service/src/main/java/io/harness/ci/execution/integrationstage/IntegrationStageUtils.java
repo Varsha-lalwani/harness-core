@@ -45,6 +45,7 @@ import io.harness.beans.execution.WebhookExecutionSource;
 import io.harness.beans.plugin.compatible.PluginCompatibleStep;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.steps.CIStepInfo;
+import io.harness.beans.steps.stepinfo.GitCloneStepInfo;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
@@ -113,6 +114,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 @OwnedBy(HarnessTeam.CI)
 public class IntegrationStageUtils {
@@ -205,12 +208,14 @@ public class IntegrationStageUtils {
     String url = getGitURLFromConnector(connectorDetails, codeBase);
     WebhookExecutionSource webhookExecutionSource = WebhookTriggerProcessorUtils.convertWebhookResponse(parsedPayload);
     Build build = RunTimeInputHandler.resolveBuild(codeBase.getBuild());
-    if (build != null) {
-      if (build.getType() == BuildType.PR) {
-        ParameterField<String> number = ((PRBuildSpec) build.getSpec()).getNumber();
-        String numberString =
-            RunTimeInputHandler.resolveStringParameter("number", "Git Clone", "identifier", number, false);
-        if (!numberString.equals(PR_EXPRESSION)) {
+    Pair<BuildType, String> buildTypeAndValue = getBuildTypeAndValue(build);
+
+    if(buildTypeAndValue != null) {
+      BuildType buildType = buildTypeAndValue.getKey();
+      String buildValue = buildTypeAndValue.getValue();
+
+      if (buildType == BuildType.PR) {
+        if (!buildValue.equals(PR_EXPRESSION)) {
           return true;
         } else {
           if (webhookExecutionSource.getWebhookEvent().getType() == BRANCH) {
@@ -220,12 +225,9 @@ public class IntegrationStageUtils {
         }
       }
 
-      if (build.getType() == BuildType.BRANCH) {
-        ParameterField<String> branch = ((BranchBuildSpec) build.getSpec()).getBranch();
-        String branchString =
-            RunTimeInputHandler.resolveStringParameter("branch", "Git Clone", "identifier", branch, false);
-        if (isNotEmpty(branchString)) {
-          if (!branchString.equals(BRANCH_EXPRESSION)) {
+      if (buildType == BuildType.BRANCH) {
+        if (isNotEmpty(buildValue)) {
+          if (!buildValue.equals(BRANCH_EXPRESSION)) {
             return true;
           }
         } else {
@@ -233,10 +235,8 @@ public class IntegrationStageUtils {
         }
       }
 
-      if (build.getType() == BuildType.TAG) {
-        ParameterField<String> tag = ((TagBuildSpec) build.getSpec()).getTag();
-        String tagString = RunTimeInputHandler.resolveStringParameter("tag", "Git Clone", "identifier", tag, false);
-        if (isNotEmpty(tagString)) {
+      if (buildType == BuildType.TAG) {
+        if (isNotEmpty(buildValue)) {
           return true;
         } else {
           throw new CIStageExecutionException("Tag should not be empty for tag build type");
@@ -249,6 +249,32 @@ public class IntegrationStageUtils {
     } else {
       return true;
     }
+  }
+
+  public static Pair<BuildType, String> getBuildTypeAndValue(Build build) {
+    Pair<BuildType, String> buildTypeAndValue = null;
+    if (build != null) {
+      switch (build.getType()) {
+        case PR:
+          ParameterField<String> number = ((PRBuildSpec) build.getSpec()).getNumber();
+          String numberString =
+                  RunTimeInputHandler.resolveStringParameter("number", "Git Clone", "identifier", number, false);
+          buildTypeAndValue = new ImmutablePair<>(BuildType.PR, numberString);
+          break;
+        case BRANCH:
+          ParameterField<String> branch = ((BranchBuildSpec) build.getSpec()).getBranch();
+          String branchString =
+                  RunTimeInputHandler.resolveStringParameter("branch", "Git Clone", "identifier", branch, false);
+          buildTypeAndValue = new ImmutablePair<>(BuildType.BRANCH, branchString);
+          break;
+        case TAG:
+          ParameterField<String> tag = ((TagBuildSpec) build.getSpec()).getTag();
+          String tagString = RunTimeInputHandler.resolveStringParameter("tag", "Git Clone", "identifier", tag, false);
+          buildTypeAndValue = new ImmutablePair<>(BuildType.TAG, tagString);
+          break;
+      }
+    }
+    return buildTypeAndValue;
   }
 
   public static boolean isURLSame(WebhookExecutionSource webhookExecutionSource, String url) {
@@ -299,7 +325,15 @@ public class IntegrationStageUtils {
   }
 
   public static String getGitURL(CodeBase ciCodebase, GitConnectionType connectionType, String url) {
-    String gitUrl = retrieveGenericGitConnectorURL(ciCodebase, connectionType, url);
+    if (ciCodebase == null) {
+      throw new IllegalArgumentException("CI codebase spec is not set");
+    }
+    String repoName = ciCodebase.getRepoName().getValue();
+    return getGitURL(repoName, connectionType, url);
+  }
+
+  public static String getGitURL(String repoName, GitConnectionType connectionType, String url) {
+    String gitUrl = retrieveGenericGitConnectorURL(repoName, connectionType, url);
 
     if (!gitUrl.endsWith(GIT_URL_SUFFIX) && !gitUrl.contains(AZURE_REPO_BASE_URL)) {
       gitUrl += GIT_URL_SUFFIX;
@@ -308,21 +342,15 @@ public class IntegrationStageUtils {
   }
 
   public static String retrieveGenericGitConnectorURL(
-      CodeBase ciCodebase, GitConnectionType connectionType, String url) {
+      String repoName, GitConnectionType connectionType, String url) {
     String gitUrl = "";
     if (connectionType == GitConnectionType.REPO) {
       gitUrl = url;
     } else if (connectionType == GitConnectionType.PROJECT || connectionType == GitConnectionType.ACCOUNT) {
-      if (ciCodebase == null) {
-        throw new IllegalArgumentException("CI codebase spec is not set");
-      }
 
-      if (isEmpty(ciCodebase.getRepoName().getValue())) {
+      if (isEmpty(repoName)) {
         throw new IllegalArgumentException("Repo name is not set in CI codebase spec");
       }
-
-      String repoName = ciCodebase.getRepoName().getValue();
-
       if (connectionType == GitConnectionType.PROJECT) {
         if (url.contains(AZURE_REPO_BASE_URL)) {
           gitUrl = GitClientHelper.getCompleteUrlForProjectLevelAzureConnector(url, repoName);
@@ -696,6 +724,9 @@ public class IntegrationStageUtils {
       switch (ciStepInfo.getNonYamlInfo().getStepInfoType()) {
         case RUN:
           return resolveConnectorIdentifier(((RunStepInfo) ciStepInfo).getConnectorRef(), ciStepInfo.getIdentifier());
+        case GIT_CLONE:
+          GitCloneStepInfo gitCloneStepInfo = ((GitCloneStepInfo) ciStepInfo);
+          return resolveConnectorIdentifier(gitCloneStepInfo.getConnectorRef(), gitCloneStepInfo.getIdentifier());
         case PLUGIN:
           return resolveConnectorIdentifier(
               ((PluginStepInfo) ciStepInfo).getConnectorRef(), ciStepInfo.getIdentifier());
