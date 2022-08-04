@@ -24,6 +24,7 @@ public class WatcherConfiguration {
   @ToString.Exclude private String accountSecret;
   @ToString.Exclude private String delegateToken;
   private String managerUrl;
+  private String ceEventServiceUrl;
   private boolean doUpgrade;
   private String upgradeCheckLocation;
   private long upgradeCheckIntervalSeconds;

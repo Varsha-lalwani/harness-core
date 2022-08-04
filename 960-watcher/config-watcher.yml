@@ -1,6 +1,7 @@
 accountId: kmpySmUISimoRrJL6NL73w
 delegateToken: 2f6b0988b6fb3370073c3d0505baee59
 managerUrl: https://localhost:9090/api/
+ceEventServiceUrl: https://localhost:7281
 doUpgrade: false
 upgradeCheckLocation: https://ci.harness.io/storage/wingswatchers/watcherci.txt
 upgradeCheckIntervalSeconds: 1200

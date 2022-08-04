@@ -55,6 +55,7 @@ public class EventPublisherServerResource {
   public Response publish(@RequestBody(description = "Publish Request") PublishRequest request) {
     log.info("Received publish request with {} messages", request.getMessagesCount());
     String accountId = requireNonNull(ACCOUNT_ID_CTX_KEY.get(Context.current()));
+    log.info("EventPublisherServerResource  accountId: {}", accountId);
     String delegateId = request.getMessages(0).getAttributesMap().getOrDefault(DELEGATE_ID, "");
     try {
       eventPublisherService.publish(accountId, delegateId, request.getMessagesList(), request.getMessagesCount());

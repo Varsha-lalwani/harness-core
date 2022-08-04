@@ -41,6 +41,7 @@ public class EventPublisherServerImpl extends EventPublisherGrpc.EventPublisherI
   @Override
   public void publish(PublishRequest request, StreamObserver<PublishResponse> responseObserver) {
     String accountId = requireNonNull(ACCOUNT_ID_CTX_KEY.get(Context.current()));
+    log.info("EventPublisherServerImpl  accountId: {}", accountId);
     String delegateId = request.getMessages(0).getAttributesMap().getOrDefault(DELEGATE_ID, "");
     try (AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR);
          AutoLogContext ignore1 = new DelegateLogContext(delegateId, OVERRIDE_ERROR)) {
