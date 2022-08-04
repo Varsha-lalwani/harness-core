@@ -27,9 +27,6 @@ public interface SettingRepository extends PagingAndSortingRepository<Setting, S
   Optional<Setting> findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier);
   List<Setting> findByIdentifier(String identifier);
-  void deleteByOrgIdentifierNullAndProjectIdentifierNullAndIdentifier(String identifier);
-  void deleteByOrgIdentifierNotNullAndProjectIdentifierNullAndIdentifier(String identifier);
-  void deleteByOrgIdentifierNotNullAndProjectIdentifierNotNullAndIdentifier(String identifier);
   void deleteByAccountIdentifierAndOrgIdentifierNotNullAndIdentifier(String accountIdentifier, String identifier);
   void deleteByAccountIdentifierAndOrgIdentifierAndProjectIdentifierNotNullAndIdentifier(
       String accountIdentifier, String orgIdentifier, String identifier);

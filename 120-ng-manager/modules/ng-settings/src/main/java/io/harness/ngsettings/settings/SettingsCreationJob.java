@@ -149,29 +149,14 @@ public class SettingsCreationJob {
   private void deleteSettingsAtDisallowedScopes(
       Set<SettingConfiguration> currentSettings, Set<SettingConfiguration> upsertedSettings) {
     Map<String, SettingConfiguration> settingConfigurationMap =
-        currentSettings.stream().collect(Collectors.toMap(setting -> setting.getIdentifier(), setting -> setting));
+        currentSettings.stream().collect(Collectors.toMap(SettingConfiguration::getIdentifier, setting -> setting));
     upsertedSettings.forEach(setting -> {
-      Set<ScopeLevel> existingScopes = settingConfigurationMap.get(setting.getIdentifier()).getAllowedScopes();
-      Set<ScopeLevel> updatedScopes = setting.getAllowedScopes();
-      Set<ScopeLevel> removedScopes = Sets.difference(existingScopes, updatedScopes);
-      removedScopes.forEach(scopeLevel -> removeSettingAtScopeLevel(setting.getIdentifier(), scopeLevel));
+      if (settingConfigurationMap.containsKey(setting.getIdentifier())) {
+        Set<ScopeLevel> existingScopes = settingConfigurationMap.get(setting.getIdentifier()).getAllowedScopes();
+        Set<ScopeLevel> updatedScopes = setting.getAllowedScopes();
+        Set<ScopeLevel> removedScopes = Sets.difference(existingScopes, updatedScopes);
+        removedScopes.forEach(scopeLevel -> settingsService.deleteByScopeLevel(scopeLevel, setting.getIdentifier()));
+      }
     });
-  }
-
-  private void removeSettingAtScopeLevel(String identifier, ScopeLevel scopeLevel) {
-    switch (scopeLevel) {
-      case ACCOUNT:
-        settingsService.deleteByOrgIdentifierNullAndProjectIdentifierNullAndIdentifier(identifier);
-        break;
-      case ORGANIZATION:
-        settingsService.deleteByOrgIdentifierNotNullAndProjectIdentifierNullAndIdentifier(identifier);
-        break;
-      case PROJECT:
-        settingsService.deleteByOrgIdentifierNotNullAndProjectIdentifierNotNullAndIdentifier(identifier);
-        break;
-      default:
-        throw new InvalidRequestException(
-            String.format("Invalid scope- %s present in the settings.yml", scopeLevel.toString()));
-    }
   }
 }

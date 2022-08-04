@@ -85,7 +85,6 @@ settings :
     allowedValues : ~
     allowOverrides: true
     allowedScopes :
-      - ACCOUNT
       - ORGANIZATION
       - PROJECT
   - identifier: test_setting_CD_2
@@ -107,7 +106,6 @@ settings :
     allowOverrides : true
     allowedScopes :
       - ACCOUNT
-      - ORGANIZATION
       - PROJECT
   - identifier: test_setting_CORE_1
     name: Test CORE setting 1
