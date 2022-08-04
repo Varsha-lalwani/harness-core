@@ -10,6 +10,7 @@ package io.harness.steps.shellscript;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.CollectionUtils;
@@ -33,6 +34,7 @@ import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.serializer.KryoSerializer;
+import io.harness.shell.ScriptType;
 import io.harness.shell.ShellExecutionData;
 import io.harness.steps.OutputExpressionConstants;
 import io.harness.steps.StepHelper;
@@ -46,6 +48,7 @@ import com.google.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 @OwnedBy(CDC)
 @Slf4j
@@ -80,11 +83,20 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
             .timeout(StepUtils.getTimeoutMillis(stepParameters.getTimeout(), StepUtils.DEFAULT_STEP_TIMEOUT))
             .build();
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
-        CollectionUtils.emptyIfNull(StepUtils.generateLogKeys(StepUtils.generateLogAbstractions(ambiance),
-            Arrays.asList(ShellScriptTaskNG.INIT_UNIT, ShellScriptTaskNG.COMMAND_UNIT))),
-        Arrays.asList(ShellScriptTaskNG.INIT_UNIT, ShellScriptTaskNG.COMMAND_UNIT), null,
+        CollectionUtils.emptyIfNull(
+            StepUtils.generateLogKeys(StepUtils.generateLogAbstractions(ambiance), getUnits(taskParameters))),
+        getUnits(taskParameters), null,
         TaskSelectorYaml.toTaskSelector(shellScriptStepParameters.getDelegateSelectors()),
         stepHelper.getEnvironmentType(ambiance));
+  }
+
+  @NotNull
+  private List<String> getUnits(ShellScriptTaskParametersNG taskParameters) {
+    if (ScriptType.BASH.equals(taskParameters.getScriptType())) {
+      return singletonList(ShellScriptTaskNG.COMMAND_UNIT);
+    } else {
+      return Arrays.asList(ShellScriptTaskNG.INIT_UNIT, ShellScriptTaskNG.COMMAND_UNIT);
+    }
   }
 
   @Override
