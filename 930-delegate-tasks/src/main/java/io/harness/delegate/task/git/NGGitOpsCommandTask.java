@@ -280,7 +280,7 @@ public class NGGitOpsCommandTask extends AbstractDelegateRunnableTask {
 
   public String getPRLink(int prNumber, ScmConnector scmConnector, ConnectorType connectorType) {
     switch (connectorType) {
-      // TODO: GITLAB, BITBUCKET
+      // TODO: BITBUCKET
       case GITHUB:
         GithubConnectorDTO githubConnectorDTO = (GithubConnectorDTO) scmConnector;
         return "https://github.com"

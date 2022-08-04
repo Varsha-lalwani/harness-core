@@ -200,6 +200,73 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
     return totalBuildSqlBuilder.toString();
   }
 
+  public String queryBuilderSelectIdLimitTimeCdTableNew(String accountId, String orgId, String projectId, long days,
+      List<String> statusList, long startInterval, long endInterval) {
+    String queryPrepared = queryBuilderSelectIdLimitTimeCdTablePrepared(
+        accountId, orgId, projectId, days, statusList, startInterval, endInterval);
+    return (queryPrepared != null) ? queryPrepared
+                                   : queryBuilderSelectIdLimitTimeCdTable(
+                                       accountId, orgId, projectId, days, statusList, startInterval, endInterval);
+  }
+
+  public String queryBuilderSelectIdLimitTimeCdTablePrepared(String accountId, String orgId, String projectId,
+      long days, List<String> statusList, long startInterval, long endInterval) {
+    String selectStatusQuery = "select id from " + tableNameCD + " where ";
+    StringBuilder preparedSqlBuilder = new StringBuilder(200);
+    preparedSqlBuilder.append(selectStatusQuery);
+
+    if (accountId != null) {
+      preparedSqlBuilder.append("accountid=? and ");
+    }
+
+    if (orgId != null) {
+      preparedSqlBuilder.append("orgidentifier=? and ");
+    }
+
+    if (projectId != null) {
+      preparedSqlBuilder.append("projectidentifier=? and ");
+    }
+
+    preparedSqlBuilder.append("status in (");
+    for (String status : statusList) {
+      preparedSqlBuilder.append(String.format("'%s',", status));
+    }
+
+    preparedSqlBuilder.deleteCharAt(preparedSqlBuilder.length() - 1);
+
+    if (startInterval > 0 && endInterval > 0) {
+      preparedSqlBuilder.append(String.format(") and startts>=%s and startts<%s", startInterval, endInterval));
+    } else {
+      preparedSqlBuilder.append(String.format(")"));
+    }
+
+    preparedSqlBuilder.append(String.format(" and startts is not null ORDER BY startts DESC LIMIT %s", days));
+
+    int totalTries = 0;
+    int parameterIndex = 1;
+    boolean success = false;
+    String value = null;
+    while (!success && totalTries <= MAX_RETRY_COUNT) {
+      try (Connection connection = timeScaleDBService.getDBConnection();
+           PreparedStatement statement = connection.prepareStatement(preparedSqlBuilder.toString())) {
+        if (accountId != null) {
+          statement.setString(parameterIndex++, accountId);
+        }
+        if (orgId != null) {
+          statement.setString(parameterIndex++, orgId);
+        }
+        if (projectId != null) {
+          statement.setString(parameterIndex, projectId);
+        }
+        success = true;
+        value = statement.toString();
+      } catch (SQLException e) {
+        totalTries++;
+      }
+    }
+    return value;
+  }
+
   public String queryBuilderSelectIdLimitTimeCdTable(String accountId, String orgId, String projectId, long days,
       List<String> statusList, long startInterval, long endInterval) {
     String selectStatusQuery = "select id from " + tableNameCD + " where ";
@@ -258,6 +325,73 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
     }
     rate = rate * 100.0;
     return rate;
+  }
+
+  public String queryBuilderStatusNew(String accountId, String orgId, String projectId, long days,
+      List<String> statusList, long startInterval, long endInterval) {
+    String queryPrepared =
+        queryBuilderStatusPrepared(accountId, orgId, projectId, days, statusList, startInterval, endInterval);
+    return (queryPrepared != null)
+        ? queryPrepared
+        : queryBuilderStatus(accountId, orgId, projectId, days, statusList, startInterval, endInterval);
+  }
+
+  public String queryBuilderStatusPrepared(String accountId, String orgId, String projectId, long days,
+      List<String> statusList, long startInterval, long endInterval) {
+    String selectStatusQuery = "select " + executionStatusCdTimeScaleColumns() + " from " + tableNameCD + " where ";
+    StringBuilder preparedSqlBuilder = new StringBuilder(200);
+    preparedSqlBuilder.append(selectStatusQuery);
+
+    if (accountId != null) {
+      preparedSqlBuilder.append("accountid=? and ");
+    }
+
+    if (orgId != null) {
+      preparedSqlBuilder.append("orgidentifier=? and ");
+    }
+
+    if (projectId != null) {
+      preparedSqlBuilder.append("projectidentifier=? and ");
+    }
+
+    preparedSqlBuilder.append("status in (");
+    for (String status : statusList) {
+      preparedSqlBuilder.append(String.format("'%s',", status));
+    }
+
+    preparedSqlBuilder.deleteCharAt(preparedSqlBuilder.length() - 1);
+
+    if (startInterval > 0 && endInterval > 0) {
+      preparedSqlBuilder.append(String.format(") and startts>=%s and startts<%s", startInterval, endInterval));
+    } else {
+      preparedSqlBuilder.append(String.format(")"));
+    }
+
+    preparedSqlBuilder.append(String.format(" and startts is not null ORDER BY startts DESC LIMIT %s;", days));
+
+    int totalTries = 0;
+    int parameterIndex = 1;
+    boolean success = false;
+    String value = null;
+    while (!success && totalTries <= MAX_RETRY_COUNT) {
+      try (Connection connection = timeScaleDBService.getDBConnection();
+           PreparedStatement statement = connection.prepareStatement(preparedSqlBuilder.toString())) {
+        if (accountId != null) {
+          statement.setString(parameterIndex++, accountId);
+        }
+        if (orgId != null) {
+          statement.setString(parameterIndex++, orgId);
+        }
+        if (projectId != null) {
+          statement.setString(parameterIndex, projectId);
+        }
+        success = true;
+        value = statement.toString();
+      } catch (SQLException e) {
+        totalTries++;
+      }
+    }
+    return value;
   }
 
   public String queryBuilderStatus(String accountId, String orgId, String projectId, long days, List<String> statusList,
@@ -1330,23 +1464,23 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
       String accountId, String orgId, String projectId, long days, long startInterval, long endInterval) {
     endInterval = endInterval + getTimeUnitToGroupBy(DAY);
     // failed
-    String queryFailed = queryBuilderStatus(
+    String queryFailed = queryBuilderStatusNew(
         accountId, orgId, projectId, days, CDDashboardServiceHelper.failedStatusList, startInterval, endInterval);
-    String queryServiceNameTagIdFailed = queryBuilderSelectIdLimitTimeCdTable(
+    String queryServiceNameTagIdFailed = queryBuilderSelectIdLimitTimeCdTableNew(
         accountId, orgId, projectId, days, CDDashboardServiceHelper.failedStatusList, startInterval, endInterval);
     List<ExecutionStatusInfo> failure = getDeploymentStatusInfo(queryFailed, queryServiceNameTagIdFailed);
 
     // active
     String queryActive =
-        queryBuilderStatus(accountId, orgId, projectId, days, activeStatusList, startInterval, endInterval);
-    String queryServiceNameTagIdActive = queryBuilderSelectIdLimitTimeCdTable(
+        queryBuilderStatusNew(accountId, orgId, projectId, days, activeStatusList, startInterval, endInterval);
+    String queryServiceNameTagIdActive = queryBuilderSelectIdLimitTimeCdTableNew(
         accountId, orgId, projectId, days, activeStatusList, startInterval, endInterval);
     List<ExecutionStatusInfo> active = getDeploymentStatusInfo(queryActive, queryServiceNameTagIdActive);
 
     // pending
     String queryPending =
-        queryBuilderStatus(accountId, orgId, projectId, days, pendingStatusList, startInterval, endInterval);
-    String queryServiceNameTagIdPending = queryBuilderSelectIdLimitTimeCdTable(
+        queryBuilderStatusNew(accountId, orgId, projectId, days, pendingStatusList, startInterval, endInterval);
+    String queryServiceNameTagIdPending = queryBuilderSelectIdLimitTimeCdTableNew(
         accountId, orgId, projectId, days, pendingStatusList, startInterval, endInterval);
     List<ExecutionStatusInfo> pending = getDeploymentStatusInfo(queryPending, queryServiceNameTagIdPending);
 

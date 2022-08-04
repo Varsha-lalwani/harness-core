@@ -47,7 +47,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 
 @Singleton
 @Slf4j
-public class OAuthTokenRereshers implements Handler<GitlabConnector> {
+public class OAuthTokenRefresher implements Handler<GitlabConnector> {
   PersistenceIteratorFactory persistenceIteratorFactory;
   @Inject private ConnectorMapper connectorMapper;
   @Inject private SecretManagerClientService ngSecretService;
@@ -58,7 +58,7 @@ public class OAuthTokenRereshers implements Handler<GitlabConnector> {
   @Inject NextGenConfiguration configuration;
 
   @Inject
-  public OAuthTokenRereshers(PersistenceIteratorFactory persistenceIteratorFactory, MongoTemplate mongoTemplate) {
+  public OAuthTokenRefresher(PersistenceIteratorFactory persistenceIteratorFactory, MongoTemplate mongoTemplate) {
     this.persistenceIteratorFactory = persistenceIteratorFactory;
     this.mongoTemplate = mongoTemplate;
   }
@@ -132,8 +132,10 @@ public class OAuthTokenRereshers implements Handler<GitlabConnector> {
             configuration.getGitlabConfig().getClientSecret(), "https://gitlab.com/oauth/token",
             String.valueOf(gitlabOauthDTO.getRefreshTokenRef().getDecryptedValue()));
       } catch (Exception e) {
-        log.error("[OAuth refresh] Error from SCM for refreshing token for connector:{},{},{}", entity.getIdentifier(),
-            entity.getAccountIdentifier(), e.getMessage());
+        log.error(
+            "[OAuth refresh] Error from SCM for refreshing token for connector:{}, clientID:{}, Account:{}, Error:{}",
+            entity.getIdentifier(), configuration.getGitlabConfig().getClientId(), entity.getAccountIdentifier(),
+            e.getMessage());
         return;
       }
 
@@ -149,26 +151,32 @@ public class OAuthTokenRereshers implements Handler<GitlabConnector> {
   }
 
   public void registerIterators(int threadPoolSize) {
-    SpringFilterExpander springFilterExpander = getFilterQuery();
+    log.info("[OAuth refresh] Register Enabled:{}, Frequency:{}, clientID:{}, clientSecret{}",
+        configuration.isOauthRefreshEnabled(), configuration.getOauthRefreshFrequency(),
+        configuration.getGitlabConfig().getClientId(), configuration.getGitlabConfig().getClientSecret());
 
-    persistenceIteratorFactory.createPumpIteratorWithDedicatedThreadPool(
-        PersistenceIteratorFactory.PumpExecutorOptions.builder()
-            .name(this.getClass().getName())
-            .poolSize(threadPoolSize)
-            .interval(ofSeconds(10))
-            .build(),
-        GitlabConnector.class,
-        MongoPersistenceIterator.<GitlabConnector, SpringFilterExpander>builder()
-            .clazz(GitlabConnector.class)
-            .fieldName(GitlabConnectorKeys.nextTokenIteration)
-            .targetInterval(ofMinutes(configuration.getOauthRefreshFrequency()))
-            .acceptableExecutionTime(ofMinutes(1))
-            .acceptableNoAlertDelay(ofMinutes(1))
-            .filterExpander(springFilterExpander)
-            .handler(this)
-            .schedulingType(REGULAR)
-            .persistenceProvider(new SpringPersistenceProvider<>(mongoTemplate))
-            .redistribute(true));
+    if (configuration.isOauthRefreshEnabled()) {
+      SpringFilterExpander springFilterExpander = getFilterQuery();
+
+      persistenceIteratorFactory.createPumpIteratorWithDedicatedThreadPool(
+          PersistenceIteratorFactory.PumpExecutorOptions.builder()
+              .name(this.getClass().getName())
+              .poolSize(threadPoolSize)
+              .interval(ofSeconds(10))
+              .build(),
+          GitlabConnector.class,
+          MongoPersistenceIterator.<GitlabConnector, SpringFilterExpander>builder()
+              .clazz(GitlabConnector.class)
+              .fieldName(GitlabConnectorKeys.nextTokenRenewIteration)
+              .targetInterval(ofMinutes(configuration.getOauthRefreshFrequency()))
+              .acceptableExecutionTime(ofMinutes(1))
+              .acceptableNoAlertDelay(ofMinutes(1))
+              .filterExpander(springFilterExpander)
+              .handler(this)
+              .schedulingType(REGULAR)
+              .persistenceProvider(new SpringPersistenceProvider<>(mongoTemplate))
+              .redistribute(true));
+    }
   }
 
   private SpringFilterExpander getFilterQuery() {
