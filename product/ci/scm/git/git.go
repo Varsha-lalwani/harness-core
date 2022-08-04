@@ -504,16 +504,21 @@ func GetUserRepos(ctx context.Context, request *pb.GetUserReposRequest, log *zap
 	log.Infow("GetUserRepos starting")
 
 	client, err := gitclient.GetGitClient(*request.GetProvider(), log)
+	gitProvider := gitclient.GetProvider(*request.GetProvider())
 	if err != nil {
-		log.Errorw("GetUserRepos failure", "bad provider", gitclient.GetProvider(*request.GetProvider()), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
+		log.Errorw("GetUserRepos failure", "bad provider", gitProvider, "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
 	paginatedCall := !request.GetFetchAllRepos()
 
 	if paginatedCall {
-		repoList, response, err := client.Repositories.List(ctx, scm.ListOptions{Page: int(request.GetPagination().GetPage())})
+	    if gitProvider == "github" && *request.GetProvider().GetGithub().GetIsGithubApp() {
+            repoList, response, err := client.Repositories.(*github.Repositories).ListAppInstallations(ctx, scm.ListOptions{Page: int(request.GetPagination().GetPage())})
+	    } else {
+		    repoList, response, err := client.Repositories.List(ctx, scm.ListOptions{Page: int(request.GetPagination().GetPage())})
+		}
 		if err != nil {
-			log.Errorw("GetUserRepos failure", "provider", gitclient.GetProvider(*request.GetProvider()), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
+			log.Errorw("GetUserRepos failure", "provider", gitProvider, "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 			// this is a hard error with no response
 			if response == nil {
 				return nil, err
@@ -661,6 +666,11 @@ func Repos(ctx context.Context, client *scm.Client, log *zap.SugaredLogger) ([]*
 	list := []*scm.Repository{}
 	opts := scm.ListOptions{Size: 100}
 	for {
+	    if gitclient.GetProvider(*request.GetProvider()) == "github" && *request.GetProvider().GetGithub().GetIsGithubApp() {
+                    repoList, response, err := client.Repositories.(*github.Repositories).ListAppInstallations(ctx, opts)
+        	    } else {
+        		    repoList, response, err := client.Repositories.List(ctx, opts)
+        		}
 		result, meta, err := client.Repositories.List(ctx, opts)
 		if err != nil {
 			return nil, err
