@@ -784,14 +784,10 @@ public class UserGroupServiceImpl implements UserGroupService {
           }
           break;
         case AppFilter.FilterType.EXCLUDE_SELECTED:
-          if (featureFlagService.isEnabled(FeatureName.CG_RBAC_EXCLUSION, accountId)) {
-            if (isAppPermissionWithEmptyIds(appPermission)) {
-              throw new InvalidRequestException("Invalid Request: Please provide atleast one application");
-            } else if (isEntityFilterWithCustomIds(entityFilter)) {
-              throw new InvalidRequestException("Invalid Request: Cannot add custom entities to a Dynamic Filter");
-            }
-          } else {
-            throw new InvalidRequestException("Invalid Request: Please provide a valid application filter");
+          if (isAppPermissionWithEmptyIds(appPermission)) {
+            throw new InvalidRequestException("Invalid Request: Please provide atleast one application");
+          } else if (isEntityFilterWithCustomIds(entityFilter)) {
+            throw new InvalidRequestException("Invalid Request: Cannot add custom entities to a Dynamic Filter");
           }
           break;
         default:
