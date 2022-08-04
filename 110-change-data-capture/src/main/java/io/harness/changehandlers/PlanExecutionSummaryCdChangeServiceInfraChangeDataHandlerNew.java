@@ -40,9 +40,12 @@ public class PlanExecutionSummaryCdChangeServiceInfraChangeDataHandlerNew implem
   @Inject private TimeScaleDBService timeScaleDBService;
   private static String SERVICE_STARTTS = "service_startts";
   private static String SERVICE_ENDTS = "service_endts";
-  private static Set<String> artifactPathNameSet =
-      new HashSet<>(Arrays.asList("imagePath", "artifactPath", "bucketName", "jobName"));
-  private static Set<String> tagNameSet = new HashSet<>(Arrays.asList("tag", "version", "build"));
+  // These set of keys we can use to populate data to 'artifact_image' in service_infra_info
+  private static List<String> artifactPathNameSet = Arrays.asList("imagePath", "artifactPath", "bucketName", "jobName");
+  // These set of keys we can use to populate data to 'tag' in service_infra_info.
+  // Passing artifactPath as both tag and artifact_image in case of ArtifactoryGenericArtifactSummary. Have put in end
+  // to avoid conflict for other ArtifactSummary
+  private static List<String> tagNameSet = Arrays.asList("tag", "version", "build", "artifactPath");
 
   @Override
   public boolean handleChange(ChangeEvent<?> changeEvent, String tableName, String[] fields) {
@@ -211,6 +214,7 @@ public class PlanExecutionSummaryCdChangeServiceInfraChangeDataHandlerNew implem
                 for (String tagName : tagNameSet) {
                   if (primary.get(tagName) != null) {
                     tag = primary.get(tagName).toString();
+                    break;
                   }
                 }
                 for (String artifactPath : artifactPathNameSet) {
