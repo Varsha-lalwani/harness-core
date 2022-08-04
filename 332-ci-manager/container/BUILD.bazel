@@ -19,13 +19,13 @@ container_image(
 pkg_tar(
     name = "files",
     srcs = [
-        "//310-ci-manager:ci-manager-config.yml",
-        "//310-ci-manager:keystore.jks",
+        "//332-ci-manager/config:ci-manager-config.yml",
+        "//332-ci-manager/config:keystore.jks",
         "//400-rest/src/main/resources:redisson-jcache.yaml",
     ],
     files = {
         "@alpn_boot_8.1.13.v20181017//file": "alpn-boot-8.1.13.v20181017.jar",
-        "//310-ci-manager:module_deploy.jar": "ci-manager-capsule.jar",
+        "//332-ci-manager/app:module_deploy.jar": "ci-manager-capsule.jar",
     },
     mode = "0600",
     owner = "65534.65534",
