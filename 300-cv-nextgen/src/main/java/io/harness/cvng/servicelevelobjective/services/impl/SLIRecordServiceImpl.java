@@ -286,8 +286,7 @@ public class SLIRecordServiceImpl implements SLIRecordService {
       }
     }
 
-    Pair<Long, Long> result = Pair.of((extra / 60000), (long) currentRange);
-    return result;
+    return Pair.of(extra / 60000, (long) currentRange);
   }
 
   @Override

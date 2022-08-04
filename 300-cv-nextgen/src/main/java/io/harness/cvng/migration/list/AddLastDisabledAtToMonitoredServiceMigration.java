@@ -35,11 +35,11 @@ public class AddLastDisabledAtToMonitoredServiceMigration implements CVNGMigrati
 
   @Override
   public ChecklistItem whatHappensOnRollback() {
-    return null;
+    return ChecklistItem.NA;
   }
 
   @Override
   public ChecklistItem whatHappensIfOldVersionIteratorPicksMigratedEntity() {
-    return null;
+    return ChecklistItem.NA;
   }
 }
