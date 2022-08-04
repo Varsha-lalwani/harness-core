@@ -348,6 +348,20 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
               }
             });
           }
+          if (isNotEmpty(freezeConfig.getExcludeAppSelections())) {
+            freezeConfig.getExcludeAppSelections().forEach(appSelection -> {
+              if ((appSelection.getFilterType() == BlackoutWindowFilterType.ALL
+                      || (appSelection.getFilterType() == BlackoutWindowFilterType.CUSTOM
+                          && ((CustomAppFilter) appSelection).getApps().contains(appId)))
+                  && areAllServicesFrozen(appSelection)) {
+                envIdsByWindow.merge(freezeConfig.getUuid(),
+                    new HashSet<>(getEnvIdsFromAppSelection(appId, appSelection)), (prevEnvSet, newEnvSet) -> {
+                      prevEnvSet.removeAll(newEnvSet);
+                      return prevEnvSet;
+                    });
+              }
+            });
+          }
         }
         return envIdsByWindow;
       }
@@ -434,6 +448,21 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
               }
             });
           }
+          if (isNotEmpty(freezeConfig.getExcludeAppSelections()) && isActive(freezeConfig)) {
+            freezeConfig.getExcludeAppSelections().forEach(appSelection -> {
+              if (appSelection.getServiceSelection() == null
+                  || appSelection.getServiceSelection().getFilterType() == ServiceFilterType.ALL) {
+                Map<String, Set<String>> appEnvMap = getAppEnvMapForAppSelection(accountId, appSelection);
+                if (isNotEmpty(appEnvMap)) {
+                  appEnvMap.forEach((app, envSet) -> appEnvs.merge(app, envSet, (prevEnvSet, newEnvSet) -> {
+                    prevEnvSet.removeAll(newEnvSet);
+                    return prevEnvSet;
+                  }));
+                }
+                checkIfAllEnvAllServiceExcludedFromFreezeAndRemove(appSelection, allEnvFrozenApps, accountId);
+              }
+            });
+          }
         }
       }
       return DeploymentFreezeInfo.builder()
@@ -460,6 +489,21 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
         allEnvFrozenApps.addAll(((CustomAppFilter) appSelection).getApps());
       } else {
         allEnvFrozenApps.addAll(emptyIfNull(appService.getAppIdsByAccountId(accountId)));
+      }
+    }
+  }
+
+  private void checkIfAllEnvAllServiceExcludedFromFreezeAndRemove(
+      ApplicationFilter appSelection, Set<String> allEnvFrozenApps, String accountId) {
+    // Whole app is excluded from freeze when both Env Filters and Service filters are ALL selected.
+    // This also applies to previously created windows which did not have option to add service selection
+    if (appSelection.getEnvSelection().getFilterType() == EnvironmentFilterType.ALL
+        && (appSelection.getServiceSelection() == null
+            || appSelection.getServiceSelection().getFilterType() == ServiceFilterType.ALL)) {
+      if (appSelection.getFilterType() == BlackoutWindowFilterType.CUSTOM) {
+        allEnvFrozenApps.removeAll(new HashSet<>(((CustomAppFilter) appSelection).getApps()));
+      } else {
+        allEnvFrozenApps.removeAll(new HashSet<>(emptyIfNull(appService.getAppIdsByAccountId(accountId))));
       }
     }
   }
@@ -613,14 +657,25 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
   }
 
   private void validateAppEnvFilter(TimeRangeBasedFreezeConfig deploymentFreeze) {
-    if (deploymentFreeze.getAppSelections().stream().anyMatch(appSelection
+    validateAppEnvFilterTypes(deploymentFreeze.getAppSelections());
+    validateAppEnvFilterOneAppWhenEnvFilterTypeIsCustom(deploymentFreeze.getAppSelections());
+    validateAppEnvFilterOneAppWhenServiceFilterTypeIsCustom(deploymentFreeze.getAppSelections());
+    validateAppEnvFilterTypes(deploymentFreeze.getExcludeAppSelections());
+    validateAppEnvFilterOneAppWhenEnvFilterTypeIsCustom(deploymentFreeze.getExcludeAppSelections());
+    validateAppEnvFilterOneAppWhenServiceFilterTypeIsCustom(deploymentFreeze.getExcludeAppSelections());
+  }
+
+  private void validateAppEnvFilterTypes(List<ApplicationFilter> appSelections) {
+    if (appSelections.stream().anyMatch(appSelection
             -> appSelection.getFilterType() != BlackoutWindowFilterType.CUSTOM
                 && appSelection.getEnvSelection().getFilterType() == EnvironmentFilterType.CUSTOM)) {
       throw new InvalidRequestException(
           "Environment filter type can be CUSTOM only when Application Filter type is CUSTOM");
     }
-    if (deploymentFreeze.getAppSelections()
-            .stream()
+  }
+
+  private void validateAppEnvFilterOneAppWhenEnvFilterTypeIsCustom(List<ApplicationFilter> appSelections) {
+    if (appSelections.stream()
             .filter(selection -> selection.getFilterType() == BlackoutWindowFilterType.CUSTOM)
             .anyMatch(appSelection
                 -> appSelection.getEnvSelection().getFilterType() == EnvironmentFilterType.CUSTOM
@@ -628,8 +683,10 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
       throw new InvalidRequestException(
           "Application filter should have exactly one app when environment filter type is CUSTOM");
     }
-    if (deploymentFreeze.getAppSelections()
-            .stream()
+  }
+
+  private void validateAppEnvFilterOneAppWhenServiceFilterTypeIsCustom(List<ApplicationFilter> appSelections) {
+    if (appSelections.stream()
             .filter(selection -> selection.getFilterType() == BlackoutWindowFilterType.CUSTOM)
             .anyMatch(appSelection
                 -> appSelection.getServiceSelection().getFilterType() == ServiceFilterType.CUSTOM

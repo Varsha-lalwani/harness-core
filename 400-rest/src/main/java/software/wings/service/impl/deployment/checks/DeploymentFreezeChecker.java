@@ -128,6 +128,21 @@ public class DeploymentFreezeChecker implements PreDeploymentChecker {
         }
       }
     }
+    // Handle exclusion logic
+    for (ApplicationFilter applicationFilter : window.getExcludeAppSelections()) {
+      if (BlackoutWindowFilterType.CUSTOM.equals(applicationFilter.getFilterType())) {
+        List<String> appIds = ((CustomAppFilter) applicationFilter).getApps();
+        if (appIds.size() == 1) {
+          if (!Collections.disjoint(governanceConfigService.getEnvIdsFromAppSelection(appIds.get(0), applicationFilter),
+                  deploymentCtx.getEnvIds())
+              && !Collections.disjoint(
+                  governanceConfigService.getServiceIdsFromAppSelection(appIds.get(0), applicationFilter),
+                  deploymentCtx.getServiceIds())) {
+            isFrozen = false;
+          }
+        }
+      }
+    }
     return isFrozen;
   }
 
@@ -154,12 +169,23 @@ public class DeploymentFreezeChecker implements PreDeploymentChecker {
     if (isEmpty(freezeWindow.getAppSelections())) {
       return false;
     }
-    return freezeWindow.getAppSelections()
-        .stream()
-        .filter(appSelection -> appSelection.getEnvSelection().getFilterType() == EnvironmentFilterType.ALL)
-        .anyMatch(appSelection
-            -> appSelection.getFilterType() == BlackoutWindowFilterType.ALL
-                || ((CustomAppFilter) appSelection).getApps().contains(deploymentCtx.getAppId()));
+    boolean is_frozen =
+        freezeWindow.getAppSelections()
+            .stream()
+            .filter(appSelection -> appSelection.getEnvSelection().getFilterType() == EnvironmentFilterType.ALL)
+            .anyMatch(appSelection
+                -> appSelection.getFilterType() == BlackoutWindowFilterType.ALL
+                    || ((CustomAppFilter) appSelection).getApps().contains(deploymentCtx.getAppId()));
+
+    boolean is_excluded_from_freeze =
+        freezeWindow.getExcludeAppSelections()
+            .stream()
+            .filter(appSelection -> appSelection.getEnvSelection().getFilterType() == EnvironmentFilterType.ALL)
+            .anyMatch(appSelection
+                -> appSelection.getFilterType() == BlackoutWindowFilterType.ALL
+                    || ((CustomAppFilter) appSelection).getApps().contains(deploymentCtx.getAppId()));
+
+    return is_frozen && !is_excluded_from_freeze;
   }
 
   void checkIfEnvFrozen(String accountId, GovernanceConfig governanceConfig) {
