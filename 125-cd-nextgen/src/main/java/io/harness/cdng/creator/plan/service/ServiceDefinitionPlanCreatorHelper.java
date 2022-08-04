@@ -7,12 +7,20 @@
 
 package io.harness.cdng.creator.plan.service;
 
+import static io.harness.cdng.manifest.ManifestType.SERVICE_OVERRIDE_SUPPORTED_MANIFEST_TYPEs;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
+import static java.lang.String.format;
+
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
 import io.harness.cdng.azure.webapp.ApplicationSettingsParameters;
 import io.harness.cdng.azure.webapp.ConnectionStringsParameters;
 import io.harness.cdng.azure.webapp.StartupCommandParameters;
 import io.harness.cdng.configfile.ConfigFileWrapper;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
+import io.harness.cdng.manifest.ManifestConfigType;
+import io.harness.cdng.manifest.yaml.ManifestConfig;
 import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.service.beans.AzureWebAppServiceSpec;
@@ -22,24 +30,40 @@ import io.harness.cdng.utilities.AzureConfigsUtility;
 import io.harness.cdng.utilities.ConfigFileUtility;
 import io.harness.cdng.utilities.ManifestsUtility;
 import io.harness.cdng.visitor.YamlTypes;
+import io.harness.data.structure.CollectionUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
+import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.service.yaml.NGServiceV2InfoConfig;
+import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
+import io.harness.ng.core.serviceoverride.mapper.NGServiceOverrideEntityConfigMapper;
+import io.harness.ng.core.serviceoverride.yaml.NGServiceOverrideConfig;
+import io.harness.ng.core.serviceoverride.yaml.NGServiceOverrideInfoConfig;
 import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.contracts.plan.Dependency;
 import io.harness.pms.contracts.plan.YamlUpdates;
+import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse.PlanCreationResponseBuilder;
 import io.harness.pms.yaml.DependenciesUtils;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.pms.yaml.YamlUtils;
 import io.harness.serializer.KryoSerializer;
 
 import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.NonNull;
 import lombok.experimental.UtilityClass;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Contains method useful for serviceDefinition plan creator
@@ -63,6 +87,7 @@ public class ServiceDefinitionPlanCreatorHelper {
     // TODO: Find an efficient way to not pass whole service entity
     metadataDependency.put(
         YamlTypes.SERVICE_ENTITY, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(serviceV2Config)));
+
     return metadataDependency;
   }
 
@@ -71,7 +96,7 @@ public class ServiceDefinitionPlanCreatorHelper {
 
     // Contains either primary artifacts or side-car artifacts
     if (artifactListConfig != null) {
-      if (artifactListConfig.getPrimary() != null || EmptyPredicate.isNotEmpty(artifactListConfig.getSidecars())) {
+      if (artifactListConfig.getPrimary() != null || isNotEmpty(artifactListConfig.getSidecars())) {
         return true;
       }
     }
@@ -79,7 +104,7 @@ public class ServiceDefinitionPlanCreatorHelper {
     if (actualServiceConfig.getStageOverrides() != null
         && actualServiceConfig.getStageOverrides().getArtifacts() != null) {
       return actualServiceConfig.getStageOverrides().getArtifacts().getPrimary() != null
-          || EmptyPredicate.isNotEmpty(actualServiceConfig.getStageOverrides().getArtifacts().getSidecars());
+          || isNotEmpty(actualServiceConfig.getStageOverrides().getArtifacts().getSidecars());
     }
 
     return false;
@@ -90,7 +115,7 @@ public class ServiceDefinitionPlanCreatorHelper {
 
     // Contains either primary artifacts or side-car artifacts
     if (artifactListConfig != null) {
-      return artifactListConfig.getPrimary() != null || EmptyPredicate.isNotEmpty(artifactListConfig.getSidecars());
+      return artifactListConfig.getPrimary() != null || isNotEmpty(artifactListConfig.getSidecars());
     }
     return false;
   }
@@ -177,14 +202,18 @@ public class ServiceDefinitionPlanCreatorHelper {
 
   String addDependenciesForManifestsV2(YamlNode serviceV2Node,
       Map<String, PlanCreationResponse> planCreationResponseMap, NGServiceV2InfoConfig serviceV2Config,
-      KryoSerializer kryoSerializer) {
+      List<NGServiceOverridesEntity> serviceOverridesEntities, KryoSerializer kryoSerializer) throws IOException {
     YamlUpdates.Builder yamlUpdates = YamlUpdates.newBuilder();
-    YamlField manifestsYamlField =
-        ManifestsUtility.fetchManifestsYamlFieldAndSetYamlUpdates(serviceV2Node, false, yamlUpdates);
+
+    List<ManifestConfigWrapper> finalManifests = prepareFinalManifests(serviceV2Config, serviceOverridesEntities);
+    YamlField manifestsYamlField = prepareFinalUuidInjectedManifestYamlField(serviceV2Node, finalManifests);
+    PlanCreatorUtils.setYamlUpdate(manifestsYamlField, yamlUpdates);
     String manifestsPlanNodeId = "manifests-" + UUIDGenerator.generateUuid();
 
     Map<String, ByteString> metadataDependency =
         prepareMetadataV2(manifestsPlanNodeId, serviceV2Config, kryoSerializer);
+    metadataDependency.put(
+        YamlTypes.MANIFEST_LIST_CONFIG, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(finalManifests)));
 
     Map<String, YamlField> dependenciesMap = new HashMap<>();
     dependenciesMap.put(manifestsPlanNodeId, manifestsYamlField);
@@ -199,6 +228,87 @@ public class ServiceDefinitionPlanCreatorHelper {
     }
     planCreationResponseMap.put(manifestsPlanNodeId, manifestsPlanCreationResponse.build());
     return manifestsPlanNodeId;
+  }
+
+  @NotNull
+  private YamlField prepareFinalUuidInjectedManifestYamlField(
+      YamlNode serviceV2Node, List<ManifestConfigWrapper> finalManifests) throws IOException {
+    YamlField manifestsYamlField = YamlUtils.injectUuidInYamlField(YamlUtils.write(finalManifests));
+    manifestsYamlField = new YamlField(YamlTypes.MANIFEST_LIST_CONFIG,
+        new YamlNode(YamlTypes.MANIFEST_LIST_CONFIG, manifestsYamlField.getNode().getCurrJsonNode(),
+            serviceV2Node.getField(YamlTypes.SERVICE_DEFINITION).getNode().getField(YamlTypes.SPEC).getNode()));
+    return manifestsYamlField;
+  }
+
+  @NotNull
+  private List<ManifestConfigWrapper> prepareFinalManifests(
+      NGServiceV2InfoConfig serviceV2Config, List<NGServiceOverridesEntity> serviceOverridesEntities) {
+    List<ManifestConfigWrapper> finalManifests = new ArrayList<>();
+    List<ManifestConfigWrapper> svcManifests = new ArrayList<>();
+    List<ManifestConfigWrapper> svcOverrideManifests = new ArrayList<>();
+    if (isNotEmpty(serviceOverridesEntities)) {
+      svcOverrideManifests = fetchSvcOverrideManifests(serviceOverridesEntities);
+    }
+    svcManifests = fetchManifestFromServiceEntity(serviceV2Config);
+    checkDuplicateManifestIdentifiers(svcManifests, svcOverrideManifests);
+    validateAllowedManifestTypesInOverrides(svcOverrideManifests);
+    finalManifests.addAll(svcOverrideManifests);
+    finalManifests.addAll(svcManifests);
+    return finalManifests;
+  }
+
+  private static void validateAllowedManifestTypesInOverrides(List<ManifestConfigWrapper> svcOverrideManifests) {
+    if (isEmpty(svcOverrideManifests)) {
+      return;
+    }
+    Set<String> unsupportedManifestTypesUsed =
+        svcOverrideManifests.stream()
+            .map(ManifestConfigWrapper::getManifest)
+            .filter(Objects::nonNull)
+            .map(ManifestConfig::getType)
+            .map(ManifestConfigType::getDisplayName)
+            .filter(type -> !SERVICE_OVERRIDE_SUPPORTED_MANIFEST_TYPEs.contains(type))
+            .collect(Collectors.toSet());
+    if (isEmpty(unsupportedManifestTypesUsed)) {
+      throw new InvalidRequestException(format("Manifest Types: %s are not supported for Service Overrides",
+          unsupportedManifestTypesUsed.stream().map(Object::toString).collect(Collectors.joining(","))));
+    }
+  }
+
+  private static void checkDuplicateManifestIdentifiers(
+      List<ManifestConfigWrapper> svcManifests, List<ManifestConfigWrapper> svcOverrideManifests) {
+    if (isEmpty(svcManifests) || isEmpty(svcOverrideManifests)) {
+      return;
+    }
+    Set<String> overridesIdentifiers = svcOverrideManifests.stream()
+                                           .map(ManifestConfigWrapper::getManifest)
+                                           .map(ManifestConfig::getIdentifier)
+                                           .collect(Collectors.toSet());
+    List<String> duplicateManifestIds = svcManifests.stream()
+                                            .map(ManifestConfigWrapper::getManifest)
+                                            .map(ManifestConfig::getIdentifier)
+                                            .filter(overridesIdentifiers::contains)
+                                            .collect(Collectors.toList());
+    if (isNotEmpty(duplicateManifestIds)) {
+      throw new InvalidRequestException(format("Found duplicate manifest identifier in Service: %s",
+          duplicateManifestIds.stream().map(Object::toString).collect(Collectors.joining(","))));
+    }
+  }
+
+  private List<ManifestConfigWrapper> fetchManifestFromServiceEntity(NGServiceV2InfoConfig serviceV2Config) {
+    return CollectionUtils.emptyIfNull(serviceV2Config.getServiceDefinition().getServiceSpec().getManifests());
+  }
+
+  private List<ManifestConfigWrapper> fetchSvcOverrideManifests(
+      @NonNull List<NGServiceOverridesEntity> serviceOverridesEntities) {
+    return serviceOverridesEntities.stream()
+        .map(NGServiceOverrideEntityConfigMapper::toNGServiceOverrideConfig)
+        .map(NGServiceOverrideConfig::getServiceOverrideInfoConfig)
+        .filter(Objects::nonNull)
+        .map(NGServiceOverrideInfoConfig::getManifests)
+        .filter(EmptyPredicate::isNotEmpty)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
   }
 
   String addDependenciesForConfigFilesV2(YamlNode serviceV2Node,
@@ -406,25 +516,25 @@ public class ServiceDefinitionPlanCreatorHelper {
     List<ManifestConfigWrapper> manifests = actualServiceConfig.getServiceDefinition().getServiceSpec().getManifests();
 
     // Contains either manifests or overrides or nothing.
-    if (EmptyPredicate.isNotEmpty(manifests)) {
+    if (isNotEmpty(manifests)) {
       return true;
     }
 
     return actualServiceConfig.getStageOverrides() != null
         && actualServiceConfig.getStageOverrides().getManifests() != null
-        && EmptyPredicate.isNotEmpty(actualServiceConfig.getStageOverrides().getManifests());
+        && isNotEmpty(actualServiceConfig.getStageOverrides().getManifests());
   }
 
   boolean shouldCreatePlanNodeForManifestsV2(NGServiceV2InfoConfig serviceV2InfoConfig) {
     List<ManifestConfigWrapper> manifests = serviceV2InfoConfig.getServiceDefinition().getServiceSpec().getManifests();
 
     // Contains either manifests or not.
-    return EmptyPredicate.isNotEmpty(manifests);
+    return isNotEmpty(manifests);
   }
 
   boolean shouldCreatePlanNodeForConfigFilesV2(NGServiceV2InfoConfig serviceV2InfoConfig) {
     List<ConfigFileWrapper> configFiles = serviceV2InfoConfig.getServiceDefinition().getServiceSpec().getConfigFiles();
 
-    return EmptyPredicate.isNotEmpty(configFiles);
+    return isNotEmpty(configFiles);
   }
 }

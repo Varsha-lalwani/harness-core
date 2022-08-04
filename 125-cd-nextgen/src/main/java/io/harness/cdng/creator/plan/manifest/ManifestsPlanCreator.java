@@ -88,9 +88,10 @@ public class ManifestsPlanCreator extends ChildrenPlanCreator<ManifestsListConfi
     } else if (ctx.getDependency().getMetadataMap().containsKey(YamlTypes.SERVICE_ENTITY)) {
       NGServiceV2InfoConfig serviceV2InfoConfig = (NGServiceV2InfoConfig) kryoSerializer.asInflatedObject(
           ctx.getDependency().getMetadataMap().get(YamlTypes.SERVICE_ENTITY).toByteArray());
+      final List<ManifestConfigWrapper> manifestListConfig =
+          (List<ManifestConfigWrapper>) kryoSerializer.asInflatedObject(
+              ctx.getDependency().getMetadataMap().get(YamlTypes.MANIFEST_LIST_CONFIG).toByteArray());
 
-      List<ManifestConfigWrapper> manifestListConfig =
-          serviceV2InfoConfig.getServiceDefinition().getServiceSpec().getManifests();
       serviceDefinitionType = serviceV2InfoConfig.getServiceDefinition().getType();
       ManifestListBuilder manifestListBuilder = new ManifestListBuilder(manifestListConfig);
       manifestList = manifestListBuilder.build();

@@ -9,6 +9,7 @@ package io.harness.ng.core.serviceoverride.services;
 
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
 
+import java.util.List;
 import java.util.Optional;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 
 public interface ServiceOverrideService {
   Optional<NGServiceOverridesEntity> get(
+      String accountId, String orgIdentifier, String projectIdentifier, String environmentRef, String serviceRef);
+
+  List<NGServiceOverridesEntity> findByEnvIdAndOptionalSvcId(
       String accountId, String orgIdentifier, String projectIdentifier, String environmentRef, String serviceRef);
 
   NGServiceOverridesEntity upsert(NGServiceOverridesEntity requestServiceOverride);
