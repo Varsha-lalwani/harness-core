@@ -28,6 +28,7 @@ import io.harness.cdng.infra.steps.InfraStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
 import io.harness.cdng.provision.cloudformation.beans.CloudformationConfig;
 import io.harness.cdng.provision.terraform.TerraformConfig;
+import io.harness.cdng.rollback.RollbackData;
 import io.harness.cdng.service.steps.ServiceStepParameters;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
@@ -58,6 +59,7 @@ public class NGMorphiaRegistrar implements MorphiaRegistrar {
     set.add(AzureWebAppInfraMapping.class);
     set.add(EcsInfraMapping.class);
     set.add(CdTelemetrySentStatus.class);
+    set.add(RollbackData.class);
   }
 
   @Override
@@ -70,5 +72,6 @@ public class NGMorphiaRegistrar implements MorphiaRegistrar {
     h.put("io.harness.cdng.provision.terraform.TerraformConfig", TerraformConfig.class);
     h.put("io.harness.cdng.provision.cloudformation.beans.CloudformationConfig", CloudformationConfig.class);
     h.put("io.harness.polling.bean.PollingDocument", PollingDocument.class);
+    h.put("io.harness.cdng.rollback.RollbackData", RollbackData.class);
   }
 }

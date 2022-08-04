@@ -22,7 +22,7 @@ import io.harness.cdng.creator.plan.artifact.SideCarArtifactPlanCreator;
 import io.harness.cdng.creator.plan.artifact.SideCarListPlanCreator;
 import io.harness.cdng.creator.plan.azure.webapps.ApplicationSettingsPlanCreator;
 import io.harness.cdng.creator.plan.azure.webapps.ConnectionStringsPlanCreator;
-import io.harness.cdng.creator.plan.azure.webapps.StartupScriptPlanCreator;
+import io.harness.cdng.creator.plan.azure.webapps.StartupCommandPlanCreator;
 import io.harness.cdng.creator.plan.configfile.ConfigFilesPlanCreator;
 import io.harness.cdng.creator.plan.configfile.IndividualConfigFilePlanCreator;
 import io.harness.cdng.creator.plan.envGroup.EnvGroupPlanCreator;
@@ -96,6 +96,7 @@ import io.harness.cdng.provision.terraform.variablecreator.TerraformPlanStepVari
 import io.harness.cdng.provision.terraform.variablecreator.TerraformRollbackStepVariableCreator;
 import io.harness.enforcement.constants.FeatureRestrictionName;
 import io.harness.executions.steps.StepSpecTypeConstants;
+import io.harness.filters.ExecutionPMSFilterJsonCreator;
 import io.harness.plancreator.stages.parallel.ParallelPlanCreator;
 import io.harness.plancreator.steps.SpecNodePlanCreator;
 import io.harness.plancreator.steps.StepGroupPMSPlanCreator;
@@ -181,7 +182,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new AzureWebAppSlotSwapSlotPlanCreator());
     planCreators.add(new AzureWebAppTrafficShiftStepPlanCreator());
     planCreators.add(new JenkinsCreateStepPlanCreator());
-    planCreators.add(new StartupScriptPlanCreator());
+    planCreators.add(new StartupCommandPlanCreator());
     planCreators.add(new ApplicationSettingsPlanCreator());
     planCreators.add(new ConnectionStringsPlanCreator());
     // ECS
@@ -197,6 +198,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     filterJsonCreators.add(new DeploymentStageFilterJsonCreatorV2());
     filterJsonCreators.add(new CDPMSStepFilterJsonCreator());
     filterJsonCreators.add(new CDPMSStepFilterJsonCreatorV2());
+    filterJsonCreators.add(new ExecutionPMSFilterJsonCreator());
     injectorUtils.injectMembers(filterJsonCreators);
 
     return filterJsonCreators;
@@ -441,7 +443,6 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                                                     .addAllCategory(CLOUDFORMATION_CATEGORY)
                                                     .addFolderPaths(CLOUDFORMATION_STEP_METADATA)
                                                     .build())
-                               .setFeatureFlag(FeatureName.CLOUDFORMATION_NG.name())
                                .build();
 
     StepInfo deleteStack = StepInfo.newBuilder()
@@ -452,7 +453,6 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                                                     .addAllCategory(CLOUDFORMATION_CATEGORY)
                                                     .addFolderPaths(CLOUDFORMATION_STEP_METADATA)
                                                     .build())
-                               .setFeatureFlag(FeatureName.CLOUDFORMATION_NG.name())
                                .build();
 
     StepInfo rollbackStack = StepInfo.newBuilder()
@@ -463,7 +463,6 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                                                       .addAllCategory(CLOUDFORMATION_CATEGORY)
                                                       .addFolderPaths(CLOUDFORMATION_STEP_METADATA)
                                                       .build())
-                                 .setFeatureFlag(FeatureName.CLOUDFORMATION_NG.name())
                                  .build();
 
     StepInfo azureWebAppSlotDeployment =

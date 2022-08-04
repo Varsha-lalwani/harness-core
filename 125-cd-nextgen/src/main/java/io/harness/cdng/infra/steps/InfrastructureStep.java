@@ -18,7 +18,6 @@ import static java.lang.String.format;
 
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.IdentifierRef;
 import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.infra.InfrastructureMapper;
 import io.harness.cdng.infra.beans.InfraMapping;
@@ -38,11 +37,8 @@ import io.harness.cdng.infra.yaml.SshWinRmAwsInfrastructure;
 import io.harness.cdng.infra.yaml.SshWinRmAzureInfrastructure;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
-import io.harness.connector.ConnectorConnectivityDetails;
 import io.harness.connector.ConnectorInfoDTO;
-import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
-import io.harness.connector.utils.ConnectorUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
@@ -60,7 +56,6 @@ import io.harness.logging.LogLevel;
 import io.harness.logging.UnitProgress;
 import io.harness.logging.UnitStatus;
 import io.harness.logstreaming.NGLogCallback;
-import io.harness.ng.core.NGAccess;
 import io.harness.ng.core.infrastructure.InfrastructureKind;
 import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -68,7 +63,6 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.plan.ExecutionPrincipalInfo;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
-import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.rbac.PipelineRbacHelper;
 import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outcome.OutcomeService;
@@ -83,17 +77,16 @@ import io.harness.steps.OutputExpressionConstants;
 import io.harness.steps.StepUtils;
 import io.harness.steps.environment.EnvironmentOutcome;
 import io.harness.steps.executable.SyncExecutableWithRbac;
+import io.harness.steps.shellscript.HostsOutput;
 import io.harness.steps.shellscript.K8sInfraDelegateConfigOutput;
 import io.harness.steps.shellscript.SshInfraDelegateConfigOutput;
 import io.harness.steps.shellscript.WinRmInfraDelegateConfigOutput;
-import io.harness.utils.IdentifierRefHelper;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @OwnedBy(CDC)
@@ -215,6 +208,8 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         SshInfraDelegateConfigOutput.builder().sshInfraDelegateConfig(sshInfraDelegateConfig).build();
     executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.SSH_INFRA_DELEGATE_CONFIG_OUTPUT_NAME,
         sshInfraDelegateConfigOutput, StepCategory.STAGE.name());
+    executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.OUTPUT,
+        HostsOutput.builder().hosts(sshInfraDelegateConfig.getHosts()).build(), StepCategory.STAGE.name());
   }
 
   private void publishWinRmInfraDelegateConfigOutput(InfrastructureOutcome infrastructureOutcome, Ambiance ambiance) {
@@ -225,6 +220,8 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         WinRmInfraDelegateConfigOutput.builder().winRmInfraDelegateConfig(winRmInfraDelegateConfig).build();
     executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.WINRM_INFRA_DELEGATE_CONFIG_OUTPUT_NAME,
         winRmInfraDelegateConfigOutput, StepCategory.STAGE.name());
+    executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.OUTPUT,
+        HostsOutput.builder().hosts(winRmInfraDelegateConfig.getHosts()).build(), StepCategory.STAGE.name());
   }
 
   @VisibleForTesting
@@ -240,7 +237,8 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
       return;
     }
 
-    ConnectorInfoDTO connectorInfo = validateAndGetConnector(infrastructure.getConnectorReference(), ambiance);
+    ConnectorInfoDTO connectorInfo =
+        infrastructureStepHelper.validateAndGetConnector(infrastructure.getConnectorReference(), ambiance, logCallback);
 
     if (InfrastructureKind.KUBERNETES_GCP.equals(infrastructure.getKind())) {
       if (!(connectorInfo.getConnectorConfig() instanceof GcpConnectorDTO)) {
@@ -290,51 +288,6 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
     saveExecutionLog(logCallback, color("Connector validated", Green));
   }
 
-  private ConnectorInfoDTO validateAndGetConnector(ParameterField<String> connectorRef, Ambiance ambiance) {
-    NGLogCallback logCallback = infrastructureStepHelper.getInfrastructureLogCallback(ambiance);
-    saveExecutionLog(logCallback, "Fetching and validating connector...");
-
-    NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
-    if (ParameterField.isNull(connectorRef)) {
-      throw new InvalidRequestException("Connector ref field not present in infrastructure");
-    }
-    String connectorRefValue = connectorRef.getValue();
-    IdentifierRef connectorIdentifierRef = IdentifierRefHelper.getIdentifierRef(connectorRefValue,
-        ngAccess.getAccountIdentifier(), ngAccess.getOrgIdentifier(), ngAccess.getProjectIdentifier());
-    Optional<ConnectorResponseDTO> connectorDTO =
-        connectorService.get(connectorIdentifierRef.getAccountIdentifier(), connectorIdentifierRef.getOrgIdentifier(),
-            connectorIdentifierRef.getProjectIdentifier(), connectorIdentifierRef.getIdentifier());
-    ConnectorInfoDTO connectorInfoDTO;
-    if (!connectorDTO.isPresent()) {
-      throw new InvalidRequestException(format("Connector not found for identifier : [%s]", connectorRefValue));
-    } else {
-      saveExecutionLog(logCallback, color("Connector fetched", Green));
-
-      connectorInfoDTO = connectorDTO.get().getConnector();
-      if (connectorInfoDTO != null) {
-        if (EmptyPredicate.isNotEmpty(connectorInfoDTO.getName())) {
-          saveExecutionLog(logCallback, color(format("Connector Name: %s", connectorInfoDTO.getName()), Yellow));
-        }
-
-        if (connectorInfoDTO.getConnectorType() != null
-            && EmptyPredicate.isNotEmpty(connectorInfoDTO.getConnectorType().name())) {
-          saveExecutionLog(
-              logCallback, color(format("Connector Type: %s", connectorInfoDTO.getConnectorType().name()), Yellow));
-        }
-      }
-
-      ConnectorConnectivityDetails connectorConnectivityDetails = connectorDTO.get().getStatus();
-      if (connectorConnectivityDetails != null && connectorConnectivityDetails.getStatus() != null
-          && EmptyPredicate.isNotEmpty(connectorConnectivityDetails.getStatus().name())) {
-        saveExecutionLog(logCallback,
-            color(format("Connector Status: %s", connectorConnectivityDetails.getStatus().name()), Yellow));
-      }
-    }
-    ConnectorUtils.checkForConnectorValidityOrThrow(connectorDTO.get());
-
-    return connectorInfoDTO;
-  }
-
   @VisibleForTesting
   void validateInfrastructure(Infrastructure infrastructure, Ambiance ambiance) {
     String k8sNamespaceLogLine = "Kubernetes Namespace: %s";
@@ -347,7 +300,8 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
     switch (infrastructure.getKind()) {
       case InfrastructureKind.KUBERNETES_DIRECT:
         K8SDirectInfrastructure k8SDirectInfrastructure = (K8SDirectInfrastructure) infrastructure;
-        validateExpression(k8SDirectInfrastructure.getConnectorRef(), k8SDirectInfrastructure.getNamespace());
+        infrastructureStepHelper.validateExpression(
+            k8SDirectInfrastructure.getConnectorRef(), k8SDirectInfrastructure.getNamespace());
 
         if (k8SDirectInfrastructure.getNamespace() != null
             && EmptyPredicate.isNotEmpty(k8SDirectInfrastructure.getNamespace().getValue())) {
@@ -358,8 +312,8 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
 
       case InfrastructureKind.KUBERNETES_GCP:
         K8sGcpInfrastructure k8sGcpInfrastructure = (K8sGcpInfrastructure) infrastructure;
-        validateExpression(k8sGcpInfrastructure.getConnectorRef(), k8sGcpInfrastructure.getNamespace(),
-            k8sGcpInfrastructure.getCluster());
+        infrastructureStepHelper.validateExpression(k8sGcpInfrastructure.getConnectorRef(),
+            k8sGcpInfrastructure.getNamespace(), k8sGcpInfrastructure.getCluster());
 
         if (k8sGcpInfrastructure.getNamespace() != null
             && EmptyPredicate.isNotEmpty(k8sGcpInfrastructure.getNamespace().getValue())) {
@@ -370,15 +324,15 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
       case InfrastructureKind.SERVERLESS_AWS_LAMBDA:
         ServerlessAwsLambdaInfrastructure serverlessAwsLambdaInfrastructure =
             (ServerlessAwsLambdaInfrastructure) infrastructure;
-        validateExpression(serverlessAwsLambdaInfrastructure.getConnectorRef(),
+        infrastructureStepHelper.validateExpression(serverlessAwsLambdaInfrastructure.getConnectorRef(),
             serverlessAwsLambdaInfrastructure.getRegion(), serverlessAwsLambdaInfrastructure.getStage());
         break;
 
       case InfrastructureKind.KUBERNETES_AZURE:
         K8sAzureInfrastructure k8sAzureInfrastructure = (K8sAzureInfrastructure) infrastructure;
-        validateExpression(k8sAzureInfrastructure.getConnectorRef(), k8sAzureInfrastructure.getNamespace(),
-            k8sAzureInfrastructure.getCluster(), k8sAzureInfrastructure.getSubscriptionId(),
-            k8sAzureInfrastructure.getResourceGroup());
+        infrastructureStepHelper.validateExpression(k8sAzureInfrastructure.getConnectorRef(),
+            k8sAzureInfrastructure.getNamespace(), k8sAzureInfrastructure.getCluster(),
+            k8sAzureInfrastructure.getSubscriptionId(), k8sAzureInfrastructure.getResourceGroup());
 
         if (k8sAzureInfrastructure.getNamespace() != null
             && EmptyPredicate.isNotEmpty(k8sAzureInfrastructure.getNamespace().getValue())) {
@@ -389,26 +343,26 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
 
       case InfrastructureKind.SSH_WINRM_AZURE:
         SshWinRmAzureInfrastructure sshWinRmAzureInfrastructure = (SshWinRmAzureInfrastructure) infrastructure;
-        validateExpression(sshWinRmAzureInfrastructure.getConnectorRef(),
+        infrastructureStepHelper.validateExpression(sshWinRmAzureInfrastructure.getConnectorRef(),
             sshWinRmAzureInfrastructure.getSubscriptionId(), sshWinRmAzureInfrastructure.getResourceGroup(),
             sshWinRmAzureInfrastructure.getCredentialsRef());
         break;
 
       case InfrastructureKind.PDC:
         PdcInfrastructure pdcInfrastructure = (PdcInfrastructure) infrastructure;
-        validateExpression(pdcInfrastructure.getCredentialsRef());
-        requireOne(pdcInfrastructure.getHosts(), pdcInfrastructure.getConnectorRef());
+        infrastructureStepHelper.validateExpression(pdcInfrastructure.getCredentialsRef());
+        infrastructureStepHelper.requireOne(pdcInfrastructure.getHosts(), pdcInfrastructure.getConnectorRef());
         break;
       case InfrastructureKind.SSH_WINRM_AWS:
         SshWinRmAwsInfrastructure sshWinRmAwsInfrastructure = (SshWinRmAwsInfrastructure) infrastructure;
-        validateExpression(sshWinRmAwsInfrastructure.getConnectorRef(), sshWinRmAwsInfrastructure.getCredentialsRef(),
-            sshWinRmAwsInfrastructure.getRegion());
+        infrastructureStepHelper.validateExpression(sshWinRmAwsInfrastructure.getConnectorRef(),
+            sshWinRmAwsInfrastructure.getCredentialsRef(), sshWinRmAwsInfrastructure.getRegion());
         break;
 
       case InfrastructureKind.AZURE_WEB_APP:
         AzureWebAppInfrastructure azureWebAppInfrastructure = (AzureWebAppInfrastructure) infrastructure;
-        validateExpression(azureWebAppInfrastructure.getConnectorRef(), azureWebAppInfrastructure.getSubscriptionId(),
-            azureWebAppInfrastructure.getResourceGroup());
+        infrastructureStepHelper.validateExpression(azureWebAppInfrastructure.getConnectorRef(),
+            azureWebAppInfrastructure.getSubscriptionId(), azureWebAppInfrastructure.getResourceGroup());
         break;
 
       case InfrastructureKind.ECS:
@@ -417,26 +371,6 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         break;
       default:
         throw new InvalidArgumentsException(format("Unknown Infrastructure Kind : [%s]", infrastructure.getKind()));
-    }
-  }
-
-  @SafeVarargs
-  private final <T> void validateExpression(ParameterField<T>... inputs) {
-    for (ParameterField<T> input : inputs) {
-      if (unresolvedExpression(input)) {
-        throw new InvalidRequestException(format("Unresolved Expression : [%s]", input.getExpressionValue()));
-      }
-    }
-  }
-
-  private <T> boolean unresolvedExpression(ParameterField<T> input) {
-    return !ParameterField.isNull(input) && input.isExpression();
-  }
-
-  private void requireOne(ParameterField<?> first, ParameterField<?> second) {
-    if (unresolvedExpression(first) && unresolvedExpression(second)) {
-      throw new InvalidRequestException(
-          format("Unresolved Expressions : [%s] , [%s]", first.getExpressionValue(), second.getExpressionValue()));
     }
   }
 
