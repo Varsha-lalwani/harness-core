@@ -9,6 +9,8 @@ package io.harness.managerclient;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.eventpublisherclient.EventPublisherClient;
+import io.harness.eventpublisherclient.EventPublisherClientFactory;
 import io.harness.security.TokenGenerator;
 import io.harness.verificationclient.CVNextGenServiceClient;
 import io.harness.verificationclient.CVNextGenServiceClientFactory;
@@ -46,6 +48,9 @@ public class DelegateManagerClientModule extends AbstractModule {
     bind(DelegateAgentManagerClient.class)
         .toProvider(new DelegateAgentManagerClientFactory(managerBaseUrl, tokenGenerator, clientCertificateFilePath,
             clientCertificateKeyFilePath, trustAllCertificates));
+    bind(EventPublisherClient.class)
+            .toProvider(new EventPublisherClientFactory(managerBaseUrl, tokenGenerator, clientCertificateFilePath,
+                    clientCertificateKeyFilePath, trustAllCertificates));
     bind(VerificationServiceClient.class)
         .toProvider(new VerificationServiceClientFactory(verificationServiceBaseUrl, tokenGenerator,
             clientCertificateFilePath, clientCertificateKeyFilePath, trustAllCertificates));

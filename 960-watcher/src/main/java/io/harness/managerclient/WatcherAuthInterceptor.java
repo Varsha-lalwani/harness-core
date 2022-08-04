@@ -20,7 +20,7 @@ import okhttp3.Response;
 public class WatcherAuthInterceptor implements Interceptor {
   private TokenGenerator tokenGenerator;
 
-  WatcherAuthInterceptor(TokenGenerator tokenGenerator) {
+  public WatcherAuthInterceptor(TokenGenerator tokenGenerator) {
     this.tokenGenerator = tokenGenerator;
   }
 

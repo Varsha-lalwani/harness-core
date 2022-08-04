@@ -85,8 +85,7 @@ public class EventServiceRule implements MethodRule, InjectorRuleMixin, MongoRul
       }
     });
 
-    modules.add(new EventServiceModule(
-        EventServiceConfig.builder().connector(new Connector(port, true, "cert.pem", "key.pem")).build()));
+    modules.add(new EventServiceModule(new EventServiceConfig()));
 
     modules.add(TestMongoModule.getInstance());
     return modules;
