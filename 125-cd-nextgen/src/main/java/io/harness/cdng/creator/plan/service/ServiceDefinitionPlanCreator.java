@@ -26,9 +26,12 @@ import io.harness.data.structure.UUIDGenerator;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.ng.core.service.yaml.NGServiceV2InfoConfig;
+import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
+import io.harness.ng.core.serviceoverride.services.ServiceOverrideService;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
 import io.harness.pms.contracts.plan.Dependency;
+import io.harness.pms.contracts.plan.PlanCreationContextValue;
 import io.harness.pms.contracts.plan.YamlUpdates;
 import io.harness.pms.contracts.steps.SkipType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -60,6 +63,7 @@ import java.util.Set;
 @OwnedBy(HarnessTeam.CDC)
 public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField> {
   @Inject KryoSerializer kryoSerializer;
+  @Inject ServiceOverrideService serviceOverrideService;
 
   /*
   TODO: currently we are using many yaml updates. For ex - if we do not have service definition and we need to call plan
@@ -80,7 +84,7 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
         addChildrenForServiceV1(planCreationResponseMap, serviceConfigNode);
       } else {
         YamlNode serviceV2Node = YamlUtils.findParentNode(serviceDefField.getNode(), YamlTypes.SERVICE_ENTITY);
-        addChildrenForServiceV2(planCreationResponseMap, serviceV2Node);
+        addChildrenForServiceV2(planCreationResponseMap, serviceV2Node, ctx);
       }
 
       return planCreationResponseMap;
@@ -167,8 +171,8 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
     addServiceSpecNode(serviceConfig, planCreationResponseMap, serviceSpecChildrenIds);
   }
 
-  private void addChildrenForServiceV2(
-      Map<String, PlanCreationResponse> planCreationResponseMap, YamlNode serviceV2Node) throws IOException {
+  private void addChildrenForServiceV2(Map<String, PlanCreationResponse> planCreationResponseMap,
+      YamlNode serviceV2Node, PlanCreationContext ctx) throws IOException {
     NGServiceV2InfoConfig config = YamlUtils.read(serviceV2Node.toString(), NGServiceV2InfoConfig.class);
 
     List<String> serviceSpecChildrenIds = new ArrayList<>();
@@ -180,8 +184,9 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
     }
 
     if (ServiceDefinitionPlanCreatorHelper.shouldCreatePlanNodeForManifestsV2(config)) {
+      List<NGServiceOverridesEntity> serviceOverridesEntities = fetchServiceOverrideEntities(ctx, config);
       String manifestPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForManifestsV2(
-          serviceV2Node, planCreationResponseMap, config, kryoSerializer);
+          serviceV2Node, planCreationResponseMap, config, serviceOverridesEntities, kryoSerializer);
       serviceSpecChildrenIds.add(manifestPlanNodeId);
     }
 
@@ -220,6 +225,17 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
 
     // Add serviceSpec node
     addServiceSpecNodeV2(config, planCreationResponseMap, serviceSpecChildrenIds);
+  }
+
+  private List<NGServiceOverridesEntity> fetchServiceOverrideEntities(
+      PlanCreationContext ctx, NGServiceV2InfoConfig serviceV2InfoConfig) {
+    final ParameterField<String> envRefField = (ParameterField<String>) kryoSerializer.asInflatedObject(
+        ctx.getDependency().getMetadataMap().get(YamlTypes.ENVIRONMENT_REF).toByteArray());
+    final PlanCreationContextValue metadata = ctx.getMetadata();
+    List<NGServiceOverridesEntity> serviceOverridesEntities =
+        serviceOverrideService.findByEnvIdAndOptionalSvcId(metadata.getAccountIdentifier(), metadata.getOrgIdentifier(),
+            metadata.getProjectIdentifier(), envRefField.getValue(), serviceV2InfoConfig.getIdentifier());
+    return serviceOverridesEntities;
   }
 
   private void addServiceSpecNode(ServiceConfig serviceConfig,
