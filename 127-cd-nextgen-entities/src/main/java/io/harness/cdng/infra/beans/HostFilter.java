@@ -24,7 +24,6 @@ public class HostFilter {
 
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
-  @NotNull
   Filter spec;
 
   @Builder
