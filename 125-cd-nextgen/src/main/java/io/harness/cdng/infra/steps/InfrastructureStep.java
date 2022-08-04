@@ -280,8 +280,8 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
     if (InfrastructureKind.ECS.equals(infrastructure.getKind())) {
       if (!(connectorInfo.getConnectorConfig() instanceof AwsConnectorDTO)) {
         throw new InvalidRequestException(format("Invalid connector type [%s] for identifier: [%s], expected [%s]",
-                connectorInfo.getConnectorType().name(), infrastructure.getConnectorReference().getValue(),
-                ConnectorType.AWS.name()));
+            connectorInfo.getConnectorType().name(), infrastructure.getConnectorReference().getValue(),
+            ConnectorType.AWS.name()));
       }
     }
 
@@ -367,7 +367,8 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
 
       case InfrastructureKind.ECS:
         EcsInfrastructure ecsInfrastructure = (EcsInfrastructure) infrastructure;
-        validateExpression(ecsInfrastructure.getConnectorRef(), ecsInfrastructure.getCluster(), ecsInfrastructure.getRegion());
+        infrastructureStepHelper.validateExpression(
+            ecsInfrastructure.getConnectorRef(), ecsInfrastructure.getCluster(), ecsInfrastructure.getRegion());
         break;
       default:
         throw new InvalidArgumentsException(format("Unknown Infrastructure Kind : [%s]", infrastructure.getKind()));
