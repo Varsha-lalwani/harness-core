@@ -1,6 +1,8 @@
 package io.harness.delegate.ecs;
 
 import com.google.inject.Inject;
+import io.harness.delegate.beans.ecs.EcsRollingDeployResult;
+import io.harness.delegate.beans.ecs.EcsRollingRollbackResult;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.exception.EcsNGException;
@@ -13,6 +15,7 @@ import io.harness.delegate.task.ecs.request.EcsCommandRequest;
 import io.harness.delegate.task.ecs.request.EcsRollingRollbackRequest;
 import io.harness.delegate.task.ecs.response.EcsCommandResponse;
 import io.harness.delegate.task.ecs.response.EcsRollingDeployResponse;
+import io.harness.delegate.task.ecs.response.EcsRollingRollbackResponse;
 import io.harness.ecs.EcsCommandUnitConstants;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.logging.CommandExecutionStatus;
@@ -63,14 +66,25 @@ public class EcsRollingRollbackCommandTaskHandler extends EcsCommandTaskNGHandle
 
       rollback(createServiceRequest,
               ecsRollingRollbackConfig.getRegisterScalableTargetRequestBuilderStrings(),
-              ecsRollingRollbackConfig.getRegisterScalableTargetRequestBuilderStrings(),
+              ecsRollingRollbackConfig.getRegisterScalingPolicyRequestBuilderStrings(),
               ecsInfraConfig,
               rollbackLogCallback, timeoutInMillis);
+      EcsRollingRollbackResult ecsRollingRollbackResult = EcsRollingRollbackResult.builder()
+              .region(ecsInfraConfig.getRegion())
+              .ecsTasks(ecsCommandTaskHelper.getRunningEcsTasks(ecsInfraConfig.getAwsConnectorDTO(), ecsInfraConfig.getCluster(),
+                      createServiceRequest.serviceName(), ecsInfraConfig.getRegion()))
+              .infrastructureKey(ecsInfraConfig.getInfraStructureKey())
+              .build();
+      EcsRollingRollbackResponse ecsRollingRollbackResponse =
+              EcsRollingRollbackResponse.builder()
+                      .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+                      .ecsRollingRollbackResult(ecsRollingRollbackResult)
+                      .build();
 
       rollbackLogCallback.saveExecutionLog(color(format("%n Rollback Successful."), LogColor.Green, LogWeight.Bold),
               LogLevel.INFO, CommandExecutionStatus.SUCCESS);
 
-      return EcsRollingDeployResponse.builder().commandExecutionStatus(CommandExecutionStatus.SUCCESS).build();
+      return ecsRollingRollbackResponse;
     } catch (Exception ex) {
       rollbackLogCallback.saveExecutionLog(color(format("%n Rollback Failed."), LogColor.Red, LogWeight.Bold),
               LogLevel.ERROR, CommandExecutionStatus.FAILURE);

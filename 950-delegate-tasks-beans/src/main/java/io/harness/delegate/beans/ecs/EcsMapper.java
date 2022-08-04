@@ -1,49 +1,74 @@
-package io.harness.aws.v2.ecs;
+package io.harness.delegate.beans.ecs;
 
+import io.harness.annotations.dev.OwnedBy;
+import lombok.experimental.UtilityClass;
+import software.amazon.awssdk.services.ecs.model.Container;
+import software.amazon.awssdk.services.ecs.model.CreateServiceRequest;
+import software.amazon.awssdk.services.ecs.model.Task;
+import software.amazon.awssdk.services.ecs.model.UpdateServiceRequest;
+
+import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import io.harness.annotations.dev.OwnedBy;
-import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.applicationautoscaling.model.PutScalingPolicyRequest;
 import software.amazon.awssdk.services.applicationautoscaling.model.RegisterScalableTargetRequest;
 import software.amazon.awssdk.services.applicationautoscaling.model.ScalableTarget;
 import software.amazon.awssdk.services.applicationautoscaling.model.ScalingPolicy;
-import software.amazon.awssdk.services.ecs.model.CreateServiceRequest;
 import software.amazon.awssdk.services.ecs.model.Service;
-import software.amazon.awssdk.services.ecs.model.UpdateServiceRequest;
-
-import javax.inject.Singleton;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 @OwnedBy(CDP)
-@Singleton
-@Slf4j
+@UtilityClass
 public class EcsMapper {
     public UpdateServiceRequest createServiceRequestToUpdateServiceRequest(CreateServiceRequest createServiceRequest) {
         return UpdateServiceRequest.builder()
                 .service(createServiceRequest.serviceName())
-                .cluster(createServiceRequest.cluster())
-                .desiredCount(createServiceRequest.desiredCount())
-                .taskDefinition(createServiceRequest.taskDefinition())
+                .serviceRegistries(createServiceRequest.serviceRegistries())
                 .capacityProviderStrategy(createServiceRequest.capacityProviderStrategy())
+                .cluster(createServiceRequest.cluster())
                 .deploymentConfiguration(createServiceRequest.deploymentConfiguration())
+                .desiredCount(createServiceRequest.desiredCount())
+                .enableECSManagedTags(createServiceRequest.enableECSManagedTags())
+                .healthCheckGracePeriodSeconds(createServiceRequest.healthCheckGracePeriodSeconds())
+                .loadBalancers(createServiceRequest.loadBalancers())
+                .enableExecuteCommand(createServiceRequest.enableExecuteCommand())
                 .networkConfiguration(createServiceRequest.networkConfiguration())
+                .overrideConfiguration(createServiceRequest.overrideConfiguration().isPresent() ? createServiceRequest.overrideConfiguration().get() : null)
                 .placementConstraints(createServiceRequest.placementConstraints())
                 .placementStrategy(createServiceRequest.placementStrategy())
                 .platformVersion(createServiceRequest.platformVersion())
-                .forceNewDeployment(false) // need to confirm with Sainath
-                .healthCheckGracePeriodSeconds(createServiceRequest.healthCheckGracePeriodSeconds())
-                .enableExecuteCommand(createServiceRequest.enableExecuteCommand())
-                .enableECSManagedTags(createServiceRequest.enableECSManagedTags())
-                .loadBalancers(createServiceRequest.loadBalancers())
                 .propagateTags(createServiceRequest.propagateTags())
-                .serviceRegistries(createServiceRequest.serviceRegistries())
+                .taskDefinition(createServiceRequest.taskDefinition())
                 .build();
+    }
 
+    public EcsTask toEcsTask(Task task, String service) {
+        return EcsTask.builder()
+                .clusterArn(task.clusterArn())
+                .serviceName(service)
+                .launchType(task.launchTypeAsString())
+                .taskArn(task.taskArn())
+                .taskDefinitionArn(task.taskDefinitionArn())
+                .startedAt(task.startedAt().getEpochSecond())
+                .startedBy(task.startedBy())
+                .version(task.version())
+                .containers(task.containers()
+                        .stream()
+                        .map(EcsMapper::toEcsContainer)
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+    public EcsContainer toEcsContainer(Container container) {
+        return EcsContainer.builder()
+                .containerArn(container.containerArn())
+                .image(container.image())
+                .name(container.name())
+                .runtimeId(container.runtimeId())
+                .build();
     }
 
     public String createCreateServiceRequestFromService(Service service) throws JsonProcessingException {

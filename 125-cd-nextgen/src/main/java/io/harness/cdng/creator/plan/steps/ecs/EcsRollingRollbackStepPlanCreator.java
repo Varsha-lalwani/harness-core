@@ -12,11 +12,19 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.steps.CDPMSStepPlanCreatorV2;
 import io.harness.cdng.ecs.EcsRollingRollbackStepNode;
+import io.harness.cdng.ecs.EcsRollingRollbackStepParameters;
+import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepNode;
+import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepParameters;
 import io.harness.executions.steps.StepSpecTypeConstants;
+import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
+import io.harness.pms.sdk.core.steps.io.StepParameters;
 
 import java.util.Set;
+
+import static io.harness.cdng.visitor.YamlTypes.ECS_ROLLING_DEPLOY;
+import static io.harness.cdng.visitor.YamlTypes.SERVERLESS_AWS_LAMBDA_DEPLOY;
 
 @OwnedBy(HarnessTeam.CDP)
 public class EcsRollingRollbackStepPlanCreator extends CDPMSStepPlanCreatorV2<EcsRollingRollbackStepNode> {
@@ -33,5 +41,16 @@ public class EcsRollingRollbackStepPlanCreator extends CDPMSStepPlanCreatorV2<Ec
   @Override
   public PlanCreationResponse createPlanForField(PlanCreationContext ctx, EcsRollingRollbackStepNode stepElement) {
     return super.createPlanForField(ctx, stepElement);
+  }
+
+  @Override
+  protected StepParameters getStepParameters(PlanCreationContext ctx, EcsRollingRollbackStepNode stepElement) {
+    final StepParameters stepParameters = super.getStepParameters(ctx, stepElement);
+
+    String ecsRollbackFnq = getExecutionStepFqn(ctx.getCurrentField(), ECS_ROLLING_DEPLOY);
+    ((EcsRollingRollbackStepParameters) ((StepElementParameters) stepParameters).getSpec())
+            .setEcsRollingRollbackFnq(ecsRollbackFnq);
+
+    return stepParameters;
   }
 }

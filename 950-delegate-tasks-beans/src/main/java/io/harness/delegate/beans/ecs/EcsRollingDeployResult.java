@@ -12,9 +12,13 @@ import io.harness.annotations.dev.OwnedBy;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 
 @Data
 @Builder
 @OwnedBy(HarnessTeam.CDP)
 public class EcsRollingDeployResult {
+    private String region;
+    private List<EcsTask> ecsTasks;
 }

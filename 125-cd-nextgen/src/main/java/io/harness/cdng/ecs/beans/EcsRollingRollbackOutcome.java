@@ -25,4 +25,5 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 @JsonTypeName("ecsRollingRollbackOutcome")
 @RecasterAlias("io.harness.cdng.ecs.EcsRollingRollbackOutcome")
 public class EcsRollingRollbackOutcome implements Outcome, ExecutionSweepingOutput {
+    boolean firstDeployment;
 }

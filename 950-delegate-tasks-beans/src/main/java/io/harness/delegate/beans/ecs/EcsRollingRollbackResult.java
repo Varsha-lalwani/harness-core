@@ -13,13 +13,14 @@ import io.harness.delegate.beans.serverless.ServerlessRollbackResult;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @Builder
 @OwnedBy(HarnessTeam.CDP)
 public class EcsRollingRollbackResult {
-  private String service;
   private String region;
-  private String stage;
-  private String errorMessage;
-  private String rollbackTimeStamp;
+  private List<EcsTask> ecsTasks;
+  private boolean firstDeployment;
+  private String infrastructureKey;
 }
