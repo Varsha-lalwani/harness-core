@@ -144,7 +144,9 @@ public class PMSPipelineServiceHelper {
                                    .withStageNames(filtersAndStageCount.getStageNames());
     newEntity.getFilters().clear();
     if (isNotEmpty(filtersAndStageCount.getFilters())) {
-      filtersAndStageCount.getFilters().forEach((key, value) -> newEntity.getFilters().put(key, Document.parse(value)));
+      filtersAndStageCount.getFilters().forEach(
+          (key,
+              value) -> newEntity.getFilters().put(key, value != null ? Document.parse(value) : Document.parse("{}")));
     }
 
     if (isNotEmpty(pipelineEntity.getTemplateModules())) {
