@@ -103,13 +103,17 @@ public class JiraTaskNGHandler {
       JiraIssueCreateMetadataNG createMetadata =
           jiraClient.getIssueCreateMetadata(params.getProjectKey(), params.getIssueType(), null, false, false);
       JiraProjectNG project = createMetadata.getProjects().get(params.getProjectKey());
-      JiraIssueTypeNG issueType = project.getIssueTypes().get(params.getIssueType());
-      issueType.getFields().entrySet().forEach(e -> {
-        if (e.getValue().getSchema().getType().equals(JiraFieldTypeNG.USER)) {
-          userTypeFields.add(e.getKey());
+      if (project != null) {
+        JiraIssueTypeNG issueType = project.getIssueTypes().get(params.getIssueType());
+        if (issueType != null) {
+          issueType.getFields().entrySet().forEach(e -> {
+            if (e.getValue().getSchema().getType().equals(JiraFieldTypeNG.USER)) {
+              userTypeFields.add(e.getKey());
+            }
+          });
+          setUserTypeCustomFieldsIfPresent(jiraClient, userTypeFields, params);
         }
-      });
-      setUserTypeCustomFieldsIfPresent(jiraClient, userTypeFields, params);
+      }
     }
     JiraIssueNG issue = jiraClient.createIssue(params.getProjectKey(), params.getIssueType(), params.getFields(), true);
     return JiraTaskNGResponse.builder().issue(issue).build();
@@ -120,13 +124,15 @@ public class JiraTaskNGHandler {
 
     if (EmptyPredicate.isNotEmpty(params.getFields())) {
       JiraIssueUpdateMetadataNG updateMetadata = jiraClient.getIssueUpdateMetadata(params.getIssueKey());
-      Set<String> userTypeFields = updateMetadata.getFields()
-                                       .entrySet()
-                                       .stream()
-                                       .filter(e -> e.getValue().getSchema().getType().equals(JiraFieldTypeNG.USER))
-                                       .map(Map.Entry::getKey)
-                                       .collect(Collectors.toSet());
-      setUserTypeCustomFieldsIfPresent(jiraClient, userTypeFields, params);
+      if (updateMetadata != null) {
+        Set<String> userTypeFields = updateMetadata.getFields()
+                                         .entrySet()
+                                         .stream()
+                                         .filter(e -> e.getValue().getSchema().getType().equals(JiraFieldTypeNG.USER))
+                                         .map(Map.Entry::getKey)
+                                         .collect(Collectors.toSet());
+        setUserTypeCustomFieldsIfPresent(jiraClient, userTypeFields, params);
+      }
     }
     JiraIssueNG issue = jiraClient.updateIssue(
         params.getIssueKey(), params.getTransitionToStatus(), params.getTransitionName(), params.getFields());
