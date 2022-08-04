@@ -131,8 +131,7 @@ public class InfrastructureMapper {
                 .credentialsRef(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getCredentialsRef()))
                 .hosts(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getHosts()))
                 .connectorRef(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getConnectorRef()))
-                .hostFilters(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getHostFilters()))
-                .attributeFilters(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getAttributeFilters()))
+                .hostFilter(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getHostFilter()))
                 .environment(environmentOutcome)
                 .infrastructureKey(InfrastructureKey.generate(
                     service, environmentOutcome, pdcInfrastructure.getInfrastructureKeyValues()))

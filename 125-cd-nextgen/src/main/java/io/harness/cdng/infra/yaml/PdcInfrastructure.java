@@ -8,13 +8,13 @@
 package io.harness.cdng.infra.yaml;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.beans.SwaggerConstants.STRING_MAP_CLASSPATH;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
+import io.harness.cdng.infra.beans.HostFilter;
 import io.harness.cdng.infra.beans.InfraMapping;
 import io.harness.cdng.infra.beans.InfrastructureDetailsAbstract;
 import io.harness.cdng.infra.beans.PdcInfraMapping;
@@ -49,8 +49,8 @@ import org.springframework.data.annotation.TypeAlias;
 @Value
 @Builder
 @JsonTypeName(InfrastructureKind.PDC)
-@OneOfSet(fields = {"hosts", "connectorRef", "connectorRef, hostFilters", "connectorRef, attributeFilters"},
-    requiredFieldNames = {"hosts", "connectorRef", "hostFilters", "attributeFilters"})
+@OneOfSet(fields = {"hosts", "connectorRef", "connectorRef, hostFilter"},
+    requiredFieldNames = {"hosts", "connectorRef", "hostFilter"})
 @SimpleVisitorHelper(helperClass = ConnectorRefExtractorHelper.class)
 @TypeAlias("PdcInfrastructure")
 @RecasterAlias("io.harness.cdng.infra.yaml.PdcInfrastructure")
@@ -75,14 +75,9 @@ public class PdcInfrastructure
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> connectorRef;
 
   @YamlSchemaTypes({runtime})
-  @ApiModelProperty(dataType = STRING_MAP_CLASSPATH)
+  @ApiModelProperty(dataType = SwaggerConstants.INFRASTRUCTURE_DEFINITION_YAML_HOST_FILTER_CLASSPATH)
   @Wither
-  ParameterField<Map<String, String>> attributeFilters;
-
-  @YamlSchemaTypes({runtime})
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
-  @Wither
-  ParameterField<List<String>> hostFilters;
+  ParameterField<HostFilter> hostFilter;
 
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
@@ -102,11 +97,8 @@ public class PdcInfrastructure
     if (connectorRef != null) {
       builder.connectorRef(connectorRef.getValue());
     }
-    if (attributeFilters != null) {
-      builder.attributeFilters(attributeFilters.getValue());
-    }
-    if (hostFilters != null) {
-      builder.hostFilters(hostFilters.getValue());
+    if (hostFilter != null) {
+      builder.hostFilter(hostFilter.getValue());
     }
 
     return builder.build();
@@ -144,11 +136,8 @@ public class PdcInfrastructure
     if (!ParameterField.isNull(config.getConnectorRef())) {
       resultantInfra = resultantInfra.withConnectorRef(config.getConnectorRef());
     }
-    if (!ParameterField.isNull(config.getAttributeFilters())) {
-      resultantInfra = resultantInfra.withAttributeFilters(config.getAttributeFilters());
-    }
-    if (!ParameterField.isNull(config.getHostFilters())) {
-      resultantInfra = resultantInfra.withHostFilters(config.getHostFilters());
+    if (!ParameterField.isNull(config.hostFilter)) {
+      resultantInfra = resultantInfra.withHostFilter(config.getHostFilter());
     }
     if (!ParameterField.isNull(config.getDelegateSelectors())) {
       resultantInfra = resultantInfra.withDelegateSelectors(config.getDelegateSelectors());

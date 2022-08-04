@@ -34,6 +34,8 @@ import io.harness.cdng.infra.beans.PdcInfrastructureOutcome;
 import io.harness.cdng.infra.beans.SshWinRmAwsInfrastructureOutcome;
 import io.harness.cdng.infra.beans.SshWinRmAzureInfrastructureOutcome;
 import io.harness.cdng.serverless.ServerlessEntityHelper;
+import io.harness.cdng.infra.beans.HostAttributesFilter;
+import io.harness.cdng.infra.beans.HostNameFilter;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
@@ -258,7 +260,8 @@ public class SshEntityHelper {
       return emptyList();
     }
 
-    if (isNotEmpty(pdcDirectInfrastructure.getHostFilters())) {
+    if (pdcDirectInfrastructure.getHostFilter() != null
+        && HostFilterType.HOST_NAMES.equals(pdcDirectInfrastructure.getHostFilter().getType())) {
       // filter hosts based on host names
       List<List<HostDTO>> batches = Lists.partition(hosts, BATCH_SIZE);
       return IntStream.range(0, batches.size())
@@ -268,7 +271,8 @@ public class SshEntityHelper {
           .collect(Collectors.toList());
     }
 
-    if (isNotEmpty(pdcDirectInfrastructure.getAttributeFilters())) {
+    if (pdcDirectInfrastructure.getHostFilter() != null
+        && HostFilterType.HOST_ATTRIBUTES.equals(pdcDirectInfrastructure.getHostFilter().getType())) {
       // filter hosts based on host attributes
       List<List<HostDTO>> batches = Lists.partition(hosts, BATCH_SIZE);
       return IntStream.range(0, batches.size())
@@ -284,11 +288,12 @@ public class SshEntityHelper {
   private List<HostDTO> filterConnectorHostsByAttributes(
       NGAccess ngAccess, PdcInfrastructureOutcome pdcDirectInfrastructure, List<HostDTO> batch, int currentPageIndex) {
     PageRequest pageRequest = PageRequest.builder().pageIndex(currentPageIndex).pageSize(batch.size()).build();
+    HostAttributesFilter filter = (HostAttributesFilter) pdcDirectInfrastructure.getHostFilter().getSpec();
     Page<HostDTO> result = ngHostService.filterHostsByConnector(ngAccess.getAccountIdentifier(),
         ngAccess.getOrgIdentifier(), ngAccess.getProjectIdentifier(), pdcDirectInfrastructure.getConnectorRef(),
         HostFilterDTO.builder()
             .type(HostFilterType.HOST_ATTRIBUTES)
-            .filter(pdcDirectInfrastructure.getAttributeFilters()
+            .filter(filter.getValue()
                         .entrySet()
                         .stream()
                         .filter(e -> !YamlTypes.UUID.equals(e.getKey()))
@@ -302,12 +307,10 @@ public class SshEntityHelper {
   private List<HostDTO> filterConnectorHostsByHostName(
       NGAccess ngAccess, PdcInfrastructureOutcome pdcDirectInfrastructure, List<HostDTO> batch, int currentPageIndex) {
     PageRequest pageRequest = PageRequest.builder().pageIndex(currentPageIndex).pageSize(batch.size()).build();
+    HostNameFilter filter = (HostNameFilter) pdcDirectInfrastructure.getHostFilter().getSpec();
     Page<HostDTO> result = ngHostService.filterHostsByConnector(ngAccess.getAccountIdentifier(),
         ngAccess.getOrgIdentifier(), ngAccess.getProjectIdentifier(), pdcDirectInfrastructure.getConnectorRef(),
-        HostFilterDTO.builder()
-            .type(HostFilterType.HOST_NAMES)
-            .filter(pdcDirectInfrastructure.getHostFilters().stream().collect(joining(",")))
-            .build(),
+        HostFilterDTO.builder().type(HostFilterType.HOST_NAMES).filter(String.join(",", filter.getValue())).build(),
         pageRequest);
     return result.getContent();
   }

@@ -24,6 +24,8 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.infra.beans.AzureWebAppInfrastructureOutcome;
+import io.harness.cdng.infra.beans.HostFilter;
+import io.harness.cdng.infra.beans.HostNameFilter;
 import io.harness.cdng.infra.beans.InfrastructureDetailsAbstract;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sAzureInfrastructureOutcome;
@@ -40,6 +42,7 @@ import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.infra.yaml.ServerlessAwsLambdaInfrastructure;
 import io.harness.cdng.infra.yaml.SshWinRmAzureInfrastructure;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
+import io.harness.delegate.beans.connector.pdcconnector.HostFilterType;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.pms.yaml.ParameterField;
@@ -214,19 +217,27 @@ public class InfrastructureMapperTest extends CategoryTest {
         PdcInfrastructure.builder()
             .credentialsRef(ParameterField.createValueField("ssh-key-ref"))
             .connectorRef(ParameterField.createValueField("connector-ref"))
-            .hostFilters(ParameterField.createValueField(Arrays.asList("host1", "host2")))
+            .hostFilter(ParameterField.createValueField(
+                HostFilter.builder()
+                    .type(HostFilterType.HOST_NAMES)
+                    .spec(HostNameFilter.builder().value(Arrays.asList("host1", "host2")).build())
+                    .build()))
             .build();
 
     InfrastructureOutcome infrastructureOutcome =
         InfrastructureMapper.toOutcome(infrastructure, environment, serviceOutcome);
 
     assertThat(infrastructureOutcome)
-        .isEqualToIgnoringGivenFields(PdcInfrastructureOutcome.builder()
-                                          .credentialsRef("ssh-key-ref")
-                                          .connectorRef("connector-ref")
-                                          .hostFilters(Arrays.asList("host1", "host2"))
-                                          .environment(environment)
-                                          .build(),
+        .isEqualToIgnoringGivenFields(
+            PdcInfrastructureOutcome.builder()
+                .credentialsRef("ssh-key-ref")
+                .connectorRef("connector-ref")
+                .hostFilter(HostFilter.builder()
+                                .type(HostFilterType.HOST_NAMES)
+                                .spec(HostNameFilter.builder().value(Arrays.asList("host1", "host2")).build())
+                                .build())
+                .environment(environment)
+                .build(),
             "infrastructureKey");
   }
 

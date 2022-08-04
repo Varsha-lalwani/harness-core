@@ -26,6 +26,9 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.azure.AzureHelperService;
+import io.harness.cdng.infra.beans.HostAttributesFilter;
+import io.harness.cdng.infra.beans.HostFilter;
+import io.harness.cdng.infra.beans.HostNameFilter;
 import io.harness.cdng.infra.beans.AwsInstanceFilter;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
@@ -172,11 +175,15 @@ public class SshEntityHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetFilteredHostByHostName() throws IOException {
     doReturn(pdcConnectorDTO).when(connectorService).get(anyString(), anyString(), anyString(), anyString());
-    PdcInfrastructureOutcome pdcInfrastructure = PdcInfrastructureOutcome.builder()
-                                                     .connectorRef("pdcConnector")
-                                                     .credentialsRef("sshKeyRef")
-                                                     .hostFilters(Arrays.asList("host1"))
-                                                     .build();
+    PdcInfrastructureOutcome pdcInfrastructure =
+        PdcInfrastructureOutcome.builder()
+            .connectorRef("pdcConnector")
+            .credentialsRef("sshKeyRef")
+            .hostFilter(HostFilter.builder()
+                            .type(HostFilterType.HOST_NAMES)
+                            .spec(HostNameFilter.builder().value(Collections.singletonList("host1")).build())
+                            .build())
+            .build();
 
     List<HostDTO> hosts = Arrays.asList(new HostDTO("host1", new HashMap<>()));
     PageRequest pageRequest = PageRequest.builder().pageSize(hosts.size()).build();
@@ -217,11 +224,15 @@ public class SshEntityHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetFilteredHostByHostNameNoMatch() throws IOException {
     doReturn(pdcConnectorDTO).when(connectorService).get(anyString(), anyString(), anyString(), anyString());
-    PdcInfrastructureOutcome pdcInfrastructure = PdcInfrastructureOutcome.builder()
-                                                     .connectorRef("pdcConnector")
-                                                     .credentialsRef("sshKeyRef")
-                                                     .hostFilters(Arrays.asList("undefined"))
-                                                     .build();
+    PdcInfrastructureOutcome pdcInfrastructure =
+        PdcInfrastructureOutcome.builder()
+            .connectorRef("pdcConnector")
+            .credentialsRef("sshKeyRef")
+            .hostFilter(HostFilter.builder()
+                            .type(HostFilterType.HOST_NAMES)
+                            .spec(HostNameFilter.builder().value(Collections.singletonList("undefined")).build())
+                            .build())
+            .build();
 
     List<HostDTO> hosts = Collections.emptyList();
     PageRequest pageRequest = PageRequest.builder().pageSize(1).build();
@@ -253,11 +264,15 @@ public class SshEntityHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetFilteredHostByHostAttributes() throws IOException {
     doReturn(pdcConnectorDTO).when(connectorService).get(anyString(), anyString(), anyString(), anyString());
-    PdcInfrastructureOutcome pdcInfrastructure = PdcInfrastructureOutcome.builder()
-                                                     .connectorRef("pdcConnector")
-                                                     .credentialsRef("sshKeyRef")
-                                                     .attributeFilters(ImmutableMap.of("type", "db"))
-                                                     .build();
+    PdcInfrastructureOutcome pdcInfrastructure =
+        PdcInfrastructureOutcome.builder()
+            .connectorRef("pdcConnector")
+            .credentialsRef("sshKeyRef")
+            .hostFilter(HostFilter.builder()
+                            .type(HostFilterType.HOST_NAMES)
+                            .spec(HostAttributesFilter.builder().value(ImmutableMap.of("type", "db")).build())
+                            .build())
+            .build();
 
     List<HostDTO> hosts = Arrays.asList(new HostDTO("host1", ImmutableMap.of("type", "db")));
     PageRequest pageRequest = PageRequest.builder().pageSize(hosts.size()).build();
@@ -298,15 +313,19 @@ public class SshEntityHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetFilteredHostByHostAttributesNoMatch() throws IOException {
     doReturn(pdcConnectorDTO).when(connectorService).get(anyString(), anyString(), anyString(), anyString());
-    PdcInfrastructureOutcome pdcInfrastructure = PdcInfrastructureOutcome.builder()
-                                                     .connectorRef("pdcConnector")
-                                                     .credentialsRef("sshKeyRef")
-                                                     .attributeFilters(ImmutableMap.of("type", "node"))
-                                                     .build();
+    PdcInfrastructureOutcome pdcInfrastructure =
+        PdcInfrastructureOutcome.builder()
+            .connectorRef("pdcConnector")
+            .credentialsRef("sshKeyRef")
+            .hostFilter(HostFilter.builder()
+                            .type(HostFilterType.HOST_NAMES)
+                            .spec(HostAttributesFilter.builder().value(ImmutableMap.of("type", "node")).build())
+                            .build())
+            .build();
 
     List<HostDTO> hosts = Collections.emptyList();
     PageRequest pageRequest = PageRequest.builder().pageSize(1).build();
-    Page<HostDTO> pageResponse = new PageImpl<>(hosts, getPageRequest(pageRequest), hosts.size());
+    Page<HostDTO> pageResponse = new PageImpl<>(hosts, getPageRequest(pageRequest), 0);
     doReturn(pageResponse)
         .when(ngHostService)
         .filterHostsByConnector(eq(accountId), eq(orgId), eq(projectId), eq("pdcConnector"), any(), any());

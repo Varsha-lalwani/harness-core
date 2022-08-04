@@ -17,7 +17,6 @@ import io.harness.yaml.core.VariableExpression;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.data.annotation.TypeAlias;
@@ -32,8 +31,7 @@ public class PdcInfrastructureOutcome extends InfrastructureDetailsAbstract impl
   String credentialsRef;
   List<String> hosts;
   String connectorRef;
-  List<String> hostFilters;
-  Map<String, String> attributeFilters;
+  HostFilter hostFilter;
 
   @VariableExpression(skipVariableExpression = true) EnvironmentOutcome environment;
   String infrastructureKey;
