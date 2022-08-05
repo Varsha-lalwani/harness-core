@@ -7,6 +7,8 @@
 
 package io.harness.cdng.creator.plan.service;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.configfile.ConfigFileWrapper;
@@ -189,12 +191,13 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
       serviceSpecChildrenIds.add(artifactNodeId);
     }
 
-    if (ServiceDefinitionPlanCreatorHelper.shouldCreatePlanNodeForManifestsV2(config)) {
-      Optional<NGServiceOverridesEntity> serviceOverridesEntity =
-          fetchServiceOverrideEntities(ctx, config, kryoSerializer);
-      NGEnvironmentConfig ngEnvironmentConfig = fetchEnvironmentConfig(ctx, kryoSerializer);
-      String manifestPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForManifestsV2(
-          serviceV2Node, planCreationResponseMap, config, serviceOverridesEntity, ngEnvironmentConfig, kryoSerializer);
+    Optional<NGServiceOverridesEntity> serviceOverridesEntity =
+        fetchServiceOverrideEntities(ctx, config, kryoSerializer);
+    NGEnvironmentConfig ngEnvironmentConfig = fetchEnvironmentConfig(ctx, kryoSerializer);
+    String manifestPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForManifestsV2(
+        serviceV2Node, planCreationResponseMap, config, serviceOverridesEntity, ngEnvironmentConfig, kryoSerializer);
+    // handling no manifest present case
+    if (isNotBlank(manifestPlanNodeId)) {
       serviceSpecChildrenIds.add(manifestPlanNodeId);
     }
 

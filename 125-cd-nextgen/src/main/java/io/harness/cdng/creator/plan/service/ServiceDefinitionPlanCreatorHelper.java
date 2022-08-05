@@ -69,6 +69,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -217,6 +218,12 @@ public class ServiceDefinitionPlanCreatorHelper {
 
     List<ManifestConfigWrapper> finalManifests =
         prepareFinalManifests(serviceV2Config, serviceOverridesEntities, ngEnvironmentConfig);
+
+    // in case no manifest is present no node should be created
+    if (isEmpty(finalManifests)) {
+      return StringUtils.EMPTY;
+    }
+
     YamlField manifestsYamlField = prepareFinalUuidInjectedManifestYamlField(serviceV2Node, finalManifests);
     PlanCreatorUtils.setYamlUpdate(manifestsYamlField, yamlUpdates);
     String manifestsPlanNodeId = "manifests-" + UUIDGenerator.generateUuid();
