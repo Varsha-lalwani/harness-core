@@ -38,5 +38,4 @@ public class PipelineInstrumentationConstants {
   public static String ERROR_MESSAGES = "error_messages";
   public static String EXCEPTION_MESSAGE = "exception_message";
   public static String ACCOUNT_NAME = "account_name";
-  public static String STAGE_TYPES_1 = "stage_types_1";
 }

@@ -350,7 +350,7 @@ public class PMSPipelineServiceHelper {
     properties.put(PIPELINE_SAVE_ACTION_TYPE, actionType);
     properties.put(PipelineInstrumentationConstants.MODULE_NAME,
         PipelineEntityUtils.getModuleNameFromPipelineEntity(entity, "cd"));
-    properties.put(PipelineInstrumentationConstants.STAGE_TYPES_1, PipelineInstrumentationUtils.getStageTypes(entity));
+    properties.put(PipelineInstrumentationConstants.STAGE_TYPES, PipelineInstrumentationUtils.getStageTypes(entity));
     telemetryReporter.sendTrackEvent(PIPELINE_SAVE, null, entity.getAccountId(), properties,
         Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL);
   }
