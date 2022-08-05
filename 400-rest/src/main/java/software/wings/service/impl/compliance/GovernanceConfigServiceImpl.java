@@ -350,15 +350,13 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
           }
           if (isNotEmpty(freezeConfig.getExcludeAppSelections())) {
             freezeConfig.getExcludeAppSelections().forEach(appSelection -> {
-              if ((appSelection.getFilterType() == BlackoutWindowFilterType.ALL
-                      || (appSelection.getFilterType() == BlackoutWindowFilterType.CUSTOM
-                          && ((CustomAppFilter) appSelection).getApps().contains(appId)))
-                  && areAllServicesFrozen(appSelection)) {
-                envIdsByWindow.merge(freezeConfig.getUuid(),
-                    new HashSet<>(getEnvIdsFromAppSelection(appId, appSelection)), (prevEnvSet, newEnvSet) -> {
-                      prevEnvSet.removeAll(newEnvSet);
-                      return prevEnvSet;
-                    });
+              if (appSelection.getFilterType() == BlackoutWindowFilterType.ALL
+                  || (appSelection.getFilterType() == BlackoutWindowFilterType.CUSTOM
+                      && ((CustomAppFilter) appSelection).getApps().contains(appId))) {
+                envIdsByWindow.merge(freezeConfig.getUuid(), new HashSet<>(), (prevEnvSet, newEnvSet) -> {
+                  prevEnvSet.removeAll(new HashSet<>(getEnvIdsFromAppSelection(appId, appSelection)));
+                  return prevEnvSet;
+                });
               }
             });
           }
@@ -428,8 +426,6 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
     if (featureFlagService.isEnabled(FeatureName.NEW_DEPLOYMENT_FREEZE, accountId)) {
       Set<String> allEnvFrozenApps = new HashSet<>();
       Map<String, Set<String>> appEnvs = new HashMap<>();
-      // What services are frozen for a environment
-      Map<String, Set<String>> envServices = new HashMap<>();
 
       if (isNotEmpty(governanceConfig.getTimeRangeBasedFreezeConfigs())) {
         for (TimeRangeBasedFreezeConfig freezeConfig : governanceConfig.getTimeRangeBasedFreezeConfigs()) {
@@ -450,17 +446,14 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
           }
           if (isNotEmpty(freezeConfig.getExcludeAppSelections()) && isActive(freezeConfig)) {
             freezeConfig.getExcludeAppSelections().forEach(appSelection -> {
-              if (appSelection.getServiceSelection() == null
-                  || appSelection.getServiceSelection().getFilterType() == ServiceFilterType.ALL) {
-                Map<String, Set<String>> appEnvMap = getAppEnvMapForAppSelection(accountId, appSelection);
-                if (isNotEmpty(appEnvMap)) {
-                  appEnvMap.forEach((app, envSet) -> appEnvs.merge(app, envSet, (prevEnvSet, newEnvSet) -> {
-                    prevEnvSet.removeAll(newEnvSet);
-                    return prevEnvSet;
-                  }));
-                }
-                checkIfAllEnvAllServiceExcludedFromFreezeAndRemove(appSelection, allEnvFrozenApps, accountId);
+              Map<String, Set<String>> appEnvMap = getAppEnvMapForAppSelection(accountId, appSelection);
+              if (isNotEmpty(appEnvMap)) {
+                appEnvMap.forEach((app, envSet) -> appEnvs.merge(app, new HashSet<>(), (prevEnvSet, newEnvSet) -> {
+                  prevEnvSet.removeAll(envSet);
+                  return prevEnvSet;
+                }));
               }
+              checkIfAllEnvAllServiceExcludedFromFreezeAndRemove(appSelection, allEnvFrozenApps, accountId);
             });
           }
         }
@@ -497,14 +490,10 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
       ApplicationFilter appSelection, Set<String> allEnvFrozenApps, String accountId) {
     // Whole app is excluded from freeze when both Env Filters and Service filters are ALL selected.
     // This also applies to previously created windows which did not have option to add service selection
-    if (appSelection.getEnvSelection().getFilterType() == EnvironmentFilterType.ALL
-        && (appSelection.getServiceSelection() == null
-            || appSelection.getServiceSelection().getFilterType() == ServiceFilterType.ALL)) {
-      if (appSelection.getFilterType() == BlackoutWindowFilterType.CUSTOM) {
-        allEnvFrozenApps.removeAll(new HashSet<>(((CustomAppFilter) appSelection).getApps()));
-      } else {
-        allEnvFrozenApps.removeAll(new HashSet<>(emptyIfNull(appService.getAppIdsByAccountId(accountId))));
-      }
+    if (appSelection.getFilterType() == BlackoutWindowFilterType.CUSTOM) {
+      allEnvFrozenApps.removeAll(new HashSet<>(((CustomAppFilter) appSelection).getApps()));
+    } else {
+      allEnvFrozenApps.removeAll(new HashSet<>(emptyIfNull(appService.getAppIdsByAccountId(accountId))));
     }
   }
 
