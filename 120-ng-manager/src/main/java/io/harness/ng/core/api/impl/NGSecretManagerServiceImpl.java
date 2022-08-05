@@ -141,7 +141,7 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
                     customNGSecretManagerConfigDTO.getTemplateInfo().getVersionLabel(), null, null, null));
 
             String yaml = template.getYaml();
-            log.info("Yaml received from template service is " + yaml);
+            log.info("Yaml received from template service is \n " + yaml);
             // resolve the yaml
             ShellScriptYamlExpressionEvaluator shellScriptYamlExpressionEvaluator =
                 new ShellScriptYamlExpressionEvaluator(yaml);
