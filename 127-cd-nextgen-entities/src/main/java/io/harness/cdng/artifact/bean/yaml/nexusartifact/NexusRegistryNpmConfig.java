@@ -16,6 +16,7 @@ import io.harness.validation.OneOfField;
 
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.Wither;
@@ -30,5 +31,5 @@ public class NexusRegistryNpmConfig implements NexusRegistryConfigSpec {
   /**
    * Artifact packageName.
    */
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> packageName;
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> packageName;
 }

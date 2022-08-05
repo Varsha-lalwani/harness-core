@@ -16,6 +16,7 @@ import io.harness.validation.OneOfField;
 
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.Wither;
@@ -28,9 +29,13 @@ import lombok.experimental.Wither;
     description = "This entity contains the details of the Nexus config for maven repository")
 public class NexusRegistryMavenConfig implements NexusRegistryConfigSpec {
   /**
+   * Artifacts in repos need to be referenced via a path.
+   */
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> artifactPath;
+  /**
    * Artifact groupId.
    */
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> groupId;
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> groupId;
   /**
    * repo extension.
    */
