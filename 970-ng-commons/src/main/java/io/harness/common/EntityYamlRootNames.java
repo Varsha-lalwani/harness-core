@@ -115,4 +115,7 @@ public class EntityYamlRootNames {
   public static final String AZURE_SWAP_SLOT_STEP = "AzureSwapSlot";
   public static final String AZURE_WEBAPP_ROLLBACK_STEP = "AzureWebAppRollback";
   public static final String EMAIL = "EMAIL";
+  public static final String AZURE_CREATE_RESOURCE_STEP = "AzureCreateResource";
+  public static final String AZURE_CREATE_BP_RESOURCE_STEP = "AzureCreateBPResource";
+  public static final String AZURE_ROLLBACK_ARM_RESOURCE_STEP = "AzureARMRollback";
 }
