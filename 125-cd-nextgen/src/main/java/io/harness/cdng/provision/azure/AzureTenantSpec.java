@@ -39,6 +39,6 @@ public class AzureTenantSpec implements AzureScopeType {
 
   @Override
   public void validateParams() {
-    Validator.notNullCheck("deploymentDataLocation can't be null", location);
+    Validator.notNullCheck("location can't be null", location);
   }
 }

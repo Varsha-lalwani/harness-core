@@ -42,6 +42,6 @@ public class AzureManagementSpec implements AzureScopeType {
   @Override
   public void validateParams() {
     Validator.notNullCheck("managementGroupId can't be null", managementGroupId);
-    Validator.notNullCheck("deploymentDataLocation can't be null", location);
+    Validator.notNullCheck("location can't be null", location);
   }
 }

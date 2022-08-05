@@ -42,6 +42,6 @@ public class AzureSubscriptionSpec implements AzureScopeType {
   @Override
   public void validateParams() {
     Validator.notNullCheck("subscription can't be null", subscription);
-    Validator.notNullCheck("deploymentDataLocation can't be null", location);
+    Validator.notNullCheck("location can't be null", location);
   }
 }

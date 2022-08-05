@@ -74,10 +74,6 @@ public class AzureCreateStepInfo
     }
     if (createStepConfiguration.getParameters() != null
         && ManifestStoreType.isInGitSubset(createStepConfiguration.getParameters().getStore().getSpec().getKind())) {
-      //      connectorRefMap.put("configuration.spec.parameters." + fileSpecs.getIdentifier() +
-      //      ".store.spec.connectorRef",
-      //          fileSpecs.getStore().getSpec().getConnectorReference());
-      // This is if we want a list of parameter files
       connectorRefMap.put("configuration.spec.parameters.store.spec.connectorRef",
           createStepConfiguration.getParameters().getStore().getSpec().getConnectorReference());
     }
