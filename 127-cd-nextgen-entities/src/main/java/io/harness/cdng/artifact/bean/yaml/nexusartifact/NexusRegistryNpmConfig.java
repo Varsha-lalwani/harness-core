@@ -24,7 +24,6 @@ import lombok.experimental.Wither;
 @OwnedBy(CDC)
 @Data
 @Builder
-@OneOfField(fields = {"tokenRef"})
 @Schema(name = "NexusRegistryNpmConfig",
     description = "This entity contains the details of the Nexus config for npm repository")
 public class NexusRegistryNpmConfig implements NexusRegistryConfigSpec {

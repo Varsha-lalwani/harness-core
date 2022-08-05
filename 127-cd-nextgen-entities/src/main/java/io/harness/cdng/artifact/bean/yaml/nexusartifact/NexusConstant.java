@@ -15,6 +15,6 @@ import io.harness.annotations.dev.OwnedBy;
 public class NexusConstant {
   // auth types
   public static final String MAVEN = "maven";
-  public static final String NPM = "NPM";
+  public static final String NPM = "npm";
   public static final String NUGET = "nuget";
 }
