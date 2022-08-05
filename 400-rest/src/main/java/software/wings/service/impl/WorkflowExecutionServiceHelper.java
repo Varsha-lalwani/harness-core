@@ -592,6 +592,32 @@ public class WorkflowExecutionServiceHelper {
         .asList();
   }
 
+  private Map<String, List<StateExecutionInstance>> fetchFailedExecutionInstanceMap(
+      String appId, List<String> workflowExecutionIds) {
+    Query<StateExecutionInstance> query = wingsPersistence.createQuery(StateExecutionInstance.class)
+                                              .filter(StateExecutionInstanceKeys.appId, appId)
+                                              .field(StateExecutionInstanceKeys.executionUuid)
+                                              .in(workflowExecutionIds)
+                                              .field(StateExecutionInstanceKeys.status)
+                                              .in(ExecutionStatus.resumableStatuses)
+                                              .order(Sort.ascending(StateExecutionInstanceKeys.endTs));
+
+    List<StateExecutionInstance> stateExecutionInstances =
+        query.project(StateExecutionInstanceKeys.uuid, true)
+            .project(StateExecutionInstanceKeys.stateType, true)
+            .project(StateExecutionInstanceKeys.displayName, true)
+            .project(StateExecutionInstanceKeys.parentInstanceId, true)
+            .project(StateExecutionInstanceKeys.stateName, true)
+            .project(StateExecutionInstanceKeys.stateExecutionMap, true)
+            .asList();
+
+    if (stateExecutionInstances == null) {
+      return new HashMap<>();
+    }
+
+    return stateExecutionInstances.stream().collect(Collectors.groupingBy(StateExecutionInstance::getExecutionUuid));
+  }
+
   public void populateFailureDetailsWithStepInfo(WorkflowExecution workflowExecution) {
     Map<String, StringJoiner> executionDetails = new LinkedHashMap<>();
     HashSet<String> parentInstances = new HashSet<>();
@@ -619,5 +645,41 @@ public class WorkflowExecutionServiceHelper {
     workflowExecution.setFailureDetails(failureMessage.toString());
     workflowExecution.setFailedStepNames(failedStepNames.toString());
     workflowExecution.setFailedStepTypes(failedStepTypes.toString());
+  }
+
+  public List<WorkflowExecution> populateFailureDetailsWithStepInfo(
+      String appId, List<WorkflowExecution> workflowExecutions) {
+    Map<String, List<StateExecutionInstance>> stateExecutionInstanceMap = fetchFailedExecutionInstanceMap(
+        appId, workflowExecutions.stream().map(WorkflowExecution::getUuid).collect(toList()));
+    List<WorkflowExecution> workflowExecutionsWithFailureDetails = new ArrayList<>();
+    stateExecutionInstanceMap.forEach((executionId, stateExecutionInstances) -> {
+      Map<String, StringJoiner> executionDetails = new LinkedHashMap<>();
+      HashSet<String> parentInstances = new HashSet<>();
+      StringJoiner failureMessage = new StringJoiner(", ");
+      StringJoiner failedStepNames = new StringJoiner(", ");
+      StringJoiner failedStepTypes = new StringJoiner(", ");
+      prepareFailedPhases(stateExecutionInstances, parentInstances, executionDetails);
+      prepareFailedSteps(appId, executionId, stateExecutionInstances, parentInstances, executionDetails);
+
+      if (isNotEmpty(executionDetails)) {
+        executionDetails.forEach((id, message) -> {
+          failureMessage.add(message.toString());
+          stateExecutionInstances.stream().filter(sei -> id.equals(sei.getUuid())).findFirst().ifPresent(sei -> {
+            failedStepNames.add(sei.getStateName());
+            failedStepTypes.add(sei.getStateType());
+          });
+        });
+      }
+
+      WorkflowExecution requiredWorkflowExecution =
+          workflowExecutions.stream().filter(we -> executionId.equals(we.getUuid())).findFirst().orElse(null);
+      if (requiredWorkflowExecution != null) {
+        requiredWorkflowExecution.setFailureDetails(failureMessage.toString());
+        requiredWorkflowExecution.setFailedStepNames(failedStepNames.toString());
+        requiredWorkflowExecution.setFailedStepTypes(failedStepTypes.toString());
+      }
+      workflowExecutionsWithFailureDetails.add(requiredWorkflowExecution);
+    });
+    return workflowExecutionsWithFailureDetails;
   }
 }

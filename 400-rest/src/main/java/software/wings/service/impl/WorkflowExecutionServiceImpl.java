@@ -6692,4 +6692,10 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     workflowExecutionServiceHelper.populateFailureDetailsWithStepInfo(workflowExecution);
     return workflowExecution;
   }
+
+  @Override
+  public List<WorkflowExecution> getWorkflowExecutionsWithFailureDetails(
+      String appId, List<WorkflowExecution> workflowExecutions) {
+    return workflowExecutionServiceHelper.populateFailureDetailsWithStepInfo(appId, workflowExecutions);
+  }
 }

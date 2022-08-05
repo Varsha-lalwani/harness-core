@@ -38,7 +38,6 @@ public class TimescaleDBDataMigrationList {
         .add(Pair.of(7, AddAccountNameInAccountTable.class))
         .add(Pair.of(8, PodInfoPartialIndexForSyncQuery.class))
         .add(Pair.of(9, AddParentPipelineDataToDeployment.class))
-        .add(Pair.of(10, AddWorkflowExecutionFailureDetails.class))
         .build();
   }
 }
