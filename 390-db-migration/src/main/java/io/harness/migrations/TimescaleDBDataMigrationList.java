@@ -10,7 +10,6 @@ package io.harness.migrations;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.migrations.timescaledb.data.AddAccountNameInAccountTable;
-import io.harness.migrations.timescaledb.data.AddParentPipelineDataToDeployment;
 import io.harness.migrations.timescaledb.data.AddWorkflowExecutionFailureDetails;
 import io.harness.migrations.timescaledb.data.MigrateWorkflowsToTimeScaleDB;
 import io.harness.migrations.timescaledb.data.OptimizeNodeRecommendationQuery;

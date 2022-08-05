@@ -54,7 +54,6 @@ public enum FeatureName {
   CUSTOM_APM_24_X_7_CV_TASK,
   CUSTOM_APM_CV_TASK,
   CUSTOM_DASHBOARD,
-  CUSTOM_DEPLOYMENT,
   CUSTOM_DEPLOYMENT_ARTIFACT_FROM_INSTANCE_JSON,
   NG_DEPLOYMENT_TEMPLATE,
   CUSTOM_MAX_PAGE_SIZE,
@@ -121,7 +120,6 @@ public enum FeatureName {
   MOVE_CONTAINER_INSTANCE_SYNC_TO_PERPETUAL_TASK,
   MOVE_PCF_INSTANCE_SYNC_TO_PERPETUAL_TASK,
   PDC_PERPETUAL_TASK,
-  NEW_INSTANCE_TIMESERIES,
   NEW_RELIC_CV_TASK,
   NEWRELIC_24_7_CV_TASK,
   NG_DASHBOARDS("", HarnessTeam.CE),
@@ -135,7 +133,6 @@ public enum FeatureName {
   REJECT_TRIGGER_IF_ARTIFACTS_NOT_MATCH,
   ROLLBACK_NONE_ARTIFACT,
   SCIM_INTEGRATION,
-  SEARCH(Scope.GLOBAL),
   SEARCH_REQUEST,
   SEND_LOG_ANALYSIS_COMPRESSED,
   SEND_SLACK_NOTIFICATION_FROM_DELEGATE,
@@ -199,6 +196,7 @@ public enum FeatureName {
   ECS_BG_DOWNSIZE,
   LIMITED_ACCESS_FOR_HARNESS_USER_GROUP,
   REMOVE_STENCIL_MANUAL_INTERVENTION,
+  CI_OVERVIEW_PAGE("UI flag to show CI overview page", HarnessTeam.CI),
   SKIP_BASED_ON_STACK_STATUSES,
   WF_VAR_MULTI_SELECT_ALLOWED_VALUES,
   LDAP_GROUP_SYNC_JOB_ITERATOR,
@@ -321,7 +319,6 @@ public enum FeatureName {
   LDAP_SECRET_AUTH,
   WORKFLOW_EXECUTION_REFRESH_STATUS,
   SERVERLESS_SUPPORT,
-  TF_MODULE_SOURCE_INHERIT_SSH,
   TRIGGERS_PAGE_PAGINATION,
   CVNG_NOTIFICATION_UI,
   STALE_FLAGS_FFM_1510,
@@ -372,7 +369,6 @@ public enum FeatureName {
   CVNG_LICENSE_ENFORCEMENT,
   SERVICE_DASHBOARD_V2,
   DEBEZIUM_ENABLED,
-  TEMPLATE_SCHEMA_VALIDATION,
   YAML_APIS_GRANULAR_PERMISSION,
   JENKINS_BUILD,
   ENABLE_DEFAULT_NG_EXPERIENCE_FOR_ONPREM,
@@ -406,10 +402,12 @@ public enum FeatureName {
       HarnessTeam.CDP),
   TERRAFORM_REMOTE_BACKEND_CONFIG("Enables storing Terraform backend configuration in a remote repo", HarnessTeam.CDP),
   NG_OPTIMIZE_FETCH_FILES_KUSTOMIZE("Used to Optimize kustomize Manifest files fetch in NG", HarnessTeam.CDP),
+  REMOVE_HINT_YAML_GIT_COMMITS("Removes the hint usage in GitCommits collection", HarnessTeam.SPG),
   FIXED_INSTANCE_ZERO_ALLOW("To allow user to set the fixed instance count to 0 for ECS Deployments", HarnessTeam.CDP),
   USE_PAGINATED_ENCRYPT_FOR_VARIABLE_OVERRIDES(
-      "Enables PaginatedComponent & Formik for VariableOverrides in CG-UI", HarnessTeam.PL);
-
+      "Enables PaginatedComponent & Formik for VariableOverrides in CG-UI", HarnessTeam.PL),
+  ON_DEMAND_ROLLBACK_WITH_DIFFERENT_ARTIFACT(
+      "Used to do on demand rollback to previously deployed different artifact on same inframapping", HarnessTeam.CDC);
   @Deprecated
   FeatureName() {
     scope = Scope.PER_ACCOUNT;
