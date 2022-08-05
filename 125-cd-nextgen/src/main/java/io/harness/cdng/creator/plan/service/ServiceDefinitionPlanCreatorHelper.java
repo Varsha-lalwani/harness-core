@@ -64,6 +64,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -210,7 +211,7 @@ public class ServiceDefinitionPlanCreatorHelper {
 
   String addDependenciesForManifestsV2(YamlNode serviceV2Node,
       Map<String, PlanCreationResponse> planCreationResponseMap, NGServiceV2InfoConfig serviceV2Config,
-      List<NGServiceOverridesEntity> serviceOverridesEntities, NGEnvironmentConfig ngEnvironmentConfig,
+      Optional<NGServiceOverridesEntity> serviceOverridesEntities, NGEnvironmentConfig ngEnvironmentConfig,
       KryoSerializer kryoSerializer) throws IOException {
     YamlUpdates.Builder yamlUpdates = YamlUpdates.newBuilder();
 
@@ -252,21 +253,21 @@ public class ServiceDefinitionPlanCreatorHelper {
 
   @NotNull
   private List<ManifestConfigWrapper> prepareFinalManifests(NGServiceV2InfoConfig serviceV2Config,
-      List<NGServiceOverridesEntity> serviceOverridesEntities, NGEnvironmentConfig ngEnvironmentConfig) {
+      Optional<NGServiceOverridesEntity> serviceOverridesEntities, NGEnvironmentConfig ngEnvironmentConfig) {
     List<ManifestConfigWrapper> svcManifests;
     List<ManifestConfigWrapper> svcOverrideManifests = new ArrayList<>();
 
     svcManifests = fetchManifestFromServiceEntity(serviceV2Config);
     List<ManifestConfigWrapper> finalManifests = new ArrayList<>(svcManifests);
 
-    if (isNotEmpty(serviceOverridesEntities)) {
-      svcOverrideManifests = fetchSvcOverrideManifests(serviceOverridesEntities);
+    if (serviceOverridesEntities.isPresent()) {
+      svcOverrideManifests = fetchSvcOverrideManifests(Collections.singletonList(serviceOverridesEntities.get()));
     }
     checkDuplicateManifestIdentifiers(svcManifests, svcOverrideManifests);
     validateAllowedManifestTypesInOverrides(svcOverrideManifests);
     finalManifests.addAll(svcOverrideManifests);
 
-    final List<ManifestConfigWrapper> envGlobalManifests = fetchFilteredEnvGlobalManifests(ngEnvironmentConfig);
+    List<ManifestConfigWrapper> envGlobalManifests = fetchFilteredEnvGlobalManifests(ngEnvironmentConfig);
     finalManifests.addAll(envGlobalManifests);
 
     return finalManifests;

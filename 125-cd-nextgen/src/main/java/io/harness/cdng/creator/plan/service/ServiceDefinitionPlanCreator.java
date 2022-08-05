@@ -190,11 +190,11 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
     }
 
     if (ServiceDefinitionPlanCreatorHelper.shouldCreatePlanNodeForManifestsV2(config)) {
-      List<NGServiceOverridesEntity> serviceOverridesEntities =
+      Optional<NGServiceOverridesEntity> serviceOverridesEntity =
           fetchServiceOverrideEntities(ctx, config, kryoSerializer);
       NGEnvironmentConfig ngEnvironmentConfig = fetchEnvironmentConfig(ctx, kryoSerializer);
-      String manifestPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForManifestsV2(serviceV2Node,
-          planCreationResponseMap, config, serviceOverridesEntities, ngEnvironmentConfig, kryoSerializer);
+      String manifestPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForManifestsV2(
+          serviceV2Node, planCreationResponseMap, config, serviceOverridesEntity, ngEnvironmentConfig, kryoSerializer);
       serviceSpecChildrenIds.add(manifestPlanNodeId);
     }
 
@@ -235,15 +235,14 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
     addServiceSpecNodeV2(config, planCreationResponseMap, serviceSpecChildrenIds);
   }
 
-  private List<NGServiceOverridesEntity> fetchServiceOverrideEntities(
+  private Optional<NGServiceOverridesEntity> fetchServiceOverrideEntities(
       PlanCreationContext ctx, NGServiceV2InfoConfig serviceV2InfoConfig, KryoSerializer kryoSerializer) {
     ParameterField<String> envRefField = (ParameterField<String>) kryoSerializer.asInflatedObject(
         ctx.getDependency().getMetadataMap().get(YamlTypes.ENVIRONMENT_REF).toByteArray());
     PlanCreationContextValue metadata = ctx.getMetadata();
 
-    return serviceOverrideService.findByEnvIdAndOptionalSvcId(metadata.getAccountIdentifier(),
-        metadata.getOrgIdentifier(), metadata.getProjectIdentifier(), envRefField.getValue(),
-        serviceV2InfoConfig.getIdentifier());
+    return serviceOverrideService.get(metadata.getAccountIdentifier(), metadata.getOrgIdentifier(),
+        metadata.getProjectIdentifier(), envRefField.getValue(), serviceV2InfoConfig.getIdentifier());
   }
 
   private NGEnvironmentConfig fetchEnvironmentConfig(PlanCreationContext ctx, KryoSerializer kryoSerializer) {

@@ -87,14 +87,6 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
   }
 
   @Override
-  public List<NGServiceOverridesEntity> findByEnvIdAndOptionalSvcId(
-      String accountId, String orgIdentifier, String projectIdentifier, String environmentRef, String serviceRef) {
-    Criteria criteria = getServiceOverrideCriteriaSvcIdOptional(
-        accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef);
-    return serviceOverrideRepository.findAll(criteria);
-  }
-
-  @Override
   public NGServiceOverridesEntity upsert(NGServiceOverridesEntity requestServiceOverride) {
     validatePresenceOfRequiredFields(requestServiceOverride.getAccountId(), requestServiceOverride.getOrgIdentifier(),
         requestServiceOverride.getProjectIdentifier(), requestServiceOverride.getEnvironmentRef(),
@@ -281,20 +273,6 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
         .is(requestServiceOverride.getEnvironmentRef())
         .and(NGServiceOverridesEntityKeys.serviceRef)
         .is(requestServiceOverride.getServiceRef());
-  }
-
-  private Criteria getServiceOverrideCriteriaSvcIdOptional(
-      String accountId, String orgIdentifier, String projectIdentifier, String environmentRef, String serviceRef) {
-    final NGServiceOverridesEntity serviceOverridesEntity = NGServiceOverridesEntity.builder()
-                                                                .accountId(accountId)
-                                                                .orgIdentifier(orgIdentifier)
-                                                                .projectIdentifier(projectIdentifier)
-                                                                .environmentRef(environmentRef)
-                                                                .serviceRef(serviceRef)
-                                                                .build();
-    return getServiceOverrideEqualityCriteria(serviceOverridesEntity)
-        .orOperator(
-            getServiceOverrideEqualityCriteriaForEnv(accountId, orgIdentifier, projectIdentifier, environmentRef));
   }
 
   private Criteria getServiceOverrideEqualityCriteriaForEnv(
