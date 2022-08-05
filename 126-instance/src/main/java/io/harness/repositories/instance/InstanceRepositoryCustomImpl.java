@@ -232,7 +232,7 @@ public class InstanceRepositoryCustomImpl implements InstanceRepositoryCustom {
     GroupOperation groupEnvId = group(InstanceKeys.infraIdentifier, InstanceKeys.infraName,
         InstanceKeys.lastPipelineExecutionId, InstanceKeys.lastPipelineExecutionName, InstanceKeys.lastDeployedAt,
         InstanceKeys.envIdentifier, InstanceKeys.envName, InstanceSyncConstants.PRIMARY_ARTIFACT_TAG,
-        InstanceSyncConstants.PRIMARY_ARTIFACT_ARTIFACT_PATH)
+        InstanceSyncConstants.PRIMARY_ARTIFACT_DISPLAY_NAME)
                                     .count()
                                     .as(InstanceSyncConstants.COUNT);
     return mongoTemplate.aggregate(

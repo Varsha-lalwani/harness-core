@@ -1817,7 +1817,7 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
       final String envId = activeServiceInstanceInfo.getEnvIdentifier();
       final String envName = activeServiceInstanceInfo.getEnvName();
       final String buildId = activeServiceInstanceInfo.getTag();
-      final String artifactPath = getArtifactPathFromArtifactPathInfo(activeServiceInstanceInfo.getArtifactPathInfo());
+      final String artifactPath = getArtifactPathFromDisplayName(activeServiceInstanceInfo.getDisplayName());
       final int count = activeServiceInstanceInfo.getCount();
       buildEnvInfraMap.putIfAbsent(buildId, new HashMap<>());
       buildEnvInfraMap.get(buildId).putIfAbsent(envId, new ArrayList<>());
@@ -1840,15 +1840,15 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
     return InstanceGroupedByArtifactList.builder().instanceGroupedByArtifactList(instanceGroupedByArtifactList).build();
   }
 
-  private String getArtifactPathFromArtifactPathInfo(String artifactPathInfo) {
-    if (artifactPathInfo != null) {
-      String[] res = artifactPathInfo.split(":");
+  private String getArtifactPathFromDisplayName(String displayName) {
+    if (displayName != null) {
+      String[] res = displayName.split(":");
       int count = res.length;
       if (count > 1) {
         return res[0];
       }
     }
-    return null;
+    return "";
   }
 
   private List<InstanceGroupedByArtifactList.InstanceGroupedByArtifact> groupedByArtifacts(
