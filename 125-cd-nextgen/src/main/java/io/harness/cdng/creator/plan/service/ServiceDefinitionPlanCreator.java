@@ -24,6 +24,10 @@ import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.core.environment.beans.Environment;
+import io.harness.ng.core.environment.mappers.EnvironmentMapper;
+import io.harness.ng.core.environment.services.EnvironmentService;
+import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
 import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.ng.core.service.yaml.NGServiceV2InfoConfig;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
@@ -58,12 +62,14 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDC)
 public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField> {
   @Inject KryoSerializer kryoSerializer;
   @Inject ServiceOverrideService serviceOverrideService;
+  @Inject EnvironmentService environmentService;
 
   /*
   TODO: currently we are using many yaml updates. For ex - if we do not have service definition and we need to call plan
@@ -184,9 +190,11 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
     }
 
     if (ServiceDefinitionPlanCreatorHelper.shouldCreatePlanNodeForManifestsV2(config)) {
-      List<NGServiceOverridesEntity> serviceOverridesEntities = fetchServiceOverrideEntities(ctx, config);
-      String manifestPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForManifestsV2(
-          serviceV2Node, planCreationResponseMap, config, serviceOverridesEntities, kryoSerializer);
+      List<NGServiceOverridesEntity> serviceOverridesEntities =
+          fetchServiceOverrideEntities(ctx, config, kryoSerializer);
+      NGEnvironmentConfig ngEnvironmentConfig = fetchEnvironmentConfig(ctx, kryoSerializer);
+      String manifestPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForManifestsV2(serviceV2Node,
+          planCreationResponseMap, config, serviceOverridesEntities, ngEnvironmentConfig, kryoSerializer);
       serviceSpecChildrenIds.add(manifestPlanNodeId);
     }
 
@@ -228,14 +236,23 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
   }
 
   private List<NGServiceOverridesEntity> fetchServiceOverrideEntities(
-      PlanCreationContext ctx, NGServiceV2InfoConfig serviceV2InfoConfig) {
-    final ParameterField<String> envRefField = (ParameterField<String>) kryoSerializer.asInflatedObject(
+      PlanCreationContext ctx, NGServiceV2InfoConfig serviceV2InfoConfig, KryoSerializer kryoSerializer) {
+    ParameterField<String> envRefField = (ParameterField<String>) kryoSerializer.asInflatedObject(
         ctx.getDependency().getMetadataMap().get(YamlTypes.ENVIRONMENT_REF).toByteArray());
-    final PlanCreationContextValue metadata = ctx.getMetadata();
-    List<NGServiceOverridesEntity> serviceOverridesEntities =
-        serviceOverrideService.findByEnvIdAndOptionalSvcId(metadata.getAccountIdentifier(), metadata.getOrgIdentifier(),
-            metadata.getProjectIdentifier(), envRefField.getValue(), serviceV2InfoConfig.getIdentifier());
-    return serviceOverridesEntities;
+    PlanCreationContextValue metadata = ctx.getMetadata();
+
+    return serviceOverrideService.findByEnvIdAndOptionalSvcId(metadata.getAccountIdentifier(),
+        metadata.getOrgIdentifier(), metadata.getProjectIdentifier(), envRefField.getValue(),
+        serviceV2InfoConfig.getIdentifier());
+  }
+
+  private NGEnvironmentConfig fetchEnvironmentConfig(PlanCreationContext ctx, KryoSerializer kryoSerializer) {
+    ParameterField<String> envRefField = (ParameterField<String>) kryoSerializer.asInflatedObject(
+        ctx.getDependency().getMetadataMap().get(YamlTypes.ENVIRONMENT_REF).toByteArray());
+    PlanCreationContextValue metadata = ctx.getMetadata();
+    Optional<Environment> environment = environmentService.get(metadata.getAccountIdentifier(),
+        metadata.getOrgIdentifier(), metadata.getProjectIdentifier(), envRefField.getValue(), false);
+    return EnvironmentMapper.toNGEnvironmentConfig(environment.get());
   }
 
   private void addServiceSpecNode(ServiceConfig serviceConfig,

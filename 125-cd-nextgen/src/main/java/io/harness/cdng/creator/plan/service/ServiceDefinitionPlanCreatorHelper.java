@@ -7,7 +7,7 @@
 
 package io.harness.cdng.creator.plan.service;
 
-import static io.harness.cdng.manifest.ManifestType.SERVICE_OVERRIDE_SUPPORTED_MANIFEST_TYPEs;
+import static io.harness.cdng.manifest.ManifestType.SERVICE_OVERRIDE_SUPPORTED_MANIFEST_TYPES;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
@@ -34,9 +34,12 @@ import io.harness.data.structure.CollectionUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.core.environment.services.EnvironmentService;
+import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
 import io.harness.ng.core.service.yaml.NGServiceV2InfoConfig;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
 import io.harness.ng.core.serviceoverride.mapper.NGServiceOverrideEntityConfigMapper;
+import io.harness.ng.core.serviceoverride.services.ServiceOverrideService;
 import io.harness.ng.core.serviceoverride.yaml.NGServiceOverrideConfig;
 import io.harness.ng.core.serviceoverride.yaml.NGServiceOverrideInfoConfig;
 import io.harness.pms.contracts.plan.Dependencies;
@@ -51,10 +54,12 @@ import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.serializer.KryoSerializer;
 
+import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +75,9 @@ import org.jetbrains.annotations.NotNull;
  */
 @UtilityClass
 public class ServiceDefinitionPlanCreatorHelper {
+  @Inject ServiceOverrideService serviceOverrideService;
+  @Inject EnvironmentService environmentService;
+
   public Map<String, ByteString> prepareMetadata(
       String planNodeId, ServiceConfig actualServiceConfig, KryoSerializer kryoSerializer) {
     Map<String, ByteString> metadataDependency = new HashMap<>();
@@ -202,10 +210,12 @@ public class ServiceDefinitionPlanCreatorHelper {
 
   String addDependenciesForManifestsV2(YamlNode serviceV2Node,
       Map<String, PlanCreationResponse> planCreationResponseMap, NGServiceV2InfoConfig serviceV2Config,
-      List<NGServiceOverridesEntity> serviceOverridesEntities, KryoSerializer kryoSerializer) throws IOException {
+      List<NGServiceOverridesEntity> serviceOverridesEntities, NGEnvironmentConfig ngEnvironmentConfig,
+      KryoSerializer kryoSerializer) throws IOException {
     YamlUpdates.Builder yamlUpdates = YamlUpdates.newBuilder();
 
-    List<ManifestConfigWrapper> finalManifests = prepareFinalManifests(serviceV2Config, serviceOverridesEntities);
+    List<ManifestConfigWrapper> finalManifests =
+        prepareFinalManifests(serviceV2Config, serviceOverridesEntities, ngEnvironmentConfig);
     YamlField manifestsYamlField = prepareFinalUuidInjectedManifestYamlField(serviceV2Node, finalManifests);
     PlanCreatorUtils.setYamlUpdate(manifestsYamlField, yamlUpdates);
     String manifestsPlanNodeId = "manifests-" + UUIDGenerator.generateUuid();
@@ -241,20 +251,39 @@ public class ServiceDefinitionPlanCreatorHelper {
   }
 
   @NotNull
-  private List<ManifestConfigWrapper> prepareFinalManifests(
-      NGServiceV2InfoConfig serviceV2Config, List<NGServiceOverridesEntity> serviceOverridesEntities) {
-    List<ManifestConfigWrapper> finalManifests = new ArrayList<>();
-    List<ManifestConfigWrapper> svcManifests = new ArrayList<>();
+  private List<ManifestConfigWrapper> prepareFinalManifests(NGServiceV2InfoConfig serviceV2Config,
+      List<NGServiceOverridesEntity> serviceOverridesEntities, NGEnvironmentConfig ngEnvironmentConfig) {
+    List<ManifestConfigWrapper> svcManifests;
     List<ManifestConfigWrapper> svcOverrideManifests = new ArrayList<>();
+
+    svcManifests = fetchManifestFromServiceEntity(serviceV2Config);
+    List<ManifestConfigWrapper> finalManifests = new ArrayList<>(svcManifests);
+
     if (isNotEmpty(serviceOverridesEntities)) {
       svcOverrideManifests = fetchSvcOverrideManifests(serviceOverridesEntities);
     }
-    svcManifests = fetchManifestFromServiceEntity(serviceV2Config);
     checkDuplicateManifestIdentifiers(svcManifests, svcOverrideManifests);
     validateAllowedManifestTypesInOverrides(svcOverrideManifests);
     finalManifests.addAll(svcOverrideManifests);
-    finalManifests.addAll(svcManifests);
+
+    final List<ManifestConfigWrapper> envGlobalManifests = fetchFilteredEnvGlobalManifests(ngEnvironmentConfig);
+    finalManifests.addAll(envGlobalManifests);
+
     return finalManifests;
+  }
+
+  @NonNull
+  private static List<ManifestConfigWrapper> fetchFilteredEnvGlobalManifests(NGEnvironmentConfig ngEnvironmentConfig) {
+    if (checkManifestAvailability(ngEnvironmentConfig)) {
+      return Collections.EMPTY_LIST;
+    }
+    return ngEnvironmentConfig.getNgEnvironmentInfoConfig().getNgEnvironmentGLobalOverride().getManifests();
+  }
+
+  private static boolean checkManifestAvailability(NGEnvironmentConfig ngEnvironmentConfig) {
+    return ngEnvironmentConfig == null || ngEnvironmentConfig.getNgEnvironmentInfoConfig() == null
+        || ngEnvironmentConfig.getNgEnvironmentInfoConfig().getNgEnvironmentGLobalOverride() == null
+        || ngEnvironmentConfig.getNgEnvironmentInfoConfig().getNgEnvironmentGLobalOverride().getManifests() == null;
   }
 
   private static void validateAllowedManifestTypesInOverrides(List<ManifestConfigWrapper> svcOverrideManifests) {
@@ -267,7 +296,7 @@ public class ServiceDefinitionPlanCreatorHelper {
             .filter(Objects::nonNull)
             .map(ManifestConfig::getType)
             .map(ManifestConfigType::getDisplayName)
-            .filter(type -> !SERVICE_OVERRIDE_SUPPORTED_MANIFEST_TYPEs.contains(type))
+            .filter(type -> !SERVICE_OVERRIDE_SUPPORTED_MANIFEST_TYPES.contains(type))
             .collect(Collectors.toSet());
     if (isEmpty(unsupportedManifestTypesUsed)) {
       throw new InvalidRequestException(format("Manifest Types: %s are not supported for Service Overrides",
