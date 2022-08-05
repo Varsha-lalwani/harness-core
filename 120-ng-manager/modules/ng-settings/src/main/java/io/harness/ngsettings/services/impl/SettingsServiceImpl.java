@@ -135,6 +135,8 @@ public class SettingsServiceImpl implements SettingsService {
       if (setting.isPresent() && Boolean.FALSE.equals(setting.get().getAllowOverrides())) {
         throw new InvalidRequestException(
             String.format("Setting- %s cannot be overridden at the current scope", settingRequestDTO.getIdentifier()));
+      } else {
+        return;
       }
     }
     Optional<SettingConfiguration> settingConfiguration =
