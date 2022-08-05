@@ -293,16 +293,7 @@ public class SshEntityHelper {
     HostAttributesFilter filter = (HostAttributesFilter) pdcDirectInfrastructure.getHostFilter().getSpec();
     Page<HostDTO> result = ngHostService.filterHostsByConnector(ngAccess.getAccountIdentifier(),
         ngAccess.getOrgIdentifier(), ngAccess.getProjectIdentifier(), pdcDirectInfrastructure.getConnectorRef(),
-        HostFilterDTO.builder()
-            .type(HostFilterType.HOST_ATTRIBUTES)
-            .filter(filter.getValue()
-                        .entrySet()
-                        .stream()
-                        .filter(e -> !YamlTypes.UUID.equals(e.getKey()))
-                        .map(e -> e.getKey() + ":" + e.getValue())
-                        .collect(joining(",")))
-            .build(),
-        pageRequest);
+        getHostFilterDTO(filter), pageRequest);
     return result.getContent();
   }
 
@@ -312,9 +303,33 @@ public class SshEntityHelper {
     HostNameFilter filter = (HostNameFilter) pdcDirectInfrastructure.getHostFilter().getSpec();
     Page<HostDTO> result = ngHostService.filterHostsByConnector(ngAccess.getAccountIdentifier(),
         ngAccess.getOrgIdentifier(), ngAccess.getProjectIdentifier(), pdcDirectInfrastructure.getConnectorRef(),
-        HostFilterDTO.builder().type(HostFilterType.HOST_NAMES).filter(String.join(",", filter.getValue())).build(),
-        pageRequest);
+        getHostFilterDTO(filter), pageRequest);
     return result.getContent();
+  }
+
+  private HostFilterDTO getHostFilterDTO(HostNameFilter filter) {
+    HostFilterDTO hostFilterDTO = null;
+    if (filter != null) {
+      hostFilterDTO =
+          HostFilterDTO.builder().type(HostFilterType.HOST_NAMES).filter(String.join(",", filter.getValue())).build();
+    }
+    return hostFilterDTO;
+  }
+
+  private HostFilterDTO getHostFilterDTO(HostAttributesFilter filter) {
+    HostFilterDTO filterDTO = null;
+    if (filter != null) {
+      filterDTO = HostFilterDTO.builder()
+                      .type(HostFilterType.HOST_ATTRIBUTES)
+                      .filter(filter.getValue()
+                                  .entrySet()
+                                  .stream()
+                                  .filter(e -> !YamlTypes.UUID.equals(e.getKey()))
+                                  .map(e -> e.getKey() + ":" + e.getValue())
+                                  .collect(joining(",")))
+                      .build();
+    }
+    return filterDTO;
   }
 
   private List<String> toStringHostNames(List<HostDTO> hosts) {

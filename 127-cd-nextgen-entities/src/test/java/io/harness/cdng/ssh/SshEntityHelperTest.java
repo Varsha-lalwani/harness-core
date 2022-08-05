@@ -269,7 +269,7 @@ public class SshEntityHelperTest extends CategoryTest {
             .connectorRef("pdcConnector")
             .credentialsRef("sshKeyRef")
             .hostFilter(HostFilter.builder()
-                            .type(HostFilterType.HOST_NAMES)
+                            .type(HostFilterType.HOST_ATTRIBUTES)
                             .spec(HostAttributesFilter.builder().value(ImmutableMap.of("type", "db")).build())
                             .build())
             .build();
@@ -318,7 +318,7 @@ public class SshEntityHelperTest extends CategoryTest {
             .connectorRef("pdcConnector")
             .credentialsRef("sshKeyRef")
             .hostFilter(HostFilter.builder()
-                            .type(HostFilterType.HOST_NAMES)
+                            .type(HostFilterType.HOST_ATTRIBUTES)
                             .spec(HostAttributesFilter.builder().value(ImmutableMap.of("type", "node")).build())
                             .build())
             .build();
