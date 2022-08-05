@@ -248,10 +248,9 @@ public class EcsStepCommonHelper extends EcsStepUtils {
             .build();
   }
 
-
-  public TaskChainResponse executeNextLink(EcsStepExecutor ecsStepExecutor, Ambiance ambiance,
-                                           StepElementParameters stepElementParameters, PassThroughData passThroughData,
-                                           ThrowingSupplier<ResponseData> responseDataSupplier, EcsStepHelper ecsStepHelper) throws Exception {
+  public TaskChainResponse executeNextLinkRolling(EcsStepExecutor ecsStepExecutor, Ambiance ambiance,
+                                                  StepElementParameters stepElementParameters, PassThroughData passThroughData,
+                                                  ThrowingSupplier<ResponseData> responseDataSupplier, EcsStepHelper ecsStepHelper) throws Exception {
     ResponseData responseData = responseDataSupplier.get();
     UnitProgressData unitProgressData = null;
     TaskChainResponse taskChainResponse = null;
@@ -261,7 +260,7 @@ public class EcsStepCommonHelper extends EcsStepUtils {
         EcsGitFetchResponse ecsGitFetchResponse = (EcsGitFetchResponse) responseData;
         EcsGitFetchPassThroughData ecsGitFetchPassThroughData = (EcsGitFetchPassThroughData) passThroughData;
 
-        taskChainResponse = handleEcsGitFetchFilesResponse(ecsGitFetchResponse, ecsStepExecutor, ambiance,
+        taskChainResponse = handleEcsGitFetchFilesResponseRolling(ecsGitFetchResponse, ecsStepExecutor, ambiance,
                 stepElementParameters, ecsGitFetchPassThroughData, ecsStepHelper);
 
       } else if (responseData instanceof EcsPrepareRollbackDataResponse) { // if EcsPrepareRollbackDataResponse is received
@@ -270,8 +269,37 @@ public class EcsStepCommonHelper extends EcsStepUtils {
                 (EcsPrepareRollbackDataResponse) responseData;
         EcsPrepareRollbackDataPassThroughData ecsStepPassThroughData = (EcsPrepareRollbackDataPassThroughData) passThroughData;
 
-        taskChainResponse = handleEcsPrepareRollbackDataResponse(ecsPrepareRollbackDataResponse,
+        taskChainResponse = handleEcsPrepareRollbackDataResponseRolling(ecsPrepareRollbackDataResponse,
                 ecsStepExecutor, ambiance, stepElementParameters, ecsStepPassThroughData);
+      }
+    } catch (Exception e) {
+      taskChainResponse = TaskChainResponse.builder()
+              .chainEnd(true)
+              .passThroughData(ServerlessStepExceptionPassThroughData.builder()
+                      .errorMessage(ExceptionUtils.getMessage(e))
+                      .unitProgressData(completeUnitProgressData(unitProgressData, ambiance, e.getMessage()))
+                      .build())
+              .build();
+    }
+
+    return taskChainResponse;
+  }
+
+  public TaskChainResponse executeNextLinkCanary(EcsStepExecutor ecsStepExecutor, Ambiance ambiance,
+                                                  StepElementParameters stepElementParameters, PassThroughData passThroughData,
+                                                  ThrowingSupplier<ResponseData> responseDataSupplier, EcsStepHelper ecsStepHelper) throws Exception {
+    ResponseData responseData = responseDataSupplier.get();
+    UnitProgressData unitProgressData = null;
+    TaskChainResponse taskChainResponse = null;
+    try {
+      if (responseData instanceof EcsGitFetchResponse) { // if EcsGitFetchResponse is received
+
+        EcsGitFetchResponse ecsGitFetchResponse = (EcsGitFetchResponse) responseData;
+        EcsGitFetchPassThroughData ecsGitFetchPassThroughData = (EcsGitFetchPassThroughData) passThroughData;
+
+        taskChainResponse = handleEcsGitFetchFilesResponseCanary(ecsGitFetchResponse, ecsStepExecutor, ambiance,
+                stepElementParameters, ecsGitFetchPassThroughData, ecsStepHelper);
+
       }
     } catch (Exception e) {
       taskChainResponse = TaskChainResponse.builder()
@@ -291,7 +319,7 @@ public class EcsStepCommonHelper extends EcsStepUtils {
     return ecsEntityHelper.getEcsInfraConfig(infrastructure, ngAccess);
   }
 
-  private TaskChainResponse handleEcsGitFetchFilesResponse(EcsGitFetchResponse ecsGitFetchResponse,
+  private TaskChainResponse handleEcsGitFetchFilesResponseRolling(EcsGitFetchResponse ecsGitFetchResponse,
                                                                   EcsStepExecutor ecsStepExecutor, Ambiance ambiance, StepElementParameters stepElementParameters,
                                                                   EcsGitFetchPassThroughData ecsGitFetchPassThroughData,
                                                                   EcsStepHelper ecsStepHelper) {
@@ -363,7 +391,83 @@ public class EcsStepCommonHelper extends EcsStepUtils {
 
   }
 
-  private TaskChainResponse handleEcsPrepareRollbackDataResponse(
+
+  private TaskChainResponse handleEcsGitFetchFilesResponseCanary(EcsGitFetchResponse ecsGitFetchResponse,
+                                                                  EcsStepExecutor ecsStepExecutor, Ambiance ambiance, StepElementParameters stepElementParameters,
+                                                                  EcsGitFetchPassThroughData ecsGitFetchPassThroughData,
+                                                                  EcsStepHelper ecsStepHelper) {
+    if (ecsGitFetchResponse.getTaskStatus() != TaskStatus.SUCCESS) {
+      EcsGitFetchFailurePassThroughData ecsGitFetchFailurePassThroughData =
+              EcsGitFetchFailurePassThroughData.builder()
+                      .errorMsg(ecsGitFetchResponse.getErrorMessage())
+                      .unitProgressData(ecsGitFetchResponse.getUnitProgressData())
+                      .build();
+      return TaskChainResponse.builder()
+              .passThroughData(ecsGitFetchFailurePassThroughData)
+              .chainEnd(true)
+              .build();
+    }
+
+    // Get ecsTaskDefinitionFileContent from ecsGitFetchResponse
+    FetchFilesResult ecsTaskDefinitionFetchFileResult = ecsGitFetchResponse.getEcsTaskDefinitionFetchFilesResult();
+    String ecsTaskDefinitionFileContent = ecsTaskDefinitionFetchFileResult.getFiles().get(0).getFileContent();
+    ecsTaskDefinitionFileContent = engineExpressionService.renderExpression(ambiance, ecsTaskDefinitionFileContent);
+
+
+    // Get ecsServiceDefinitionFetchFileResult from ecsGitFetchResponse
+    FetchFilesResult ecsServiceDefinitionFetchFileResult = ecsGitFetchResponse.getEcsServiceDefinitionFetchFilesResult();
+    String ecsServiceDefinitionFileContent = ecsServiceDefinitionFetchFileResult.getFiles().get(0).getFileContent();
+    ecsServiceDefinitionFileContent = engineExpressionService.renderExpression(ambiance, ecsServiceDefinitionFileContent);
+
+    // Get ecsScalableTargetManifestContentList from ecsGitFetchResponse if present
+    List<String> ecsScalableTargetManifestContentList = null;
+    List<FetchFilesResult> ecsScalableTargetFetchFilesResults = ecsGitFetchResponse.getEcsScalableTargetFetchFilesResults();
+
+    if (CollectionUtils.isNotEmpty(ecsScalableTargetFetchFilesResults)) {
+
+      ecsScalableTargetManifestContentList = ecsScalableTargetFetchFilesResults.stream()
+              .map(ecsScalableTargetFetchFilesResult -> ecsScalableTargetFetchFilesResult.getFiles().get(0).getFileContent())
+              .collect(Collectors.toList());
+
+      ecsScalableTargetManifestContentList.stream().map(ecsScalableTargetManifestContent ->
+              engineExpressionService.renderExpression(ambiance, ecsScalableTargetManifestContent)).collect(Collectors.toList());
+
+    }
+
+    // Get ecsScalingPolicyManifestContentList from ecsGitFetchResponse if present
+    List<String> ecsScalingPolicyManifestContentList = null;
+    List<FetchFilesResult> ecsScalingPolicyFetchFilesResults = ecsGitFetchResponse.getEcsScalingPolicyFetchFilesResults();
+
+    if (CollectionUtils.isNotEmpty(ecsScalingPolicyFetchFilesResults)) {
+
+      ecsScalingPolicyManifestContentList = ecsScalingPolicyFetchFilesResults.stream()
+              .map(ecsScalingPolicyFetchFilesResult -> ecsScalingPolicyFetchFilesResult.getFiles().get(0).getFileContent())
+              .collect(Collectors.toList());
+
+      ecsScalingPolicyManifestContentList.stream().map(ecsScalingPolicyManifestContent ->
+              engineExpressionService.renderExpression(ambiance, ecsScalingPolicyManifestContent)).collect(Collectors.toList());
+
+    }
+
+    EcsExecutionPassThroughData ecsExecutionPassThroughData = EcsExecutionPassThroughData.builder()
+            .infrastructure(ecsGitFetchPassThroughData.getInfrastructureOutcome())
+            .lastActiveUnitProgressData(ecsGitFetchResponse.getUnitProgressData())
+            .build();
+
+
+    EcsStepExecutorParams ecsStepExecutorParams = EcsStepExecutorParams.builder()
+            .shouldOpenFetchFilesLogStream(false)
+            .ecsTaskDefinitionManifestContent(ecsTaskDefinitionFileContent)
+            .ecsServiceDefinitionManifestContent(ecsServiceDefinitionFileContent)
+            .ecsScalableTargetManifestContentList(ecsScalableTargetManifestContentList)
+            .ecsScalingPolicyManifestContentList(ecsScalingPolicyManifestContentList)
+            .build();
+
+    return ecsStepExecutor.executeEcsTask(ambiance, stepElementParameters, ecsExecutionPassThroughData, ecsGitFetchResponse.getUnitProgressData(), ecsStepExecutorParams);
+
+  }
+
+  private TaskChainResponse handleEcsPrepareRollbackDataResponseRolling(
           EcsPrepareRollbackDataResponse ecsPrepareRollbackDataResponse,
           EcsStepExecutor ecsStepExecutor, Ambiance ambiance, StepElementParameters stepElementParameters,
           EcsPrepareRollbackDataPassThroughData ecsStepPassThroughData) {

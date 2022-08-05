@@ -62,11 +62,15 @@ import io.harness.cdng.creator.plan.steps.azure.webapp.AzureWebAppRollbackStepPl
 import io.harness.cdng.creator.plan.steps.azure.webapp.AzureWebAppSlotDeploymentStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.azure.webapp.AzureWebAppSlotSwapSlotPlanCreator;
 import io.harness.cdng.creator.plan.steps.azure.webapp.AzureWebAppTrafficShiftStepPlanCreator;
+import io.harness.cdng.creator.plan.steps.ecs.EcsCanaryDeleteStepPlanCreator;
+import io.harness.cdng.creator.plan.steps.ecs.EcsCanaryDeployStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.ecs.EcsRollingDeployStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.ecs.EcsRollingRollbackStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.serverless.ServerlessAwsLambdaDeployStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.serverless.ServerlessAwsLambdaRollbackStepPlanCreator;
 import io.harness.cdng.creator.variables.DeploymentStageVariableCreator;
+import io.harness.cdng.creator.variables.EcsCanaryDeleteStepVariableCreator;
+import io.harness.cdng.creator.variables.EcsCanaryDeployStepVariableCreator;
 import io.harness.cdng.creator.variables.EcsRollingDeployStepVariableCreator;
 import io.harness.cdng.creator.variables.EcsRollingRollbackStepVariableCreator;
 import io.harness.cdng.creator.variables.GitOpsCreatePRStepVariableCreator;
@@ -188,6 +192,9 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     // ECS
     planCreators.add(new EcsRollingDeployStepPlanCreator());
     planCreators.add(new EcsRollingRollbackStepPlanCreator());
+    planCreators.add(new EcsCanaryDeployStepPlanCreator());
+    planCreators.add(new EcsCanaryDeleteStepPlanCreator());
+
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
@@ -241,6 +248,10 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     // ECS
     variableCreators.add(new EcsRollingDeployStepVariableCreator());
     variableCreators.add(new EcsRollingRollbackStepVariableCreator());
+    variableCreators.add(new EcsCanaryDeployStepVariableCreator());
+    variableCreators.add(new EcsCanaryDeleteStepVariableCreator());
+
+
     return variableCreators;
   }
 
@@ -435,6 +446,24 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                     .setFeatureFlag(FeatureName.ECS_NG.name())
                     .build();
 
+    StepInfo ecsCanaryDeploy =
+            StepInfo.newBuilder()
+                    .setName("Ecs Canary Deploy")
+                    .setType(StepSpecTypeConstants.ECS_CANARY_DEPLOY)
+                    .setStepMetaData(
+                            StepMetaData.newBuilder().addCategory("ECS").setFolderPath("ECS").build())
+                    .setFeatureFlag(FeatureName.ECS_NG.name())
+                    .build();
+
+    StepInfo ecsCanaryDelete =
+            StepInfo.newBuilder()
+                    .setName("Ecs Canary Delete")
+                    .setType(StepSpecTypeConstants.ECS_CANARY_DELETE)
+                    .setStepMetaData(
+                            StepMetaData.newBuilder().addCategory("ECS").setFolderPath("ECS").build())
+                    .setFeatureFlag(FeatureName.ECS_NG.name())
+                    .build();
+
     StepInfo createStack = StepInfo.newBuilder()
                                .setName("CloudFormation Create Stack")
                                .setType(StepSpecTypeConstants.CLOUDFORMATION_CREATE_STACK)
@@ -540,6 +569,9 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     stepInfos.add(azureWebAppRollback);
     stepInfos.add(jenkinsBuildStepInfo);
     stepInfos.add(ecsRollingDeploy);
+    stepInfos.add(ecsRollingRollack);
+    stepInfos.add(ecsCanaryDeploy);
+    stepInfos.add(ecsCanaryDelete);
     return stepInfos;
   }
 }

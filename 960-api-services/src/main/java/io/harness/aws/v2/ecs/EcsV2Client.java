@@ -16,6 +16,8 @@ import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.applicationautoscaling.model.RegisterScalableTargetResponse;
 import software.amazon.awssdk.services.ecs.model.CreateServiceRequest;
 import software.amazon.awssdk.services.ecs.model.CreateServiceResponse;
+import software.amazon.awssdk.services.ecs.model.DeleteServiceRequest;
+import software.amazon.awssdk.services.ecs.model.DeleteServiceResponse;
 import software.amazon.awssdk.services.ecs.model.DescribeServicesRequest;
 import software.amazon.awssdk.services.ecs.model.DescribeServicesResponse;
 import software.amazon.awssdk.services.ecs.model.DescribeTasksResponse;
@@ -37,6 +39,9 @@ public interface EcsV2Client {
                                          String region);
 
      UpdateServiceResponse updateService(AwsInternalConfig awsConfig, UpdateServiceRequest updateServiceRequest,
+                                         String region);
+
+     DeleteServiceResponse deleteService(AwsInternalConfig awsConfig, DeleteServiceRequest deleteServiceRequest,
                                          String region);
 
      RegisterTaskDefinitionResponse createTask(AwsInternalConfig awsConfig,

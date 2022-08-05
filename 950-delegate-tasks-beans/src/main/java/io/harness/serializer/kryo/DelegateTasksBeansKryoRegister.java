@@ -206,7 +206,13 @@ import io.harness.delegate.beans.connector.servicenow.connection.ServiceNowTestC
 import io.harness.delegate.beans.connector.splunkconnector.SplunkConnectionTaskParams;
 import io.harness.delegate.beans.connector.splunkconnector.SplunkConnectionTaskResponse;
 import io.harness.delegate.beans.connector.vaultconnector.VaultValidationParams;
+<<<<<<< Updated upstream
 import io.harness.delegate.beans.ecs.EcsContainer;
+=======
+import io.harness.delegate.beans.ecs.EcsCanaryDeleteResult;
+import io.harness.delegate.beans.ecs.EcsCanaryDeployResult;
+import io.harness.delegate.beans.ecs.EcsPrepareRollbackDataResult;
+>>>>>>> Stashed changes
 import io.harness.delegate.beans.ecs.EcsRollingDeployResult;
 import io.harness.delegate.beans.ecs.EcsTask;
 import io.harness.delegate.beans.ecs.EcsPrepareRollbackDataResult;
@@ -438,11 +444,18 @@ import io.harness.delegate.task.ecs.EcsCommandTypeNG;
 import io.harness.delegate.task.ecs.EcsGitFetchFileConfig;
 import io.harness.delegate.task.ecs.EcsInfraConfig;
 import io.harness.delegate.task.ecs.EcsInfraType;
+<<<<<<< Updated upstream
 import io.harness.delegate.task.ecs.EcsRollingRollbackConfig;
+=======
+import io.harness.delegate.task.ecs.request.EcsCanaryDeleteRequest;
+import io.harness.delegate.task.ecs.request.EcsCanaryDeployRequest;
+>>>>>>> Stashed changes
 import io.harness.delegate.task.ecs.request.EcsGitFetchRequest;
 import io.harness.delegate.task.ecs.request.EcsPrepareRollbackDataRequest;
 import io.harness.delegate.task.ecs.request.EcsRollingDeployRequest;
 import io.harness.delegate.task.ecs.request.EcsRollingRollbackRequest;
+import io.harness.delegate.task.ecs.response.EcsCanaryDeleteResponse;
+import io.harness.delegate.task.ecs.response.EcsCanaryDeployResponse;
 import io.harness.delegate.task.ecs.response.EcsGitFetchResponse;
 import io.harness.delegate.task.ecs.response.EcsPrepareRollbackDataResponse;
 import io.harness.delegate.task.ecs.response.EcsRollingDeployResponse;
@@ -1670,6 +1683,13 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EcsTask.class, 573517);
     kryo.register(EcsContainer.class, 573718);
     kryo.register(EcsRollingRollbackConfig.class, 573719);
+    kryo.register(EcsCanaryDeployRequest.class, 573520);
+    kryo.register(EcsCanaryDeployResponse.class, 573521);
+    kryo.register(EcsCanaryDeployResult.class, 573522);
+    kryo.register(EcsCanaryDeleteRequest.class, 573523);
+    kryo.register(EcsCanaryDeleteResponse.class, 573524);
+    kryo.register(EcsCanaryDeleteResult.class, 573525);
+
 
     kryo.register(AzurePackageArtifactConfig.class, 55410);
     kryo.register(AzureArtifactRequestDetails.class, 55411);

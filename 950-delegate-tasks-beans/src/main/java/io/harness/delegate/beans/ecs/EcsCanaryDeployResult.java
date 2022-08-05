@@ -5,12 +5,16 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.delegate.task.ecs;
+package io.harness.delegate.beans.ecs;
 
-public enum EcsCommandTypeNG {
-  ECS_ROLLING_DEPLOY,
-  ECS_PREPARE_ROLLBACK_DATA,
-  ECS_ROLLING_ROLLBACK,
-  ECS_CANARY_DEPLOY,
-  ECS_CANARY_DELETE
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
+import lombok.Builder;
+import lombok.Data;
+
+
+@Data
+@Builder
+@OwnedBy(HarnessTeam.CDP)
+public class EcsCanaryDeployResult {
 }

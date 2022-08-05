@@ -51,4 +51,6 @@ public interface StepSpecTypeConstants {
 
   String ECS_ROLLING_DEPLOY = "EcsRollingDeploy";
   String ECS_ROLLING_ROLLBACK = "EcsRollingRollback";
+  String ECS_CANARY_DEPLOY = "EcsCanaryDeploy";
+  String ECS_CANARY_DELETE = "EcsCanaryDelete";
 }

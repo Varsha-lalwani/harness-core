@@ -118,4 +118,6 @@ public class EntityYamlRootNames {
   public static final String EMAIL = "EMAIL";
   public static final String ECS_ROLLING_DEPLOY = "EcsRollingDeploy";
   public static final String ECS_ROLLING_ROLLBACK = "EcsRollingRollback";
+  public static final String ECS_CANARY_DEPLOY = "EcsCanaryDeploy";
+  public static final String ECS_CANARY_DELETE = "EcsCanaryDelete";
 }

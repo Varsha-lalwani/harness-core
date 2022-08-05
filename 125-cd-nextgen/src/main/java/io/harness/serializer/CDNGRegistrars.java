@@ -16,6 +16,8 @@ import io.harness.cdng.azure.webapp.AzureWebAppSlotDeploymentStepNode;
 import io.harness.cdng.azure.webapp.AzureWebAppSwapSlotStepNode;
 import io.harness.cdng.azure.webapp.AzureWebAppTrafficShiftStepNode;
 import io.harness.cdng.creator.plan.stage.DeploymentStageNode;
+import io.harness.cdng.ecs.EcsCanaryDeleteStepNode;
+import io.harness.cdng.ecs.EcsCanaryDeployStepNode;
 import io.harness.cdng.ecs.EcsRollingDeployStepNode;
 import io.harness.cdng.ecs.EcsRollingRollbackStepNode;
 import io.harness.cdng.gitops.CreatePRStepNode;
@@ -480,6 +482,30 @@ public class CDNGRegistrars {
                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
                           .build())
                   .build())
+            .add(YamlSchemaRootClass.builder()
+                  .entityType(EntityType.ECS_CANARY_DEPLOY_STEP)
+                  .availableAtProjectLevel(true)
+                  .availableAtOrgLevel(false)
+                  .availableAtAccountLevel(false)
+                  .clazz(EcsCanaryDeployStepNode.class)
+                  .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                          .namespace(SchemaNamespaceConstants.CD)
+                          .modulesSupported(Collections.singletonList(ModuleType.CD))
+                          .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                          .build())
+                  .build())
+            .add(YamlSchemaRootClass.builder()
+                  .entityType(EntityType.ECS_CANARY_DELETE_STEP)
+                  .availableAtProjectLevel(true)
+                  .availableAtOrgLevel(false)
+                  .availableAtAccountLevel(false)
+                  .clazz(EcsCanaryDeleteStepNode.class)
+                  .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                          .namespace(SchemaNamespaceConstants.CD)
+                          .modulesSupported(Collections.singletonList(ModuleType.CD))
+                          .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                          .build())
+                    .build())
           .build();
 
   public final ImmutableList<Class<? extends Converter<?, ?>>> springConverters =

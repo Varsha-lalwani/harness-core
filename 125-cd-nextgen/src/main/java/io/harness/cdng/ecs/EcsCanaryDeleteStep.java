@@ -9,16 +9,17 @@ import io.harness.cdng.ecs.beans.EcsExecutionPassThroughData;
 import io.harness.cdng.ecs.beans.EcsRollingRollbackDataOutcome;
 import io.harness.cdng.ecs.beans.EcsRollingRollbackOutcome;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
-import io.harness.cdng.instance.info.InstanceInfoService;
 import io.harness.cdng.serverless.ServerlessStepCommonHelper;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.beans.ecs.EcsCanaryDeleteResult;
 import io.harness.delegate.beans.ecs.EcsRollingRollbackResult;
-import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.task.ecs.EcsCommandTypeNG;
 import io.harness.delegate.task.ecs.EcsRollingRollbackConfig;
+import io.harness.delegate.task.ecs.request.EcsCanaryDeleteRequest;
 import io.harness.delegate.task.ecs.request.EcsRollingRollbackRequest;
+import io.harness.delegate.task.ecs.response.EcsCanaryDeleteResponse;
 import io.harness.delegate.task.ecs.response.EcsCommandResponse;
 import io.harness.delegate.task.ecs.response.EcsRollingRollbackResponse;
 import io.harness.exception.ExceptionUtils;
@@ -45,24 +46,23 @@ import io.harness.steps.StepHelper;
 import io.harness.supplier.ThrowingSupplier;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
-public class EcsRollingRollbackStep extends TaskExecutableWithRollbackAndRbac<EcsCommandResponse> {
+public class EcsCanaryDeleteStep extends TaskExecutableWithRollbackAndRbac<EcsCommandResponse> {
   public static final StepType STEP_TYPE = StepType.newBuilder()
-          .setType(ExecutionNodeType.ECS_ROLLING_ROLLBACK.getYamlType())
+          .setType(ExecutionNodeType.ECS_CANARY_DELETE.getYamlType())
           .setStepCategory(StepCategory.STEP)
           .build();
-  public static final String ECS_ROLLING_ROLLBACK_COMMAND_NAME = "EcsRollingRollback";
+  public static final String ECS_CANARY_DELETE_COMMAND_NAME = "EcsCanaryDelete";
 
   @Inject
   private ExecutionSweepingOutputService executionSweepingOutputService;
+  @Inject private ServerlessStepCommonHelper serverlessStepCommonHelper;
   @Inject private OutcomeService outcomeService;
   @Inject private EcsStepCommonHelper ecsStepCommonHelper;
   @Inject private AccountService accountService;
   @Inject private StepHelper stepHelper;
-  @Inject private InstanceInfoService instanceInfoService;
+
 
 
   @Override
@@ -74,11 +74,12 @@ public class EcsRollingRollbackStep extends TaskExecutableWithRollbackAndRbac<Ec
   public StepResponse handleTaskResultWithSecurityContext(Ambiance ambiance, StepElementParameters stepElementParameters, ThrowingSupplier<EcsCommandResponse> responseDataSupplier) throws Exception {
     StepResponse stepResponse = null;
     try {
-      EcsRollingRollbackResponse ecsRollingRollbackResponse = (EcsRollingRollbackResponse) responseDataSupplier.get();
-      StepResponse.StepResponseBuilder stepResponseBuilder =
-              StepResponse.builder().unitProgressList(ecsRollingRollbackResponse.getUnitProgressData().getUnitProgresses());
+      EcsCanaryDeleteResponse ecsCanaryDeleteResponse = (EcsCanaryDeleteResponse) responseDataSupplier.get();
 
-      stepResponse = generateStepResponse(ambiance, ecsRollingRollbackResponse, stepResponseBuilder);
+      StepResponse.StepResponseBuilder stepResponseBuilder =
+              StepResponse.builder().unitProgressList(ecsCanaryDeleteResponse.getUnitProgressData().getUnitProgresses());
+
+      stepResponse = generateStepResponse(ambiance, ecsCanaryDeleteResponse, stepResponseBuilder);
     } catch (Exception e) {
       log.error("Error while processing Serverless Aws Lambda rollback response: {}", ExceptionUtils.getMessage(e), e);
       throw e;
@@ -91,37 +92,28 @@ public class EcsRollingRollbackStep extends TaskExecutableWithRollbackAndRbac<Ec
   }
 
   private StepResponse generateStepResponse(
-          Ambiance ambiance, EcsRollingRollbackResponse ecsRollingRollbackResponse,
-          StepResponse.StepResponseBuilder stepResponseBuilder) {
+          Ambiance ambiance, EcsCanaryDeleteResponse ecsCanaryDeleteResponse, StepResponse.StepResponseBuilder stepResponseBuilder) {
     StepResponse stepResponse;
 
-    if (ecsRollingRollbackResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
+    if (ecsCanaryDeleteResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
       stepResponse = stepResponseBuilder.status(Status.FAILED)
               .failureInfo(FailureInfo.newBuilder()
-                      .setErrorMessage(ecsStepCommonHelper.getErrorMessage(ecsRollingRollbackResponse))
+                      .setErrorMessage(ecsStepCommonHelper.getErrorMessage(ecsCanaryDeleteResponse))
                       .build())
               .build();
     } else {
-      EcsRollingRollbackResult ecsRollingRollbackResult =
-              ecsRollingRollbackResponse.getEcsRollingRollbackResult();
+      EcsCanaryDeleteResult ecsCanaryDeleteResult =
+              ecsCanaryDeleteResponse.getEcsCanaryDeleteResult();
 
       EcsRollingRollbackOutcome ecsRollingRollbackOutcome =
               EcsRollingRollbackOutcome.builder()
-                      .firstDeployment(ecsRollingRollbackResult.isFirstDeployment())
                       .build();
-
-      List<ServerInstanceInfo> serverInstanceInfos = ecsStepCommonHelper.getServerInstanceInfos(
-              ecsRollingRollbackResponse, ecsRollingRollbackResult.getInfrastructureKey());
-
-      StepResponse.StepOutcome stepOutcome =
-              instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance, serverInstanceInfos);
 
       executionSweepingOutputService.consume(ambiance,
               OutcomeExpressionConstants.ECS_ROLLING_ROLLBACK_OUTCOME, ecsRollingRollbackOutcome,
               StepOutcomeGroup.STEP.name());
 
       stepResponse = stepResponseBuilder.status(Status.SUCCEEDED)
-              .stepOutcome(stepOutcome)
               .stepOutcome(StepResponse.StepOutcome.builder()
                       .name(OutcomeExpressionConstants.OUTPUT)
                       .outcome(ecsRollingRollbackOutcome)
@@ -133,61 +125,23 @@ public class EcsRollingRollbackStep extends TaskExecutableWithRollbackAndRbac<Ec
 
   @Override
   public TaskRequest obtainTaskAfterRbac(Ambiance ambiance, StepElementParameters stepElementParameters, StepInputPackage inputPackage) {
-    EcsRollingRollbackStepParameters ecsRollingRollbackStepParameters =
-            (EcsRollingRollbackStepParameters) stepElementParameters.getSpec();
 
-    if (EmptyPredicate.isEmpty(ecsRollingRollbackStepParameters.getEcsRollingRollbackFnq())) {
-      return TaskRequest.newBuilder()
-              .setSkipTaskRequest(SkipTaskRequest.newBuilder()
-                      .setMessage("Ecs Rolling Deploy Step was not executed. Skipping Rollback.")
-                      .build())
-              .build();
-    }
-
-    OptionalSweepingOutput ecsRollingRollbackDataOptionalOutput =
-            executionSweepingOutputService.resolveOptional(ambiance,
-                    RefObjectUtils.getSweepingOutputRefObject(ecsRollingRollbackStepParameters.getEcsRollingRollbackFnq() + "."
-                            + OutcomeExpressionConstants.ECS_ROLLING_ROLLBACK_OUTCOME));
-
-    if (!ecsRollingRollbackDataOptionalOutput.isFound()) {
-      return TaskRequest.newBuilder()
-              .setSkipTaskRequest(SkipTaskRequest.newBuilder()
-                      .setMessage("Ecs Rolling Deploy Step was not executed. Skipping Rollback.")
-                      .build())
-              .build();
-    }
-
-    EcsRollingRollbackDataOutcome ecsRollingRollbackDataOutcome =
-            (EcsRollingRollbackDataOutcome) ecsRollingRollbackDataOptionalOutput.getOutput();
-
+    final String accountId = AmbianceUtils.getAccountId(ambiance);
 
     InfrastructureOutcome infrastructureOutcome = (InfrastructureOutcome) outcomeService.resolve(
             ambiance, RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.INFRASTRUCTURE_OUTCOME));
 
-    EcsRollingRollbackConfig ecsRollingRollbackConfig =
-            EcsRollingRollbackConfig.builder()
-                    .isFirstDeployment(ecsRollingRollbackDataOutcome.isFirstDeployment())
-                    .createServiceRequestBuilderString(ecsRollingRollbackDataOutcome.getCreateServiceRequestBuilderString())
-                    .registerScalableTargetRequestBuilderStrings(ecsRollingRollbackDataOutcome.getRegisterScalableTargetRequestBuilderStrings())
-                    .registerScalingPolicyRequestBuilderStrings(ecsRollingRollbackDataOutcome.getRegisterScalingPolicyRequestBuilderStrings())
-                    .build();
-
-    final String accountId = AmbianceUtils.getAccountId(ambiance);
-
-
-    EcsRollingRollbackRequest ecsRollingRollbackRequest =
-            EcsRollingRollbackRequest.builder()
+    EcsCanaryDeleteRequest ecsCanaryDeleteRequest =
+            EcsCanaryDeleteRequest.builder()
                     .accountId(accountId)
-                    .ecsCommandType(EcsCommandTypeNG.ECS_ROLLING_ROLLBACK)
-                    .ecsRollingRollbackConfig(ecsRollingRollbackConfig)
-                    .commandName(ECS_ROLLING_ROLLBACK_COMMAND_NAME)
+                    .ecsCommandType(EcsCommandTypeNG.ECS_CANARY_DELETE)
+                    .commandName(ECS_CANARY_DELETE_COMMAND_NAME)
                     .commandUnitsProgress(CommandUnitsProgress.builder().build())
                     .timeoutIntervalInMin(CDStepHelper.getTimeoutInMin(stepElementParameters))
-                    .ecsInfraConfig(ecsStepCommonHelper.getEcsInfraConfig(infrastructureOutcome, ambiance))
                     .build();
 
     return ecsStepCommonHelper
-            .queueEcsTask(stepElementParameters, ecsRollingRollbackRequest, ambiance,
+            .queueEcsTask(stepElementParameters, ecsCanaryDeleteRequest, ambiance,
                     EcsExecutionPassThroughData.builder().infrastructure(infrastructureOutcome).build(), true)
             .getTaskRequest();
   }

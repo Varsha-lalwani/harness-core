@@ -26,6 +26,8 @@ import software.amazon.awssdk.services.applicationautoscaling.model.RegisterScal
 import software.amazon.awssdk.services.applicationautoscaling.model.RegisterScalableTargetResponse;
 import software.amazon.awssdk.services.ecs.model.CreateServiceRequest;
 import software.amazon.awssdk.services.ecs.model.CreateServiceResponse;
+import software.amazon.awssdk.services.ecs.model.DeleteServiceRequest;
+import software.amazon.awssdk.services.ecs.model.DeleteServiceResponse;
 import software.amazon.awssdk.services.ecs.model.DescribeServicesRequest;
 import software.amazon.awssdk.services.ecs.model.DescribeServicesResponse;
 import software.amazon.awssdk.services.ecs.model.DescribeTaskDefinitionRequest;
@@ -76,6 +78,23 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             super.handleException(exception);
         }
         return UpdateServiceResponse.builder().build();
+    }
+
+    @Override
+    public DeleteServiceResponse deleteService(AwsInternalConfig awsConfig, DeleteServiceRequest deleteServiceRequest, String region) {
+        try(EcsClient ecsClient = getEcsClient(awsConfig, region)) {
+            return ecsClient.deleteService(deleteServiceRequest);
+        }
+        catch(AwsServiceException awsServiceException) {
+            awsApiV2ExceptionHandler.handleAwsServiceException(awsServiceException);
+        }
+        catch(SdkException sdkException) {
+            awsApiV2ExceptionHandler.handleSdkException(sdkException);
+        }
+        catch(Exception exception) {
+            awsApiV2ExceptionHandler.handleException(exception);
+        }
+        return DeleteServiceResponse.builder().build();
     }
 
     @Override

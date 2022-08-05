@@ -25,6 +25,8 @@ import software.amazon.awssdk.services.applicationautoscaling.model.RegisterScal
 import software.amazon.awssdk.services.applicationautoscaling.model.ServiceNamespace;
 import software.amazon.awssdk.services.ecs.model.CreateServiceRequest;
 import software.amazon.awssdk.services.ecs.model.CreateServiceResponse;
+import software.amazon.awssdk.services.ecs.model.DeleteServiceRequest;
+import software.amazon.awssdk.services.ecs.model.DeleteServiceResponse;
 import software.amazon.awssdk.services.ecs.model.DescribeServicesRequest;
 import software.amazon.awssdk.services.ecs.model.DescribeServicesResponse;
 import software.amazon.awssdk.services.ecs.model.DescribeTasksResponse;
@@ -68,6 +70,15 @@ public class EcsCommandTaskNGHelper {
 
   public UpdateServiceResponse updateService(UpdateServiceRequest updateServiceRequest, String region, AwsConnectorDTO awsConnectorDTO) {
     return ecsV2Client.updateService(awsNgConfigMapper.createAwsInternalConfig(awsConnectorDTO), updateServiceRequest, region);
+  }
+
+  public DeleteServiceResponse deleteService(String serviceName, String cluster, String region, AwsConnectorDTO awsConnectorDTO) {
+    DeleteServiceRequest deleteServiceRequest = DeleteServiceRequest.builder()
+            .service(serviceName)
+            .cluster(cluster)
+            .build();
+
+    return ecsV2Client.deleteService(awsNgConfigMapper.createAwsInternalConfig(awsConnectorDTO), deleteServiceRequest, region);
   }
 
 
@@ -303,6 +314,38 @@ public class EcsCommandTaskNGHelper {
       attachScalingPolicies(ecsScalingPolicyManifestContentList, ecsInfraConfig.getAwsConnectorDTO(), service.serviceName(),
               ecsInfraConfig.getCluster(), ecsInfraConfig.getRegion(), logCallback);
     }
+  }
+
+  public void createCanaryService(CreateServiceRequest createServiceRequest,
+                                  List<String> ecsScalableTargetManifestContentList,
+                                  List<String> ecsScalingPolicyManifestContentList,
+                                  EcsInfraConfig ecsInfraConfig, LogCallback logCallback,
+                                  long timeoutInMillis) {
+    // if service exists create service, otherwise update service
+    Optional<Service> optionalService = describeService(createServiceRequest.cluster(), createServiceRequest.serviceName(), ecsInfraConfig.getRegion(), ecsInfraConfig.getAwsConnectorDTO());
+
+    if (optionalService.isPresent() && isServiceActive(optionalService.get())) { // if service exists delete it
+
+      Service service = optionalService.get();
+
+      deleteService(service.serviceName(), service.clusterArn(), ecsInfraConfig.getRegion(), ecsInfraConfig.getAwsConnectorDTO());
+
+    }
+
+
+    logCallback.saveExecutionLog(format("Creating Service with name %s %n", createServiceRequest.serviceName()), LogLevel.INFO);
+    CreateServiceResponse createServiceResponse = createService(createServiceRequest, ecsInfraConfig.getRegion(), ecsInfraConfig.getAwsConnectorDTO());
+
+    ecsServiceSteadyStateCheck(logCallback, ecsInfraConfig.getAwsConnectorDTO(), createServiceRequest.cluster(), createServiceRequest.serviceName(), ecsInfraConfig.getRegion(), (int) TimeUnit.MILLISECONDS.toMinutes(timeoutInMillis));
+
+    logCallback.saveExecutionLog(format("Created Service %s with Arn %s %n", createServiceRequest.serviceName(), createServiceResponse.service().serviceArn()), LogLevel.INFO);
+
+    registerScalableTargets(ecsScalableTargetManifestContentList, ecsInfraConfig.getAwsConnectorDTO(), createServiceResponse.service().serviceName(),
+            ecsInfraConfig.getCluster(), ecsInfraConfig.getRegion(), logCallback);
+
+    attachScalingPolicies(ecsScalingPolicyManifestContentList, ecsInfraConfig.getAwsConnectorDTO(), createServiceResponse.service().serviceName(),
+            ecsInfraConfig.getCluster(), ecsInfraConfig.getRegion(), logCallback);
+
   }
 
   public boolean isServiceActive(Service service) {

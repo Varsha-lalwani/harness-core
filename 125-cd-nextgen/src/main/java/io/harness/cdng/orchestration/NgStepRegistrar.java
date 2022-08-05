@@ -24,6 +24,8 @@ import io.harness.cdng.azure.webapp.StartupCommandStep;
 import io.harness.cdng.configfile.steps.ConfigFilesStep;
 import io.harness.cdng.configfile.steps.IndividualConfigFileStep;
 import io.harness.cdng.creator.plan.environment.steps.EnvironmentStepV2;
+import io.harness.cdng.ecs.EcsCanaryDeleteStep;
+import io.harness.cdng.ecs.EcsCanaryDeployStep;
 import io.harness.cdng.ecs.EcsRollingDeployStep;
 import io.harness.cdng.ecs.EcsRollingRollbackStep;
 import io.harness.cdng.gitops.CreatePRStep;
@@ -147,6 +149,8 @@ public class NgStepRegistrar {
     // ECS
     engineSteps.put(EcsRollingDeployStep.STEP_TYPE, EcsRollingDeployStep.class);
     engineSteps.put(EcsRollingRollbackStep.STEP_TYPE, EcsRollingRollbackStep.class);
+    engineSteps.put(EcsCanaryDeployStep.STEP_TYPE, EcsCanaryDeployStep.class);
+    engineSteps.put(EcsCanaryDeleteStep.STEP_TYPE, EcsCanaryDeleteStep.class);
     return engineSteps;
   }
 }

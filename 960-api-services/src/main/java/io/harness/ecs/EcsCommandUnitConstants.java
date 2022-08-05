@@ -24,5 +24,11 @@ public enum EcsCommandUnitConstants {
     public String toString() {
       return "Rollback";
     }
+  },
+  deleteService {
+    @Override
+    public String toString() {
+      return "Delete Service";
+    }
   }
 }

@@ -66,7 +66,7 @@ public class EcsRollingDeployStep extends TaskChainExecutableWithRollbackAndRbac
   @Override
   public TaskChainResponse executeNextLinkWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage, PassThroughData passThroughData, ThrowingSupplier<ResponseData> responseSupplier) throws Exception {
     log.info("Calling executeNextLink");
-    return ecsStepCommonHelper.executeNextLink(
+    return ecsStepCommonHelper.executeNextLinkRolling(
             this, ambiance, stepParameters, passThroughData, responseSupplier, ecsStepHelper);
   }
 

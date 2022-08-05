@@ -90,6 +90,8 @@ import io.harness.delegate.cf.PcfRouteUpdateCommandTaskHandler;
 import io.harness.delegate.cf.PcfRunPluginCommandTaskHandler;
 import io.harness.delegate.cf.PcfValidationCommandTaskHandler;
 import io.harness.delegate.configuration.DelegateConfiguration;
+import io.harness.delegate.ecs.EcsCanaryDeleteCommandTaskHandler;
+import io.harness.delegate.ecs.EcsCanaryDeployCommandTaskHandler;
 import io.harness.delegate.ecs.EcsCommandTaskNGHandler;
 import io.harness.delegate.ecs.EcsPrepareRollbackCommandTaskHandler;
 import io.harness.delegate.ecs.EcsRollingDeployCommandTaskHandler;
@@ -1766,6 +1768,10 @@ public class DelegateModule extends AbstractModule {
             .to(EcsPrepareRollbackCommandTaskHandler.class);
     ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_ROLLING_ROLLBACK.name())
                     .to(EcsRollingRollbackCommandTaskHandler.class);
+    ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_CANARY_DELETE.name())
+            .to(EcsCanaryDeleteCommandTaskHandler.class);
+    ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_CANARY_DEPLOY.name())
+            .to(EcsCanaryDeployCommandTaskHandler.class);
 
 
     mapBinder.addBinding(TaskType.ECS_GIT_FETCH_TASK_NG).toInstance(EcsGitFetchTask.class);
