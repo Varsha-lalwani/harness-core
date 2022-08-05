@@ -5,11 +5,14 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.migrations.timescaledb;
+package io.harness.cdng.execution;
 
-public class AddParentPipelineToDeployment extends AbstractTimeScaleDBMigration {
-  @Override
-  public String getFileName() {
-    return "timescaledb/add_parent_pipeline_to_deployment.sql";
-  }
-}
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+
+import io.harness.annotations.dev.OwnedBy;
+
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+@OwnedBy(CDP)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+public interface ExecutionDetails {}

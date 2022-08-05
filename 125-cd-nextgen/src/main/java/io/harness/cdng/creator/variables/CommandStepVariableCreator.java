@@ -9,17 +9,22 @@ package io.harness.cdng.creator.variables;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.ssh.CommandStepNode;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.pms.sdk.core.pipeline.variables.GenericStepVariableCreator;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDP)
-public class SshVariableCreator extends GenericStepVariableCreator {
+public class CommandStepVariableCreator extends GenericStepVariableCreator<CommandStepNode> {
   @Override
   public Set<String> getSupportedStepTypes() {
-    return new HashSet<>(Arrays.asList(StepSpecTypeConstants.COMMAND));
+    return Collections.singleton(StepSpecTypeConstants.COMMAND);
+  }
+
+  @Override
+  public Class<CommandStepNode> getFieldClass() {
+    return CommandStepNode.class;
   }
 }

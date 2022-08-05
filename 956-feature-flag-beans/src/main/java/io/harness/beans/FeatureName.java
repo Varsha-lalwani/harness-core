@@ -120,7 +120,6 @@ public enum FeatureName {
   MOVE_CONTAINER_INSTANCE_SYNC_TO_PERPETUAL_TASK,
   MOVE_PCF_INSTANCE_SYNC_TO_PERPETUAL_TASK,
   PDC_PERPETUAL_TASK,
-  NEW_INSTANCE_TIMESERIES,
   NEW_RELIC_CV_TASK,
   NEWRELIC_24_7_CV_TASK,
   NG_DASHBOARDS("", HarnessTeam.CE),
@@ -134,7 +133,6 @@ public enum FeatureName {
   REJECT_TRIGGER_IF_ARTIFACTS_NOT_MATCH,
   ROLLBACK_NONE_ARTIFACT,
   SCIM_INTEGRATION,
-  SEARCH(Scope.GLOBAL),
   SEARCH_REQUEST,
   SEND_LOG_ANALYSIS_COMPRESSED,
   SEND_SLACK_NOTIFICATION_FROM_DELEGATE,
@@ -379,6 +377,9 @@ public enum FeatureName {
   QUEUED_COUNT_FOR_QUEUEKEY("Used to display the count of the queue in CG git sync", HarnessTeam.SPG),
   NG_EMAIL_STEP,
   PRUNE_KUBERNETES_RESOURCES_NG,
+  DISABLE_PIPELINE_SCHEMA_VALIDATION(
+      "Used to disable pipeline yaml schema as We saw some intermittent issue in Schema Validation due to invalid schema generation. Will keep this FF until root cause is found and fixed.",
+      HarnessTeam.PIPELINE),
   CI_STEP_GROUP_ENABLED,
   GIT_SIMPLIFICATION_DISABLED,
   USE_K8S_API_FOR_STEADY_STATE_CHECK,
@@ -410,7 +411,8 @@ public enum FeatureName {
   USE_PAGINATED_ENCRYPT_FOR_VARIABLE_OVERRIDES(
       "Enables PaginatedComponent & Formik for VariableOverrides in CG-UI", HarnessTeam.PL),
   ON_DEMAND_ROLLBACK_WITH_DIFFERENT_ARTIFACT(
-      "Used to do on demand rollback to previously deployed different artifact on same inframapping", HarnessTeam.CDC);
+      "Used to do on demand rollback to previously deployed different artifact on same inframapping", HarnessTeam.CDC),
+  CG_GIT_POLLING("Poll git based on account config for git sync in CG.", HarnessTeam.SPG);
   @Deprecated
   FeatureName() {
     scope = Scope.PER_ACCOUNT;

@@ -15,10 +15,10 @@ import org.bson.types.Binary;
 import org.springframework.core.convert.converter.Converter;
 
 @OwnedBy(HarnessTeam.CDP)
-public class AbstractRollbackDeploymentInfoWriteConverter<T extends WriteConverter> implements Converter<T, Binary> {
+public class AbstractWriteConverter<T extends WriteConverter> implements Converter<T, Binary> {
   private final KryoSerializer kryoSerializer;
 
-  public AbstractRollbackDeploymentInfoWriteConverter(KryoSerializer kryoSerializer) {
+  public AbstractWriteConverter(KryoSerializer kryoSerializer) {
     this.kryoSerializer = kryoSerializer;
   }
 
