@@ -2230,9 +2230,9 @@
         "type": {
           "type": "string",
           "enum": [
-            "ALL",
-            "HOST_NAMES",
-            "HOST_ATTRIBUTES"
+            "All",
+            "HostNames",
+            "HostAttributes"
           ]
         }
       },
@@ -2874,9 +2874,9 @@
         "type": {
           "type": "string",
           "enum": [
-            "ALL",
-            "HOST_NAMES",
-            "HOST_ATTRIBUTES"
+            "All",
+            "HostNames",
+            "HostAttributes"
           ]
         }
       },
@@ -2886,7 +2886,7 @@
           "if": {
             "properties": {
               "type": {
-                "const": "ALL"
+                "const": "All"
               }
             }
           },
@@ -2902,7 +2902,7 @@
           "if": {
             "properties": {
               "type": {
-                "const": "HOST_ATTRIBUTES"
+                "const": "HostAttributes"
               }
             }
           },
@@ -2918,7 +2918,7 @@
           "if": {
             "properties": {
               "type": {
-                "const": "HOST_NAMES"
+                "const": "HostNames"
               }
             }
           },

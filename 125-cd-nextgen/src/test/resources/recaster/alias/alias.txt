@@ -382,3 +382,7 @@ io.harness.logging.CommandExecutionStatus
 io.harness.plancreator.steps.TaskSelectorYaml
 io.harness.plancreator.strategy.ExpressionAxisConfig
 io.harness.cdng.service.beans.ServiceUseFromStageV2
+io.harness.cdng.infra.beans.HostFilter
+io.harness.cdng.infra.beans.AllHostsFilter
+io.harness.cdng.infra.beans.HostNameFilter
+io.harness.cdng.infra.beans.HostAttributesFilter

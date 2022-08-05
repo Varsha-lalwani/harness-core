@@ -15,7 +15,7 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(CDP)
 @Value
 @Builder
-@JsonTypeName("HOST_ATTRIBUTES")
+@JsonTypeName("HostAttributes")
 @TypeAlias("HostAttributesFilter")
 @RecasterAlias("io.harness.cdng.infra.beans.HostAttributesFilter")
 public class HostAttributesFilter implements Filter {
