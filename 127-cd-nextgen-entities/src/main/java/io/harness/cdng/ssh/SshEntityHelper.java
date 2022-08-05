@@ -36,8 +36,6 @@ import io.harness.cdng.infra.beans.PdcInfrastructureOutcome;
 import io.harness.cdng.infra.beans.SshWinRmAwsInfrastructureOutcome;
 import io.harness.cdng.infra.beans.SshWinRmAzureInfrastructureOutcome;
 import io.harness.cdng.serverless.ServerlessEntityHelper;
-import io.harness.cdng.infra.beans.HostAttributesFilter;
-import io.harness.cdng.infra.beans.HostNameFilter;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
