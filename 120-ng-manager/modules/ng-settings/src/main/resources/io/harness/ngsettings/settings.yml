@@ -101,9 +101,13 @@ settings :
   - identifier: test_setting_CD_3
     name: Test CD setting 3
     category : CD
-    defaultValue: ~
+    defaultValue: 2
     valueType : STRING
-    allowedValues : ~
+    allowedValues :
+      - 1
+      - 2
+      - 3
+      - 4
     allowOverrides : true
     allowedScopes :
       - ACCOUNT
@@ -125,7 +129,7 @@ settings :
   - identifier: test_setting_CORE_2
     name: Test CORE setting 2
     category : CORE
-    defaultValue: ~
+    defaultValue: defaultValue
     valueType : STRING
     allowedValues : ~
     allowOverrides : true
@@ -134,7 +138,7 @@ settings :
   - identifier: test_setting_CORE_3
     name: Test CORE setting 3
     category: CORE
-    defaultValue: ~
+    defaultValue: defaultValue
     valueType: STRING
     allowedValues: ~
     allowOverrides: false
