@@ -255,8 +255,11 @@ public class PMSPipelineServiceHelper {
 
     // Add Template Module Info temporarily to Pipeline Entity
     HashSet<String> templateModuleInfo = new HashSet<>();
-    for (TemplateReferenceSummary templateReferenceSummary : templateMergeResponseDTO.getTemplateReferenceSummaries()) {
-      templateModuleInfo.addAll(templateReferenceSummary.getModuleInfo());
+    if (isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries())) {
+      for (TemplateReferenceSummary templateReferenceSummary :
+          templateMergeResponseDTO.getTemplateReferenceSummaries()) {
+        templateModuleInfo.addAll(templateReferenceSummary.getModuleInfo());
+      }
     }
     pipelineEntity.setTemplateModules(templateModuleInfo);
 
