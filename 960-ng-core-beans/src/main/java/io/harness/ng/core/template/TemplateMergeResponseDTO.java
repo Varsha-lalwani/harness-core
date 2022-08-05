@@ -27,9 +27,11 @@ import lombok.Value;
 @Schema(name = "TemplateMergeResponse",
     description = "This is the view of the TemplateMergeResponse entity defined in Harness")
 public class TemplateMergeResponseDTO {
+  // merged Yaml
   String mergedPipelineYaml;
   // Only TemplateReferences which you are directly using in your given yaml. Suppose you are referencing stage template
   // which has step template ref, then it returns only stage template.
   List<TemplateReferenceSummary> templateReferenceSummaries;
+  // mergedYamlWithTemplateRef
   String mergedPipelineYamlWithTemplateRef;
 }
