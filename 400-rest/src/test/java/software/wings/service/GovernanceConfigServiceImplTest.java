@@ -10,8 +10,8 @@ package software.wings.service;
 import static io.harness.rule.OwnerRule.AGORODETKI;
 import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.SHIVAM;
+import static io.harness.rule.OwnerRule.VINICIUS;
 import static io.harness.rule.OwnerRule.YUVRAJ;
-
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.APP_ID;
 import static software.wings.utils.WingsTestConstants.ENV_ID;
@@ -226,7 +226,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldGetFrozenAppEnvs", null, true, asList(appSelection1, appSelection2, appSelection3),
+            range, "shouldGetFrozenAppEnvs", null, true, asList(appSelection1, appSelection2, appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
     GovernanceConfig governanceConfig =
         GovernanceConfig.builder()
@@ -274,7 +274,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetFrozenAllAppEnvs",
-        null, true, asList(appSelection1, appSelection3), Collections.singletonList("testUserGroup"), "uuid", null);
+        null, true, asList(appSelection1, appSelection3), null, Collections.singletonList("testUserGroup"), "uuid", null);
     GovernanceConfig governanceConfig =
         GovernanceConfig.builder()
             .accountId(ACCOUNT_ID)
@@ -289,6 +289,53 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     assertThat(deploymentFreezeInfo.isFreezeAll()).isFalse();
     assertThat(deploymentFreezeInfo.getAppEnvs()).hasSize(1);
     assertThat(deploymentFreezeInfo.getAllEnvFrozenApps()).containsExactlyInAnyOrder(APP_ID, APP_ID + 2, APP_ID + 3);
+    assertThat(deploymentFreezeInfo.getAppEnvs().get(APP_ID)).containsExactlyInAnyOrder(ENV_ID, ENV_ID + 2);
+  }
+  // TODO: Continue from here, aka: make this next test simpler and go on.
+  @Test
+  @Owner(developers = VINICIUS)
+  @Category(UnitTests.class)
+  public void shouldGetFrozenAllAppEnvsWithExcluded() {
+    TimeRange range = new TimeRange(System.currentTimeMillis(), System.currentTimeMillis() + 100_000_000,
+        "Asia/Calcutta", false, null, null, null, false);
+
+    ApplicationFilter appSelection1 = AllAppFilter.builder()
+        .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
+        .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+        .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
+        .build();
+
+    ApplicationFilter appSelection3 = CustomAppFilter.builder()
+        .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
+        .apps(asList(APP_ID))
+        .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+        .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
+        .build();
+
+    ApplicationFilter excludeAppSelection = CustomAppFilter.builder()
+        .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
+        .apps(asList(APP_ID))
+        .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+        .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
+        .build();
+
+    TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig = new TimeRangeBasedFreezeConfig(true,
+        Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetFrozenAllAppEnvs",
+        null, true, asList(appSelection1, appSelection3), asList(excludeAppSelection),
+        Collections.singletonList("testUserGroup"), "uuid", null);
+    GovernanceConfig governanceConfig = GovernanceConfig.builder()
+        .accountId(ACCOUNT_ID)
+        .timeRangeBasedFreezeConfigs(Collections.singletonList(timeRangeBasedFreezeConfig))
+        .build();
+
+    when(appService.getAppIdsByAccountId(ACCOUNT_ID)).thenReturn(asList(APP_ID, APP_ID + 2, APP_ID + 3));
+    governanceConfigService.upsert(governanceConfig.getAccountId(), governanceConfig);
+
+    DeploymentFreezeInfo deploymentFreezeInfo = governanceConfigService.getDeploymentFreezeInfo(ACCOUNT_ID);
+    assertThat(deploymentFreezeInfo).isNotNull();
+    assertThat(deploymentFreezeInfo.isFreezeAll()).isFalse();
+    assertThat(deploymentFreezeInfo.getAppEnvs()).hasSize(1);
+    assertThat(deploymentFreezeInfo.getAllEnvFrozenApps()).containsExactlyInAnyOrder(APP_ID + 2, APP_ID + 3);
     assertThat(deploymentFreezeInfo.getAppEnvs().get(APP_ID)).containsExactlyInAnyOrder(ENV_ID, ENV_ID + 2);
   }
 
@@ -314,12 +361,12 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldGetOnlyApplicableAppEnvs", null, false, asList(appSelection1, appSelection3),
+            range, "shouldGetOnlyApplicableAppEnvs", null, false, asList(appSelection1, appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig2 =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldGetOnlyApplicableAppEnvs2", null, true, asList(appSelection3),
+            range, "shouldGetOnlyApplicableAppEnvs2", null, true, asList(appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
     GovernanceConfig governanceConfig =
         GovernanceConfig.builder()
@@ -346,7 +393,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldReturnEmptyMapForNoAppSelections", null, false, Collections.emptyList(), null, "uuid", null);
+            range, "shouldReturnEmptyMapForNoAppSelections", null, false, Collections.emptyList(), null, null, "uuid", null);
 
     GovernanceConfig governanceConfig = GovernanceConfig.builder()
                                             .accountId(ACCOUNT_ID)
@@ -397,7 +444,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldReturnEmptyMapForNoWindows", null, false, asList(appSelection3),
+            range, "shouldReturnEmptyMapForNoWindows", null, false, asList(appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
 
     GovernanceConfig governanceConfig = GovernanceConfig.builder()
@@ -443,11 +490,11 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetFrozenEnvsForApp",
-        null, true, asList(appSelection1), Collections.singletonList("testUserGroup"), "uuid", null);
+        null, true, asList(appSelection1), null, Collections.singletonList("testUserGroup"), "uuid", null);
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig1 = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetFrozenEnvsForApp2",
-        null, true, asList(appSelection2, appSelection3), Collections.singletonList("testUserGroup"), "uuid2", null);
+        null, true, asList(appSelection2, appSelection3), null, Collections.singletonList("testUserGroup"), "uuid2", null);
     GovernanceConfig governanceConfig =
         GovernanceConfig.builder()
             .accountId(ACCOUNT_ID)
@@ -486,7 +533,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetFrozenEnvsForApp",
-        null, true, asList(appSelection), Collections.singletonList("testUserGroup"), "uuid", null);
+        null, true, asList(appSelection), null, Collections.singletonList("testUserGroup"), "uuid", null);
 
     GovernanceConfig governanceConfig =
         GovernanceConfig.builder()
@@ -605,7 +652,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.emptyList(), range, "shouldGetFrozenEnvsForApp", null, true,
-        asList(allProdForParticularService, allNonProd), Collections.singletonList("testUserGroup"), "uuid", null);
+        asList(allProdForParticularService, allNonProd), null, Collections.singletonList("testUserGroup"), "uuid", null);
 
     GovernanceConfig governanceConfig =
         GovernanceConfig.builder()
@@ -647,7 +694,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig1 =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldGetFrozenEnvsForOneBlockingWindow", null, true, asList(appSelection2, appSelection1),
+            range, "shouldGetFrozenEnvsForOneBlockingWindow", null, true, asList(appSelection2, appSelection1), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
     GovernanceConfig governanceConfig = GovernanceConfig.builder()
                                             .accountId(ACCOUNT_ID)
@@ -693,11 +740,11 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetOnlyApplicableEnvs",
-        null, false, asList(appSelection1, appSelection3), Collections.singletonList("testUserGroup"), "uuid", null);
+        null, false, asList(appSelection1, appSelection3), null, Collections.singletonList("testUserGroup"), "uuid", null);
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig2 = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetOnlyApplicableEnvs2",
-        null, true, asList(appSelection3), Collections.singletonList("testUserGroup"), "uuid2", null);
+        null, true, asList(appSelection3), null, Collections.singletonList("testUserGroup"), "uuid2", null);
     GovernanceConfig governanceConfig =
         GovernanceConfig.builder()
             .accountId(ACCOUNT_ID)
@@ -726,7 +773,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldReturnEmptyEnvForNoAppSelections", null, false, Collections.emptyList(), null, "uuid", null);
+            range, "shouldReturnEmptyEnvForNoAppSelections", null, false, Collections.emptyList(), null, null, "uuid", null);
 
     GovernanceConfig governanceConfig = GovernanceConfig.builder()
                                             .accountId(ACCOUNT_ID)
@@ -757,7 +804,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldReturnEmptyMapForUnFrozenApp", null, false, asList(appSelection3),
+            range, "shouldReturnEmptyMapForUnFrozenApp", null, false, asList(appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
 
     GovernanceConfig governanceConfig = GovernanceConfig.builder()
@@ -805,7 +852,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldReturnEmptyEnvForOutofTimeRange", null, false, asList(appSelection3),
+            range, "shouldReturnEmptyEnvForOutofTimeRange", null, false, asList(appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
 
     GovernanceConfig governanceConfig = GovernanceConfig.builder()
@@ -833,11 +880,11 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "FREEZE1", null, false, Collections.emptyList(), null, "uuid", null);
+            range, "FREEZE1", null, false, Collections.emptyList(), null, null, "uuid", null);
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig2 =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "FREEZE2", null, false, Collections.emptyList(), null, "uuid2", null);
+            range, "FREEZE2", null, false, Collections.emptyList(), null, null, "uuid2", null);
 
     governanceConfig.getTimeRangeBasedFreezeConfigs().add(timeRangeBasedFreezeConfig);
     governanceConfig.getTimeRangeBasedFreezeConfigs().add(timeRangeBasedFreezeConfig2);
@@ -892,17 +939,17 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldRecalculateNextIterations", null, true, asList(appSelection1, appSelection3),
+            range, "shouldRecalculateNextIterations", null, true, asList(appSelection1, appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig2 =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range2, "shouldRecalculateNextIterations2", null, true, asList(appSelection3),
+            range2, "shouldRecalculateNextIterations2", null, true, asList(appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig3 =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range3, "shouldRecalculateNextIterations3", null, false, asList(appSelection1, appSelection3),
+            range3, "shouldRecalculateNextIterations3", null, false, asList(appSelection1, appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
     GovernanceConfig governanceConfig =
         GovernanceConfig.builder()
@@ -942,7 +989,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldRecalculateNextIterations", null, true, asList(appSelection1, appSelection3),
+            range, "shouldRecalculateNextIterations", null, true, asList(appSelection1, appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
 
     GovernanceConfig governanceConfig = GovernanceConfig.builder()
@@ -979,7 +1026,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldRecalculateNextIterations", null, true, asList(appSelection1, appSelection3),
+            range, "shouldRecalculateNextIterations", null, true, asList(appSelection1, appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
 
     GovernanceConfig governanceConfig = GovernanceConfig.builder()
@@ -1017,7 +1064,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldRecalculateNextIterations", null, false, asList(appSelection1, appSelection3),
+            range, "shouldRecalculateNextIterations", null, false, asList(appSelection1, appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
 
     GovernanceConfig governanceConfig = GovernanceConfig.builder()
@@ -1032,7 +1079,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     timeRangeBasedFreezeConfig.setApplicable(true);
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig2 =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldRecalculateNextIteration2s", null, true, asList(appSelection1, appSelection3),
+            range, "shouldRecalculateNextIteration2s", null, true, asList(appSelection1, appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid2", null);
     governanceConfig = GovernanceConfig.builder()
                            .accountId(ACCOUNT_ID)
@@ -1068,7 +1115,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldRecalculateNextIterations", null, true, asList(appSelection1, appSelection3),
+            range, "shouldRecalculateNextIterations", null, true, asList(appSelection1, appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid", null);
 
     GovernanceConfig governanceConfig = GovernanceConfig.builder()
@@ -1082,7 +1129,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     timeRangeBasedFreezeConfig.setApplicable(false);
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig2 =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
-            range, "shouldRecalculateNextIteration2s", null, false, asList(appSelection1, appSelection3),
+            range, "shouldRecalculateNextIteration2s", null, false, asList(appSelection1, appSelection3), null,
             Collections.singletonList("testUserGroup"), "uuid2", null);
     governanceConfig = GovernanceConfig.builder()
                            .accountId(ACCOUNT_ID)

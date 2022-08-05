@@ -448,8 +448,8 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
             freezeConfig.getExcludeAppSelections().forEach(appSelection -> {
               Map<String, Set<String>> appEnvMap = getAppEnvMapForAppSelection(accountId, appSelection);
               if (isNotEmpty(appEnvMap)) {
-                appEnvMap.forEach((app, envSet) -> appEnvs.merge(app, new HashSet<>(), (prevEnvSet, newEnvSet) -> {
-                  prevEnvSet.removeAll(envSet);
+                appEnvMap.forEach((app, envSet) -> appEnvs.merge(app, envSet, (prevEnvSet, newEnvSet) -> {
+                  prevEnvSet.addAll(newEnvSet);
                   return prevEnvSet;
                 }));
               }
