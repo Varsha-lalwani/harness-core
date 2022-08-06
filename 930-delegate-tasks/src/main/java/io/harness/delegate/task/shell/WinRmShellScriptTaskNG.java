@@ -25,6 +25,7 @@ import io.harness.delegate.task.winrm.WinRmExecutorFactoryNG;
 import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.delegate.task.winrm.WinRmSessionConfig.WinRmSessionConfigBuilder;
 import io.harness.logging.CommandExecutionStatus;
+import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
 import io.harness.shell.ExecuteCommandResponse;
 
 import software.wings.core.winrm.executors.WinRmExecutor;
@@ -88,12 +89,9 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
                                                   .hostname(taskParameters.getHost())
                                                   .timeout(SESSION_TIMEOUT);
 
-    WinRmSessionConfig config = null;
-    //    WinRmSessionConfig config =
-    //        winRmConfigAuthEnhancer.configureAuthentication((WinRmCredentialsSpecDTO)
-    //        taskParameters.getSshKeySpecDTO(),
-    //            taskParameters.getEncryptionDetails(), configBuilder,
-    //            taskParameters.isUseWinRMKerberosUniqueCacheFile());
+    WinRmSessionConfig config =
+        winRmConfigAuthEnhancer.configureAuthentication((WinRmCredentialsSpecDTO) taskParameters.getSshKeySpecDTO(),
+            taskParameters.getEncryptionDetails(), configBuilder, taskParameters.isUseWinRMKerberosUniqueCacheFile());
 
     WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(
         config, taskParameters.isDisableCommandEncoding(), logStreamingTaskClient, commandUnitsProgress);
@@ -119,11 +117,9 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
                                                   .hostname(taskParameters.getHost())
                                                   .timeout(SESSION_TIMEOUT);
 
-    WinRmSessionConfig config = null;
-    //        winRmConfigAuthEnhancer.configureAuthentication((WinRmCredentialsSpecDTO)
-    //        taskParameters.getSshKeySpecDTO(),
-    //            taskParameters.getEncryptionDetails(), configBuilder,
-    //            taskParameters.isUseWinRMKerberosUniqueCacheFile());
+    WinRmSessionConfig config =
+        winRmConfigAuthEnhancer.configureAuthentication((WinRmCredentialsSpecDTO) taskParameters.getSshKeySpecDTO(),
+            taskParameters.getEncryptionDetails(), configBuilder, taskParameters.isUseWinRMKerberosUniqueCacheFile());
 
     WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(
         config, taskParameters.isDisableCommandEncoding(), logStreamingTaskClient, commandUnitsProgress);
