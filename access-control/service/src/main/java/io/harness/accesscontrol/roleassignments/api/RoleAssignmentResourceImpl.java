@@ -469,6 +469,16 @@ public class RoleAssignmentResourceImpl implements RoleAssignmentResource {
     }));
   }
 
+  @Override
+  public ResponseDTO<RoleAssignmentResponseDTO> get(HarnessScopeParams harnessScopeParams,String identifier) {
+    Scope scope = fromParams(harnessScopeParams);
+    RoleAssignmentResponseDTO response = roleAssignmentDTOMapper.toResponseDTO(
+            roleAssignmentService.get(identifier,scope.toString()).<NotFoundException>orElseThrow(() -> {
+         throw new NotFoundException("Role Assignment with given identifier doesn't exists");
+     }));
+    return ResponseDTO.newResponse(response);
+  }
+
   private List<RoleAssignmentResponseDTO> createRoleAssignments(
       HarnessScopeParams harnessScopeParams, RoleAssignmentCreateRequestDTO requestDTO, boolean managed) {
     Scope scope = fromParams(harnessScopeParams);
