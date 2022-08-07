@@ -12,6 +12,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ngsettings.SettingValueType;
 import io.harness.ngsettings.entities.SettingConfiguration;
 import io.harness.ngsettings.entities.SettingsConfigurationState;
 import io.harness.ngsettings.services.SettingsService;
@@ -67,6 +68,10 @@ public class SettingsCreationJob {
     settingsConfig.getSettings().forEach(settingConfiguration -> {
       if (settingConfiguration.getAllowOverrides() == null) {
         settingConfiguration.setAllowOverrides(true);
+      }
+      if (settingConfiguration.getValueType() == SettingValueType.BOOLEAN
+          && settingConfiguration.getDefaultValue() == null) {
+        settingConfiguration.setDefaultValue("false");
       }
     });
   }
