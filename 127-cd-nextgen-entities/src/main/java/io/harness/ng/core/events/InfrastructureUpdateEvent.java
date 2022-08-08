@@ -1,14 +1,14 @@
 package io.harness.ng.core.events;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.audit.ResourceTypeConstants.SERVICE_OVERRIDE;
+import static io.harness.audit.ResourceTypeConstants.INFRASTRUCTURE_DEF;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.event.Event;
 import io.harness.ng.core.ProjectScope;
 import io.harness.ng.core.Resource;
 import io.harness.ng.core.ResourceScope;
-import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
+import io.harness.ng.core.infrastructure.entity.InfrastructureEntity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
@@ -19,30 +19,30 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
-public class ServiceOverrideDeleteEvent implements Event {
+public class InfrastructureUpdateEvent implements Event {
   private String accountIdentifier;
   private String orgIdentifier;
   private String projectIdentifier;
-  private String environmentRef;
-  private String serviceRef;
-  private NGServiceOverridesEntity serviceOverride;
+  private String envIdentifier;
+  private InfrastructureEntity newInfrastructureEntity;
+  private InfrastructureEntity oldInfrastructureEntity;
 
   @JsonIgnore
   @Override
   public ResourceScope getResourceScope() {
     return new ProjectScope(
-        accountIdentifier, serviceOverride.getOrgIdentifier(), serviceOverride.getProjectIdentifier());
+        accountIdentifier, newInfrastructureEntity.getOrgIdentifier(), newInfrastructureEntity.getProjectIdentifier());
   }
 
   @JsonIgnore
   @Override
   public Resource getResource() {
-    return Resource.builder().type(SERVICE_OVERRIDE).build();
+    return Resource.builder().identifier(newInfrastructureEntity.getIdentifier()).type(INFRASTRUCTURE_DEF).build();
   }
 
   @JsonIgnore
   @Override
   public String getEventType() {
-    return OutboxEventConstants.SERVICE_OVERRIDE_DELETED;
+    return OutboxEventConstants.INFRASTRUCTURE_DEF_UPDATED;
   }
 }

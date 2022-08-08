@@ -23,6 +23,7 @@ public class ServiceOverrideUpsertEvent implements Event {
   private String accountIdentifier;
   private String orgIdentifier;
   private String projectIdentifier;
+  private String environmentRef;
   private String serviceRef;
   private NGServiceOverridesEntity serviceOverride;
 
@@ -36,7 +37,7 @@ public class ServiceOverrideUpsertEvent implements Event {
   @JsonIgnore
   @Override
   public Resource getResource() {
-    return Resource.builder().identifier(serviceOverride.getId()).type(SERVICE_OVERRIDE).build();
+    return Resource.builder().type(SERVICE_OVERRIDE).build();
   }
 
   @JsonIgnore

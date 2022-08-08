@@ -24,9 +24,13 @@ import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.ng.DuplicateKeyExceptionParser;
+import io.harness.ng.core.events.InfrastructureCreateEvent;
+import io.harness.ng.core.events.InfrastructureUpdateEvent;
+import io.harness.ng.core.events.InfrastructureUpsertEvent;
 import io.harness.ng.core.infrastructure.entity.InfrastructureEntity;
 import io.harness.ng.core.infrastructure.entity.InfrastructureEntity.InfrastructureEntityKeys;
 import io.harness.ng.core.infrastructure.services.InfrastructureEntityService;
+import io.harness.outbox.api.OutboxService;
 import io.harness.pms.merger.helpers.RuntimeInputFormHelper;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
@@ -70,6 +74,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class InfrastructureEntityServiceImpl implements InfrastructureEntityService {
   private final InfrastructureRepository infrastructureRepository;
   @Inject @Named(OUTBOX_TRANSACTION_TEMPLATE) private final TransactionTemplate transactionTemplate;
+  private final OutboxService outboxService;
   private final RetryPolicy<Object> transactionRetryPolicy = DEFAULT_TRANSACTION_RETRY_POLICY;
 
   private static final String DUP_KEY_EXP_FORMAT_STRING_FOR_PROJECT =
@@ -90,8 +95,17 @@ public class InfrastructureEntityServiceImpl implements InfrastructureEntityServ
           infraEntity.getAccountId(), infraEntity.getIdentifier(), infraEntity.getEnvIdentifier());
       setNameIfNotPresent(infraEntity);
       modifyInfraRequest(infraEntity);
-      return Failsafe.with(transactionRetryPolicy)
-          .get(() -> transactionTemplate.execute(status -> infrastructureRepository.save(infraEntity)));
+      return Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
+        InfrastructureEntity infrastructureEntity = infrastructureRepository.save(infraEntity);
+        outboxService.save(InfrastructureCreateEvent.builder()
+                               .accountIdentifier(infraEntity.getAccountId())
+                               .orgIdentifier(infraEntity.getOrgIdentifier())
+                               .projectIdentifier(infraEntity.getProjectIdentifier())
+                               .envIdentifier(infraEntity.getEnvIdentifier())
+                               .infrastructureEntity(infraEntity)
+                               .build());
+        return infrastructureEntity;
+      }));
 
     } catch (DuplicateKeyException ex) {
       throw new DuplicateFieldException(
@@ -126,7 +140,14 @@ public class InfrastructureEntityServiceImpl implements InfrastructureEntityServ
               requestInfra.getIdentifier(), requestInfra.getEnvIdentifier(), requestInfra.getProjectIdentifier(),
               requestInfra.getOrgIdentifier()));
         }
-
+        outboxService.save(InfrastructureUpdateEvent.builder()
+                               .accountIdentifier(requestInfra.getAccountId())
+                               .orgIdentifier(requestInfra.getOrgIdentifier())
+                               .projectIdentifier(requestInfra.getProjectIdentifier())
+                               .envIdentifier(requestInfra.getEnvIdentifier())
+                               .newInfrastructureEntity(requestInfra)
+                               .oldInfrastructureEntity(infraEntityOptional.get())
+                               .build());
         return updatedResult;
       }));
     } else {
@@ -151,6 +172,14 @@ public class InfrastructureEntityServiceImpl implements InfrastructureEntityServ
             requestInfra.getIdentifier(), requestInfra.getEnvIdentifier(), requestInfra.getProjectIdentifier(),
             requestInfra.getOrgIdentifier()));
       }
+      outboxService.save(InfrastructureUpsertEvent.builder()
+                             .accountIdentifier(requestInfra.getAccountId())
+                             .orgIdentifier(requestInfra.getOrgIdentifier())
+                             .projectIdentifier(requestInfra.getProjectIdentifier())
+                             .envIdentifier(requestInfra.getEnvIdentifier())
+
+                             .infrastructureEntity(requestInfra)
+                             .build());
       return result;
     }));
   }
@@ -183,6 +212,13 @@ public class InfrastructureEntityServiceImpl implements InfrastructureEntityServ
               "Infrastructure [%s] under Environment [%s], Project[%s], Organization [%s] couldn't be deleted.",
               infraIdentifier, envIdentifier, projectIdentifier, orgIdentifier));
         }
+        outboxService.save(InfrastructureUpsertEvent.builder()
+                               .accountIdentifier(accountId)
+                               .orgIdentifier(orgIdentifier)
+                               .projectIdentifier(projectIdentifier)
+                               .envIdentifier(envIdentifier)
+                               .infrastructureEntity(infraEntityOptional.get())
+                               .build());
         return true;
       }));
     } else {

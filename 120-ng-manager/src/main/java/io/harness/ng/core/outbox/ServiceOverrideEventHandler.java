@@ -98,9 +98,9 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
   public boolean handle(OutboxEvent outboxEvent) {
     try {
       switch (outboxEvent.getEventType()) {
-        case OutboxEventConstants.SERVICE_UPSERTED:
+        case OutboxEventConstants.SERVICE_OVERRIDE_UPSERTED:
           return handlerServiceOverrideUpserted(outboxEvent);
-        case OutboxEventConstants.SERVICE_DELETED:
+        case OutboxEventConstants.SERVICE_OVERRIDE_DELETED:
           return handlerServiceOverrideDeleted(outboxEvent);
         default:
           return false;

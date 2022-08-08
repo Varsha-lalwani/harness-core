@@ -148,20 +148,7 @@ import io.harness.ng.core.globalkms.impl.NgGlobalKmsServiceImpl;
 import io.harness.ng.core.globalkms.services.NgGlobalKmsService;
 import io.harness.ng.core.impl.OrganizationServiceImpl;
 import io.harness.ng.core.impl.ProjectServiceImpl;
-import io.harness.ng.core.outbox.ApiKeyEventHandler;
-import io.harness.ng.core.outbox.DelegateProfileEventHandler;
-import io.harness.ng.core.outbox.EnvironmentEventHandler;
-import io.harness.ng.core.outbox.NextGenOutboxEventHandler;
-import io.harness.ng.core.outbox.OrganizationEventHandler;
-import io.harness.ng.core.outbox.ProjectEventHandler;
-import io.harness.ng.core.outbox.SecretEventHandler;
-import io.harness.ng.core.outbox.ServiceAccountEventHandler;
-import io.harness.ng.core.outbox.ServiceOutBoxEventHandler;
-import io.harness.ng.core.outbox.ServiceOverrideEventHandler;
-import io.harness.ng.core.outbox.TokenEventHandler;
-import io.harness.ng.core.outbox.UserEventHandler;
-import io.harness.ng.core.outbox.UserGroupEventHandler;
-import io.harness.ng.core.outbox.VariableEventHandler;
+import io.harness.ng.core.outbox.*;
 import io.harness.ng.core.schema.YamlBaseUrlService;
 import io.harness.ng.core.services.OrganizationService;
 import io.harness.ng.core.services.ProjectService;
@@ -829,6 +816,7 @@ public class NextGenModule extends AbstractModule {
     outboxEventHandlerMapBinder.addBinding(VARIABLE).to(VariableEventHandler.class);
     outboxEventHandlerMapBinder.addBinding(SETTING).to(SettingEventHandler.class);
     outboxEventHandlerMapBinder.addBinding(SERVICE_OVERRIDE).to(ServiceOverrideEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding(INFRASTRUCTURE_DEF).to(InfrastructureEventHandler.class);
   }
 
   private void registerEventsFrameworkMessageListeners() {

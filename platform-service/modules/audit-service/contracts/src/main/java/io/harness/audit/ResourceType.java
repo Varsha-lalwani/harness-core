@@ -55,7 +55,8 @@ public enum ResourceType {
   AUTOSTOPPING_LB(ResourceTypeConstants.AUTOSTOPPING_LB),
   AUTOSTOPPING_STARTSTOP(ResourceTypeConstants.AUTOSTOPPING_STARTSTOP),
   SETTING(ResourceTypeConstants.SETTING),
-  SERVICE_OVERRIDE(ResourceTypeConstants.SERVICE_OVERRIDE);
+  SERVICE_OVERRIDE(ResourceTypeConstants.SERVICE_OVERRIDE),
+  INFRASTRUCTURE_DEF(ResourceTypeConstants.INFRASTRUCTURE_DEF);
 
   ResourceType(String resourceType) {
     if (!this.name().equals(resourceType)) {

@@ -24,7 +24,6 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
 import io.harness.ng.core.events.ServiceOverrideDeleteEvent;
 import io.harness.ng.core.events.ServiceOverrideUpsertEvent;
-import io.harness.ng.core.events.ServiceUpsertEvent;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity.NGServiceOverridesEntityKeys;
 import io.harness.ng.core.serviceoverride.services.ServiceOverrideService;
@@ -109,6 +108,8 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
                              .accountIdentifier(requestServiceOverride.getAccountId())
                              .orgIdentifier(requestServiceOverride.getOrgIdentifier())
                              .projectIdentifier(requestServiceOverride.getProjectIdentifier())
+                             .environmentRef(requestServiceOverride.getEnvironmentRef())
+                             .serviceRef(requestServiceOverride.getServiceRef())
                              .serviceOverride(requestServiceOverride)
                              .build());
 
@@ -186,6 +187,8 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
                                .accountIdentifier(accountId)
                                .orgIdentifier(orgIdentifier)
                                .projectIdentifier(projectIdentifier)
+                               .environmentRef(environmentRef)
+                               .serviceRef(serviceRef)
                                .serviceOverride(entityOptional.get())
                                .build());
         return true;
