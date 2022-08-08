@@ -179,7 +179,7 @@ public class YamlChangeSetServiceImpl implements YamlChangeSetService {
     if (yamlGitConfig == null) {
       throw NoResultFoundException.newBuilder()
           .message(format(
-              "Unable to find yamlGitConfig for account = {}, appId = {}. Git Sync might not have been configured",
+              "Unable to find yamlGitConfig for account = %s, appId = %s. Git Sync might not have been configured",
               accountId, appId))
           .build();
     }

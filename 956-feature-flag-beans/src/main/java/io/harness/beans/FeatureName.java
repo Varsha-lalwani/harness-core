@@ -156,7 +156,6 @@ public enum FeatureName {
   TRIGGER_YAML,
   UI_ALLOW_K8S_V1,
   USE_NEXUS3_PRIVATE_APIS,
-  WEEKLY_WINDOW,
   ENABLE_CVNG_INTEGRATION,
   DYNATRACE_MULTI_SERVICE,
   REFACTOR_STATEMACHINEXECUTOR,
@@ -228,7 +227,6 @@ public enum FeatureName {
   MANIFEST_INHERIT_FROM_CANARY_TO_PRIMARY_PHASE,
   USE_LATEST_CHARTMUSEUM_VERSION,
   KUBERNETES_EXPORT_MANIFESTS,
-  NG_TEMPLATES,
   NEW_KUSTOMIZE_BINARY,
   KUSTOMIZE_PATCHES_CG,
   SSH_JSCH_LOGS,
@@ -412,7 +410,9 @@ public enum FeatureName {
       "Enables PaginatedComponent & Formik for VariableOverrides in CG-UI", HarnessTeam.PL),
   ON_DEMAND_ROLLBACK_WITH_DIFFERENT_ARTIFACT(
       "Used to do on demand rollback to previously deployed different artifact on same inframapping", HarnessTeam.CDC),
-  CG_GIT_POLLING("Poll git based on account config for git sync in CG.", HarnessTeam.SPG);
+  CG_GIT_POLLING("Poll git based on account config for git sync in CG.", HarnessTeam.SPG),
+  GRAPHQL_WORKFLOW_EXECUTION_OPTIMIZATION(
+      "Making multiple optimizations for workflow execution graphql in CG", HarnessTeam.SPG);
   @Deprecated
   FeatureName() {
     scope = Scope.PER_ACCOUNT;

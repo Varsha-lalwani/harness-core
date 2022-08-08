@@ -43,6 +43,7 @@ import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
+import io.harness.delegate.task.gitapi.client.impl.AzureRepoApiClient;
 import io.harness.delegate.task.gitapi.client.impl.GithubApiClient;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
@@ -99,12 +100,14 @@ public class NGGitOpsCommandTask extends AbstractDelegateRunnableTask {
   @Inject private GitDecryptionHelper gitDecryptionHelper;
   @Inject private NGGitService ngGitService;
   @Inject private GithubApiClient githubApiClient;
+  @Inject private AzureRepoApiClient azureRepoApiClient;
 
   public static final String FetchFiles = "Fetch Files";
   public static final String UpdateFiles = "Update GitOps Configuration files";
   public static final String CommitAndPush = "Commit and Push";
   public static final String CreatePR = "Create PR";
   public static final String MergePR = "Merge PR";
+  public static final String PullRequestMessage = "Pull Request successfully merged";
 
   private LogCallback logCallback;
 
@@ -142,12 +145,15 @@ public class NGGitOpsCommandTask extends AbstractDelegateRunnableTask {
       logCallback = new NGDelegateLogCallback(getLogStreamingTaskClient(), MergePR, true, commandUnitsProgress);
 
       ConnectorType connectorType = gitOpsTaskParams.connectorInfoDTO.getConnectorType();
-      GitApiTaskResponse responseData = null;
-
+      GitApiTaskResponse responseData;
       switch (connectorType) {
         case GITHUB:
           responseData = (GitApiTaskResponse) githubApiClient.mergePR(gitOpsTaskParams.getGitApiTaskParams());
           break;
+        case AZURE_REPO:
+          responseData = (GitApiTaskResponse) azureRepoApiClient.mergePR(gitOpsTaskParams.getGitApiTaskParams());
+          break;
+
         default:
           String errorMsg = "Failed to execute MergePR step. Connector not supported";
           logCallback.saveExecutionLog(errorMsg, INFO, CommandExecutionStatus.FAILURE);
@@ -165,8 +171,7 @@ public class NGGitOpsCommandTask extends AbstractDelegateRunnableTask {
       }
 
       logCallback.saveExecutionLog(format("PR Link: %s", gitOpsTaskParams.getPrLink(), INFO));
-      logCallback.saveExecutionLog(
-          format("%s", ((GitApiMergePRTaskResponse) responseData.getGitApiResult()).getMessage()), INFO);
+      logCallback.saveExecutionLog(format("%s", PullRequestMessage), INFO);
       String sha = ((GitApiMergePRTaskResponse) responseData.getGitApiResult()).getSha();
       logCallback.saveExecutionLog(format("Commit Sha is %s", sha), INFO);
       logCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
