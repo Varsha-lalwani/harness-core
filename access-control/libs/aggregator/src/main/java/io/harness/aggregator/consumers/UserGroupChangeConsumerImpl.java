@@ -30,6 +30,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -180,8 +181,9 @@ public class UserGroupChangeConsumerImpl implements ChangeConsumer<UserGroupDBO>
                         roleAssignmentDBO, resourceSelector, false)))));
       }
       numberOfACLsCreated += aclRepository.insertAllIgnoringDuplicates(aclsToCreate);
-      numberOfACLsCreated += aclRepository.insertAllIgnoringDuplicates(
-          changeConsumerService.getImplicitACLsForRoleAssignment(roleAssignmentDBO, principalsAddedToUserGroup));
+      numberOfACLsCreated +=
+          aclRepository.insertAllIgnoringDuplicates(changeConsumerService.getImplicitACLsForChangeSet(
+              roleAssignmentDBO, principalsAddedToUserGroup, new HashSet<>()));
 
       return new Result(numberOfACLsCreated, numberOfACLsDeleted);
     }

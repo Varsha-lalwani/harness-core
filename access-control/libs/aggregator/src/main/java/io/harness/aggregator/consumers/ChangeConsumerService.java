@@ -19,6 +19,6 @@ import java.util.Set;
 public interface ChangeConsumerService {
   List<ACL> getAClsForRoleAssignment(RoleAssignmentDBO roleAssignmentDBO);
   List<ACL> getImplicitACLsForRoleAssignment(RoleAssignmentDBO roleAssignmentDBO);
-  List<ACL> getImplicitACLsForRoleAssignment(Set<String> permissions, RoleAssignmentDBO roleAssignment);
-  List<ACL> getImplicitACLsForRoleAssignment(RoleAssignmentDBO roleAssignment, Set<String> principals);
+  List<ACL> getImplicitACLsForChangeSet(
+      RoleAssignmentDBO roleAssignment, Set<String> addedPrincipals, Set<String> addedPermissions);
 }

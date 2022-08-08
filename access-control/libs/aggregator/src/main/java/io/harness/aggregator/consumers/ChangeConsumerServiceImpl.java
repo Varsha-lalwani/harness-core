@@ -13,6 +13,7 @@ import static io.harness.accesscontrol.principals.PrincipalType.USER_GROUP;
 import static io.harness.accesscontrol.scopes.core.ScopeHelper.toParentScope;
 import static io.harness.aggregator.ACLUtils.buildACL;
 import static io.harness.aggregator.ACLUtils.buildResourceSelector;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.accesscontrol.acl.api.Principal;
 import io.harness.accesscontrol.acl.persistence.ACL;
@@ -120,37 +121,11 @@ public class ChangeConsumerServiceImpl implements ChangeConsumerService {
     } else {
       principals.add(roleAssignment.getPrincipalIdentifier());
     }
-    return getImplicitACLsForRoleAssignment(roleAssignment, principals);
-  }
-
-  @Override
-  public List<ACL> getImplicitACLsForRoleAssignment(Set<String> permissions, RoleAssignmentDBO roleAssignment) {
-    Set<String> principals = new HashSet<>();
-    if (USER_GROUP.equals(roleAssignment.getPrincipalType())) {
-      Scope scope = toParentScope(scopeService.buildScopeFromScopeIdentifier(roleAssignment.getScopeIdentifier()),
-          roleAssignment.getPrincipalScopeLevel());
-      String principalScopeIdentifier = scope == null ? roleAssignment.getScopeIdentifier() : scope.toString();
-      Optional<UserGroup> userGroup =
-          userGroupService.get(roleAssignment.getPrincipalIdentifier(), principalScopeIdentifier);
-      userGroup.ifPresent(group -> principals.addAll(group.getUsers()));
-    } else {
-      principals.add(roleAssignment.getPrincipalIdentifier());
-    }
-    return getImplicitACLsForRoleAssignment(roleAssignment, principals, permissions);
-  }
-
-  @Override
-  public List<ACL> getImplicitACLsForRoleAssignment(RoleAssignmentDBO roleAssignment, Set<String> principals) {
     Optional<Role> role = roleService.get(
         roleAssignment.getRoleIdentifier(), roleAssignment.getScopeIdentifier(), ManagedFilter.NO_FILTER);
     if (!role.isPresent()) {
       return new ArrayList<>();
     }
-    return getImplicitACLsForRoleAssignment(roleAssignment, principals, role.get().getPermissions());
-  }
-
-  private List<ACL> getImplicitACLsForRoleAssignment(
-      RoleAssignmentDBO roleAssignment, Set<String> principals, Set<String> permissionsFilter) {
     Optional<ResourceGroup> resourceGroup = resourceGroupService.get(
         roleAssignment.getResourceGroupIdentifier(), roleAssignment.getScopeIdentifier(), ManagedFilter.NO_FILTER);
     if (!resourceGroup.isPresent()) {
@@ -166,7 +141,8 @@ public class ChangeConsumerServiceImpl implements ChangeConsumerService {
         while (currentScope != null) {
           ResourceSelector resourceSelector =
               ResourceSelector.builder().selector(buildResourceSelector(currentScope)).build();
-          Set<String> permissions = getPermissions(currentScope, givePermissionOnChildScopes, permissionsFilter);
+          Set<String> permissions =
+              getPermissions(currentScope, givePermissionOnChildScopes, role.get().getPermissions());
           for (String principalIdentifier : principals) {
             for (String permission : permissions) {
               if (SERVICE_ACCOUNT.equals(roleAssignment.getPrincipalType())) {
@@ -182,6 +158,24 @@ public class ChangeConsumerServiceImpl implements ChangeConsumerService {
           currentScope = currentScope.getParentScope();
         }
       }
+    }
+    return acls;
+  }
+
+  @Override
+  public List<ACL> getImplicitACLsForChangeSet(
+      RoleAssignmentDBO roleAssignment, Set<String> addedUsers, Set<String> addedPermissions) {
+    List<ACL> acls = getImplicitACLsForRoleAssignment(roleAssignment);
+    if (isNotEmpty(addedPermissions)) {
+      acls = acls.stream()
+                 .filter(acl -> addedPermissions.contains(acl.getPermissionIdentifier()))
+                 .collect(Collectors.toList());
+    }
+    if (isNotEmpty(addedUsers)) {
+      acls = acls.stream()
+                 .filter(acl
+                     -> addedUsers.contains(acl.getPrincipalIdentifier()) && USER.name().equals(acl.getPrincipalType()))
+                 .collect(Collectors.toList());
     }
     return acls;
   }
