@@ -16,11 +16,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
+import io.harness.account.AccountClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
@@ -41,6 +43,7 @@ import javax.ws.rs.core.UriInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -49,9 +52,9 @@ public class NGTriggerWebhookResourceImplTest extends CategoryTest {
   NGTriggerWebhookConfigResourceImpl ngTriggerWebhookConfigResource;
   @Mock NGTriggerService ngTriggerService;
   @Mock NGTriggerElementMapper ngTriggerElementMapper;
-  @Mock UrlHelper urlHelper;
+  @Mock AccountClient accountClient;
   TriggerWebhookValidator triggerWebhookValidator;
-
+  @InjectMocks private UrlHelper urlHelper = spy(UrlHelper.class);
   private final String accountIdentifier = "account";
   private final String orgIdentifier = "org";
   private final String projectIdentifier = "project";
@@ -115,7 +118,7 @@ public class NGTriggerWebhookResourceImplTest extends CategoryTest {
     UriInfo uriInfo = mock(UriInfo.class);
     when(uriInfo.getBaseUri()).thenReturn(URI.create("base_url/"));
     when(headers.getRequestHeaders()).thenReturn(new MultivaluedHashMap<>());
-    when(urlHelper.getBaseUrl(any())).thenReturn("base_ui_url/");
+    doReturn("base_ui_url/").when(urlHelper).getBaseUrl(any());
     String executionUuid = "executionUuid";
     TriggerWebhookEventBuilder triggerWebhookEventBuilder = TriggerWebhookEvent.builder()
                                                                 .accountId(accountIdentifier)

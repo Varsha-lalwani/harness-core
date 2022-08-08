@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UrlHelper {
   @Inject private AccountClient accountClient;
 
-  private String getBaseUrl(String accountIdentifier) {
+  public String getBaseUrl(String accountIdentifier) {
     return RestClientUtils.getResponse(accountClient.getBaseUrl(accountIdentifier));
   }
 
