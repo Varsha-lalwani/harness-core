@@ -1401,7 +1401,7 @@
 19460:io.harness.ng.core.Status
 19461:io.harness.ng.core.dto.ErrorDTO
 19462:io.harness.http.HttpHeaderConfig
-19462:io.harness.delegate.task.shell.WinRmShellScriptTaskParametersNG
+19482:io.harness.delegate.task.shell.WinRmShellScriptTaskParametersNG
 19463:io.harness.delegate.task.shell.ShellScriptTaskParametersNG
 19464:io.harness.delegate.task.shell.ShellScriptTaskResponseNG
 19465:io.harness.delegate.task.azure.appservice.webapp.request.AzureWebAppSlotSetupParameters

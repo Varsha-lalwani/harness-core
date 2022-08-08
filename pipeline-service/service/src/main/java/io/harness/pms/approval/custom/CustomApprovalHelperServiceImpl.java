@@ -17,6 +17,8 @@ import io.harness.OrchestrationPublisherName;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.TaskSelector;
+import io.harness.delegate.TaskType;
+import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.shell.ShellScriptTaskNG;
 import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
@@ -120,7 +122,7 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
       validateField(orgIdentifier, "orgIdentifier");
       validateField(projectIdentifier, "projectIdentifier");
 
-      ShellScriptTaskParametersNG scriptTaskParametersNG = buildShellScriptTaskParametersNG(ambiance, instance);
+      TaskParameters scriptTaskParametersNG = buildShellScriptTaskParametersNG(ambiance, instance);
       log.info("Queuing Custom Approval delegate task");
       String taskId = queueTask(ambiance, instance, scriptTaskParametersNG);
       log.info("Custom Approval Instance queued task with taskId - {}", taskId);
@@ -134,14 +136,14 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
     }
   }
 
-  private ShellScriptTaskParametersNG buildShellScriptTaskParametersNG(
+  private TaskParameters buildShellScriptTaskParametersNG(
       @Nonnull Ambiance ambiance, @Nonnull CustomApprovalInstance customApprovalInstance) {
     ShellScriptStepParameters shellScriptStepParameters = customApprovalInstance.toShellScriptStepParameters();
     return shellScriptHelperService.buildShellScriptTaskParametersNG(ambiance, shellScriptStepParameters);
   }
 
-  private String queueTask(Ambiance ambiance, CustomApprovalInstance approvalInstance,
-      ShellScriptTaskParametersNG shellScriptTaskParametersNG) {
+  private String queueTask(
+      Ambiance ambiance, CustomApprovalInstance approvalInstance, TaskParameters shellScriptTaskParametersNG) {
     TaskRequest taskRequest = prepareCustomApprovalTaskRequest(ambiance, approvalInstance, shellScriptTaskParametersNG);
     String taskId =
         ngDelegate2TaskExecutor.queueTask(ambiance.getSetupAbstractionsMap(), taskRequest, Duration.ofSeconds(0));
@@ -151,7 +153,7 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
   }
 
   private TaskRequest prepareCustomApprovalTaskRequest(
-      Ambiance ambiance, CustomApprovalInstance instance, ShellScriptTaskParametersNG stepParameters) {
+      Ambiance ambiance, CustomApprovalInstance instance, TaskParameters stepParameters) {
     TaskData taskData = TaskData.builder()
                             .async(true)
                             .taskType(software.wings.beans.TaskType.SHELL_SCRIPT_TASK_NG.name())

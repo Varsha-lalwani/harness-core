@@ -1114,8 +1114,8 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ArtifactoryGenericArtifactDelegateResponse.class, 19484);
 
     kryo.register(DeploymentSlotData.class, 19457);
-    kryo.register(WinRmShellScriptTaskParametersNG.class, 19462);
     kryo.register(ShellScriptTaskParametersNG.class, 19463);
+    kryo.register(WinRmShellScriptTaskParametersNG.class, 19482);
     kryo.register(ShellScriptTaskResponseNG.class, 19464);
     kryo.register(AzureWebAppSlotSetupParameters.class, 19465);
     kryo.register(AzureWebAppRollbackParameters.class, 19466);

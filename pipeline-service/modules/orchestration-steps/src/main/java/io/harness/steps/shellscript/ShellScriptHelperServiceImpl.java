@@ -15,9 +15,12 @@ import static java.util.Collections.emptyList;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
 import io.harness.delegate.task.shell.ShellScriptTaskParametersNG.ShellScriptTaskParametersNGBuilder;
+import io.harness.delegate.task.shell.WinRmShellScriptTaskParametersNG;
+import io.harness.delegate.task.shell.WinRmShellScriptTaskParametersNG.WinRmShellScriptTaskParametersNGBuilder;
 import io.harness.exception.InvalidRequestException;
 import io.harness.k8s.K8sConstants;
 import io.harness.ng.core.NGAccess;
@@ -153,6 +156,38 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
     }
   }
 
+  public void prepareWinRmTaskParametersForExecutionTarget(@Nonnull Ambiance ambiance,
+      @Nonnull ShellScriptStepParameters shellScriptStepParameters,
+      @Nonnull WinRmShellScriptTaskParametersNGBuilder taskParametersNGBuilder) {
+    if (!shellScriptStepParameters.onDelegate.getValue()) {
+      ExecutionTarget executionTarget = shellScriptStepParameters.getExecutionTarget();
+      validateExecutionTarget(executionTarget);
+      String sshKeyRef = executionTarget.getConnectorRef().getValue();
+
+      IdentifierRef identifierRef =
+          IdentifierRefHelper.getIdentifierRef(sshKeyRef, AmbianceUtils.getAccountId(ambiance),
+              AmbianceUtils.getOrgIdentifier(ambiance), AmbianceUtils.getProjectIdentifier(ambiance));
+      String errorMSg = "No secret configured with identifier: " + sshKeyRef;
+      SecretResponseWrapper secretResponseWrapper = NGRestUtils.getResponse(
+          secretManagerClient.getSecret(identifierRef.getIdentifier(), identifierRef.getAccountIdentifier(),
+              identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier()),
+          errorMSg);
+      if (secretResponseWrapper == null) {
+        throw new InvalidRequestException(errorMSg);
+      }
+      SecretDTOV2 secret = secretResponseWrapper.getSecret();
+
+      SSHKeySpecDTO secretSpec = (SSHKeySpecDTO) secret.getSpec();
+      NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
+      List<EncryptedDataDetail> sshKeyEncryptionDetails =
+          sshKeySpecDTOHelper.getSSHKeyEncryptionDetails(secretSpec, ngAccess);
+
+      taskParametersNGBuilder.sshKeySpecDTO(secretSpec)
+          .encryptionDetails(sshKeyEncryptionDetails)
+          .host(executionTarget.getHost().getValue());
+    }
+  }
+
   private void validateExecutionTarget(ExecutionTarget executionTarget) {
     if (executionTarget == null) {
       throw new InvalidRequestException("Execution Target can't be empty with on delegate set to false");
@@ -191,31 +226,52 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
   }
 
   @Override
-  public ShellScriptTaskParametersNG buildShellScriptTaskParametersNG(
+  public TaskParameters buildShellScriptTaskParametersNG(
       @Nonnull Ambiance ambiance, @Nonnull ShellScriptStepParameters shellScriptStepParameters) {
     SecurityContextBuilder.setContext(new ServicePrincipal(NG_MANAGER.getServiceId()));
     ScriptType scriptType = shellScriptStepParameters.getShell().getScriptType();
-    ShellScriptTaskParametersNGBuilder taskParametersNGBuilder = ShellScriptTaskParametersNG.builder();
-
     String shellScript = shellScriptHelperService.getShellScript(shellScriptStepParameters);
-    taskParametersNGBuilder.k8sInfraDelegateConfig(
-        shellScriptHelperService.getK8sInfraDelegateConfig(ambiance, shellScript));
-    shellScriptHelperService.prepareTaskParametersForExecutionTarget(
-        ambiance, shellScriptStepParameters, taskParametersNGBuilder);
     ParameterField<String> workingDirectory = (shellScriptStepParameters.getExecutionTarget() != null)
         ? shellScriptStepParameters.getExecutionTarget().getWorkingDirectory()
         : ParameterField.ofNull();
-    return taskParametersNGBuilder.accountId(AmbianceUtils.getAccountId(ambiance))
-        .executeOnDelegate(shellScriptStepParameters.onDelegate.getValue())
-        .environmentVariables(
-            shellScriptHelperService.getEnvironmentVariables(shellScriptStepParameters.getEnvironmentVariables()))
-        .executionId(AmbianceUtils.obtainCurrentRuntimeId(ambiance))
-        .outputVars(shellScriptHelperService.getOutputVars(shellScriptStepParameters.getOutputVariables()))
-        .script(shellScript)
-        .scriptType(scriptType)
-        .workingDirectory(shellScriptHelperService.getWorkingDirectory(
-            workingDirectory, scriptType, shellScriptStepParameters.onDelegate.getValue()))
-        .build();
+
+    if (ScriptType.BASH.equals(scriptType)) {
+      ShellScriptTaskParametersNGBuilder taskParametersNGBuilder = ShellScriptTaskParametersNG.builder();
+
+      taskParametersNGBuilder.k8sInfraDelegateConfig(
+          shellScriptHelperService.getK8sInfraDelegateConfig(ambiance, shellScript));
+      shellScriptHelperService.prepareTaskParametersForExecutionTarget(
+          ambiance, shellScriptStepParameters, taskParametersNGBuilder);
+      return taskParametersNGBuilder.accountId(AmbianceUtils.getAccountId(ambiance))
+          .executeOnDelegate(shellScriptStepParameters.onDelegate.getValue())
+          .environmentVariables(
+              shellScriptHelperService.getEnvironmentVariables(shellScriptStepParameters.getEnvironmentVariables()))
+          .executionId(AmbianceUtils.obtainCurrentRuntimeId(ambiance))
+          .outputVars(shellScriptHelperService.getOutputVars(shellScriptStepParameters.getOutputVariables()))
+          .script(shellScript)
+          .scriptType(scriptType)
+          .workingDirectory(shellScriptHelperService.getWorkingDirectory(
+              workingDirectory, scriptType, shellScriptStepParameters.onDelegate.getValue()))
+          .build();
+    } else {
+      WinRmShellScriptTaskParametersNGBuilder taskParametersNGBuilder = WinRmShellScriptTaskParametersNG.builder();
+
+      taskParametersNGBuilder.k8sInfraDelegateConfig(
+          shellScriptHelperService.getK8sInfraDelegateConfig(ambiance, shellScript));
+      shellScriptHelperService.prepareWinRmTaskParametersForExecutionTarget(
+          ambiance, shellScriptStepParameters, taskParametersNGBuilder);
+      return taskParametersNGBuilder.accountId(AmbianceUtils.getAccountId(ambiance))
+          .executeOnDelegate(shellScriptStepParameters.onDelegate.getValue())
+          .environmentVariables(
+              shellScriptHelperService.getEnvironmentVariables(shellScriptStepParameters.getEnvironmentVariables()))
+          .executionId(AmbianceUtils.obtainCurrentRuntimeId(ambiance))
+          .outputVars(shellScriptHelperService.getOutputVars(shellScriptStepParameters.getOutputVariables()))
+          .script(shellScript)
+          .scriptType(scriptType)
+          .workingDirectory(shellScriptHelperService.getWorkingDirectory(
+              workingDirectory, scriptType, shellScriptStepParameters.onDelegate.getValue()))
+          .build();
+    }
   }
 
   @Override
