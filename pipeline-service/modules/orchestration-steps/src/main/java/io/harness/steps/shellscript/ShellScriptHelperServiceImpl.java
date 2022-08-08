@@ -25,8 +25,9 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.k8s.K8sConstants;
 import io.harness.ng.core.NGAccess;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
-import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
+import io.harness.ng.core.dto.secrets.SecretSpecDTO;
+import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
@@ -35,6 +36,7 @@ import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
+import io.harness.secretmanagerclient.services.WinRmCredentialsSpecDTOHelper;
 import io.harness.secrets.remote.SecretNGManagerClient;
 import io.harness.security.SecurityContextBuilder;
 import io.harness.security.dto.ServicePrincipal;
@@ -60,6 +62,7 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
   @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
   @Inject @Named("PRIVILEGED") private SecretNGManagerClient secretManagerClient;
   @Inject private SshKeySpecDTOHelper sshKeySpecDTOHelper;
+  @Inject private WinRmCredentialsSpecDTOHelper winRmCredentialsSpecDTOHelper;
   @Inject private ShellScriptHelperService shellScriptHelperService;
 
   @Override
@@ -130,54 +133,7 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
     if (!shellScriptStepParameters.onDelegate.getValue()) {
       ExecutionTarget executionTarget = shellScriptStepParameters.getExecutionTarget();
       validateExecutionTarget(executionTarget);
-      String sshKeyRef = executionTarget.getConnectorRef().getValue();
-
-      IdentifierRef identifierRef =
-          IdentifierRefHelper.getIdentifierRef(sshKeyRef, AmbianceUtils.getAccountId(ambiance),
-              AmbianceUtils.getOrgIdentifier(ambiance), AmbianceUtils.getProjectIdentifier(ambiance));
-      String errorMSg = "No secret configured with identifier: " + sshKeyRef;
-      SecretResponseWrapper secretResponseWrapper = NGRestUtils.getResponse(
-          secretManagerClient.getSecret(identifierRef.getIdentifier(), identifierRef.getAccountIdentifier(),
-              identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier()),
-          errorMSg);
-      if (secretResponseWrapper == null) {
-        throw new InvalidRequestException(errorMSg);
-      }
-      SecretDTOV2 secret = secretResponseWrapper.getSecret();
-
-      SSHKeySpecDTO secretSpec = (SSHKeySpecDTO) secret.getSpec();
-      NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
-      List<EncryptedDataDetail> sshKeyEncryptionDetails =
-          sshKeySpecDTOHelper.getSSHKeyEncryptionDetails(secretSpec, ngAccess);
-
-      taskParametersNGBuilder.sshKeySpecDTO(secretSpec)
-          .encryptionDetails(sshKeyEncryptionDetails)
-          .host(executionTarget.getHost().getValue());
-    }
-  }
-
-  public void prepareWinRmTaskParametersForExecutionTarget(@Nonnull Ambiance ambiance,
-      @Nonnull ShellScriptStepParameters shellScriptStepParameters,
-      @Nonnull WinRmShellScriptTaskParametersNGBuilder taskParametersNGBuilder) {
-    if (!shellScriptStepParameters.onDelegate.getValue()) {
-      ExecutionTarget executionTarget = shellScriptStepParameters.getExecutionTarget();
-      validateExecutionTarget(executionTarget);
-      String sshKeyRef = executionTarget.getConnectorRef().getValue();
-
-      IdentifierRef identifierRef =
-          IdentifierRefHelper.getIdentifierRef(sshKeyRef, AmbianceUtils.getAccountId(ambiance),
-              AmbianceUtils.getOrgIdentifier(ambiance), AmbianceUtils.getProjectIdentifier(ambiance));
-      String errorMSg = "No secret configured with identifier: " + sshKeyRef;
-      SecretResponseWrapper secretResponseWrapper = NGRestUtils.getResponse(
-          secretManagerClient.getSecret(identifierRef.getIdentifier(), identifierRef.getAccountIdentifier(),
-              identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier()),
-          errorMSg);
-      if (secretResponseWrapper == null) {
-        throw new InvalidRequestException(errorMSg);
-      }
-      SecretDTOV2 secret = secretResponseWrapper.getSecret();
-
-      SSHKeySpecDTO secretSpec = (SSHKeySpecDTO) secret.getSpec();
+      SSHKeySpecDTO secretSpec = (SSHKeySpecDTO) getSshKeySpec(ambiance, executionTarget);
       NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
       List<EncryptedDataDetail> sshKeyEncryptionDetails =
           sshKeySpecDTOHelper.getSSHKeyEncryptionDetails(secretSpec, ngAccess);
@@ -258,8 +214,19 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
 
       taskParametersNGBuilder.k8sInfraDelegateConfig(
           shellScriptHelperService.getK8sInfraDelegateConfig(ambiance, shellScript));
-      shellScriptHelperService.prepareWinRmTaskParametersForExecutionTarget(
-          ambiance, shellScriptStepParameters, taskParametersNGBuilder);
+
+      if (!shellScriptStepParameters.onDelegate.getValue()) {
+        ExecutionTarget executionTarget = shellScriptStepParameters.getExecutionTarget();
+        validateExecutionTarget(executionTarget);
+        SecretSpecDTO secretSpec = getSshKeySpec(ambiance, executionTarget);
+        final List<EncryptedDataDetail> encryptionDetails = winRmCredentialsSpecDTOHelper.getWinRmEncryptionDetails(
+            (WinRmCredentialsSpecDTO) secretSpec, AmbianceUtils.getNgAccess(ambiance));
+
+        taskParametersNGBuilder.sshKeySpecDTO(secretSpec)
+            .encryptionDetails(encryptionDetails)
+            .host(executionTarget.getHost().getValue());
+      }
+
       return taskParametersNGBuilder.accountId(AmbianceUtils.getAccountId(ambiance))
           .executeOnDelegate(shellScriptStepParameters.onDelegate.getValue())
           .environmentVariables(
@@ -272,6 +239,23 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
               workingDirectory, scriptType, shellScriptStepParameters.onDelegate.getValue()))
           .build();
     }
+  }
+
+  private SecretSpecDTO getSshKeySpec(Ambiance ambiance, ExecutionTarget executionTarget) {
+    String sshKeyRef = executionTarget.getConnectorRef().getValue();
+
+    IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(sshKeyRef, AmbianceUtils.getAccountId(ambiance),
+        AmbianceUtils.getOrgIdentifier(ambiance), AmbianceUtils.getProjectIdentifier(ambiance));
+    String errorMSg = "No secret configured with identifier: " + sshKeyRef;
+    SecretResponseWrapper secretResponseWrapper = NGRestUtils.getResponse(
+        secretManagerClient.getSecret(identifierRef.getIdentifier(), identifierRef.getAccountIdentifier(),
+            identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier()),
+        errorMSg);
+    if (secretResponseWrapper == null) {
+      throw new InvalidRequestException(errorMSg);
+    }
+
+    return secretResponseWrapper.getSecret().getSpec();
   }
 
   @Override
