@@ -71,22 +71,21 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
     ILogStreamingStepClient logStreamingStepClient = logStreamingStepClientFactory.getLogStreamingStepClient(ambiance);
     logStreamingStepClient.openStream(ShellScriptTaskNG.COMMAND_UNIT);
     ShellScriptStepParameters shellScriptStepParameters = (ShellScriptStepParameters) stepParameters.getSpec();
+    TaskParameters taskParameters =
+        shellScriptHelperService.buildShellScriptTaskParametersNG(ambiance, shellScriptStepParameters);
 
     switch (shellScriptStepParameters.getShell()) {
       case Bash:
-        return obtainBashTask(ambiance, stepParameters, shellScriptStepParameters);
+        return obtainBashTask(ambiance, stepParameters, shellScriptStepParameters, taskParameters);
       case PowerShell:
-        return obtainPowerShellTask(ambiance, stepParameters, shellScriptStepParameters);
+        return obtainPowerShellTask(ambiance, stepParameters, shellScriptStepParameters, taskParameters);
       default:
         throw new UnsupportedOperationException("Shell type not supported: " + shellScriptStepParameters.getShell());
     }
   }
 
-  private TaskRequest obtainBashTask(
-      Ambiance ambiance, StepElementParameters stepParameters, ShellScriptStepParameters shellScriptStepParameters) {
-    TaskParameters taskParameters =
-        shellScriptHelperService.buildShellScriptTaskParametersNG(ambiance, shellScriptStepParameters);
-
+  private TaskRequest obtainBashTask(Ambiance ambiance, StepElementParameters stepParameters,
+      ShellScriptStepParameters shellScriptStepParameters, TaskParameters taskParameters) {
     TaskData taskData =
         TaskData.builder()
             .async(true)
@@ -101,11 +100,8 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
         stepHelper.getEnvironmentType(ambiance));
   }
 
-  private TaskRequest obtainPowerShellTask(
-      Ambiance ambiance, StepElementParameters stepParameters, ShellScriptStepParameters shellScriptStepParameters) {
-    TaskParameters taskParameters =
-        shellScriptHelperService.buildShellScriptTaskParametersNG(ambiance, shellScriptStepParameters);
-
+  private TaskRequest obtainPowerShellTask(Ambiance ambiance, StepElementParameters stepParameters,
+      ShellScriptStepParameters shellScriptStepParameters, TaskParameters taskParameters) {
     TaskData taskData =
         TaskData.builder()
             .async(true)
