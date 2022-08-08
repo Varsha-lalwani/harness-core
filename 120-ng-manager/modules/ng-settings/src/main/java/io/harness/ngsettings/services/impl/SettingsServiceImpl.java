@@ -312,10 +312,13 @@ public class SettingsServiceImpl implements SettingsService {
       settingDTO =
           settingsMapper.writeNewDTO(orgIdentifier, projectIdentifier, settingRequestDTO, settingConfiguration, true);
     }
+    Setting parentSetting = getSettingFromParentScope(Scope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        settingRequestDTO.getIdentifier(), settingConfiguration);
     return Failsafe.with(DEFAULT_TRANSACTION_RETRY_POLICY).get(() -> transactionTemplate.execute(status -> {
       setting.ifPresent(settingRepository::delete);
       outboxService.save(new SettingRestoreEvent(accountIdentifier, oldSettingDTO, settingDTO));
-      return settingsMapper.writeSettingResponseDTO(settingConfiguration, true);
+      return settingsMapper.writeSettingResponseDTO(
+          parentSetting, settingConfiguration, true, parentSetting.getValue());
     }));
   }
 
