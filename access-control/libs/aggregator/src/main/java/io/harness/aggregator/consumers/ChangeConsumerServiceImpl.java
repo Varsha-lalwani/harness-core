@@ -81,13 +81,13 @@ public class ChangeConsumerServiceImpl implements ChangeConsumerService {
 
   @Override
   public List<ACL> getImplicitACLsForRoleAssignment(RoleAssignmentDBO roleAssignment) {
-    Set<String> principals = getPrincipalsFromRoleAssignment(roleAssignment);
-    Set<String> permissionsFromRole = getPermissionsFromRole(roleAssignment);
     Optional<ResourceGroup> resourceGroup = resourceGroupService.get(
         roleAssignment.getResourceGroupIdentifier(), roleAssignment.getScopeIdentifier(), ManagedFilter.NO_FILTER);
     if (!resourceGroup.isPresent() || resourceGroup.get().getScopeSelectors() == null) {
       return new ArrayList<>();
     }
+    Set<String> principals = getPrincipalsFromRoleAssignment(roleAssignment);
+    Set<String> permissionsFromRole = getPermissionsFromRole(roleAssignment);
     List<ACL> acls = new ArrayList<>();
     for (ScopeSelector scopeSelector : resourceGroup.get().getScopeSelectors()) {
       Scope currentScope = scopeSelector.getScopeIdentifier() == null
