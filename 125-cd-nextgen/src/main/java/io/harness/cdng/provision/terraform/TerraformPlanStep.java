@@ -59,6 +59,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -104,6 +105,12 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
         TerraformStepHelper.prepareEntityDetailsForVarFiles(accountId, orgIdentifier, projectIdentifier, varFiles);
     entityDetailList.addAll(varFilesEntityDetails);
 
+    //Backend Config connector
+    TerraformBackendConfig backendConfig = stepParametersSpec.getConfiguration().getBackendConfig();
+    Optional<EntityDetail> bcFileEntityDetails =
+            TerraformStepHelper.prepareEntityDetailForBackendConfigFiles(accountId, orgIdentifier, projectIdentifier, backendConfig);
+    bcFileEntityDetails.ifPresent(entityDetailList::add);
+
     // Secret Manager Connector
     String secretManagerRef = stepParametersSpec.getConfiguration().getSecretManagerRef().getValue();
     identifierRef = IdentifierRefHelper.getIdentifierRef(secretManagerRef, accountId, orgIdentifier, projectIdentifier);
@@ -139,6 +146,7 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
             configuration.getConfigFiles().getStore().getSpec(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
         .varFileInfos(helper.toTerraformVarFileInfo(configuration.getVarFiles(), ambiance))
         .backendConfig(helper.getBackendConfig(configuration.getBackendConfig()))
+        .backendConfigFileInfo(helper.toTerraformBackendFileInfo(configuration.getBackendConfig(), ambiance))
         .targets(ParameterFieldHelper.getParameterFieldValue(configuration.getTargets()))
         .saveTerraformStateJson(
             featureFlagHelper.isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.EXPORT_TF_PLAN_JSON_NG)

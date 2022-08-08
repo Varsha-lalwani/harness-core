@@ -10,6 +10,7 @@ package io.harness.cdng.provision.terraform;
 import static io.harness.cdng.provision.terraform.TerraformPlanCommand.APPLY;
 import static io.harness.delegate.beans.connector.ConnectorType.GITHUB;
 import static io.harness.rule.OwnerRule.ABOSII;
+import static io.harness.rule.OwnerRule.JELENA;
 import static io.harness.rule.OwnerRule.NAMAN_TALAYCHA;
 import static io.harness.rule.OwnerRule.NGONZALEZ;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
@@ -105,6 +106,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -801,6 +804,44 @@ public class TerraformStepHelperTest extends CategoryTest {
     assertThat(entityDetail.getEntityRef().getOrgIdentifier()).isEqualTo("test-org");
     assertThat(entityDetail.getEntityRef().getProjectIdentifier()).isEqualTo("test-project");
     assertThat(entityDetail.getEntityRef().getAccountIdentifier()).isEqualTo("test-account");
+  }
+
+  @Test
+  @Owner(developers = JELENA)
+  @Category(UnitTests.class)
+  public void testPrepareEntityDetailForBackendConfigFileInline() {
+    TerraformBackendConfig inlineConfig = TerraformStepDataGenerator.generateInlineBackendConfigFile();
+    Optional<EntityDetail> entityDetail =
+            helper.prepareEntityDetailForBackendConfigFiles("test-account", "test-org", "test-project", inlineConfig);
+    assertThat(entityDetail.isPresent()).isTrue();
+    assertThat(entityDetail.get().getEntityRef().getIdentifier()).isEqualTo("ConnectorRef");
+    assertThat(entityDetail.get().getEntityRef().getOrgIdentifier()).isEqualTo("test-org");
+    assertThat(entityDetail.get().getEntityRef().getProjectIdentifier()).isEqualTo("test-project");
+    assertThat(entityDetail.get().getEntityRef().getAccountIdentifier()).isEqualTo("test-account");
+  }
+
+  @Test
+  @Owner(developers = JELENA)
+  @Category(UnitTests.class)
+  public void testPrepareEntityDetailForBackendConfigFileRemote() {
+    TerraformStepDataGenerator.GitStoreConfig gitStoreVarFiles =
+            TerraformStepDataGenerator.GitStoreConfig.builder()
+                    .branch("master")
+                    .fetchType(FetchType.BRANCH)
+                    .folderPath(ParameterField.createValueField("VarFiles/"))
+                    .varFolderPath(ParameterField.createValueField(Collections.singletonList("VarFiles/")))
+                    .connectoref(ParameterField.createValueField("ConnectorRef"))
+                    .build();
+    RemoteTerraformBackendConfigSpec remoteFile =
+            TerraformStepDataGenerator.generateRemoteBackendConfigFileSpec(StoreConfigType.GITLAB, gitStoreVarFiles);
+    TerraformBackendConfig remoteConfig = TerraformStepDataGenerator.generateRemoteBackendConfigFile(remoteFile);
+    Optional<EntityDetail> entityDetail =
+            helper.prepareEntityDetailForBackendConfigFiles("test-account", "test-org", "test-project", remoteConfig);
+    assertThat(entityDetail.isPresent()).isTrue();
+    assertThat(entityDetail.get().getEntityRef().getIdentifier()).isEqualTo("ConnectorRef");
+    assertThat(entityDetail.get().getEntityRef().getOrgIdentifier()).isEqualTo("test-org");
+    assertThat(entityDetail.get().getEntityRef().getProjectIdentifier()).isEqualTo("test-project");
+    assertThat(entityDetail.get().getEntityRef().getAccountIdentifier()).isEqualTo("test-account");
   }
 
   @Test

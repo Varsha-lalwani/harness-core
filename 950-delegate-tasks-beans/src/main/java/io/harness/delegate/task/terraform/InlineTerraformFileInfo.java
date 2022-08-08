@@ -6,11 +6,18 @@
  */
 
 package io.harness.delegate.task.terraform;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.expression.Expression;
+import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
-@SuperBuilder
+import static io.harness.expression.Expression.ALLOW_SECRETS;
+
+@Data
 @OwnedBy(HarnessTeam.CDP)
-public class InlineTerraformVarFileInfo extends InlineTerraformFileInfo implements TerraformVarFileInfo {
+@SuperBuilder
+public abstract class InlineTerraformFileInfo {
+  @Expression(ALLOW_SECRETS) String varFileContent;
 }

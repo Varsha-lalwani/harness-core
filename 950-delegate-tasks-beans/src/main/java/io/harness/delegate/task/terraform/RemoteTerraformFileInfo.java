@@ -6,11 +6,18 @@
  */
 
 package io.harness.delegate.task.terraform;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.task.filestore.FileStoreFetchFilesConfig;
+import io.harness.delegate.task.git.GitFetchFilesConfig;
+import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
-@SuperBuilder
+@Data
 @OwnedBy(HarnessTeam.CDP)
-public class InlineTerraformVarFileInfo extends InlineTerraformFileInfo implements TerraformVarFileInfo {
+@SuperBuilder
+public abstract class RemoteTerraformFileInfo {
+  GitFetchFilesConfig gitFetchFilesConfig;
+  FileStoreFetchFilesConfig filestoreFetchFilesConfig;
 }

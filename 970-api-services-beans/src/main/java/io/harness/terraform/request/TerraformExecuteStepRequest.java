@@ -30,6 +30,7 @@ public class TerraformExecuteStepRequest {
   String tfBackendConfigsFile;
   String tfOutputsFile;
   List<String> tfVarFilePaths;
+  List<String> tfBackendConfigFilePaths;
   String varParams; // Needed to send inline variable values in CG
   String uiLogs; // Needed to NOT log secrets in CG
   @Nonnull @NotEmpty String scriptDirectory;

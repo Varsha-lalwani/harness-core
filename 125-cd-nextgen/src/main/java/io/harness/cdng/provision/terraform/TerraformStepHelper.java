@@ -56,9 +56,12 @@ import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.filestore.FileStoreFetchFilesConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
+import io.harness.delegate.task.terraform.InlineTerraformBackendConfigFileInfo;
 import io.harness.delegate.task.terraform.InlineTerraformVarFileInfo;
+import io.harness.delegate.task.terraform.RemoteTerraformBackendConfigFileInfo;
 import io.harness.delegate.task.terraform.RemoteTerraformVarFileInfo;
 import io.harness.delegate.task.terraform.RemoteTerraformVarFileInfo.RemoteTerraformVarFileInfoBuilder;
+import io.harness.delegate.task.terraform.TerraformBackendConfigFileInfo;
 import io.harness.delegate.task.terraform.TerraformTaskNGResponse;
 import io.harness.delegate.task.terraform.TerraformVarFileInfo;
 import io.harness.exception.ExceptionUtils;
@@ -99,6 +102,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -115,6 +119,7 @@ public class TerraformStepHelper {
   private static final String TF_INHERIT_OUTPUT_FORMAT = "tfInheritOutput_%s_%s";
   public static final String TF_CONFIG_FILES = "TF_CONFIG_FILES";
   public static final String TF_VAR_FILES = "TF_VAR_FILES_%d";
+  public static final String TF_BACKEND_CONFIG_FILE = "TF_BACKEND_CONFIG_FILE";
   public static final String USE_CONNECTOR_CREDENTIALS = "useConnectorCredentials";
 
   @Inject private HPersistence persistence;
@@ -127,6 +132,20 @@ public class TerraformStepHelper {
   @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
   @Inject private CDStepHelper cdStepHelper;
   @Inject public TerraformConfigDAL terraformConfigDAL;
+
+  public static Optional<EntityDetail> prepareEntityDetailForBackendConfigFiles(String accountId, String orgIdentifier, String projectIdentifier, TerraformBackendConfig config) {
+    if (config == null || config.getType().equals(TerraformVarFileTypes.Inline)) {return Optional.empty(); }
+    String connectorRef = ((RemoteTerraformBackendConfigSpec) config.getTerraformBackendConfigSpec())
+            .getStore()
+            .getSpec()
+            .getConnectorReference()
+            .getValue();
+    IdentifierRef identifierRef =
+            IdentifierRefHelper.getIdentifierRef(connectorRef, accountId, orgIdentifier, projectIdentifier);
+    EntityDetail entityDetail =
+            EntityDetail.builder().type(EntityType.CONNECTORS).entityRef(identifierRef).build();
+    return Optional.of(entityDetail);
+    }
 
   public static List<EntityDetail> prepareEntityDetailsForVarFiles(
       String accountId, String orgIdentifier, String projectIdentifier, Map<String, TerraformVarFile> varFiles) {
@@ -171,10 +190,15 @@ public class TerraformStepHelper {
     String connectorId = gitStoreConfig.getConnectorRef().getValue();
     ConnectorInfoDTO connectorDTO = cdStepHelper.getConnector(connectorId, ambiance);
     String validationMessage = "";
-    if (identifier.equals(TerraformStepHelper.TF_CONFIG_FILES)) {
-      validationMessage = "Config Files";
-    } else {
-      validationMessage = format("Var Files with identifier: %s", identifier);
+    switch (identifier) {
+      case TerraformStepHelper.TF_CONFIG_FILES:
+        validationMessage = "Config Files";
+        break;
+      case TerraformStepHelper.TF_VAR_FILES:
+        validationMessage = "Backend Configuration Files";
+        break;
+      default:
+        validationMessage = format("Var Files with identifier: %s", identifier);
     }
     // TODO: fix manifest part, remove k8s dependency
     cdStepHelper.validateManifest(store.getKind(), connectorDTO, validationMessage);
@@ -225,13 +249,18 @@ public class TerraformStepHelper {
     String connectorId = ParameterFieldHelper.getParameterFieldValue(artifactoryStoreConfig.getConnectorRef());
     ConnectorInfoDTO connectorDTO = cdStepHelper.getConnector(connectorId, ambiance);
     String validationMessage = "";
-    if (identifier.equals(TerraformStepHelper.TF_CONFIG_FILES)) {
-      if (ParameterFieldHelper.getParameterFieldValue(artifactoryStoreConfig.getArtifactPaths()).size() > 1) {
-        throw new InvalidRequestException("Config file should not contain more than one file path");
-      }
-      validationMessage = "Config Files";
-    } else {
-      validationMessage = format("Var Files with identifier: %s", identifier);
+    switch (identifier) {
+      case TerraformStepHelper.TF_CONFIG_FILES:
+        if (ParameterFieldHelper.getParameterFieldValue(artifactoryStoreConfig.getArtifactPaths()).size() > 1) {
+          throw new InvalidRequestException("Config file should not contain more than one file path");
+        }
+        validationMessage = "Config Files";
+        break;
+      case TerraformStepHelper.TF_BACKEND_CONFIG_FILE:
+        validationMessage = "Backend Configuration File";
+        break;
+      default:
+        validationMessage = format("Var Files with identifier: %s", identifier);
     }
     cdStepHelper.validateManifest(store.getKind(), connectorDTO, validationMessage);
     NGAccess basicNGAccessObject = AmbianceUtils.getNgAccess(ambiance);
@@ -636,6 +665,37 @@ public class TerraformStepHelper {
   }
 
   // Conversion Methods
+
+  public TerraformBackendConfigFileInfo toTerraformBackendFileInfo(TerraformBackendConfig backendConfig, Ambiance ambiance) {
+    TerraformBackendConfigFileInfo fileInfo = null;
+    if (backendConfig != null) {
+      TerraformBackendConfigSpec spec = backendConfig.getTerraformBackendConfigSpec();
+      if (spec instanceof InlineTerraformBackendConfigSpec) {
+        String content =
+                ParameterFieldHelper.getParameterFieldValue(((InlineTerraformBackendConfigSpec) spec).getContent());
+        if (EmptyPredicate.isNotEmpty(content)) {
+          fileInfo = InlineTerraformBackendConfigFileInfo.builder().varFileContent(content).build();
+        }
+      } else if (spec instanceof RemoteTerraformBackendConfigSpec) {
+        StoreConfigWrapper storeConfigWrapper = ((RemoteTerraformBackendConfigSpec) spec).getStore();
+        if (storeConfigWrapper != null) {
+          StoreConfig storeConfig = storeConfigWrapper.getSpec();
+          // Retrieve the files from the GIT stores
+          GitFetchFilesConfig gitFetchFilesConfig =
+                  getGitFetchFilesConfig(storeConfig, ambiance, TF_BACKEND_CONFIG_FILE);
+          // And retrive the files from the Files stores
+          FileStoreFetchFilesConfig fileFetchFilesConfig =
+                  getFileStoreFetchFilesConfig(storeConfig, ambiance, TF_BACKEND_CONFIG_FILE);
+          fileInfo = RemoteTerraformBackendConfigFileInfo.builder()
+                  .gitFetchFilesConfig(gitFetchFilesConfig)
+                  .filestoreFetchFilesConfig(fileFetchFilesConfig)
+                  .build();
+        }
+      }
+    }
+    return fileInfo;
+  }
+
   public List<TerraformVarFileInfo> toTerraformVarFileInfo(
       Map<String, TerraformVarFile> varFilesMap, Ambiance ambiance) {
     if (EmptyPredicate.isNotEmpty(varFilesMap)) {
