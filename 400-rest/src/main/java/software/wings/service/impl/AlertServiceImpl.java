@@ -185,6 +185,7 @@ public class AlertServiceImpl implements AlertService {
   }
 
   private void openInternal(String accountId, String appId, AlertType alertType, AlertData alertData, Date validUntil) {
+    log.info("Thala, open Internal with validUntil is being called");
     try (AutoLogContext ignore = new AlertLogContext(accountId, alertType, appId, OVERRIDE_ERROR)) {
       Alert alert = findExistingAlert(accountId, appId, alertType, alertData).orElse(null);
       if (alert == null) {
@@ -198,6 +199,9 @@ public class AlertServiceImpl implements AlertService {
   }
 
   private void postProcessAlertAfterCreating(String accountId, Alert alert, AlertType alertType) {
+    log.info("Processing the alert");
+    log.info("Alert trigger count is {}", alert.getTriggerCount());
+    log.info("AlertType pending count is {}", alertType.getPendingCount());
     AlertStatus status = alert.getTriggerCount() >= alertType.getPendingCount() ? Open : Pending;
 
     UpdateOperations<Alert> updateOperations = wingsPersistence.createUpdateOperations(Alert.class);
@@ -227,6 +231,7 @@ public class AlertServiceImpl implements AlertService {
   }
 
   private void openInternal(String accountId, String appId, AlertType alertType, AlertData alertData) {
+    log.info("Thala, open Internal without validUntil is being called");
     try (AutoLogContext ignore = new AlertLogContext(accountId, alertType, appId, OVERRIDE_ERROR)) {
       Alert alert = findExistingAlert(accountId, appId, alertType, alertData).orElse(null);
       if (alert == null) {
