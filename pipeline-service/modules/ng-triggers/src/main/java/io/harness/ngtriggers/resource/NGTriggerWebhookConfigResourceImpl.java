@@ -33,7 +33,6 @@ import io.harness.ngtriggers.helpers.UrlHelper;
 import io.harness.ngtriggers.helpers.WebhookConfigHelper;
 import io.harness.ngtriggers.mapper.NGTriggerElementMapper;
 import io.harness.ngtriggers.service.NGTriggerService;
-import io.harness.ngtriggers.utils.CustomWebhookTriggerResponseUtils;
 import io.harness.ngtriggers.validations.TriggerWebhookValidator;
 import io.harness.utils.YamlPipelineUtils;
 
@@ -168,11 +167,10 @@ public class NGTriggerWebhookConfigResourceImpl implements NGTriggerWebhookConfi
       return ResponseDTO.newResponse(
           NGProcessWebhookResponseDTO.builder()
               .eventCorrelationId(uuid)
-              .apiUrl(CustomWebhookTriggerResponseUtils.buildApiExecutionUrl(uriInfo, uuid, accountIdentifier))
-              .uiUrl(CustomWebhookTriggerResponseUtils.buildUiUrl(urlHelper.getBaseUrl(accountIdentifier),
-                  accountIdentifier, orgIdentifier, projectIdentifier, pipelineIdentifier))
-              .uiSetupUrl(CustomWebhookTriggerResponseUtils.buildUiSetupUrl(urlHelper.getBaseUrl(accountIdentifier),
-                  accountIdentifier, orgIdentifier, projectIdentifier, pipelineIdentifier))
+              .apiUrl(urlHelper.buildApiExecutionUrl(uriInfo, uuid, accountIdentifier))
+              .uiUrl(urlHelper.buildUiUrl(accountIdentifier, orgIdentifier, projectIdentifier, pipelineIdentifier))
+              .uiSetupUrl(
+                  urlHelper.buildUiSetupUrl(accountIdentifier, orgIdentifier, projectIdentifier, pipelineIdentifier))
               .build());
     } else {
       return ResponseDTO.newResponse(
