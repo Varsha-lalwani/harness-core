@@ -16,15 +16,18 @@ import static io.harness.template.beans.NGTemplateConstants.TEMPLATE_VERSION_LAB
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.NGTemplateException;
 import io.harness.exception.ngexception.beans.templateservice.TemplateInputsErrorMetadataDTO;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.ng.core.template.TemplateReferenceSummary;
+import io.harness.ng.core.template.TemplateRetainVariablesResponse;
 import io.harness.ng.core.template.exception.NGTemplateResolveException;
 import io.harness.ng.core.template.exception.NGTemplateResolveExceptionV2;
 import io.harness.pms.merger.YamlConfig;
 import io.harness.pms.merger.fqn.FQN;
 import io.harness.pms.merger.fqn.FQNNode;
+import io.harness.pms.merger.helpers.YamlRefreshHelper;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.template.beans.refresh.ValidateTemplateInputsResponseDTO;
@@ -109,6 +112,30 @@ public class TemplateMergeServiceImpl implements TemplateMergeService {
     }
     return getTemplateMergeResponseDTO(
         accountId, orgId, projectId, yaml, getMergedYamlWithTemplateField, yamlNode, templateCacheMap);
+  }
+
+  @Override
+  public TemplateRetainVariablesResponse updateTemplateInputs(String sourceYaml, String yamlToBeUpdated) {
+    JsonNode sourceInputSetFormatJsonNode;
+    JsonNode yamlToBeUpdatedJsonNode;
+    try {
+      sourceInputSetFormatJsonNode = YamlUtils.readTree(sourceYaml).getNode().getCurrJsonNode();
+      yamlToBeUpdatedJsonNode = YamlUtils.readTree(yamlToBeUpdated).getNode().getCurrJsonNode();
+    } catch (IOException e) {
+      throw new InvalidRequestException("Couldn't convert sourceNodeInputSetFormatYaml to JsonNode");
+    }
+    JsonNode updatedJsonNode =
+        YamlRefreshHelper.refreshNodeFromSourceNode(sourceInputSetFormatJsonNode, yamlToBeUpdatedJsonNode);
+    return TemplateRetainVariablesResponse.builder().mergedTemplateInputs(convertToYaml(updatedJsonNode)).build();
+  }
+
+  private String convertToYaml(JsonNode jsonNode) {
+    if (jsonNode == null) {
+      return "";
+    }
+    String yaml = YamlUtils.write(jsonNode).replaceFirst("---\n", "");
+    // removing last \n from string to simplify test
+    return yaml.substring(0, yaml.length() - 1);
   }
 
   private TemplateMergeResponseDTO getTemplateMergeResponseDTO(String accountId, String orgId, String projectId,

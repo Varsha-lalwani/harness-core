@@ -41,6 +41,9 @@ import io.harness.ng.core.template.TemplateListType;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.ng.core.template.TemplateMetadataSummaryResponseDTO;
 import io.harness.ng.core.template.TemplateReferenceRequestDTO;
+import io.harness.ng.core.template.TemplateReferenceSummary;
+import io.harness.ng.core.template.TemplateRetainVariablesRequestDTO;
+import io.harness.ng.core.template.TemplateRetainVariablesResponse;
 import io.harness.ng.core.template.TemplateSummaryResponseDTO;
 import io.harness.pms.contracts.service.VariableMergeResponseProto;
 import io.harness.pms.contracts.service.VariablesServiceGrpc.VariablesServiceBlockingStub;
@@ -721,5 +724,23 @@ public class NGTemplateResource {
       @NotNull TemplateReferenceRequestDTO templateReferenceRequestDTO) {
     return ResponseDTO.newResponse(templateReferenceHelper.getNestedTemplateReferences(
         accountId, orgId, projectId, templateReferenceRequestDTO.getYaml(), false));
+  }
+
+  @POST
+  @Path("/retainTemplateVariables")
+  @Operation(operationId = "retainTemplateVariables", summary = "retain Template Variables",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "default", description = "Retain the common templates variables when creating a new version")
+      })
+  @ApiOperation(value = "Retain variables for Template", nickname = "retainTemplateVariables")
+  @Hidden
+  public ResponseDTO<TemplateRetainVariablesResponse>
+  retainTemplateVariables(@NotNull TemplateRetainVariablesRequestDTO templateRetainVariablesRequestDTO) {
+    log.info("Retaining Template Variables for new template version");
+    return ResponseDTO.newResponse(
+        templateMergeService.updateTemplateInputs(templateRetainVariablesRequestDTO.getOriginalTemplateInputs(),
+            templateRetainVariablesRequestDTO.getTemplateInputsTobeUpdated()));
   }
 }
