@@ -10,6 +10,7 @@ package software.wings.service.impl.deployment.checks;
 import static io.harness.rule.OwnerRule.HINGER;
 import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.VINICIUS;
+
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.APP_ID;
 import static software.wings.utils.WingsTestConstants.ENV_ID;
@@ -31,12 +32,16 @@ import io.harness.beans.FeatureName;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.DeploymentFreezeException;
 import io.harness.ff.FeatureFlagService;
-import io.harness.governance.*;
+import io.harness.governance.AllEnvFilter;
+import io.harness.governance.BlackoutWindowFilterType;
+import io.harness.governance.CustomAppFilter;
 import io.harness.governance.EnvironmentFilter.EnvironmentFilterType;
+import io.harness.governance.ServiceFilter;
 import io.harness.governance.ServiceFilter.ServiceFilterType;
+import io.harness.governance.TimeRangeBasedFreezeConfig;
+import io.harness.governance.TimeRangeOccurrence;
 import io.harness.rule.Owner;
 
-import org.assertj.core.api.Assertions;
 import software.wings.WingsBaseTest;
 import software.wings.beans.governance.GovernanceConfig;
 import software.wings.resources.stats.model.TimeRange;
@@ -49,6 +54,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -231,12 +237,13 @@ public class DeploymentFreezeCheckerTest extends WingsBaseTest {
     GovernanceConfig governanceConfig = generateGovernanceConfig();
     governanceConfig.getTimeRangeBasedFreezeConfigs().get(0).getAppSelections().get(0).setServiceSelection(
         new ServiceFilter(ServiceFilterType.CUSTOM, Arrays.asList(SERVICE_ID, SERVICE_ID + 1)));
-    governanceConfig.getTimeRangeBasedFreezeConfigs().get(0).setExcludeAppSelections(asList(CustomAppFilter.builder()
-        .apps(asList(APP_ID))
-        .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
-        .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
-        .serviceSelection(new ServiceFilter(ServiceFilterType.CUSTOM, Arrays.asList(SERVICE_ID, SERVICE_ID + 1)))
-        .build()));
+    governanceConfig.getTimeRangeBasedFreezeConfigs().get(0).setExcludeAppSelections(asList(
+        CustomAppFilter.builder()
+            .apps(asList(APP_ID))
+            .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
+            .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.CUSTOM, Arrays.asList(SERVICE_ID, SERVICE_ID + 1)))
+            .build()));
 
     DeploymentFreezeChecker deploymentFreezeChecker = new DeploymentFreezeChecker(governanceConfigService,
         new DeploymentCtx(APP_ID, Collections.singletonList(ENV_ID + 2), Collections.singletonList(SERVICE_ID)),
