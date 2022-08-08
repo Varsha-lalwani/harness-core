@@ -59,6 +59,16 @@ public class AzureTask extends AbstractDelegateRunnableTask {
         ConnectorValidationResult connectorValidationResult = azureValidationHandler.validate(azureTaskParams);
         connectorValidationResult.setDelegateId(getDelegateId());
         return AzureValidateTaskResponse.builder().connectorValidationResult(connectorValidationResult).build();
+      case LIST_MNG_GROUP:
+        return azureAsyncTaskHelper.listMngGroup(
+            azureTaskParams.getEncryptionDetails(), azureTaskParams.getAzureConnector());
+      case LIST_SUBSCRIPTION_LOCATIONS:
+        validateAzureResourceExist(azureTaskParams,
+            "Could not retrieve any location id because of invalid parameter(s)",
+            AzureAdditionalParams.SUBSCRIPTION_ID);
+        return azureAsyncTaskHelper.listSubscriptionLocations(azureTaskParams.getEncryptionDetails(),
+            azureTaskParams.getAzureConnector(),
+            azureTaskParams.getAdditionalParams().get(AzureAdditionalParams.SUBSCRIPTION_ID));
       case LIST_SUBSCRIPTIONS:
         return azureAsyncTaskHelper.listSubscriptions(
             azureTaskParams.getEncryptionDetails(), azureTaskParams.getAzureConnector());

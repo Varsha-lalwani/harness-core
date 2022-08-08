@@ -7,6 +7,8 @@
 
 package io.harness.cdng.k8s.resources.azure.service;
 
+import static io.harness.delegate.task.azure.arm.AzureARMTaskType.LIST_MNG_GROUP;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
@@ -17,6 +19,8 @@ import io.harness.cdng.k8s.resources.azure.dtos.AzureClusterDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureClustersDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureDeploymentSlotDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureDeploymentSlotsDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureLocationsDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureManagementGroupsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureResourceGroupDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureResourceGroupsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureSubscriptionDTO;
@@ -24,6 +28,8 @@ import io.harness.cdng.k8s.resources.azure.dtos.AzureSubscriptionsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureWebAppNamesDTO;
 import io.harness.delegate.beans.azure.response.AzureClustersResponse;
 import io.harness.delegate.beans.azure.response.AzureDeploymentSlotsResponse;
+import io.harness.delegate.beans.azure.response.AzureLocationsResponse;
+import io.harness.delegate.beans.azure.response.AzureMngGroupsResponse;
 import io.harness.delegate.beans.azure.response.AzureResourceGroupsResponse;
 import io.harness.delegate.beans.azure.response.AzureSubscriptionsResponse;
 import io.harness.delegate.beans.azure.response.AzureTagsResponse;
@@ -32,8 +38,13 @@ import io.harness.delegate.beans.connector.azureconnector.AzureAdditionalParams;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureTaskParams;
 import io.harness.delegate.beans.connector.azureconnector.AzureTaskType;
+import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
+import io.harness.delegate.task.azure.arm.AzureARMTaskType;
+import io.harness.delegate.task.azure.arm.AzureTaskNGParameters;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.security.encryption.EncryptedDataDetail;
+
+import software.wings.service.impl.azure.manager.AzureTaskExecutionRequest;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -228,5 +239,45 @@ public class AzureResourceServiceImpl implements AzureResourceService {
                   .map(tag -> AzureTagDTO.builder().tag(tag).build())
                   .collect(Collectors.toList()))
         .build();
+  }
+
+  @Override
+  public AzureManagementGroupsDTO getResourceManagement(
+      IdentifierRef connectorRef, String orgIdentifier, String projectIdentifier) {
+    AzureConnectorDTO connector = azureHelperService.getConnector(connectorRef);
+    BaseNGAccess baseNGAccess =
+        azureHelperService.getBaseNGAccess(connectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
+    List<EncryptedDataDetail> encryptionDetails = azureHelperService.getEncryptionDetails(connector, baseNGAccess);
+
+    AzureTaskParams azureTaskParamsTaskParams = AzureTaskParams.builder()
+                                                    .azureTaskType(AzureTaskType.LIST_MNG_GROUP)
+                                                    .azureConnector(connector)
+                                                    .encryptionDetails(encryptionDetails)
+                                                    .delegateSelectors(connector.getDelegateSelectors())
+                                                    .build();
+    AzureMngGroupsResponse response = (AzureMngGroupsResponse) azureHelperService.executeSyncTask(
+        azureTaskParamsTaskParams, baseNGAccess, "Azure list management groups task failure due to error");
+    return AzureManagementGroupsDTO.builder().managementGroups(response.getManagementGroups()).build();
+  }
+
+  @Override
+  public AzureLocationsDTO getLocationsBySubscription(
+      IdentifierRef connectorRef, String orgIdentifier, String projectIdentifier, String subscriptionId) {
+    AzureConnectorDTO connector = azureHelperService.getConnector(connectorRef);
+    BaseNGAccess baseNGAccess =
+        azureHelperService.getBaseNGAccess(connectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
+    List<EncryptedDataDetail> encryptionDetails = azureHelperService.getEncryptionDetails(connector, baseNGAccess);
+    Map<AzureAdditionalParams, String> additionalParams =
+        Collections.singletonMap(AzureAdditionalParams.SUBSCRIPTION_ID, subscriptionId);
+    AzureTaskParams azureTaskParamsTaskParams = AzureTaskParams.builder()
+                                                    .azureTaskType(AzureTaskType.LIST_SUBSCRIPTION_LOCATIONS)
+                                                    .azureConnector(connector)
+                                                    .encryptionDetails(encryptionDetails)
+                                                    .delegateSelectors(connector.getDelegateSelectors())
+                                                    .additionalParams(additionalParams)
+                                                    .build();
+    AzureLocationsResponse response = (AzureLocationsResponse) azureHelperService.executeSyncTask(
+        azureTaskParamsTaskParams, baseNGAccess, "Azure list locations task failure due to error");
+    return AzureLocationsDTO.builder().locations(response.getLocations()).build();
   }
 }
