@@ -38,7 +38,6 @@ import io.harness.ng.core.environment.services.EnvironmentService;
 import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
 import io.harness.ng.core.service.yaml.NGServiceV2InfoConfig;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
-import io.harness.ng.core.serviceoverride.mapper.NGServiceOverrideEntityConfigMapper;
 import io.harness.ng.core.serviceoverride.services.ServiceOverrideService;
 import io.harness.ng.core.serviceoverride.yaml.NGServiceOverrideConfig;
 import io.harness.ng.core.serviceoverride.yaml.NGServiceOverrideInfoConfig;
@@ -212,12 +211,12 @@ public class ServiceDefinitionPlanCreatorHelper {
 
   String addDependenciesForManifestsV2(YamlNode serviceV2Node,
       Map<String, PlanCreationResponse> planCreationResponseMap, NGServiceV2InfoConfig serviceV2Config,
-      Optional<NGServiceOverridesEntity> serviceOverridesEntities, NGEnvironmentConfig ngEnvironmentConfig,
+      NGServiceOverrideConfig serviceOverrideConfig, NGEnvironmentConfig ngEnvironmentConfig,
       KryoSerializer kryoSerializer) throws IOException {
     YamlUpdates.Builder yamlUpdates = YamlUpdates.newBuilder();
 
     List<ManifestConfigWrapper> finalManifests =
-        prepareFinalManifests(serviceV2Config, serviceOverridesEntities, ngEnvironmentConfig);
+        prepareFinalManifests(serviceV2Config, serviceOverrideConfig, ngEnvironmentConfig);
 
     // in case no manifest is present no node should be created
     if (isEmpty(finalManifests)) {
@@ -260,22 +259,19 @@ public class ServiceDefinitionPlanCreatorHelper {
 
   @NotNull
   private List<ManifestConfigWrapper> prepareFinalManifests(NGServiceV2InfoConfig serviceV2Config,
-      Optional<NGServiceOverridesEntity> serviceOverridesEntities, NGEnvironmentConfig ngEnvironmentConfig) {
-    List<ManifestConfigWrapper> svcManifests;
-    List<ManifestConfigWrapper> svcOverrideManifests = new ArrayList<>();
-
-    svcManifests = fetchManifestFromServiceEntity(serviceV2Config);
+      NGServiceOverrideConfig serviceOverrideConfig, NGEnvironmentConfig ngEnvironmentConfig) {
+    final List<ManifestConfigWrapper> svcManifests = getManifests(serviceV2Config);
     List<ManifestConfigWrapper> finalManifests = new ArrayList<>(svcManifests);
 
-    if (serviceOverridesEntities.isPresent()) {
-      svcOverrideManifests = fetchSvcOverrideManifests(Collections.singletonList(serviceOverridesEntities.get()));
+    if (serviceOverrideConfig != null) {
+      final List<ManifestConfigWrapper> svcOverrideManifests =
+          fetchSvcOverrideManifests(Collections.singletonList(serviceOverrideConfig));
+      checkDuplicateManifestIdentifiers(svcManifests, svcOverrideManifests, serviceV2Config.getIdentifier(),
+          ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier());
+      validateAllowedManifestTypesInOverrides(svcOverrideManifests);
+      finalManifests.addAll(svcOverrideManifests);
     }
-    checkDuplicateManifestIdentifiers(svcManifests, svcOverrideManifests);
-    validateAllowedManifestTypesInOverrides(svcOverrideManifests);
-    finalManifests.addAll(svcOverrideManifests);
-
-    List<ManifestConfigWrapper> envGlobalManifests = fetchFilteredEnvGlobalManifests(ngEnvironmentConfig);
-    finalManifests.addAll(envGlobalManifests);
+    finalManifests.addAll(fetchFilteredEnvGlobalManifests(ngEnvironmentConfig));
 
     return finalManifests;
   }
@@ -312,8 +308,8 @@ public class ServiceDefinitionPlanCreatorHelper {
     }
   }
 
-  private static void checkDuplicateManifestIdentifiers(
-      List<ManifestConfigWrapper> svcManifests, List<ManifestConfigWrapper> svcOverrideManifests) {
+  private static void checkDuplicateManifestIdentifiers(List<ManifestConfigWrapper> svcManifests,
+      List<ManifestConfigWrapper> svcOverrideManifests, String svcIdentifier, String envIdentifier) {
     if (isEmpty(svcManifests) || isEmpty(svcOverrideManifests)) {
       return;
     }
@@ -327,19 +323,20 @@ public class ServiceDefinitionPlanCreatorHelper {
                                             .filter(overridesIdentifiers::contains)
                                             .collect(Collectors.toList());
     if (isNotEmpty(duplicateManifestIds)) {
-      throw new InvalidRequestException(format("Found duplicate manifest identifier in Service: %s",
-          duplicateManifestIds.stream().map(Object::toString).collect(Collectors.joining(","))));
+      throw new InvalidRequestException(
+          format("found duplicate manifest identifiers [%s] for service [%s] and environment [%s]",
+              duplicateManifestIds.stream().map(Object::toString).collect(Collectors.joining(",")), svcIdentifier,
+              envIdentifier));
     }
   }
 
-  private List<ManifestConfigWrapper> fetchManifestFromServiceEntity(NGServiceV2InfoConfig serviceV2Config) {
+  private List<ManifestConfigWrapper> getManifests(NGServiceV2InfoConfig serviceV2Config) {
     return CollectionUtils.emptyIfNull(serviceV2Config.getServiceDefinition().getServiceSpec().getManifests());
   }
 
   private List<ManifestConfigWrapper> fetchSvcOverrideManifests(
-      @NonNull List<NGServiceOverridesEntity> serviceOverridesEntities) {
-    return serviceOverridesEntities.stream()
-        .map(NGServiceOverrideEntityConfigMapper::toNGServiceOverrideConfig)
+      @NonNull List<NGServiceOverrideConfig> serviceOverrideConfigs) {
+    return serviceOverrideConfigs.stream()
         .map(NGServiceOverrideConfig::getServiceOverrideInfoConfig)
         .filter(Objects::nonNull)
         .map(NGServiceOverrideInfoConfig::getManifests)
