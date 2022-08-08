@@ -11,6 +11,7 @@ import static io.harness.exception.WingsException.USER_SRE;
 import static io.harness.ngtriggers.beans.source.NGTriggerType.ARTIFACT;
 import static io.harness.ngtriggers.beans.source.NGTriggerType.MANIFEST;
 
+import io.harness.account.AccountClient;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.TriggerException;
 import io.harness.ngtriggers.beans.dto.TriggerDetails;
@@ -37,6 +38,8 @@ public class PollingSubscriptionHelper {
   private final BuildTriggerHelper buildTriggerHelper;
   private final NGTriggerElementMapper ngTriggerElementMapper;
   private final GeneratorFactory generatorFactory;
+
+  @Inject private AccountClient accountClient;
 
   public PollingItem generatePollingItem(NGTriggerEntity ngTriggerEntity) {
     NGTriggerType triggerType = ngTriggerEntity.getType();
