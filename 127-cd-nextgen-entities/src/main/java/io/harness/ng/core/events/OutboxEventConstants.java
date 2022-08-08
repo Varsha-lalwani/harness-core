@@ -16,6 +16,8 @@ public class OutboxEventConstants {
   public static final String SERVICE_UPDATED = "ServiceUpdated";
   public static final String SERVICE_DELETED = "ServiceDeleted";
   public static final String SERVICE_UPSERTED = "ServiceUpserted";
+  public static final String SERVICE_OVERRIDE_UPSERTED = "ServiceOverrideUpserted";
+  public static final String SERVICE_OVERRIDE_DELETED = "ServiceDeleted";
   public static final String ENVIRONMENT_CREATED = "EnvironmentCreated";
   public static final String ENVIRONMENT_UPDATED = "EnvironmentUpdated";
   public static final String ENVIRONMENT_DELETED = "EnvironmentDeleted";

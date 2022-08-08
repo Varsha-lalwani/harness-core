@@ -22,6 +22,9 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.eventsframework.api.Producer;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
+import io.harness.ng.core.events.ServiceOverrideDeleteEvent;
+import io.harness.ng.core.events.ServiceOverrideUpsertEvent;
+import io.harness.ng.core.events.ServiceUpsertEvent;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity.NGServiceOverridesEntityKeys;
 import io.harness.ng.core.serviceoverride.services.ServiceOverrideService;
@@ -102,6 +105,13 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
             requestServiceOverride.getProjectIdentifier(), requestServiceOverride.getOrgIdentifier(),
             requestServiceOverride.getEnvironmentRef(), requestServiceOverride.getServiceRef()));
       }
+      outboxService.save(ServiceOverrideUpsertEvent.builder()
+                             .accountIdentifier(requestServiceOverride.getAccountId())
+                             .orgIdentifier(requestServiceOverride.getOrgIdentifier())
+                             .projectIdentifier(requestServiceOverride.getProjectIdentifier())
+                             .serviceOverride(requestServiceOverride)
+                             .build());
+
       // todo: events for outbox service
       return tempResult;
     }));
@@ -172,6 +182,12 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
               "Service Override for Service [%s], Environment [%s], Project[%s], Organization [%s] couldn't be deleted.",
               serviceRef, environmentRef, projectIdentifier, orgIdentifier));
         }
+        outboxService.save(ServiceOverrideDeleteEvent.builder()
+                               .accountIdentifier(accountId)
+                               .orgIdentifier(orgIdentifier)
+                               .projectIdentifier(projectIdentifier)
+                               .serviceOverride(entityOptional.get())
+                               .build());
         return true;
       }));
     } else {
