@@ -207,7 +207,7 @@ public class RoleAssignmentChangeConsumerImplTest extends AggregatorTestBase {
         .findByIdentifierAndScopeIdentifier(roleAssignmentDBO.getIdentifier(), roleAssignmentDBO.getScopeIdentifier());
     verify(roleAssignmentCRUDEventHandler, times(1)).handleRoleAssignmentCreate(roleAssignmentDBO);
     verify(roleService, times(1)).get(role.getIdentifier(), role.getScopeIdentifier(), ManagedFilter.NO_FILTER);
-    verify(resourceGroupService, times(1))
+    verify(resourceGroupService, times(2))
         .get(resourceGroup.getIdentifier(), resourceGroup.getScopeIdentifier(), ManagedFilter.NO_FILTER);
     if (roleAssignmentDBO.getPrincipalType().equals(USER_GROUP)) {
       verify(userGroupService, times(1)).get(userGroup.getIdentifier(), userGroup.getScopeIdentifier());

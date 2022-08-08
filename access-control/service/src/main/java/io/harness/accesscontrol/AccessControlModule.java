@@ -8,6 +8,9 @@
 package io.harness.accesscontrol;
 
 import static io.harness.AuthorizationServiceHeader.ACCESS_CONTROL_SERVICE;
+import static io.harness.accesscontrol.AccessControlPermissions.VIEW_ACCOUNT_PERMISSION;
+import static io.harness.accesscontrol.AccessControlPermissions.VIEW_ORGANIZATION_PERMISSION;
+import static io.harness.accesscontrol.AccessControlPermissions.VIEW_PROJECT_PERMISSION;
 import static io.harness.accesscontrol.principals.PrincipalType.SERVICE_ACCOUNT;
 import static io.harness.accesscontrol.principals.PrincipalType.USER;
 import static io.harness.accesscontrol.principals.PrincipalType.USER_GROUP;
@@ -333,17 +336,17 @@ public class AccessControlModule extends AbstractModule {
     MapBinder<Pair<ScopeLevel, Boolean>, Set<String>> implicitPermissionsByScope = MapBinder.newMapBinder(
         binder(), new TypeLiteral<Pair<ScopeLevel, Boolean>>() {}, new TypeLiteral<Set<String>>() {});
     implicitPermissionsByScope.addBinding(Pair.of(ACCOUNT, true))
-        .toInstance(Sets.newHashSet("core_account_view", "core_organization_view", "core_project_view"));
+        .toInstance(Sets.newHashSet(VIEW_ACCOUNT_PERMISSION, VIEW_ORGANIZATION_PERMISSION, VIEW_PROJECT_PERMISSION));
     implicitPermissionsByScope.addBinding(Pair.of(ACCOUNT, false))
-        .toInstance(Collections.singleton("core_account_view"));
+        .toInstance(Collections.singleton(VIEW_ACCOUNT_PERMISSION));
     implicitPermissionsByScope.addBinding(Pair.of(ORGANIZATION, true))
-        .toInstance(Sets.newHashSet("core_organization_view", "core_project_view"));
+        .toInstance(Sets.newHashSet(VIEW_ORGANIZATION_PERMISSION, VIEW_PROJECT_PERMISSION));
     implicitPermissionsByScope.addBinding(Pair.of(ORGANIZATION, false))
-        .toInstance(Collections.singleton("core_organization_view"));
+        .toInstance(Collections.singleton(VIEW_ORGANIZATION_PERMISSION));
     implicitPermissionsByScope.addBinding(Pair.of(PROJECT, true))
-        .toInstance(Collections.singleton("core_project_view"));
+        .toInstance(Collections.singleton(VIEW_PROJECT_PERMISSION));
     implicitPermissionsByScope.addBinding(Pair.of(PROJECT, false))
-        .toInstance(Collections.singleton("core_project_view"));
+        .toInstance(Collections.singleton(VIEW_PROJECT_PERMISSION));
 
     MapBinder<PrincipalType, PrincipalValidator> validatorByPrincipalType =
         MapBinder.newMapBinder(binder(), PrincipalType.class, PrincipalValidator.class);
