@@ -31,6 +31,7 @@ public class ResourceTypeConstants {
   public static final String DELEGATE_CONFIGURATION = "DELEGATE_CONFIGURATION";
   public static final String SERVICE = "SERVICE";
   public static final String SERVICE_OVERRIDE = "SERVICE_OVERRIDE";
+  public static final String INFRASTRUCTURE_DEF = "INFRASTRUCTURE_DEF";
   public static final String ENVIRONMENT = "ENVIRONMENT";
   public static final String ENVIRONMENT_GROUP = "ENVIRONMENT_GROUP";
   public static final String DELEGATE = "DELEGATE";

@@ -8,20 +8,7 @@
 package io.harness.ng;
 
 import static io.harness.AuthorizationServiceHeader.NG_MANAGER;
-import static io.harness.audit.ResourceTypeConstants.API_KEY;
-import static io.harness.audit.ResourceTypeConstants.CONNECTOR;
-import static io.harness.audit.ResourceTypeConstants.DELEGATE_CONFIGURATION;
-import static io.harness.audit.ResourceTypeConstants.ENVIRONMENT;
-import static io.harness.audit.ResourceTypeConstants.FILE;
-import static io.harness.audit.ResourceTypeConstants.ORGANIZATION;
-import static io.harness.audit.ResourceTypeConstants.PROJECT;
-import static io.harness.audit.ResourceTypeConstants.SECRET;
-import static io.harness.audit.ResourceTypeConstants.SERVICE;
-import static io.harness.audit.ResourceTypeConstants.SERVICE_ACCOUNT;
-import static io.harness.audit.ResourceTypeConstants.SETTING;
-import static io.harness.audit.ResourceTypeConstants.TOKEN;
-import static io.harness.audit.ResourceTypeConstants.USER;
-import static io.harness.audit.ResourceTypeConstants.VARIABLE;
+import static io.harness.audit.ResourceTypeConstants.*;
 import static io.harness.eventsframework.EventsFrameworkConstants.ENTITY_CRUD;
 import static io.harness.eventsframework.EventsFrameworkConstants.INSTANCE_STATS;
 import static io.harness.eventsframework.EventsFrameworkConstants.SETUP_USAGE;
@@ -170,6 +157,7 @@ import io.harness.ng.core.outbox.ProjectEventHandler;
 import io.harness.ng.core.outbox.SecretEventHandler;
 import io.harness.ng.core.outbox.ServiceAccountEventHandler;
 import io.harness.ng.core.outbox.ServiceOutBoxEventHandler;
+import io.harness.ng.core.outbox.ServiceOverrideEventHandler;
 import io.harness.ng.core.outbox.TokenEventHandler;
 import io.harness.ng.core.outbox.UserEventHandler;
 import io.harness.ng.core.outbox.UserGroupEventHandler;
@@ -840,6 +828,7 @@ public class NextGenModule extends AbstractModule {
     outboxEventHandlerMapBinder.addBinding(TOKEN).to(TokenEventHandler.class);
     outboxEventHandlerMapBinder.addBinding(VARIABLE).to(VariableEventHandler.class);
     outboxEventHandlerMapBinder.addBinding(SETTING).to(SettingEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding(SERVICE_OVERRIDE).to(ServiceOverrideEventHandler.class);
   }
 
   private void registerEventsFrameworkMessageListeners() {
