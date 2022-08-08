@@ -7,12 +7,13 @@
 
 package io.harness.ngtriggers.helpers;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import io.harness.account.AccountClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.remote.client.RestClientUtils;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
@@ -24,5 +25,4 @@ public class UrlHelper {
   public String getBaseUrl(String accountIdentifier) {
     return RestClientUtils.getResponse(accountClient.getBaseUrl(accountIdentifier));
   }
-
 }

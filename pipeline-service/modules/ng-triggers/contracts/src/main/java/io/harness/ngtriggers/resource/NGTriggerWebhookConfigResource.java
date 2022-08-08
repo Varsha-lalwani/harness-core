@@ -246,30 +246,30 @@ public interface NGTriggerWebhookConfigResource {
   @PublicApi
   ResponseDTO<String>
   processWebhookEvent(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-                      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
-                      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-                      @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) String pipelineIdentifier,
-                      @QueryParam(TRIGGER_KEY) String triggerIdentifier, @NotNull String eventPayload,
-                      @Context HttpHeaders httpHeaders);
+      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) String pipelineIdentifier,
+      @QueryParam(TRIGGER_KEY) String triggerIdentifier, @NotNull String eventPayload,
+      @Context HttpHeaders httpHeaders);
 
   @POST
-  @Operation(operationId = "processCustomWebhookEventV2", summary = "Handles event payload for custom webhook triggers.",
-          responses =
-                  {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "default",
-                        description = "Returns data about of newly created custom webhook processing event.")
-                  })
+  @Operation(operationId = "processCustomWebhookEventV2",
+      summary = "Handles event payload for custom webhook triggers.",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
+            description = "Returns data about of newly created custom webhook processing event.")
+      })
   @Path("/custom/v2")
   @ApiOperation(value = "accept custom webhook event V2", nickname = "customWebhookEndpointV2")
   @PublicApi
   ResponseDTO<NGProcessWebhookResponseDTO>
   processWebhookEventV2(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-                      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
-                      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-                      @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) String pipelineIdentifier,
-                      @QueryParam(TRIGGER_KEY) String triggerIdentifier, @NotNull String eventPayload,
-                      @Context HttpHeaders httpHeaders, @Context UriInfo uriInfo);
+      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) String pipelineIdentifier,
+      @QueryParam(TRIGGER_KEY) String triggerIdentifier, @NotNull String eventPayload, @Context HttpHeaders httpHeaders,
+      @Context UriInfo uriInfo);
 
   @GET
   @Operation(operationId = "fetchWebhookDetails", summary = "Gets webhook event processing details for input eventId.",

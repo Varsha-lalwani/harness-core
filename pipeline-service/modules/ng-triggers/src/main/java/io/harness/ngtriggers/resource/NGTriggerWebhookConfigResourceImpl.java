@@ -29,11 +29,11 @@ import io.harness.ngtriggers.beans.source.webhook.v2.github.action.GithubPRActio
 import io.harness.ngtriggers.beans.source.webhook.v2.github.event.GithubTriggerEvent;
 import io.harness.ngtriggers.beans.source.webhook.v2.gitlab.action.GitlabPRAction;
 import io.harness.ngtriggers.beans.source.webhook.v2.gitlab.event.GitlabTriggerEvent;
+import io.harness.ngtriggers.helpers.UrlHelper;
 import io.harness.ngtriggers.helpers.WebhookConfigHelper;
 import io.harness.ngtriggers.mapper.NGTriggerElementMapper;
 import io.harness.ngtriggers.service.NGTriggerService;
 import io.harness.ngtriggers.utils.CustomWebhookTriggerResponseUtils;
-import io.harness.ngtriggers.helpers.UrlHelper;
 import io.harness.ngtriggers.validations.TriggerWebhookValidator;
 import io.harness.utils.YamlPipelineUtils;
 
@@ -46,7 +46,6 @@ import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -166,7 +165,8 @@ public class NGTriggerWebhookConfigResourceImpl implements NGTriggerWebhookConfi
       triggerWebhookValidator.applyValidationsForCustomWebhook(eventEntity);
       TriggerWebhookEvent newEvent = ngTriggerService.addEventToQueue(eventEntity);
       String uuid = newEvent.getUuid();
-      return ResponseDTO.newResponse(NGProcessWebhookResponseDTO.builder()
+      return ResponseDTO.newResponse(
+          NGProcessWebhookResponseDTO.builder()
               .eventCorrelationId(uuid)
               .apiUrl(CustomWebhookTriggerResponseUtils.buildApiExecutionUrl(uriInfo, uuid, accountIdentifier))
               .uiUrl(CustomWebhookTriggerResponseUtils.buildUiUrl(urlHelper.getBaseUrl(accountIdentifier),
@@ -176,7 +176,7 @@ public class NGTriggerWebhookConfigResourceImpl implements NGTriggerWebhookConfi
               .build());
     } else {
       return ResponseDTO.newResponse(
-              NGProcessWebhookResponseDTO.builder().eventCorrelationId(UNRECOGNIZED_WEBHOOK).build());
+          NGProcessWebhookResponseDTO.builder().eventCorrelationId(UNRECOGNIZED_WEBHOOK).build());
     }
   }
 

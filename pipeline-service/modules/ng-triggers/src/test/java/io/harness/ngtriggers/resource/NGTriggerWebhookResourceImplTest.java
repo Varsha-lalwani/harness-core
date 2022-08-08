@@ -38,7 +38,6 @@ import java.net.URI;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriInfo;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -63,9 +62,8 @@ public class NGTriggerWebhookResourceImplTest extends CategoryTest {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     triggerWebhookValidator = spy(new TriggerWebhookValidator(ngTriggerService));
-    ngTriggerWebhookConfigResource =
-        new NGTriggerWebhookConfigResourceImpl(ngTriggerService, ngTriggerElementMapper, triggerWebhookValidator,
-            urlHelper);
+    ngTriggerWebhookConfigResource = new NGTriggerWebhookConfigResourceImpl(
+        ngTriggerService, ngTriggerElementMapper, triggerWebhookValidator, urlHelper);
   }
 
   @Test
@@ -105,8 +103,7 @@ public class NGTriggerWebhookResourceImplTest extends CategoryTest {
         .thenReturn(triggerWebhookEventBuilder);
     assertThatThrownBy(()
                            -> ngTriggerWebhookConfigResource.processWebhookEventV2(accountIdentifier, orgIdentifier,
-                               projectIdentifier, pipelineIdentifier, triggerIdentifier, "payload", headers,
-                               uriInfo))
+                               projectIdentifier, pipelineIdentifier, triggerIdentifier, "payload", headers, uriInfo))
         .isInstanceOf(InvalidRequestException.class);
   }
 
@@ -121,23 +118,23 @@ public class NGTriggerWebhookResourceImplTest extends CategoryTest {
     when(urlHelper.getBaseUrl(any())).thenReturn("base_ui_url/");
     String executionUuid = "executionUuid";
     TriggerWebhookEventBuilder triggerWebhookEventBuilder = TriggerWebhookEvent.builder()
-            .accountId(accountIdentifier)
-            .orgIdentifier(orgIdentifier)
-            .projectIdentifier(projectIdentifier)
-            .pipelineIdentifier(pipelineIdentifier)
-            .triggerIdentifier(triggerIdentifier)
-            .uuid(executionUuid);
+                                                                .accountId(accountIdentifier)
+                                                                .orgIdentifier(orgIdentifier)
+                                                                .projectIdentifier(projectIdentifier)
+                                                                .pipelineIdentifier(pipelineIdentifier)
+                                                                .triggerIdentifier(triggerIdentifier)
+                                                                .uuid(executionUuid);
     TriggerWebhookEvent eventEntity = triggerWebhookEventBuilder.build();
     when(ngTriggerElementMapper.toNGTriggerWebhookEventForCustom(any(), any(), any(), any(), any(), any(), any()))
-            .thenReturn(triggerWebhookEventBuilder);
+        .thenReturn(triggerWebhookEventBuilder);
     doNothing().when(triggerWebhookValidator).applyValidationsForCustomWebhook(any());
     when(ngTriggerService.addEventToQueue(any())).thenReturn(eventEntity);
     ResponseDTO<NGProcessWebhookResponseDTO> response =
         ngTriggerWebhookConfigResource.processWebhookEventV2(accountIdentifier, orgIdentifier, projectIdentifier,
             pipelineIdentifier, triggerIdentifier, "payload", headers, uriInfo);
     assertThat(response.getData().getEventCorrelationId()).isEqualTo(executionUuid);
-    String expectedApiUrl = format("%swebhook/triggerExecutionDetails/%s?accountIdentifier=%s", "base_url/",
-        executionUuid, accountIdentifier);
+    String expectedApiUrl = format(
+        "%swebhook/triggerExecutionDetails/%s?accountIdentifier=%s", "base_url/", executionUuid, accountIdentifier);
     assertThat(response.getData().getApiUrl()).isEqualTo(expectedApiUrl);
     String expectedUiUrl = format("%s#/account/%s/cd/orgs/%s/projects/%s/deployments?pipelineIdentifier=%s&page=1",
         "base_ui_url/", accountIdentifier, orgIdentifier, projectIdentifier, pipelineIdentifier);

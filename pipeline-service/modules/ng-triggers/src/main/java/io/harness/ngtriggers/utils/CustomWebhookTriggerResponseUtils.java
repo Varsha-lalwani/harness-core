@@ -7,15 +7,14 @@
 
 package io.harness.ngtriggers.utils;
 
-import io.harness.annotations.dev.HarnessTeam;
-import io.harness.annotations.dev.OwnedBy;
-import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.ws.rs.core.UriInfo;
-
 import static java.lang.String.format;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
+
+import javax.ws.rs.core.UriInfo;
+import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @UtilityClass
@@ -34,7 +33,7 @@ public class CustomWebhookTriggerResponseUtils {
 
   public String buildUiSetupUrl(String baseUiUrl, String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String pipelineIdentifier) {
-    return format("%s#/account/%s/cd/orgs/%s/projects/%s/pipelines/%s/pipeline-studio/", baseUiUrl,
-        accountIdentifier, orgIdentifier, projectIdentifier, pipelineIdentifier);
+    return format("%s#/account/%s/cd/orgs/%s/projects/%s/pipelines/%s/pipeline-studio/", baseUiUrl, accountIdentifier,
+        orgIdentifier, projectIdentifier, pipelineIdentifier);
   }
 }
