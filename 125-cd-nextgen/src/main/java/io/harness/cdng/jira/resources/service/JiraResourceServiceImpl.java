@@ -34,6 +34,8 @@ import io.harness.exception.HarnessJiraException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.jira.JiraActionNG;
+import io.harness.jira.JiraFieldNG;
+import io.harness.jira.JiraFieldTypeNG;
 import io.harness.jira.JiraIssueCreateMetadataNG;
 import io.harness.jira.JiraIssueUpdateMetadataNG;
 import io.harness.jira.JiraProjectBasicNG;
@@ -50,9 +52,11 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @OwnedBy(CDC)
 @Singleton
@@ -110,7 +114,21 @@ public class JiraResourceServiceImpl implements JiraResourceService {
                                                     .fetchStatus(fetchStatus)
                                                     .ignoreComment(ignoreComment);
     JiraTaskNGResponse jiraTaskResponse = obtainJiraTaskNGResponse(jiraConnectorRef, orgId, projectId, paramsBuilder);
-    return jiraTaskResponse.getIssueCreateMetadata();
+
+    JiraIssueCreateMetadataNG jiraIssueCreateMetadataNG = jiraTaskResponse.getIssueCreateMetadata();
+    if (!cdFeatureFlagHelper.isEnabled(
+            jiraConnectorRef.getAccountIdentifier(), FeatureName.ALLOW_USER_TYPE_FIELDS_JIRA)) {
+      Set<JiraFieldNG> jiraUserFields = new HashSet<>();
+      jiraIssueCreateMetadataNG.getProjects().values().forEach(
+          proj -> proj.getIssueTypes().values().forEach(issueType1 -> issueType1.getFields().values().forEach(field -> {
+            if (field.getSchema().getType() == JiraFieldTypeNG.USER) {
+              jiraUserFields.add(field);
+            }
+          })));
+      jiraUserFields.forEach(field -> jiraIssueCreateMetadataNG.removeField(field.getName()));
+    }
+
+    return jiraIssueCreateMetadataNG;
   }
 
   @Override
