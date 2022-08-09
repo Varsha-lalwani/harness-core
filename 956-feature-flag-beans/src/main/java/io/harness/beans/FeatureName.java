@@ -132,7 +132,6 @@ public enum FeatureName {
   PRUNE_KUBERNETES_RESOURCES,
   REJECT_TRIGGER_IF_ARTIFACTS_NOT_MATCH,
   ROLLBACK_NONE_ARTIFACT,
-  SCIM_INTEGRATION,
   SEARCH_REQUEST,
   SEND_LOG_ANALYSIS_COMPRESSED,
   SEND_SLACK_NOTIFICATION_FROM_DELEGATE,
@@ -295,7 +294,6 @@ public enum FeatureName {
   SERVICENOW_CREATE_UPDATE_NG,
   OUTCOME_GRAPHQL_WITH_INFRA_DEF,
   AUTO_REJECT_PREVIOUS_APPROVALS,
-  ENABLE_K8S_AUTH_IN_VAULT,
   BIND_CUSTOM_VALUE_AND_MANIFEST_FETCH_TASK,
   AZURE_BLOB_SM,
   CONSIDER_ORIGINAL_STATE_VERSION,
@@ -412,7 +410,10 @@ public enum FeatureName {
       "Used to do on demand rollback to previously deployed different artifact on same inframapping", HarnessTeam.CDC),
   CG_GIT_POLLING("Poll git based on account config for git sync in CG.", HarnessTeam.SPG),
   GRAPHQL_WORKFLOW_EXECUTION_OPTIMIZATION(
-      "Making multiple optimizations for workflow execution graphql in CG", HarnessTeam.SPG);
+      "Making multiple optimizations for workflow execution graphql in CG", HarnessTeam.SPG),
+  NG_ENABLE_LDAP_CHECK("Enables NG Ldap in NG-UI", HarnessTeam.PL),
+  CUSTOM_SECRET_MANAGER_NG("Enable Custom Secret Manager in NG", HarnessTeam.PL);
+
   @Deprecated
   FeatureName() {
     scope = Scope.PER_ACCOUNT;
