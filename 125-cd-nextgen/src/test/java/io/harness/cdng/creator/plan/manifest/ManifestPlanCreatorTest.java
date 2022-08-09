@@ -38,6 +38,7 @@ import io.harness.cdng.service.beans.StageOverridesConfig;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.core.service.yaml.NGServiceV2InfoConfig;
 import io.harness.pms.contracts.plan.Dependency;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.core.plan.PlanNode;
@@ -293,6 +294,45 @@ public class ManifestPlanCreatorTest extends CDNGTestBase {
 
     testCreatePlanForChildrenNodesDuplicateDeploymentsManifests(
         ServiceDefinitionType.NATIVE_HELM, serviceSpec, HELM_SUPPORTED_MANIFEST_TYPES);
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void testCreatePlanForChildrenNodesWithServiceEntity() throws IOException {
+    NGServiceV2InfoConfig ngServiceV2InfoConfig =
+        NGServiceV2InfoConfig.builder()
+            .serviceDefinition(ServiceDefinition.builder().type(ServiceDefinitionType.KUBERNETES).build())
+            .identifier("SVC_ID")
+            .build();
+    Map<String, ByteString> metadataDependency = new HashMap<>();
+
+    final ManifestConfigWrapper valuesManifest1 =
+        ManifestConfigWrapper.builder()
+            .manifest(ManifestConfig.builder().identifier("values_test1").type(ManifestConfigType.VALUES).build())
+            .build();
+    final ManifestConfigWrapper valuesManifest2 =
+        ManifestConfigWrapper.builder()
+            .manifest(ManifestConfig.builder().identifier("values_test2").type(ManifestConfigType.VALUES).build())
+            .build();
+    metadataDependency.put(
+        YamlTypes.SERVICE_ENTITY, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(ngServiceV2InfoConfig)));
+    metadataDependency.put(YamlTypes.MANIFEST_LIST_CONFIG,
+        ByteString.copyFrom(kryoSerializer.asDeflatedBytes(Arrays.asList(valuesManifest1, valuesManifest2))));
+
+    Dependency dependency = Dependency.newBuilder().putAllMetadata(metadataDependency).build();
+    YamlField manifestsYamlField = getYamlFieldFromGivenFileName("cdng/plan/manifests/manifests.yml");
+
+    PlanCreationContext ctx =
+        PlanCreationContext.builder().currentField(manifestsYamlField).dependency(dependency).build();
+    List<String> expectedListOfIdentifier = Arrays.asList("values_test1", "values_test2");
+    List<String> actualListOfIdentifier = new ArrayList<>();
+    LinkedHashMap<String, PlanCreationResponse> response = manifestsPlanCreator.createPlanForChildrenNodes(ctx, null);
+    assertThat(response.size()).isEqualTo(2);
+    for (Map.Entry<String, PlanCreationResponse> entry : response.entrySet()) {
+      actualListOfIdentifier.add(fetchManifestIdentifier(entry.getKey(), entry.getValue()));
+    }
+    assertThat(expectedListOfIdentifier).isEqualTo(actualListOfIdentifier);
   }
 
   private void testCreatePlanForChildrenNodesDuplicateDeploymentsManifests(
