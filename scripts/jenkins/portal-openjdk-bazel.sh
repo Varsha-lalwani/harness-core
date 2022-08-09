@@ -265,7 +265,6 @@ if [ ! -z ${PURPOSE} ]
 then
     echo ${PURPOSE} > purpose.txt
 fi
-java -jar pipeline-service-capsule.jar scan-classpath-metadata
 
 cd ../..
 
@@ -290,7 +289,7 @@ then
     echo ${PURPOSE} > purpose.txt
 fi
 
-java -jar debezium-service-capsule scan-classpath-metadata
+java -jar debezium-service-capsule.jar scan-classpath-metadata
 
 
 cd ../..
