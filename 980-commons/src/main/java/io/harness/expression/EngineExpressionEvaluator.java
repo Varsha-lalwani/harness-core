@@ -242,10 +242,6 @@ public class EngineExpressionEvaluator {
     return evaluateExpressionInternal(expression, prepareContext(ctx), MAX_DEPTH, expressionMode);
   }
 
-  //  private Object evaluateExpressionInternal(@NotNull String expression, @NotNull EngineJexlContext ctx, int depth) {
-  //    return evaluateExpressionInternal(expression,ctx,depth, ExpressionMode.RETURN_NULL_IF_UNRESOLVED);
-  //  }
-
   private Object evaluateExpressionInternal(
       @NotNull String expression, @NotNull EngineJexlContext ctx, int depth, ExpressionMode expressionMode) {
     checkDepth(depth, expression);
