@@ -1501,6 +1501,7 @@
 19554:io.harness.delegate.beans.connector.customseceretmanager.CustomSecretManagerConnectorDTO
 19555:io.harness.delegate.beans.connector.TemplateInfo
 19556:io.harness.delegate.beans.connector.customsecretmanager.CustomSecretManagerValidationParams
+19557:io.harness.delegate.beans.connector.customseceretmanager.TemplateLinkConfig
 19630:io.harness.delegate.beans.connector.helm.OciHelmValidationParams
 19640:io.harness.delegate.beans.connector.helm.HttpHelmConnectivityTaskParams
 19641:io.harness.delegate.beans.connector.helm.HttpHelmConnectivityTaskResponse

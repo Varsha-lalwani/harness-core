@@ -7,6 +7,8 @@
 
 package io.harness.mappers;
 
+import static io.harness.mappers.SecretManagerConfigMapper.ngMetaDataFromDto;
+
 import io.harness.secretmanagerclient.dto.CustomSecretManagerConfigDTO;
 
 import software.wings.beans.CustomSecretNGManagerConfig;
@@ -17,12 +19,16 @@ public class CustomConfigMapper {
         CustomSecretNGManagerConfig.builder()
             .delegateSelectors(customSecretManagerConfigDTO.getDelegateSelectors())
             .onDelegate(customSecretManagerConfigDTO.isOnDelegate())
-            .connectorRef(customSecretManagerConfigDTO.getConnectorRef())
+            .connectorToken(customSecretManagerConfigDTO.getConnectorToken())
             .host(customSecretManagerConfigDTO.getHost())
             .workingDirectory(customSecretManagerConfigDTO.getWorkingDirectory())
-            .templateInfo(customSecretManagerConfigDTO.getTemplateInfo())
-            .testVariables(customSecretManagerConfigDTO.getTestVariables())
+            .template(customSecretManagerConfigDTO.getTemplate())
             .build();
+
+    customSecretNGManagerConfig.setNgMetadata(ngMetaDataFromDto(customSecretManagerConfigDTO));
+    customSecretNGManagerConfig.setAccountId(customSecretManagerConfigDTO.getAccountIdentifier());
+    customSecretNGManagerConfig.setEncryptionType(customSecretManagerConfigDTO.getEncryptionType());
+    customSecretNGManagerConfig.setDefault(customSecretManagerConfigDTO.isDefault());
     return customSecretNGManagerConfig;
   }
 }

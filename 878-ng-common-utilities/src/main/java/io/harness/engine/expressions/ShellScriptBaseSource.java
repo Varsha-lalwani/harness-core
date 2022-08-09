@@ -31,6 +31,6 @@ public class ShellScriptBaseSource {
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> script;
 
   public String getType() {
-    return "Inline";
+    return type;
   }
 }

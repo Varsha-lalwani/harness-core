@@ -23,5 +23,5 @@ import org.springframework.data.annotation.TypeAlias;
 @Builder
 @TypeAlias("ShellScriptYamlDTO")
 public class ShellScriptYamlDTO implements YamlDTO {
-  @JsonProperty("template") ShellScriptBaseDTO shellScriptBaseDTO;
+  @JsonProperty("connector") ShellScriptBaseDTO shellScriptBaseDTO;
 }

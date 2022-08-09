@@ -175,8 +175,8 @@ public class CustomSecretsManagerValidationUtils {
 
      */
     Map<String, String> envVars = new HashMap<>();
-    customSecretNGManagerConfig.getTestVariables().forEach(
-        encryptedDataParams -> envVars.put(encryptedDataParams.getName(), encryptedDataParams.getValue()));
+    /*customSecretNGManagerConfig.getTestVariables().forEach(
+        encryptedDataParams -> envVars.put(encryptedDataParams.getName(), encryptedDataParams.getValue()));*/
     return taskParametersNGBuilder.accountId(accountId)
         .executeOnDelegate(customSecretNGManagerConfig.isOnDelegate())
         .environmentVariables(envVars)
