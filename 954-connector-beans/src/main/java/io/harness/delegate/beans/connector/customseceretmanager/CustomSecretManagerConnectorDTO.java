@@ -13,12 +13,14 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DecryptableEntity;
 import io.harness.connector.DelegateSelectable;
 import io.harness.delegate.beans.connector.ConnectorConfigDTO;
-import io.harness.delegate.beans.connector.TemplateInfo;
+import io.harness.encryption.SecretRefData;
+import io.harness.encryption.SecretReference;
 import io.harness.security.encryption.EncryptedDataParams;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Collections;
 import java.util.List;
@@ -40,10 +42,15 @@ public class CustomSecretManagerConnectorDTO extends ConnectorConfigDTO implemen
   private boolean onDelegate;
   @Schema(description = SecretManagerDescriptionConstants.DEFAULT) private boolean isDefault;
   @Schema @JsonIgnore private boolean harnessManaged;
-  @Schema(description = SecretManagerDescriptionConstants.AUTH_TOKEN) private String connectorRef;
+
+  @SecretReference
+  @ApiModelProperty(dataType = "string")
+  @Schema(description = SecretManagerDescriptionConstants.CUSTOM_AUTH_TOKEN)
+  private SecretRefData connectorToken;
+
   private String host;
   private String workingDirectory;
-  private TemplateInfo templateInfo;
+  private TemplateLinkConfig template;
   private Set<EncryptedDataParams> testVariables;
   @Override
   public List<DecryptableEntity> getDecryptableEntities() {

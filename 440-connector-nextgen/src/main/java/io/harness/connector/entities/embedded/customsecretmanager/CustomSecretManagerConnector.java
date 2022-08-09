@@ -11,7 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.entities.Connector;
-import io.harness.delegate.beans.connector.TemplateInfo;
+import io.harness.delegate.beans.connector.customseceretmanager.TemplateLinkConfig;
 import io.harness.security.encryption.EncryptedDataParams;
 
 import java.util.Set;
@@ -37,6 +37,6 @@ public class CustomSecretManagerConnector extends Connector {
   private String connectorRef;
   private String host;
   private String workingDirectory;
-  private TemplateInfo templateRef;
+  private TemplateLinkConfig template;
   private Set<EncryptedDataParams> testVariables;
 }

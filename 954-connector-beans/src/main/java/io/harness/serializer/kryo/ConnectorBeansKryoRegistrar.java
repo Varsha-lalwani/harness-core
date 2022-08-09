@@ -74,6 +74,7 @@ import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthCon
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthKeyAndValue;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
 import io.harness.delegate.beans.connector.customseceretmanager.CustomSecretManagerConnectorDTO;
+import io.harness.delegate.beans.connector.customseceretmanager.TemplateLinkConfig;
 import io.harness.delegate.beans.connector.datadog.DatadogConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerAuthCredentialsDTO;
 import io.harness.delegate.beans.connector.docker.DockerAuthType;
@@ -284,6 +285,7 @@ public class ConnectorBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(NexusConstants.class, 19503);
     kryo.register(VaultConnectorDTO.class, 19506);
     kryo.register(CustomSecretManagerConnectorDTO.class, 19554);
+    kryo.register(TemplateLinkConfig.class, 19557);
     kryo.register(GithubUsernameTokenDTO.class, 19511);
     kryo.register(GitlabUsernameTokenDTO.class, 19512);
     kryo.register(GitlabAuthenticationDTO.class, 19520);

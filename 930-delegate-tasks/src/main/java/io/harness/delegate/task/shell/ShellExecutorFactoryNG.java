@@ -13,6 +13,7 @@ import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.logstreaming.NGDelegateLogCallback;
 import io.harness.delegate.task.shell.ssh.ArtifactCommandUnitHandler;
+import io.harness.logging.DummyLogCallbackImpl;
 import io.harness.logging.LogCallback;
 import io.harness.shell.ScriptProcessExecutor;
 import io.harness.shell.ShellExecutorConfig;
@@ -23,6 +24,11 @@ import java.util.Map;
 @OwnedBy(HarnessTeam.CDC)
 @Singleton
 public class ShellExecutorFactoryNG {
+  public ScriptProcessExecutor getExecutor(
+      ShellExecutorConfig shellExecutorConfig, CommandUnitsProgress commandUnitsProgress) {
+    return new ScriptProcessExecutor(new DummyLogCallbackImpl(), false, shellExecutorConfig);
+  }
+
   public ScriptProcessExecutor getExecutor(ShellExecutorConfig shellExecutorConfig,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
     return new ScriptProcessExecutor(
