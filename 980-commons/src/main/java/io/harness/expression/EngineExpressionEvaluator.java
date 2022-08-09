@@ -221,20 +221,33 @@ public class EngineExpressionEvaluator {
   }
 
   public Object evaluateExpression(String expression) {
-    return evaluateExpression(expression, null);
+    return evaluateExpression(expression, null, ExpressionMode.RETURN_NULL_IF_UNRESOLVED);
+  }
+
+  public Object evaluateExpression(String expression, ExpressionMode expressionMode) {
+    return evaluateExpression(expression, null, expressionMode);
   }
 
   public Object evaluateExpression(String expression, Map<String, Object> ctx) {
+    return evaluateExpression(expression, ctx, ExpressionMode.RETURN_NULL_IF_UNRESOLVED);
+  }
+
+  public Object evaluateExpression(String expression, Map<String, Object> ctx, ExpressionMode expressionMode) {
     // NOTE: Don't check for hasExpressions here. There might be normal expressions like '"true" != "false"'
     if (expression == null || EmptyPredicate.isEmpty(expression.trim())) {
       return null;
     }
-    return evaluateExpressionInternal(expression, prepareContext(ctx), MAX_DEPTH);
+    return evaluateExpressionInternal(expression, prepareContext(ctx), MAX_DEPTH, expressionMode);
   }
 
-  private Object evaluateExpressionInternal(@NotNull String expression, @NotNull EngineJexlContext ctx, int depth) {
+  //  private Object evaluateExpressionInternal(@NotNull String expression, @NotNull EngineJexlContext ctx, int depth) {
+  //    return evaluateExpressionInternal(expression,ctx,depth, ExpressionMode.RETURN_NULL_IF_UNRESOLVED);
+  //  }
+
+  private Object evaluateExpressionInternal(
+      @NotNull String expression, @NotNull EngineJexlContext ctx, int depth, ExpressionMode expressionMode) {
     checkDepth(depth, expression);
-    EvaluateExpressionResolver resolver = new EvaluateExpressionResolver(this, ctx, depth);
+    EvaluateExpressionResolver resolver = new EvaluateExpressionResolver(this, ctx, depth, expressionMode);
     String finalExpression = runStringReplacer(expression, resolver);
     try {
       return evaluateInternal(finalExpression, ctx);
@@ -273,7 +286,8 @@ public class EngineExpressionEvaluator {
       @NotNull EngineJexlContext ctx, @NotNull Map<String, Object> partialCtx, int depth,
       ExpressionMode expressionMode) {
     checkDepth(depth, expression);
-    PartialEvaluateExpressionResolver resolver = new PartialEvaluateExpressionResolver(this, ctx, partialCtx, depth);
+    PartialEvaluateExpressionResolver resolver =
+        new PartialEvaluateExpressionResolver(this, ctx, partialCtx, depth, expressionMode);
     String finalExpression = runStringReplacer(expression, resolver);
     ctx.addToContext(partialCtx);
     if (!hasExpressions(finalExpression)) {
@@ -294,21 +308,28 @@ public class EngineExpressionEvaluator {
   }
 
   public PartialEvaluateResult partialEvaluateExpression(String expression) {
-    return partialEvaluateExpression(expression, null);
+    return partialEvaluateExpression(expression, ExpressionMode.RETURN_NULL_IF_UNRESOLVED);
+  }
+  public PartialEvaluateResult partialEvaluateExpression(String expression, ExpressionMode expressionMode) {
+    return partialEvaluateExpression(expression, null, expressionMode);
   }
 
-  public PartialEvaluateResult partialEvaluateExpression(String expression, Map<String, Object> ctx) {
+  public PartialEvaluateResult partialEvaluateExpression(
+      String expression, Map<String, Object> ctx, ExpressionMode expressionMode) {
     // NOTE: Don't check for hasExpressions here. There might be normal expressions like '"true" != "false"'
     if (EmptyPredicate.isEmpty(expression)) {
       return null;
     }
-    return partialEvaluateExpressionInternal(expression, prepareContext(ctx), new HashMap<>(), MAX_DEPTH);
+    return partialEvaluateExpressionInternal(
+        expression, prepareContext(ctx), new HashMap<>(), MAX_DEPTH, expressionMode);
   }
 
-  private PartialEvaluateResult partialEvaluateExpressionInternal(
-      @NotNull String expression, @NotNull EngineJexlContext ctx, @NotNull Map<String, Object> partialCtx, int depth) {
+  private PartialEvaluateResult partialEvaluateExpressionInternal(@NotNull String expression,
+      @NotNull EngineJexlContext ctx, @NotNull Map<String, Object> partialCtx, int depth,
+      ExpressionMode expressionMode) {
     checkDepth(depth, expression);
-    PartialEvaluateExpressionResolver resolver = new PartialEvaluateExpressionResolver(this, ctx, partialCtx, depth);
+    PartialEvaluateExpressionResolver resolver =
+        new PartialEvaluateExpressionResolver(this, ctx, partialCtx, depth, expressionMode);
     String finalExpression = runStringReplacer(expression, resolver);
     ctx.addToContext(partialCtx);
     if (!hasExpressions(finalExpression)) {
@@ -324,30 +345,33 @@ public class EngineExpressionEvaluator {
       }
       return PartialEvaluateResult.createPartialResult(finalExpression, partialCtx);
     } else {
-      return PartialEvaluateResult.createCompleteResult(evaluateExpressionInternal(expression, ctx, depth));
+      return PartialEvaluateResult.createCompleteResult(
+          evaluateExpressionInternal(expression, ctx, depth, expressionMode));
     }
   }
 
   public PartialEvaluateResult partialEvaluateExpressionBlock(@NotNull String expressionBlock,
-      @NotNull EngineJexlContext ctx, @NotNull Map<String, Object> partialCtx, int depth) {
+      @NotNull EngineJexlContext ctx, @NotNull Map<String, Object> partialCtx, int depth,
+      ExpressionMode expressionMode) {
     if (EmptyPredicate.isEmpty(expressionBlock)) {
       return PartialEvaluateResult.createCompleteResult(expressionBlock);
     }
 
     // Check for cases like <+<+abc>.contains(<+def>)>.
     if (hasExpressions(expressionBlock)) {
-      return partialEvaluateExpressionInternal(expressionBlock, ctx, partialCtx, depth - 1);
+      return partialEvaluateExpressionInternal(expressionBlock, ctx, partialCtx, depth - 1, expressionMode);
     }
 
     // If object is another expression, evaluate it recursively.
-    Object object = evaluatePrefixCombinations(expressionBlock, ctx, depth);
+    Object object = evaluatePrefixCombinations(expressionBlock, ctx, depth, expressionMode);
     if (object instanceof String && hasExpressions((String) object)) {
       if (createExpression(expressionBlock).equals(object)) {
         // If returned expression is exactly the same, throw exception.
         throw new EngineExpressionEvaluationException(
             "Infinite loop in variable evaluation", createExpression(expressionBlock));
       } else {
-        PartialEvaluateResult result = partialEvaluateExpressionInternal((String) object, ctx, partialCtx, depth - 1);
+        PartialEvaluateResult result =
+            partialEvaluateExpressionInternal((String) object, ctx, partialCtx, depth - 1, expressionMode);
         if (result.isPartial()) {
           return result;
         } else {
@@ -370,7 +394,8 @@ public class EngineExpressionEvaluator {
    * Evaluate an expression block (anything inside <+...>) with the given context after applying static alias
    * substitutions and prefixes. This variant is non-recursive.
    */
-  public Object evaluateExpressionBlock(@NotNull String expressionBlock, @NotNull EngineJexlContext ctx, int depth) {
+  public Object evaluateExpressionBlock(
+      @NotNull String expressionBlock, @NotNull EngineJexlContext ctx, int depth, ExpressionMode expressionMode) {
     checkDepth(depth, expressionBlock);
     if (EmptyPredicate.isEmpty(expressionBlock)) {
       return expressionBlock;
@@ -378,10 +403,10 @@ public class EngineExpressionEvaluator {
 
     // Check for cases like <+<+abc>.contains(<+def>)>.
     if (hasExpressions(expressionBlock)) {
-      return evaluateExpressionInternal(expressionBlock, ctx, depth - 1);
+      return evaluateExpressionInternal(expressionBlock, ctx, depth - 1, expressionMode);
     }
 
-    Object object = evaluatePrefixCombinations(expressionBlock, ctx, depth);
+    Object object = evaluatePrefixCombinations(expressionBlock, ctx, depth, expressionMode);
 
     // If object is another expression, evaluate it recursively.
     if (object instanceof String && hasExpressions((String) object)) {
@@ -391,7 +416,7 @@ public class EngineExpressionEvaluator {
             "Infinite loop in variable interpretation", createExpression(expressionBlock));
       } else {
         observed(expressionBlock, object);
-        return evaluateExpressionInternal((String) object, ctx, depth - 1);
+        return evaluateExpressionInternal((String) object, ctx, depth - 1, expressionMode);
       }
     }
 
@@ -400,14 +425,14 @@ public class EngineExpressionEvaluator {
   }
 
   private Object evaluatePrefixCombinations(
-      @NotNull String expressionBlock, @NotNull EngineJexlContext ctx, int depth) {
+      @NotNull String expressionBlock, @NotNull EngineJexlContext ctx, int depth, ExpressionMode expressionMode) {
     // Apply all the prefixes and return first one that evaluates successfully.
     List<String> finalExpressions = preProcessExpression(expressionBlock);
     Object object = null;
     for (String finalExpression : finalExpressions) {
       try {
         if (hasExpressions(finalExpression)) {
-          object = evaluateExpressionInternal(finalExpression, ctx, depth - 1);
+          object = evaluateExpressionInternal(finalExpression, ctx, depth - 1, expressionMode);
         } else {
           object = evaluateInternal(finalExpression, ctx);
         }
@@ -596,7 +621,7 @@ public class EngineExpressionEvaluator {
     @Override
     public String resolveInternal(String expression) {
       try {
-        Object value = engineExpressionEvaluator.evaluateExpressionBlock(expression, ctx, depth);
+        Object value = engineExpressionEvaluator.evaluateExpressionBlock(expression, ctx, depth, expressionMode);
         if (value == null) {
           unresolvedExpressions.add(expression);
         }
@@ -615,20 +640,28 @@ public class EngineExpressionEvaluator {
     private final String prefix;
     private final String suffix;
     private int varIndex;
+    private ExpressionMode expressionMode;
     @Getter private final Set<String> unresolvedExpressions = new HashSet<>();
 
-    EvaluateExpressionResolver(EngineExpressionEvaluator engineExpressionEvaluator, EngineJexlContext ctx, int depth) {
+    EvaluateExpressionResolver(EngineExpressionEvaluator engineExpressionEvaluator, EngineJexlContext ctx, int depth,
+        ExpressionMode expressionMode) {
       this.engineExpressionEvaluator = engineExpressionEvaluator;
       this.ctx = ctx;
       this.depth = depth;
       this.prefix = IdentifierName.random();
       this.suffix = IdentifierName.random();
+      this.expressionMode = expressionMode;
+    }
+
+    @Override
+    public ExpressionMode getExpressionMode() {
+      return expressionMode;
     }
 
     @Override
     public String resolveInternal(String expression) {
       try {
-        Object value = engineExpressionEvaluator.evaluateExpressionBlock(expression, ctx, depth - 1);
+        Object value = engineExpressionEvaluator.evaluateExpressionBlock(expression, ctx, depth - 1, expressionMode);
         // In case of unresolved expression, identified by null value, we are not returning early but storing the
         // context map with null value.
         if (value == null) {
@@ -651,19 +684,26 @@ public class EngineExpressionEvaluator {
     private final EngineJexlContext ctx;
     private final Map<String, Object> partialCtx;
     private final int depth;
+    private final ExpressionMode expressionMode;
 
     PartialEvaluateExpressionResolver(EngineExpressionEvaluator engineExpressionEvaluator, EngineJexlContext ctx,
-        Map<String, Object> partialCtx, int depth) {
+        Map<String, Object> partialCtx, int depth, ExpressionMode expressionMode) {
       this.engineExpressionEvaluator = engineExpressionEvaluator;
       this.ctx = ctx;
       this.partialCtx = partialCtx;
       this.depth = depth;
+      this.expressionMode = expressionMode;
+    }
+
+    @Override
+    public ExpressionMode getExpressionMode() {
+      return expressionMode;
     }
 
     @Override
     public String resolveInternal(String expression) {
-      PartialEvaluateResult result =
-          engineExpressionEvaluator.partialEvaluateExpressionBlock(expression, ctx, partialCtx, depth - 1);
+      PartialEvaluateResult result = engineExpressionEvaluator.partialEvaluateExpressionBlock(
+          expression, ctx, partialCtx, depth - 1, expressionMode);
       if (result.isPartial()) {
         return result.getExpressionValue();
       }

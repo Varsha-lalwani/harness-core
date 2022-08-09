@@ -22,6 +22,7 @@ import io.harness.pms.plan.execution.SetupAbstractionKeys;
 import io.harness.product.ci.scm.proto.ParseWebhookResponse;
 
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -68,7 +69,7 @@ public class TriggerExpressionEvaluator extends EngineExpressionEvaluator {
   @Override
   public Object evaluateExpression(String expression) {
     try {
-      Object result = evaluateExpression(expression, null);
+      Object result = evaluateExpression(expression, (Map<String, Object>) null);
       return result == null ? "null" : result;
     } catch (Exception e) {
       log.warn("Failed to evaluated Trigger expression", e);
