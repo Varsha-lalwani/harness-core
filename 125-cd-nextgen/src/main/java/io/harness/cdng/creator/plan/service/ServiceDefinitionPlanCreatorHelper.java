@@ -50,6 +50,7 @@ import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.serializer.KryoSerializer;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,6 +72,9 @@ import org.jetbrains.annotations.NotNull;
  */
 @UtilityClass
 public class ServiceDefinitionPlanCreatorHelper {
+  private final String SERVICE_OVERRIDES = "SERVICE_OVERRIDES";
+  private final String ENVIRONMENT_GLOBAL_OVERRIDES = "ENVIRONMENT_GLOBAL_OVERRIDES";
+
   public Map<String, ByteString> prepareMetadata(
       String planNodeId, ServiceConfig actualServiceConfig, KryoSerializer kryoSerializer) {
     Map<String, ByteString> metadataDependency = new HashMap<>();
@@ -249,8 +253,9 @@ public class ServiceDefinitionPlanCreatorHelper {
     return manifestsYamlField;
   }
 
+  @VisibleForTesting
   @NotNull
-  private List<ManifestConfigWrapper> prepareFinalManifests(NGServiceV2InfoConfig serviceV2Config,
+  List<ManifestConfigWrapper> prepareFinalManifests(NGServiceV2InfoConfig serviceV2Config,
       NGServiceOverrideConfig serviceOverrideConfig, NGEnvironmentConfig ngEnvironmentConfig) {
     final List<ManifestConfigWrapper> svcManifests = getManifests(serviceV2Config);
     List<ManifestConfigWrapper> finalManifests = new ArrayList<>(svcManifests);
@@ -259,17 +264,21 @@ public class ServiceDefinitionPlanCreatorHelper {
       final List<ManifestConfigWrapper> svcOverrideManifests =
           fetchSvcOverrideManifests(Collections.singletonList(serviceOverrideConfig));
       checkDuplicateManifestIdentifiers(svcManifests, svcOverrideManifests, serviceV2Config.getIdentifier(),
-          ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier());
-      validateAllowedManifestTypesInOverrides(svcOverrideManifests);
+          ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(), SERVICE_OVERRIDES);
+      validateAllowedManifestTypesInOverrides(svcOverrideManifests, SERVICE_OVERRIDES);
       finalManifests.addAll(svcOverrideManifests);
     }
-    finalManifests.addAll(fetchFilteredEnvGlobalManifests(ngEnvironmentConfig));
+    final List<ManifestConfigWrapper> envGlobalManifests = getEnvGlobalManifests(ngEnvironmentConfig);
+    checkDuplicateManifestIdentifiers(svcManifests, envGlobalManifests, serviceV2Config.getIdentifier(),
+        ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(), ENVIRONMENT_GLOBAL_OVERRIDES);
+    validateAllowedManifestTypesInOverrides(envGlobalManifests, ENVIRONMENT_GLOBAL_OVERRIDES);
+    finalManifests.addAll(envGlobalManifests);
 
     return finalManifests;
   }
 
   @NonNull
-  private static List<ManifestConfigWrapper> fetchFilteredEnvGlobalManifests(NGEnvironmentConfig ngEnvironmentConfig) {
+  private static List<ManifestConfigWrapper> getEnvGlobalManifests(NGEnvironmentConfig ngEnvironmentConfig) {
     if (checkManifestAvailability(ngEnvironmentConfig)) {
       return Collections.EMPTY_LIST;
     }
@@ -282,7 +291,8 @@ public class ServiceDefinitionPlanCreatorHelper {
         || ngEnvironmentConfig.getNgEnvironmentInfoConfig().getNgEnvironmentGLobalOverride().getManifests() == null;
   }
 
-  private static void validateAllowedManifestTypesInOverrides(List<ManifestConfigWrapper> svcOverrideManifests) {
+  private static void validateAllowedManifestTypesInOverrides(
+      List<ManifestConfigWrapper> svcOverrideManifests, String overrideLocation) {
     if (isEmpty(svcOverrideManifests)) {
       return;
     }
@@ -294,14 +304,16 @@ public class ServiceDefinitionPlanCreatorHelper {
             .map(ManifestConfigType::getDisplayName)
             .filter(type -> !SERVICE_OVERRIDE_SUPPORTED_MANIFEST_TYPES.contains(type))
             .collect(Collectors.toSet());
-    if (isEmpty(unsupportedManifestTypesUsed)) {
-      throw new InvalidRequestException(format("Manifest Types: %s are not supported for Service Overrides",
-          unsupportedManifestTypesUsed.stream().map(Object::toString).collect(Collectors.joining(","))));
+    if (isNotEmpty(unsupportedManifestTypesUsed)) {
+      throw new InvalidRequestException(format("Unsupported Manifest Types: [%s] found for %s",
+          unsupportedManifestTypesUsed.stream().map(Object::toString).collect(Collectors.joining(",")),
+          overrideLocation));
     }
   }
 
   private static void checkDuplicateManifestIdentifiers(List<ManifestConfigWrapper> svcManifests,
-      List<ManifestConfigWrapper> svcOverrideManifests, String svcIdentifier, String envIdentifier) {
+      List<ManifestConfigWrapper> svcOverrideManifests, String svcIdentifier, String envIdentifier,
+      String overrideLocation) {
     if (isEmpty(svcManifests) || isEmpty(svcOverrideManifests)) {
       return;
     }
@@ -316,9 +328,9 @@ public class ServiceDefinitionPlanCreatorHelper {
                                             .collect(Collectors.toList());
     if (isNotEmpty(duplicateManifestIds)) {
       throw new InvalidRequestException(
-          format("found duplicate manifest identifiers [%s] for service [%s] and environment [%s]",
-              duplicateManifestIds.stream().map(Object::toString).collect(Collectors.joining(",")), svcIdentifier,
-              envIdentifier));
+          format("Found duplicate manifest identifiers [%s] in %s for service [%s] and environment [%s]",
+              duplicateManifestIds.stream().map(Object::toString).collect(Collectors.joining(",")), overrideLocation,
+              svcIdentifier, envIdentifier));
     }
   }
 
