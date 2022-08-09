@@ -10,33 +10,40 @@ package io.harness.ng;
 import io.harness.connector.ConnectorDTO;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.connector.customseceretmanager.CustomSecretManagerConnectorDTO;
+import io.harness.pms.yaml.YamlUtils;
 import io.harness.secretmanagerclient.dto.CustomSecretManagerConfigDTO;
+import io.harness.secretmanagerclient.dto.CustomSecretManagerConfigDTO.CustomSecretManagerConfigDTOBuilder;
 import io.harness.security.encryption.EncryptionType;
 
 public class CustomSecretManagerConfigDTOMapper {
   public static CustomSecretManagerConfigDTO getCustomSecretManagerConfigDTO(
       String accountIdentifier, ConnectorDTO connectorRequestDTO, CustomSecretManagerConnectorDTO connectorDTO) {
     ConnectorInfoDTO connector = connectorRequestDTO.getConnectorInfo();
-    return CustomSecretManagerConfigDTO.builder()
-        .isDefault(false)
-        .encryptionType(EncryptionType.CUSTOM_NG)
+    CustomSecretManagerConfigDTOBuilder<?, ?> builder =
+        CustomSecretManagerConfigDTO.builder()
+            .isDefault(false)
+            .encryptionType(EncryptionType.CUSTOM_NG)
 
-        .name(connector.getName())
-        .accountIdentifier(accountIdentifier)
-        .orgIdentifier(connector.getOrgIdentifier())
-        .projectIdentifier(connector.getProjectIdentifier())
-        .tags(connector.getTags())
-        .identifier(connector.getIdentifier())
-        .description(connector.getDescription())
-        .harnessManaged(connectorDTO.isHarnessManaged())
+            .name(connector.getName())
+            .accountIdentifier(accountIdentifier)
+            .orgIdentifier(connector.getOrgIdentifier())
+            .projectIdentifier(connector.getProjectIdentifier())
+            .tags(connector.getTags())
+            .identifier(connector.getIdentifier())
+            .description(connector.getDescription())
+            .harnessManaged(connectorDTO.isHarnessManaged())
+            .unmergedConnectorRequest(YamlUtils.write(connectorRequestDTO))
 
-        .delegateSelectors(connectorDTO.getDelegateSelectors())
-        .onDelegate(connectorDTO.isOnDelegate())
-        .connectorRef(connectorDTO.getConnectorRef())
-        .host(connectorDTO.getHost())
-        .workingDirectory(connectorDTO.getWorkingDirectory())
-        .templateInfo(connectorDTO.getTemplateInfo())
+            .delegateSelectors(connectorDTO.getDelegateSelectors())
+            .onDelegate(connectorDTO.isOnDelegate())
+            //.connectorToken(connectorDTO.getConnectorToken())
+            .host(connectorDTO.getHost())
+            .workingDirectory(connectorDTO.getWorkingDirectory())
+            .template(connectorDTO.getTemplate());
 
-        .build();
+    if (null != connectorDTO.getConnectorToken() && null != connectorDTO.getConnectorToken().getDecryptedValue()) {
+      builder.connectorToken(String.valueOf(connectorDTO.getConnectorToken().getDecryptedValue()));
+    }
+    return builder.build();
   }
 }

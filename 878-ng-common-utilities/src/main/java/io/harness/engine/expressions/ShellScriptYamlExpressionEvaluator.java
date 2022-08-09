@@ -46,13 +46,13 @@ public class ShellScriptYamlExpressionEvaluator extends EngineExpressionEvaluato
   @Override
   protected List<String> fetchPrefixes() {
     ImmutableList.Builder<String> listBuilder = ImmutableList.builder();
-    return listBuilder.add("__yamlExpression").addAll(super.fetchPrefixes()).build();
+    return listBuilder.add("__yamlExpression").add("__yamlExpression.connector").addAll(super.fetchPrefixes()).build();
   }
 
   private YamlField getShellScriptYamlField() {
     try {
       YamlField yamlField = YamlUtils.readTree(yaml);
-      return yamlField.getNode().getField("template");
+      return yamlField.getNode().getField("connector");
     } catch (IOException e) {
       throw new InvalidRequestException("Not valid yaml passed.");
     }

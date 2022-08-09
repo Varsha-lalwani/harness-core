@@ -32,6 +32,7 @@ import io.harness.engine.expressions.ShellScriptYamlExpressionEvaluator;
 import io.harness.exception.WingsException;
 import io.harness.mappers.SecretManagerConfigMapper;
 import io.harness.ng.core.api.NGSecretManagerService;
+import io.harness.ng.core.template.TemplateApplyRequestDTO;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.remote.client.NGRestUtils;
@@ -133,20 +134,30 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
             log.info("Secret manager type is custom");
             CustomSecretManagerConfigDTO customNGSecretManagerConfigDTO =
                 (CustomSecretManagerConfigDTO) secretManagerConfigDTO;
-            TemplateResponseDTO template = NGRestUtils.getResponse(
-                templateResourceClient.getTemplate(customNGSecretManagerConfigDTO.getTemplateInfo().getTemplateRef(),
+            /*TemplateResponseDTO template = NGRestUtils.getResponse(
+                templateResourceClient.getTemplate(customNGSecretManagerConfigDTO.getTemplate().getTemplateRef(),
                     customNGSecretManagerConfigDTO.getAccountIdentifier(),
                     customNGSecretManagerConfigDTO.getOrgIdentifier(),
                     customNGSecretManagerConfigDTO.getProjectIdentifier(),
-                    customNGSecretManagerConfigDTO.getTemplateInfo().getVersionLabel(), null, null, null));
-
-            String yaml = template.getYaml();
-            log.info("Yaml received from template service is \n " + yaml);
+                    customNGSecretManagerConfigDTO.getTemplate().getVersionLabel(), null, null, null));
+*/
+            String mergedYaml =
+                NGRestUtils
+                    .getResponse(templateResourceClient.applyTemplatesOnGivenYaml(
+                        customNGSecretManagerConfigDTO.getAccountIdentifier(),
+                        customNGSecretManagerConfigDTO.getOrgIdentifier(),
+                        customNGSecretManagerConfigDTO.getProjectIdentifier(), null, null, null,
+                        TemplateApplyRequestDTO.builder()
+                            .originalEntityYaml(customNGSecretManagerConfigDTO.getUnmergedConnectorRequest())
+                            .build()))
+                    .getMergedPipelineYaml();
+            // String yaml = template.getYaml();
+            log.info("Yaml received from template service is \n" + mergedYaml);
             // resolve the yaml
             ShellScriptYamlExpressionEvaluator shellScriptYamlExpressionEvaluator =
-                new ShellScriptYamlExpressionEvaluator(yaml);
+                new ShellScriptYamlExpressionEvaluator(mergedYaml);
             ShellScriptBaseDTO shellScriptBaseDTO =
-                YamlUtils.read(yaml, ShellScriptYamlDTO.class).getShellScriptBaseDTO();
+                YamlUtils.read(mergedYaml, ShellScriptYamlDTO.class).getShellScriptBaseDTO();
             shellScriptBaseDTO =
                 (ShellScriptBaseDTO) shellScriptYamlExpressionEvaluator.resolve(shellScriptBaseDTO, false);
             // get the script out of resolved yaml
@@ -164,7 +175,10 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
             CustomEncryptor customEncryptor = customEncryptorsRegistry.getCustomEncryptor(CUSTOM_NG);
             Set<EncryptedDataParams> encryptedDataParamsSet = new HashSet<>();
             encryptedDataParamsSet.add(EncryptedDataParams.builder().name("Script").value(script).build());
-            customEncryptor.validateReference(accountIdentifier, encryptedDataParamsSet, encryptionConfig);
+            // maybe output var
+            // Script , task parameters -> (script, )
+            validationResult =
+                customEncryptor.validateReference(accountIdentifier, encryptedDataParamsSet, encryptionConfig);
             // encryptor will pass it to delegate.
             //              validationResult = customEncryptor.validateReference(encryptionConfig.getAccountId(),
             //              encryptionConfig);
