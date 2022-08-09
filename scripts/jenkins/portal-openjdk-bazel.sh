@@ -278,6 +278,7 @@ cp ../../951-debezium-service/src/main/resources/redisson-jcache.yaml .
 
 cp ../../dockerization/debezium-service/Dockerfile-debezium-service-jenkins-k8-openjdk ./Dockerfile
 cp ../../dockerization/debezium-service/Dockerfile-debezium-service-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
+cp ../../dockerization/debezium-service/Dockerfile-debezium-service-cie-jdk ./Dockerfile-cie-jdk
 cp ../../dockerization/base-images/apm/inject-onprem-apm-bins-into-dockerimage.sh .
 cp ../../dockerization/base-images/apm/inject-saas-apm-bins-into-dockerimage.sh .
 cp -r ../../dockerization/debezium-service/scripts/ .
