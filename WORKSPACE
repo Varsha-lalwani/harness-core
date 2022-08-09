@@ -5312,6 +5312,7 @@ maven_install(
         "https://harness.jfrog.io/harness/thirdparty-annonymous",
         "https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-core/4.3.4",
     ],
+    version_conflict_policy = "pinned",
 )
 
 load("//tools/bazel/sonarqube:repositories.bzl", "bazel_sonarqube_repositories")
