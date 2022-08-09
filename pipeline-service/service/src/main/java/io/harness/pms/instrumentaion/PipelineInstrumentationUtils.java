@@ -90,7 +90,14 @@ public class PipelineInstrumentationUtils {
       List<String> res = new ArrayList<>();
       if (stagesJsonNode.isArray()) {
         for (JsonNode stageNode : stagesJsonNode) {
-          res.add(stageNode.get("stage").get("type").textValue());
+          if (stageNode.get("parallel") != null) {
+            JsonNode parallelStagesNode = stageNode.get("parallel");
+            for (JsonNode stageNodeInsideParallel : parallelStagesNode) {
+              res.add(stageNodeInsideParallel.get("stage").get("type").textValue());
+            }
+          } else {
+            res.add(stageNode.get("stage").get("type").textValue());
+          }
         }
       }
       return res;
