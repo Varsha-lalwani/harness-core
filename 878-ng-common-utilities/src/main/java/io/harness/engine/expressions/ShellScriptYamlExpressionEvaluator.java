@@ -11,6 +11,7 @@ import io.harness.data.algorithm.HashGenerator;
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.EngineExpressionEvaluator;
 import io.harness.expression.ExpressionEvaluatorUtils;
+import io.harness.expression.ExpressionMode;
 import io.harness.expression.ResolveObjectResponse;
 import io.harness.ng.core.template.TemplateEntityType;
 import io.harness.pms.yaml.ParameterField;
@@ -67,7 +68,7 @@ public class ShellScriptYamlExpressionEvaluator extends EngineExpressionEvaluato
   public static class ShellScriptFunctorImpl extends ResolveFunctorImpl {
     public ShellScriptFunctorImpl(
         EngineExpressionEvaluator expressionEvaluator, boolean skipUnresolvedExpressionsCheck) {
-      super(expressionEvaluator, skipUnresolvedExpressionsCheck);
+      super(expressionEvaluator, ExpressionMode.RETURN_ORIGINAL_EXPRESSION_IF_UNRESOLVED);
     }
 
     @Override
