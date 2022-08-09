@@ -16,8 +16,8 @@ import lombok.Builder;
 
 public class MergePRStepParams extends MergePRBaseStepInfo implements GitOpsSpecParameters {
   @Builder(builderMethodName = "infoBuilder")
-  public MergePRStepParams(ParameterField<List<TaskSelectorYaml>> delegateSelectors, ParameterField<Boolean> deleteBranch) {
-    super(delegateSelectors, deleteBranch);
+  public MergePRStepParams(ParameterField<List<TaskSelectorYaml>> delegateSelectors, ParameterField<Boolean> deleteSourceBranch) {
+    super(delegateSelectors, deleteSourceBranch);
   }
 
   @Override

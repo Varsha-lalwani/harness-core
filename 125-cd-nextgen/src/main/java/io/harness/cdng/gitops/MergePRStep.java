@@ -188,7 +188,7 @@ public class MergePRStep extends TaskExecutableWithRollbackAndRbac<NGGitOpsRespo
                                .prNumber(String.valueOf(prNumber))
                                .slug(slug)
                                .sha(sha)
-                               .deleteBranch(CDStepHelper.getParameterFieldBooleanValue(gitOpsSpecParams.getDeleteBranch(), MergePRBaseStepInfo.MergePRBaseStepInfoKeys.deleteBranch, stepParameters))
+                               .deleteSourceBranch(CDStepHelper.getParameterFieldBooleanValue(gitOpsSpecParams.getDeleteBranch(), MergePRBaseStepInfo.MergePRBaseStepInfoKeys.deleteSourceBranch, stepParameters))
                                .build();
         break;
       default:

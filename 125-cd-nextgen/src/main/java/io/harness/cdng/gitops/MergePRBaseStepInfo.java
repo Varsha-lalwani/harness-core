@@ -44,5 +44,5 @@ public class MergePRBaseStepInfo {
   @NotNull
   @ApiModelProperty(dataType = BOOLEAN_CLASSPATH)
   @YamlSchemaTypes({string})
-  ParameterField<Boolean> deleteBranch;
+  ParameterField<Boolean> deleteSourceBranch;
 }
