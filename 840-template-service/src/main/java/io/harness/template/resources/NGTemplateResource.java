@@ -737,8 +737,11 @@ public class NGTemplateResource {
   @ApiOperation(value = "Retain variables for Template", nickname = "retainTemplateVariables")
   @Hidden
   public ResponseDTO<TemplateRetainVariablesResponse>
-  retainTemplateVariables(@NotNull TemplateRetainVariablesRequestDTO templateRetainVariablesRequestDTO) {
-    log.info("Retaining Template Variables for new template version");
+  retainTemplateVariables(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId,
+      @NotNull TemplateRetainVariablesRequestDTO templateRetainVariablesRequestDTO) {
+    log.info("Retain Template Variables for new template version");
     return ResponseDTO.newResponse(
         templateMergeService.updateTemplateInputs(templateRetainVariablesRequestDTO.getOriginalTemplateInputs(),
             templateRetainVariablesRequestDTO.getTemplateInputsTobeUpdated()));
