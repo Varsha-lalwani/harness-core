@@ -73,7 +73,8 @@ public class GitlabApiClient implements GitApiClient {
       String gitApiURL = getGitApiURL(gitConfigDTO.getUrl());
       String slug = gitApiTaskParams.getSlug();
       String prNumber = gitApiTaskParams.getPrNumber();
-      JSONObject mergePRResponse = gitlabService.mergePR(gitApiURL, slug, token, prNumber);
+      Boolean deleteBranch = gitApiTaskParams.getDeleteBranch();
+      JSONObject mergePRResponse = gitlabService.mergePR(gitApiURL, slug, token, prNumber, deleteBranch);
       if (mergePRResponse != null) {
         responseBuilder.commandExecutionStatus(CommandExecutionStatus.SUCCESS)
             .gitApiResult(GitApiMergePRTaskResponse.builder().sha(mergePRResponse.get("sha").toString()).build());
