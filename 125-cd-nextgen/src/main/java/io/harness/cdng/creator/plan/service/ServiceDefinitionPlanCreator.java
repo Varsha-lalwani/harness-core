@@ -56,6 +56,7 @@ import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.serializer.KryoSerializer;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
@@ -194,13 +195,8 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
     }
 
     NGEnvironmentConfig ngEnvironmentConfig = fetchEnvironmentConfig(ctx, kryoSerializer);
-    NGServiceOverrideConfig serviceOverrideConfig = null;
-    Optional<NGServiceOverridesEntity> serviceOverridesEntity =
-        fetchServiceOverrideEntities(ctx, config, ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier());
-    if (serviceOverridesEntity.isPresent()) {
-      serviceOverrideConfig =
-          NGServiceOverrideEntityConfigMapper.toNGServiceOverrideConfig(serviceOverridesEntity.get());
-    }
+    NGServiceOverrideConfig serviceOverrideConfig =
+        fetchServiceOverrideConfig(ctx, config, ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier());
 
     String manifestPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForManifestsV2(
         serviceV2Node, planCreationResponseMap, config, serviceOverrideConfig, ngEnvironmentConfig, kryoSerializer);
@@ -246,14 +242,19 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
     addServiceSpecNodeV2(config, planCreationResponseMap, serviceSpecChildrenIds);
   }
 
-  private Optional<NGServiceOverridesEntity> fetchServiceOverrideEntities(
+  @VisibleForTesting
+  NGServiceOverrideConfig fetchServiceOverrideConfig(
       PlanCreationContext ctx, NGServiceV2InfoConfig serviceV2InfoConfig, String envRef) {
     PlanCreationContextValue metadata = ctx.getMetadata();
-    return serviceOverrideService.get(metadata.getAccountIdentifier(), metadata.getOrgIdentifier(),
-        metadata.getProjectIdentifier(), envRef, serviceV2InfoConfig.getIdentifier());
+    final Optional<NGServiceOverridesEntity> serviceOverridesEntity =
+        serviceOverrideService.get(metadata.getAccountIdentifier(), metadata.getOrgIdentifier(),
+            metadata.getProjectIdentifier(), envRef, serviceV2InfoConfig.getIdentifier());
+
+    return serviceOverridesEntity.map(NGServiceOverrideEntityConfigMapper::toNGServiceOverrideConfig).orElse(null);
   }
 
-  private NGEnvironmentConfig fetchEnvironmentConfig(PlanCreationContext ctx, KryoSerializer kryoSerializer) {
+  @VisibleForTesting
+  NGEnvironmentConfig fetchEnvironmentConfig(PlanCreationContext ctx, KryoSerializer kryoSerializer) {
     ParameterField<String> envRefField = (ParameterField<String>) kryoSerializer.asInflatedObject(
         ctx.getDependency().getMetadataMap().get(YamlTypes.ENVIRONMENT_REF).toByteArray());
     PlanCreationContextValue metadata = ctx.getMetadata();

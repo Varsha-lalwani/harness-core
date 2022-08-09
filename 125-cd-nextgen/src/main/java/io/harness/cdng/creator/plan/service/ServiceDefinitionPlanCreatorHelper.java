@@ -34,11 +34,8 @@ import io.harness.data.structure.CollectionUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.exception.InvalidRequestException;
-import io.harness.ng.core.environment.services.EnvironmentService;
 import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
 import io.harness.ng.core.service.yaml.NGServiceV2InfoConfig;
-import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
-import io.harness.ng.core.serviceoverride.services.ServiceOverrideService;
 import io.harness.ng.core.serviceoverride.yaml.NGServiceOverrideConfig;
 import io.harness.ng.core.serviceoverride.yaml.NGServiceOverrideInfoConfig;
 import io.harness.pms.contracts.plan.Dependencies;
@@ -53,7 +50,6 @@ import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.serializer.KryoSerializer;
 
-import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -63,7 +59,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -76,9 +71,6 @@ import org.jetbrains.annotations.NotNull;
  */
 @UtilityClass
 public class ServiceDefinitionPlanCreatorHelper {
-  @Inject ServiceOverrideService serviceOverrideService;
-  @Inject EnvironmentService environmentService;
-
   public Map<String, ByteString> prepareMetadata(
       String planNodeId, ServiceConfig actualServiceConfig, KryoSerializer kryoSerializer) {
     Map<String, ByteString> metadataDependency = new HashMap<>();
