@@ -290,6 +290,9 @@ then
     echo ${PURPOSE} > purpose.txt
 fi
 
+java -jar debezium-service-capsule scan-classpath-metadata
+
+
 cd ../..
 
 mkdir -p dist/template-service
