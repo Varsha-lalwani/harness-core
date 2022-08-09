@@ -1,0 +1,15 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+    name = "resources",
+    srcs = glob(["*.java"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//960-ng-core-beans:module",
+        "//970-ng-commons:module",
+        "//999-annotations:module",
+        "//access-control/contracts:module",
+        "@maven//:com_squareup_retrofit2_retrofit",
+        "@maven//:io_swagger_swagger_annotations",
+    ],
+)

@@ -1,0 +1,26 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+    name = "services",
+    srcs = glob(["*.java"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:lombok",
+        "//120-ng-manager/src/main/java/io/harness/ng/accesscontrol/migrations/dao",
+        "//120-ng-manager/src/main/java/io/harness/ng/accesscontrol/migrations/models",
+        "//123-ng-core-user:module",
+        "//930-ng-core-clients:module",
+        "//950-ng-project-n-orgs:module",
+        "//960-ng-core-beans:module",
+        "//960-persistence:module",
+        "//970-ng-commons:module",
+        "//980-commons:module",
+        "//999-annotations:module",
+        "//access-control/contracts:module",
+        "//clients/access-control/admin-client:module",
+        "@maven//:com_google_guava_guava",
+        "@maven//:com_google_inject_guice",
+        "@maven//:org_springframework_data_spring_data_mongodb",
+        "@maven//:org_springframework_spring_tx",
+    ],
+)

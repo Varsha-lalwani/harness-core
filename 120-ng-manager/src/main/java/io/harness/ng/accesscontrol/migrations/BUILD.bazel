@@ -1,0 +1,26 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+    name = "migrations",
+    srcs = glob(["*.java"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:lombok",
+        "//120-ng-manager/src/main/java/io/harness/ng/accesscontrol/migrations/dao",
+        "//120-ng-manager/src/main/java/io/harness/ng/accesscontrol/migrations/repositories",
+        "//120-ng-manager/src/main/java/io/harness/ng/accesscontrol/migrations/services",
+        "//123-ng-core-user:module",
+        "//930-ng-core-clients:module",
+        "//950-ng-project-n-orgs:module",
+        "//960-persistence:module",
+        "//999-annotations:module",
+        "//clients/access-control/admin-client:module",
+        "//clients/resource-group:module",
+        "@maven//:com_google_guava_guava",
+        "@maven//:com_google_inject_guice",
+        "@maven//:io_dropwizard_dropwizard_lifecycle",
+        "@maven//:org_mongodb_mongo_java_driver",
+        "@maven//:org_springframework_data_spring_data_mongodb",
+        "@maven//:org_springframework_spring_context",
+    ],
+)

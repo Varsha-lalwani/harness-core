@@ -1,0 +1,13 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+    name = "repositories",
+    srcs = glob(["*.java"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//120-ng-manager/src/main/java/io/harness/ng/accesscontrol/migrations/models",
+        "//960-persistence:module",
+        "//999-annotations:module",
+        "@maven//:org_springframework_data_spring_data_commons",
+    ],
+)
