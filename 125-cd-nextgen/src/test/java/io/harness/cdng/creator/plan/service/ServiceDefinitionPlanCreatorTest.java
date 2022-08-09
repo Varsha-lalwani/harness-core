@@ -72,8 +72,8 @@ public class ServiceDefinitionPlanCreatorTest extends CDNGTestBase {
   private static final String ACCOUNT_ID = "account_id";
   private static final String ORG_IDENTIFIER = "orgId";
   private static final String PROJ_IDENTIFIER = "projId";
-  private final static String SVC_REF = "SVC_REF";
-  private final static String ENV_REF = "ENV_REF";
+  private static final String SVC_REF = "SVC_REF";
+  private static final String ENV_REF = "ENV_REF";
 
   @Before
   public void setupMocks() {

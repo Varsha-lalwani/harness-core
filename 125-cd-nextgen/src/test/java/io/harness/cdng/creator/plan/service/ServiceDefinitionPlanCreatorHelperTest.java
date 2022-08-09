@@ -27,7 +27,6 @@ import io.harness.cdng.artifact.bean.yaml.SidecarArtifactWrapper;
 import io.harness.cdng.manifest.ManifestConfigType;
 import io.harness.cdng.manifest.yaml.ManifestConfig;
 import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
-import io.harness.cdng.service.ServiceSpec;
 import io.harness.cdng.service.beans.KubernetesServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.service.beans.ServiceDefinition;
@@ -70,19 +69,19 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
 
   private final static String SVC_REF = "SVC_REF";
   private final static String ENV_REF = "ENV_REF";
-  private static final ManifestConfigWrapper k8sManifest =
+  private final static ManifestConfigWrapper k8sManifest =
       ManifestConfigWrapper.builder()
           .manifest(ManifestConfig.builder().identifier("k8s_test1").type(ManifestConfigType.K8_MANIFEST).build())
           .build();
-  private static final ManifestConfigWrapper valuesManifest1 =
+  private final static ManifestConfigWrapper valuesManifest1 =
       ManifestConfigWrapper.builder()
           .manifest(ManifestConfig.builder().identifier("values_test1").type(ManifestConfigType.VALUES).build())
           .build();
-  private static final ManifestConfigWrapper valuesManifest2 =
+  private final static ManifestConfigWrapper valuesManifest2 =
       ManifestConfigWrapper.builder()
           .manifest(ManifestConfig.builder().identifier("values_test2").type(ManifestConfigType.VALUES).build())
           .build();
-  private static final ManifestConfigWrapper valuesManifest3 =
+  private final static ManifestConfigWrapper valuesManifest3 =
       ManifestConfigWrapper.builder()
           .manifest(ManifestConfig.builder().identifier("values_test3").type(ManifestConfigType.VALUES).build())
           .build();
