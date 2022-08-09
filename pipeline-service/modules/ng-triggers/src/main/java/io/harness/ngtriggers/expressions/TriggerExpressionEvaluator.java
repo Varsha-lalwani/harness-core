@@ -12,6 +12,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.HeaderConfig;
 import io.harness.expression.EngineExpressionEvaluator;
 import io.harness.expression.EngineJexlContext;
+import io.harness.expression.ExpressionMode;
 import io.harness.ngtriggers.expressions.functors.PayloadFunctor;
 import io.harness.ngtriggers.expressions.functors.TriggerPayloadFunctor;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -68,6 +69,11 @@ public class TriggerExpressionEvaluator extends EngineExpressionEvaluator {
 
   @Override
   public Object evaluateExpression(String expression) {
+    return evaluateExpression(expression, ExpressionMode.RETURN_NULL_IF_UNRESOLVED);
+  }
+
+  @Override
+  public Object evaluateExpression(String expression, ExpressionMode expressionMode) {
     try {
       Object result = evaluateExpression(expression, (Map<String, Object>) null);
       return result == null ? "null" : result;

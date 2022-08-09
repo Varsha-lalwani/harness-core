@@ -220,6 +220,7 @@ public class EngineExpressionEvaluator {
     return finalExpression;
   }
 
+  @Deprecated
   public Object evaluateExpression(String expression) {
     return evaluateExpression(expression, null, ExpressionMode.RETURN_NULL_IF_UNRESOLVED);
   }
@@ -228,6 +229,7 @@ public class EngineExpressionEvaluator {
     return evaluateExpression(expression, null, expressionMode);
   }
 
+  @Deprecated
   public Object evaluateExpression(String expression, Map<String, Object> ctx) {
     return evaluateExpression(expression, ctx, ExpressionMode.RETURN_NULL_IF_UNRESOLVED);
   }
