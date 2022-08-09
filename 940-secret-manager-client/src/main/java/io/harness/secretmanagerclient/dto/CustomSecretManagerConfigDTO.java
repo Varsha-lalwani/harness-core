@@ -11,8 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.SecretManagerDescriptionConstants;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.beans.connector.TemplateInfo;
-import io.harness.security.encryption.EncryptedDataParams;
+import io.harness.connector.DelegateSelectable;
+import io.harness.delegate.beans.connector.customseceretmanager.TemplateLinkConfig;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Set;
@@ -20,21 +20,23 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @OwnedBy(PL)
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString(exclude = {"connectorToken", "unmergedConnectorRequest"})
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-public class CustomSecretManagerConfigDTO extends SecretManagerConfigDTO {
+public class CustomSecretManagerConfigDTO extends SecretManagerConfigDTO implements DelegateSelectable {
   Set<String> delegateSelectors;
   private boolean onDelegate;
 
-  @Schema(description = SecretManagerDescriptionConstants.AUTH_TOKEN) private String connectorRef;
+  @Schema(description = SecretManagerDescriptionConstants.CUSTOM_AUTH_TOKEN) private String connectorToken;
   private String host;
   private String workingDirectory;
-  private TemplateInfo templateInfo;
-  private Set<EncryptedDataParams> testVariables;
+  private TemplateLinkConfig template;
+  private String unmergedConnectorRequest;
 }
