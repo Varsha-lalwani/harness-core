@@ -9,7 +9,6 @@ package io.harness.ng.core.template;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
-import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
 
@@ -17,6 +16,6 @@ import lombok.Value;
 @Value
 @Builder
 public class TemplateRetainVariablesRequestDTO {
-  @NotNull String originalTemplateInputs;
-  @NotNull String templateInputsTobeUpdated;
+  String originalTemplateInputs;
+  String templateInputsTobeUpdated;
 }

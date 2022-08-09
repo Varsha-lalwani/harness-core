@@ -27,6 +27,7 @@ import io.harness.encryption.Scope;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.ng.core.template.TemplateReferenceSummary;
+import io.harness.ng.core.template.TemplateRetainVariablesResponse;
 import io.harness.ng.core.template.exception.NGTemplateResolveException;
 import io.harness.rule.Owner;
 import io.harness.template.entity.TemplateEntity;
@@ -518,5 +519,64 @@ public class TemplateMergeServiceImplTest extends TemplateServiceTestBase {
     String resFile = "pipeline-with-template-with-opa-policy-response.yaml";
     String resPipeline = readFile(resFile);
     assertThat(finalPipelineYaml).isEqualTo(resPipeline);
+  }
+
+  @Test
+  @Owner(developers = UTKARSH_CHOUBEY)
+  @Category(UnitTests.class)
+  public void testUpdateTemplateInputs() {
+    String originalTemplateYaml = "type: \"ShellScript\"\n"
+        + "spec:\n"
+        + "  source:\n"
+        + "    type: \"Inline\"\n"
+        + "    spec:\n"
+        + "      script: \"cd harness\"\n"
+        + "timeout: \"10s\"";
+
+    String yamlToBeUpdated = "type: \"ShellScript\"\n"
+        + "spec:\n"
+        + "  source:\n"
+        + "    type: \"Inline\"\n"
+        + "    spec:\n"
+        + "      script: \"<+input>\"\n"
+        + "timeout: \"<+input>\"\n";
+
+    TemplateRetainVariablesResponse templateRetainVariablesResponse =
+        templateMergeService.updateTemplateInputs(originalTemplateYaml, yamlToBeUpdated);
+    assertThat(originalTemplateYaml).isEqualTo(templateRetainVariablesResponse.getMergedTemplateInputs());
+  }
+
+  @Test
+  @Owner(developers = UTKARSH_CHOUBEY)
+  @Category(UnitTests.class)
+  public void testUpdateTemplateWhenSourceYamlIsEmpty() {
+    String originalTemplateYaml = "";
+    String yamlToBeUpdated = "type: \"ShellScript\"\n"
+        + "spec:\n"
+        + "  source:\n"
+        + "    type: \"Inline\"\n"
+        + "    spec:\n"
+        + "      script: \"<+input>\"\n"
+        + "timeout: \"<+input>\"\n";
+    assertThatThrownBy(() -> templateMergeService.updateTemplateInputs(originalTemplateYaml, yamlToBeUpdated))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("Source Yaml cannot be empty.");
+  }
+
+  @Test
+  @Owner(developers = UTKARSH_CHOUBEY)
+  @Category(UnitTests.class)
+  public void testUpdateTemplateWhenYamlToBeUpdatedIsEmpty() {
+    String originalTemplateYaml = "type: \"ShellScript\"\n"
+        + "spec:\n"
+        + "  source:\n"
+        + "    type: \"Inline\"\n"
+        + "    spec:\n"
+        + "      script: \"cd harness\"\n"
+        + "timeout: \"10s\"";
+    String yamlToBeUpdated = "";
+    TemplateRetainVariablesResponse templateRetainVariablesResponse =
+        templateMergeService.updateTemplateInputs(originalTemplateYaml, yamlToBeUpdated);
+    assertThat(yamlToBeUpdated).isEqualTo(templateRetainVariablesResponse.getMergedTemplateInputs());
   }
 }

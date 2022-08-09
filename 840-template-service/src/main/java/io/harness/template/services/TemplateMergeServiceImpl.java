@@ -16,6 +16,7 @@ import static io.harness.template.beans.NGTemplateConstants.TEMPLATE_VERSION_LAB
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.NGTemplateException;
 import io.harness.exception.ngexception.beans.templateservice.TemplateInputsErrorMetadataDTO;
@@ -118,11 +119,17 @@ public class TemplateMergeServiceImpl implements TemplateMergeService {
   public TemplateRetainVariablesResponse updateTemplateInputs(String sourceYaml, String yamlToBeUpdated) {
     JsonNode sourceInputSetFormatJsonNode;
     JsonNode yamlToBeUpdatedJsonNode;
+    if (EmptyPredicate.isEmpty(sourceYaml)) {
+      throw new InvalidRequestException("Source Yaml cannot be empty.");
+    }
+    if (EmptyPredicate.isEmpty(yamlToBeUpdated)) {
+      return TemplateRetainVariablesResponse.builder().mergedTemplateInputs(yamlToBeUpdated).build();
+    }
     try {
       sourceInputSetFormatJsonNode = YamlUtils.readTree(sourceYaml).getNode().getCurrJsonNode();
       yamlToBeUpdatedJsonNode = YamlUtils.readTree(yamlToBeUpdated).getNode().getCurrJsonNode();
     } catch (IOException e) {
-      throw new InvalidRequestException("Couldn't convert sourceNodeInputSetFormatYaml to JsonNode");
+      throw new InvalidRequestException("Couldn't convert yaml to JsonNode");
     }
     JsonNode updatedJsonNode =
         YamlRefreshHelper.refreshNodeFromSourceNode(sourceInputSetFormatJsonNode, yamlToBeUpdatedJsonNode);
