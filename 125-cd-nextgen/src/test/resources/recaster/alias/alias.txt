@@ -383,3 +383,4 @@ io.harness.plancreator.steps.TaskSelectorYaml
 io.harness.plancreator.strategy.ExpressionAxisConfig
 io.harness.cdng.service.beans.ServiceUseFromStageV2
 io.harness.ng.core.environment.beans.NGEnvironmentGlobalOverride
+io.harness.cdng.execution.ExecutionInfoKeyOutput
