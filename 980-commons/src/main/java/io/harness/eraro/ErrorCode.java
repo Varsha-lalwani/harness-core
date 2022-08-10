@@ -631,7 +631,15 @@ public enum ErrorCode {
 
   SCM_UNEXPECTED_ERROR,
 
-  AWS_ECS_EXCEPTION;
+  AWS_ECS_ERROR,
+
+  AWS_APPLICATION_AUTO_SCALING,
+
+  AWS_ECS_SERVICE_NOT_ACTIVE,
+
+  AWS_ECS_CLIENT_ERROR,
+
+  AWS_STS_ERROR;
 
   private Status status = BAD_REQUEST;
   private String description;

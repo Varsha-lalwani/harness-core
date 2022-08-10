@@ -5,7 +5,9 @@ import com.google.inject.Singleton;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.v2.AwsClientHelper;
 import io.harness.aws.beans.AwsInternalConfig;
+import io.harness.exception.InvalidRequestException;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.SdkClient;
 import software.amazon.awssdk.core.retry.backoff.FixedDelayBackoffStrategy;
 import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;
@@ -24,6 +26,9 @@ import software.amazon.awssdk.services.applicationautoscaling.model.PutScalingPo
 import software.amazon.awssdk.services.applicationautoscaling.model.PutScalingPolicyResponse;
 import software.amazon.awssdk.services.applicationautoscaling.model.RegisterScalableTargetRequest;
 import software.amazon.awssdk.services.applicationautoscaling.model.RegisterScalableTargetResponse;
+import software.amazon.awssdk.services.ecs.model.AccessDeniedException;
+import software.amazon.awssdk.services.ecs.model.ClientException;
+import software.amazon.awssdk.services.ecs.model.ClusterNotFoundException;
 import software.amazon.awssdk.services.ecs.model.CreateServiceRequest;
 import software.amazon.awssdk.services.ecs.model.CreateServiceResponse;
 import software.amazon.awssdk.services.ecs.model.DeleteServiceRequest;
@@ -33,11 +38,14 @@ import software.amazon.awssdk.services.ecs.model.DescribeServicesResponse;
 import software.amazon.awssdk.services.ecs.model.DescribeTaskDefinitionRequest;
 import software.amazon.awssdk.services.ecs.model.DescribeTasksRequest;
 import software.amazon.awssdk.services.ecs.model.DescribeTasksResponse;
+import software.amazon.awssdk.services.ecs.model.EcsException;
 import software.amazon.awssdk.services.ecs.model.ListTasksRequest;
 import software.amazon.awssdk.services.ecs.model.ListTasksResponse;
 import software.amazon.awssdk.services.ecs.model.RegisterTaskDefinitionRequest;
 import software.amazon.awssdk.services.ecs.model.RegisterTaskDefinitionResponse;
 import software.amazon.awssdk.services.ecs.model.Service;
+import software.amazon.awssdk.services.ecs.model.ServiceNotActiveException;
+import software.amazon.awssdk.services.ecs.model.ServiceNotFoundException;
 import software.amazon.awssdk.services.ecs.model.TaskDefinition;
 import software.amazon.awssdk.services.ecs.model.UpdateServiceRequest;
 import software.amazon.awssdk.services.ecs.model.UpdateServiceResponse;
@@ -50,6 +58,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.eraro.ErrorCode.AWS_ACCESS_DENIED;
+import static io.harness.eraro.ErrorCode.AWS_CLUSTER_NOT_FOUND;
+import static io.harness.eraro.ErrorCode.AWS_ECS_CLIENT_ERROR;
+import static io.harness.eraro.ErrorCode.AWS_ECS_ERROR;
+import static io.harness.eraro.ErrorCode.AWS_ECS_SERVICE_NOT_ACTIVE;
+import static io.harness.eraro.ErrorCode.AWS_SERVICE_NOT_FOUND;
+import static io.harness.exception.WingsException.USER;
 
 @OwnedBy(CDP)
 @Singleton
@@ -63,6 +78,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return ecsClient.createService(createServiceRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return CreateServiceResponse.builder().build();
@@ -75,6 +91,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return ecsClient.updateService(updateServiceRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return UpdateServiceResponse.builder().build();
@@ -99,6 +116,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return ecsClient.registerTaskDefinition(registerTaskDefinitionRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return RegisterTaskDefinitionResponse.builder().build();
@@ -117,6 +135,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return ecsWaiter.waitUntilServicesStable(describeServicesRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return null;
@@ -149,6 +168,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
            return applicationAutoScalingClient.registerScalableTarget(registerScalableTargetRequest);
        }
        catch(Exception exception) {
+           super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
            super.handleException(exception);
        }
        return RegisterScalableTargetResponse.builder().build();
@@ -163,6 +183,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return applicationAutoScalingClient.deregisterScalableTarget(deregisterScalableTargetRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return DeregisterScalableTargetResponse.builder().build();
@@ -176,6 +197,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return applicationAutoScalingClient.putScalingPolicy(putScalingPolicyRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return PutScalingPolicyResponse.builder().build();
@@ -189,6 +211,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return applicationAutoScalingClient.deleteScalingPolicy(deleteScalingPolicyRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return DeleteScalingPolicyResponse.builder().build();
@@ -203,6 +226,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return applicationAutoScalingClient.describeScalableTargets(describeScalableTargetsRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return null;
@@ -217,6 +241,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return applicationAutoScalingClient.describeScalingPolicies(describeScalingPoliciesRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return DescribeScalingPoliciesResponse.builder().build();
@@ -234,6 +259,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return ecsClient.describeServices(describeServicesRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return null;
@@ -249,6 +275,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return ecsClient.describeTaskDefinition(describeTaskDefinitionRequest).taskDefinition();
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return TaskDefinition.builder().build();
@@ -263,6 +290,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return ecsClient.listTasks(listTasksRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return ListTasksResponse.builder().build();
@@ -280,6 +308,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return ecsClient.describeTasks(describeTasksRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return DescribeTasksResponse.builder().build();
@@ -316,4 +345,28 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
     public String client() {
         return "ECS";
     }
+
+    @Override
+    public void handleClientServiceException(AwsServiceException awsServiceException) {
+        if(awsServiceException instanceof ClusterNotFoundException) {
+            throw new InvalidRequestException(awsServiceException.getMessage(), AWS_CLUSTER_NOT_FOUND, USER);
+        }
+        else if(awsServiceException instanceof ServiceNotFoundException) {
+            throw new InvalidRequestException(awsServiceException.getMessage(), AWS_SERVICE_NOT_FOUND, USER);
+        }
+        else if(awsServiceException instanceof ServiceNotActiveException) {
+            throw new InvalidRequestException(awsServiceException.getMessage(), AWS_ECS_SERVICE_NOT_ACTIVE, USER);
+        }
+        else if(awsServiceException instanceof AccessDeniedException) {
+            throw new InvalidRequestException(awsServiceException.getMessage(), AWS_ACCESS_DENIED, USER);
+        }
+        else if(awsServiceException instanceof ClientException) {
+            throw new InvalidRequestException(awsServiceException.getMessage(), AWS_ECS_CLIENT_ERROR, USER);
+        }
+        else if(awsServiceException instanceof EcsException) {
+            throw new InvalidRequestException(awsServiceException.getMessage(), AWS_ECS_ERROR, USER);
+        }
+        throw new InvalidRequestException(awsServiceException.getMessage(), awsServiceException, USER);
+    }
+
 }

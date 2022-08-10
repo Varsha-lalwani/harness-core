@@ -5,6 +5,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.data.structure.UUIDGenerator;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -15,20 +16,32 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider;
 
 import com.google.inject.Singleton;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.SdkClient;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.retry.RetryPolicy;
 import software.amazon.awssdk.core.retry.backoff.EqualJitterBackoffStrategy;
 import software.amazon.awssdk.core.retry.backoff.FullJitterBackoffStrategy;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.applicationautoscaling.model.ApplicationAutoScalingException;
+import software.amazon.awssdk.services.ecs.model.ClusterNotFoundException;
+import software.amazon.awssdk.services.ecs.model.ServiceNotFoundException;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.StsException;
 import software.wings.beans.AmazonClientSDKDefaultBackoffStrategy;
 
 import java.time.Duration;
 import java.util.UUID;
 
+import static io.harness.eraro.ErrorCode.AWS_APPLICATION_AUTO_SCALING;
+import static io.harness.eraro.ErrorCode.AWS_CLUSTER_NOT_FOUND;
+import static io.harness.eraro.ErrorCode.AWS_SERVICE_NOT_FOUND;
+import static io.harness.eraro.ErrorCode.AWS_STS_ERROR;
+import static io.harness.exception.WingsException.USER;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static software.amazon.awssdk.core.retry.backoff.BackoffStrategy.defaultStrategy;
 import static software.amazon.awssdk.core.retry.backoff.BackoffStrategy.defaultThrottlingStrategy;
@@ -46,13 +59,25 @@ public abstract class AwsClientHelper {
 
      public abstract String client();
 
-     public void logCall(String client, String method) {
+    public abstract void handleClientServiceException(AwsServiceException awsServiceException);
+
+    public void logCall(String client, String method) {
          log.info("AWS Call: client: {}, method: {}", client, method);
      }
 
-     public void handleException(Exception ex)  {
-        throw new WingsException(ex);
-        //todo: handle exceptions
+    public void logError(String client, String method, String errorMessage) {
+        log.error("AWS Call: client: {}, method: {}, error: {}", client, method, errorMessage);
+    }
+
+    public void handleException(Exception exception)  {
+         if(exception instanceof AwsServiceException){
+             AwsServiceException awsServiceException = (AwsServiceException) exception;
+             handleServiceException(awsServiceException);
+         }
+         else if(exception instanceof SdkClientException) {
+             throw new InvalidRequestException(exception.getMessage(), AWS_STS_ERROR, USER);
+         }
+         throw new InvalidRequestException(exception.getMessage(), exception, USER);
      }
      public AwsCredentialsProvider getAwsCredentialsProvider(AwsInternalConfig awsConfig) {
         AwsCredentialsProvider credentialsProvider;
@@ -70,6 +95,17 @@ public abstract class AwsClientHelper {
             return getStsAssumeRoleAwsCredentialsProvider(awsConfig, credentialsProvider);
         }
         return credentialsProvider;
+    }
+
+    public void handleServiceException(AwsServiceException awsServiceException) {
+       if(awsServiceException instanceof ApplicationAutoScalingException) {
+             throw new InvalidRequestException(awsServiceException.getMessage(), AWS_APPLICATION_AUTO_SCALING, USER);
+       }
+        if(awsServiceException instanceof StsException) {
+            throw new InvalidRequestException(awsServiceException.getMessage(), AWS_STS_ERROR, USER);
+        }
+       handleClientServiceException(awsServiceException);
+        throw new InvalidRequestException(awsServiceException.getMessage(), awsServiceException, USER);
     }
 
 
