@@ -39,6 +39,27 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     this.objectMapper = NG_DEFAULT_OBJECT_MAPPER;
   }
 
+  @Override
+  public boolean handle(OutboxEvent outboxEvent) {
+    try {
+      switch (outboxEvent.getEventType()) {
+        case OutboxEventConstants.INFRASTRUCTURE_DEF_CREATED:
+          return handlerInfrastructureCreated(outboxEvent);
+        case OutboxEventConstants.INFRASTRUCTURE_DEF_UPSERTED:
+          return handlerInfrastructureUpserted(outboxEvent);
+        case OutboxEventConstants.INFRASTRUCTURE_DEF_UPDATED:
+          return handlerInfrastructureUpdated(outboxEvent);
+        case OutboxEventConstants.INFRASTRUCTURE_DEF_DELETED:
+          return handlerInfrastructureDeleted(outboxEvent);
+        default:
+          return false;
+      }
+
+    } catch (IOException ex) {
+      return false;
+    }
+  }
+
   private boolean handlerInfrastructureCreated(OutboxEvent outboxEvent) throws IOException {
     GlobalContext globalContext = outboxEvent.getGlobalContext();
     InfrastructureCreateEvent infrastructureCreateEvent =
@@ -46,7 +67,7 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     final InfrastructureEntity infrastructure = infrastructureCreateEvent.getInfrastructureEntity();
     AuditEntry auditEntry = AuditEntry.builder()
                                 .action(Action.CREATE)
-                                .module(ModuleType.CORE)
+                                .module(ModuleType.CD)
                                 .insertId(outboxEvent.getId())
                                 .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
                                 .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
@@ -57,8 +78,7 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     Principal principal = null;
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
       principal = new ServicePrincipal(NG_MANAGER.getServiceId());
-    } else if (globalContext.get(PRINCIPAL_CONTEXT) != null) {
-    } else if (globalContext.get(PRINCIPAL_CONTEXT) != null) {
+    } else {
       principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
     }
     return auditClientService.publishAudit(auditEntry, fromSecurityPrincipal(principal), globalContext);
@@ -71,7 +91,7 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     final InfrastructureEntity infrastructure = infrastructureUpsertEvent.getInfrastructureEntity();
     AuditEntry auditEntry = AuditEntry.builder()
                                 .action(Action.UPSERT)
-                                .module(ModuleType.CORE)
+                                .module(ModuleType.CD)
                                 .insertId(outboxEvent.getId())
                                 .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
                                 .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
@@ -82,7 +102,7 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     Principal principal = null;
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
       principal = new ServicePrincipal(NG_MANAGER.getServiceId());
-    } else if (globalContext.get(PRINCIPAL_CONTEXT) != null) {
+    } else {
       principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
     }
     return auditClientService.publishAudit(auditEntry, fromSecurityPrincipal(principal), globalContext);
@@ -95,7 +115,7 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     final InfrastructureEntity oldInfrastructure = infrastructureUpdateEvent.getOldInfrastructureEntity();
     AuditEntry auditEntry = AuditEntry.builder()
                                 .action(Action.UPDATE)
-                                .module(ModuleType.CORE)
+                                .module(ModuleType.CD)
                                 .insertId(outboxEvent.getId())
                                 .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
                                 .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
@@ -107,7 +127,7 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     Principal principal = null;
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
       principal = new ServicePrincipal(NG_MANAGER.getServiceId());
-    } else if (globalContext.get(PRINCIPAL_CONTEXT) != null) {
+    } else {
       principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
     }
     return auditClientService.publishAudit(auditEntry, fromSecurityPrincipal(principal), globalContext);
@@ -119,7 +139,7 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     final InfrastructureEntity infrastructure = infrastructureDeleteEvent.getInfrastructureEntity();
     AuditEntry auditEntry = AuditEntry.builder()
                                 .action(Action.DELETE)
-                                .module(ModuleType.CORE)
+                                .module(ModuleType.CD)
                                 .insertId(outboxEvent.getId())
                                 .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
                                 .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
@@ -130,30 +150,9 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     Principal principal = null;
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
       principal = new ServicePrincipal(NG_MANAGER.getServiceId());
-    } else if (globalContext.get(PRINCIPAL_CONTEXT) != null) {
+    } else {
       principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
     }
     return auditClientService.publishAudit(auditEntry, fromSecurityPrincipal(principal), globalContext);
-  }
-
-  @Override
-  public boolean handle(OutboxEvent outboxEvent) {
-    try {
-      switch (outboxEvent.getEventType()) {
-        case OutboxEventConstants.INFRASTRUCTURE_DEF_CREATED:
-          return handlerInfrastructureCreated(outboxEvent);
-        case OutboxEventConstants.INFRASTRUCTURE_DEF_UPSERTED:
-          return handlerInfrastructureUpserted(outboxEvent);
-        case OutboxEventConstants.INFRASTRUCTURE_DEF_UPDATED:
-          return handlerInfrastructureUpdated(outboxEvent);
-        case OutboxEventConstants.INFRASTRUCTURE_DEF_DELETE:
-          return handlerInfrastructureDeleted(outboxEvent);
-        default:
-          return false;
-      }
-
-    } catch (IOException ex) {
-      return false;
-    }
   }
 }

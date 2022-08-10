@@ -11,4 +11,6 @@ public class ResourceConstants {
   public static final String LABEL_KEY_RESOURCE_NAME = "resourceName";
   public static final String LABEL_KEY_USER_ID = "userId";
   public static final String LABEL_KEY_PIPELINE_IDENTIFIER = "pipelineIdentifier";
+  public static final String LABEL_KEY_ENV_IDENTIFIER = "environmentIdentifier";
+  public static final String LABEL_KEY_SERVICE_IDENTIFIER = "serviceIdentifier";
 }

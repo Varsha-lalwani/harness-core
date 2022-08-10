@@ -8,7 +8,22 @@
 package io.harness.ng;
 
 import static io.harness.AuthorizationServiceHeader.NG_MANAGER;
-import static io.harness.audit.ResourceTypeConstants.*;
+import static io.harness.audit.ResourceTypeConstants.API_KEY;
+import static io.harness.audit.ResourceTypeConstants.CONNECTOR;
+import static io.harness.audit.ResourceTypeConstants.DELEGATE_CONFIGURATION;
+import static io.harness.audit.ResourceTypeConstants.ENVIRONMENT;
+import static io.harness.audit.ResourceTypeConstants.FILE;
+import static io.harness.audit.ResourceTypeConstants.INFRASTRUCTURE_DEF;
+import static io.harness.audit.ResourceTypeConstants.ORGANIZATION;
+import static io.harness.audit.ResourceTypeConstants.PROJECT;
+import static io.harness.audit.ResourceTypeConstants.SECRET;
+import static io.harness.audit.ResourceTypeConstants.SERVICE;
+import static io.harness.audit.ResourceTypeConstants.SERVICE_ACCOUNT;
+import static io.harness.audit.ResourceTypeConstants.SERVICE_OVERRIDE;
+import static io.harness.audit.ResourceTypeConstants.SETTING;
+import static io.harness.audit.ResourceTypeConstants.TOKEN;
+import static io.harness.audit.ResourceTypeConstants.USER;
+import static io.harness.audit.ResourceTypeConstants.VARIABLE;
 import static io.harness.eventsframework.EventsFrameworkConstants.ENTITY_CRUD;
 import static io.harness.eventsframework.EventsFrameworkConstants.INSTANCE_STATS;
 import static io.harness.eventsframework.EventsFrameworkConstants.SETUP_USAGE;

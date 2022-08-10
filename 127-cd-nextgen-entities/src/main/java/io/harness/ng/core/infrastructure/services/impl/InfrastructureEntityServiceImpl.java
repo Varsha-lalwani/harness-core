@@ -25,6 +25,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.ng.DuplicateKeyExceptionParser;
 import io.harness.ng.core.events.InfrastructureCreateEvent;
+import io.harness.ng.core.events.InfrastructureDeleteEvent;
 import io.harness.ng.core.events.InfrastructureUpdateEvent;
 import io.harness.ng.core.events.InfrastructureUpsertEvent;
 import io.harness.ng.core.infrastructure.entity.InfrastructureEntity;
@@ -212,7 +213,7 @@ public class InfrastructureEntityServiceImpl implements InfrastructureEntityServ
               "Infrastructure [%s] under Environment [%s], Project[%s], Organization [%s] couldn't be deleted.",
               infraIdentifier, envIdentifier, projectIdentifier, orgIdentifier));
         }
-        outboxService.save(InfrastructureUpsertEvent.builder()
+        outboxService.save(InfrastructureDeleteEvent.builder()
                                .accountIdentifier(accountId)
                                .orgIdentifier(orgIdentifier)
                                .projectIdentifier(projectIdentifier)

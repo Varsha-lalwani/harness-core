@@ -43,6 +43,22 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
     this.objectMapper = NG_DEFAULT_OBJECT_MAPPER;
   }
 
+  @Override
+  public boolean handle(OutboxEvent outboxEvent) {
+    try {
+      switch (outboxEvent.getEventType()) {
+        case OutboxEventConstants.SERVICE_OVERRIDE_UPSERTED:
+          return handlerServiceOverrideUpserted(outboxEvent);
+        case OutboxEventConstants.SERVICE_OVERRIDE_DELETED:
+          return handlerServiceOverrideDeleted(outboxEvent);
+        default:
+          return false;
+      }
+
+    } catch (IOException ex) {
+      return false;
+    }
+  }
   private boolean handlerServiceOverrideUpserted(OutboxEvent outboxEvent) throws IOException {
     GlobalContext globalContext = outboxEvent.getGlobalContext();
     ServiceOverrideUpsertEvent serviceOverrideUpsertEvent =
@@ -61,9 +77,10 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
             .build();
 
     Principal principal = null;
+
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
       principal = new ServicePrincipal(NG_MANAGER.getServiceId());
-    } else if (globalContext.get(PRINCIPAL_CONTEXT) != null) {
+    } else {
       principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
     }
     return auditClientService.publishAudit(auditEntry, fromSecurityPrincipal(principal), globalContext);
@@ -88,26 +105,9 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
     Principal principal = null;
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
       principal = new ServicePrincipal(NG_MANAGER.getServiceId());
-    } else if (globalContext.get(PRINCIPAL_CONTEXT) != null) {
+    } else {
       principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
     }
     return auditClientService.publishAudit(auditEntry, fromSecurityPrincipal(principal), globalContext);
-  }
-
-  @Override
-  public boolean handle(OutboxEvent outboxEvent) {
-    try {
-      switch (outboxEvent.getEventType()) {
-        case OutboxEventConstants.SERVICE_OVERRIDE_UPSERTED:
-          return handlerServiceOverrideUpserted(outboxEvent);
-        case OutboxEventConstants.SERVICE_OVERRIDE_DELETED:
-          return handlerServiceOverrideDeleted(outboxEvent);
-        default:
-          return false;
-      }
-
-    } catch (IOException ex) {
-      return false;
-    }
   }
 }

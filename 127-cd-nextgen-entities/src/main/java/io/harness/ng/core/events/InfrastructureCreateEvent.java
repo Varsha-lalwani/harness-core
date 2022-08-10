@@ -7,10 +7,13 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.event.Event;
 import io.harness.ng.core.ProjectScope;
 import io.harness.ng.core.Resource;
+import io.harness.ng.core.ResourceConstants;
 import io.harness.ng.core.ResourceScope;
 import io.harness.ng.core.infrastructure.entity.InfrastructureEntity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -36,7 +39,14 @@ public class InfrastructureCreateEvent implements Event {
   @JsonIgnore
   @Override
   public Resource getResource() {
-    return Resource.builder().identifier(infrastructureEntity.getIdentifier()).type(INFRASTRUCTURE_DEF).build();
+    Map<String, String> labels = new HashMap<>();
+    labels.put(ResourceConstants.LABEL_KEY_RESOURCE_NAME, infrastructureEntity.getName());
+    labels.put(ResourceConstants.LABEL_KEY_ENV_IDENTIFIER, envIdentifier);
+    return Resource.builder()
+        .identifier(infrastructureEntity.getIdentifier())
+        .labels(labels)
+        .type(INFRASTRUCTURE_DEF)
+        .build();
   }
 
   @JsonIgnore

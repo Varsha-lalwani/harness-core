@@ -21,7 +21,7 @@ public class OutboxEventConstants {
   public static final String INFRASTRUCTURE_DEF_CREATED = "InfrastructureDefCreated";
   public static final String INFRASTRUCTURE_DEF_UPDATED = "InfrastructureDefUpdated";
   public static final String INFRASTRUCTURE_DEF_UPSERTED = "InfrastructureDefUpserted";
-  public static final String INFRASTRUCTURE_DEF_DELETE = "InfrastructureDefDelete";
+  public static final String INFRASTRUCTURE_DEF_DELETED = "InfrastructureDefDelete";
   public static final String ENVIRONMENT_CREATED = "EnvironmentCreated";
   public static final String ENVIRONMENT_UPDATED = "EnvironmentUpdated";
   public static final String ENVIRONMENT_DELETED = "EnvironmentDeleted";
