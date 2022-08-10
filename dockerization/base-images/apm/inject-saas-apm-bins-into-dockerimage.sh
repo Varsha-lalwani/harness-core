@@ -23,7 +23,6 @@ function download_saas_apm_binaries(){
   curl ${JMX_METRICS_AGENT} --output ${JMX_METRICS_AGENT##*/}; STATUS3=$?
 	echo "INFO: Download Status: ${JMX_METRICS_AGENT##*/}: $STATUS3"
 	chmod 711 ${JMX_METRICS_AGENT##*/}
-	mv ${JMX_METRICS_AGENT##*/} /opt/harness
 
 	if [ "${STATUS1}" -eq 0 ] && [ "${STATUS2}" -eq 0 ] && [ "${STATUS3}" -eq 0 ] ; then
 		echo "Download Finished..."
