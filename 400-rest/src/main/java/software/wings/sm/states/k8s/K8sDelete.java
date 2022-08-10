@@ -118,7 +118,7 @@ public class K8sDelete extends AbstractK8sState {
       ContainerInfrastructureMapping infraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
 
       Activity activity = createActivity(context);
-      // Sweeping output here and check if its canary
+
       K8sCanaryDeleteServiceElement k8sCanaryDeleteServiceElement = fetchK8sCanaryDeleteServiceElement(context);
       K8sTaskParameters k8sTaskParameters;
       boolean wasCanaryDeployedPrev = false;

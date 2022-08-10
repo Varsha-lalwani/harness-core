@@ -184,9 +184,7 @@ public class K8sDeleteTaskHandler extends K8sTaskHandler {
           executionLogCallback.saveExecutionLog("\nDone.", INFO, SUCCESS);
           return true;
         }
-        //        executionLogCallback.saveExecutionLog("Deleting canary workloads.\n");
-        //        k8sTaskHelperBase.delete(client, k8sDelegateTaskParams, resourceIdsToDelete, executionLogCallback,
-        //        true);
+
         return true;
       }
       if (StringUtils.isEmpty(k8sDeleteTaskParameters.getResources())) {
