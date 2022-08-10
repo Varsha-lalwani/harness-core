@@ -159,20 +159,20 @@ public class SecretSpecBuilder {
   }
 
   public Map<String, SecretParams> decryptConnectorSecret(ConnectorDetails connectorDetails) {
-    ConnectorType type = connectorDetails.getConnectorType();
-    log.info("Decrypting connector id:[{}], type:[{}]", connectorDetails.getIdentifier(), type);
+    ConnectorType connectorType = connectorDetails.getConnectorType();
+    log.info("Decrypting connector id:[{}], type:[{}]", connectorDetails.getIdentifier(), connectorType);
     Map<String, SecretParams> secretParamsMap = new HashMap<>();
-    if (type == ConnectorType.DOCKER) {
+    if (connectorType == ConnectorType.DOCKER) {
       secretParamsMap = connectorEnvVariablesHelper.getDockerSecretVariables(connectorDetails);
-    } else if (type == ConnectorType.AWS) {
+    } else if (connectorType == ConnectorType.AWS) {
       secretParamsMap = connectorEnvVariablesHelper.getAwsSecretVariables(connectorDetails);
-    } else if (type == ConnectorType.GCP) {
+    } else if (connectorType == ConnectorType.GCP) {
       secretParamsMap = connectorEnvVariablesHelper.getGcpSecretVariables(connectorDetails);
-    } else if (type == ConnectorType.ARTIFACTORY) {
+    } else if (connectorType == ConnectorType.ARTIFACTORY) {
       secretParamsMap = connectorEnvVariablesHelper.getArtifactorySecretVariables(connectorDetails);
     } else if (connectorDetails.getConnectorType() == ConnectorType.AZURE) {
       secretParamsMap = connectorEnvVariablesHelper.getAzureSecretVariables(connectorDetails);
-    } else if (isScmConnectorType(type)) {
+    } else if (isScmConnectorType(connectorType)) {
       secretParamsMap = decryptGitSecretVariables(connectorDetails);
     } else {
       log.info("Decrypting connector of unknown type: {}", connectorDetails.getConnectorType());
@@ -215,6 +215,7 @@ public class SecretSpecBuilder {
     if (gitConnector == null) {
       return secretData;
     }
+    String uniqueIdentifier = "_" + generateRandomAlphaNumericString(RANDOM_LENGTH);
 
     log.info(
         "Decrypting git connector id:[{}], type:[{}]", gitConnector.getIdentifier(), gitConnector.getConnectorType());
@@ -225,7 +226,7 @@ public class SecretSpecBuilder {
       String key = DRONE_NETRC_PASSWORD;
       secretData.put(key,
           SecretParams.builder()
-              .secretKey(key)
+              .secretKey(key + uniqueIdentifier)
               .value(encodeBase64(new String(gitHTTPAuthenticationDTO.getPasswordRef().getDecryptedValue())))
               .type(TEXT)
               .build());
@@ -240,7 +241,8 @@ public class SecretSpecBuilder {
       }
       char[] sshKey = key.getDecryptedValue();
       secretData.put(DRONE_SSH_KEY,
-          SecretParams.builder().secretKey(DRONE_SSH_KEY).value(encodeBase64(sshKey)).type(TEXT).build());
+          SecretParams.builder().secretKey(DRONE_SSH_KEY + uniqueIdentifier)
+                  .value(encodeBase64(sshKey)).type(TEXT).build());
     }
     return secretData;
   }
@@ -395,7 +397,8 @@ public class SecretSpecBuilder {
       }
       char[] sshKey = key.getDecryptedValue();
       secretData.put(DRONE_SSH_KEY,
-          SecretParams.builder().secretKey(DRONE_SSH_KEY).value(encodeBase64(sshKey)).type(TEXT).build());
+          SecretParams.builder().secretKey(DRONE_SSH_KEY + uniqueIdentifier)
+                  .value(encodeBase64(sshKey)).type(TEXT).build());
 
     } else {
       throw new CIStageExecutionException(
@@ -459,7 +462,8 @@ public class SecretSpecBuilder {
       }
       char[] sshKey = key.getDecryptedValue();
       secretData.put(DRONE_SSH_KEY,
-          SecretParams.builder().secretKey(DRONE_SSH_KEY).value(encodeBase64(sshKey)).type(TEXT).build());
+          SecretParams.builder().secretKey(DRONE_SSH_KEY + uniqueIdentifier)
+                  .value(encodeBase64(sshKey)).type(TEXT).build());
     } else {
       throw new CIStageExecutionException(
           "Unsupported azure repo connector auth" + gitConfigDTO.getAuthentication().getAuthType());
@@ -568,7 +572,8 @@ public class SecretSpecBuilder {
       }
       char[] sshKey = key.getDecryptedValue();
       secretData.put(DRONE_SSH_KEY,
-          SecretParams.builder().secretKey(DRONE_SSH_KEY).value(encodeBase64(sshKey)).type(TEXT).build());
+          SecretParams.builder().secretKey(DRONE_SSH_KEY + uniqueIdentifier)
+                  .value(encodeBase64(sshKey)).type(TEXT).build());
     } else {
       throw new CIStageExecutionException(
           "Unsupported gitlab connector auth" + gitConfigDTO.getAuthentication().getAuthType());
@@ -627,7 +632,8 @@ public class SecretSpecBuilder {
       }
       char[] sshKey = key.getDecryptedValue();
       secretData.put(DRONE_SSH_KEY,
-          SecretParams.builder().secretKey(DRONE_SSH_KEY).value(encodeBase64(sshKey)).type(TEXT).build());
+          SecretParams.builder().secretKey(DRONE_SSH_KEY + uniqueIdentifier)
+                  .value(encodeBase64(sshKey)).type(TEXT).build());
     } else {
       throw new CIStageExecutionException(
           "Unsupported bitbucket connector auth" + gitConfigDTO.getAuthentication().getAuthType());

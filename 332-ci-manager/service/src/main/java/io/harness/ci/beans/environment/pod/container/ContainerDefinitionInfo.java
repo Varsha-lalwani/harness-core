@@ -9,7 +9,6 @@ package io.harness.beans.environment.pod.container;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.delegate.beans.ci.pod.CIContainerType;
-import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.pod.ContainerResourceParams;
 import io.harness.yaml.core.variables.SecretNGVariable;
 
@@ -46,5 +45,4 @@ public class ContainerDefinitionInfo {
   private Boolean privileged;
   private Integer runAsUser;
   private String imagePullPolicy;
-  private ConnectorDetails gitConnector;
 }

@@ -9,7 +9,6 @@ package io.harness.ci.serializer.vm;
 
 import io.harness.beans.plugin.compatible.PluginCompatibleStep;
 import io.harness.beans.steps.CIStepInfo;
-import io.harness.beans.steps.stepinfo.GitCloneStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
@@ -31,7 +30,6 @@ public class VmStepSerializer {
   @Inject VmPluginStepSerializer vmPluginStepSerializer;
   @Inject VmRunStepSerializer vmRunStepSerializer;
   @Inject VmRunTestStepSerializer vmRunTestStepSerializer;
-  @Inject VmGitCloneStepSerializer vmGitCloneStepSerializer;
 
   public Set<String> getStepSecrets(VmStepInfo vmStepInfo, Ambiance ambiance) {
     CIVmSecretEvaluator ciVmSecretEvaluator = CIVmSecretEvaluator.builder().build();
@@ -49,9 +47,6 @@ public class VmStepSerializer {
       case RUN_TESTS:
         return vmRunTestStepSerializer.serialize(
             (RunTestsStepInfo) stepInfo, identifier, parameterFieldTimeout, stepName, ambiance);
-      case GIT_CLONE:
-        return vmGitCloneStepSerializer.serialize(
-            (GitCloneStepInfo) stepInfo, stageInfraDetails, identifier, parameterFieldTimeout, stepName, ambiance);
       case PLUGIN:
         return vmPluginStepSerializer.serialize(
             (PluginStepInfo) stepInfo, stageInfraDetails, identifier, parameterFieldTimeout, stepName, ambiance);
@@ -67,6 +62,7 @@ public class VmStepSerializer {
       case SAVE_CACHE_S3:
       case SECURITY:
       case RESTORE_CACHE_S3:
+      case GIT_CLONE:
         return vmPluginCompatibleStepSerializer.serialize(
             ambiance, (PluginCompatibleStep) stepInfo, stageInfraDetails, identifier, parameterFieldTimeout, stepName);
       case CLEANUP:

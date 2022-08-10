@@ -76,6 +76,7 @@ public class CIK8BuildTaskHandlerTestHelper {
     CIK8PodParams<CIK8ContainerParams> cik8PodParams = CIK8PodParams.<CIK8ContainerParams>builder()
                                                            .name(podName)
                                                            .namespace(namespace)
+                                                           .gitConnector(ConnectorDetails.builder().build())
                                                            .containerParamsList(containerParamsList)
                                                            .build();
     return CIK8InitializeTaskParams.builder().cik8PodParams(cik8PodParams).podMaxWaitUntilReadySecs(timeout).build();
@@ -99,6 +100,7 @@ public class CIK8BuildTaskHandlerTestHelper {
     CIK8PodParams<CIK8ContainerParams> cik8PodParams = CIK8PodParams.<CIK8ContainerParams>builder()
                                                            .name(podName)
                                                            .namespace(namespace)
+                                                           .gitConnector(ConnectorDetails.builder().build())
                                                            .containerParamsList(containerParamsList)
                                                            .build();
 
@@ -123,6 +125,7 @@ public class CIK8BuildTaskHandlerTestHelper {
     CIK8PodParams<CIK8ContainerParams> cik8PodParams = CIK8PodParams.<CIK8ContainerParams>builder()
                                                            .name(podName)
                                                            .namespace(namespace)
+                                                           .gitConnector(ConnectorDetails.builder().build())
                                                            .containerParamsList(containerParamsList)
                                                            .build();
 
@@ -161,6 +164,7 @@ public class CIK8BuildTaskHandlerTestHelper {
     CIK8PodParams<CIK8ContainerParams> cik8PodParams = CIK8PodParams.<CIK8ContainerParams>builder()
                                                            .name(podName)
                                                            .namespace(namespace)
+                                                           .gitConnector(getGitConnector())
                                                            .containerParamsList(containerParamsList)
                                                            .build();
 
@@ -215,6 +219,7 @@ public class CIK8BuildTaskHandlerTestHelper {
             .build());
 
     CIK8PodParams<CIK8ContainerParams> cik8PodParams = CIK8PodParams.<CIK8ContainerParams>builder()
+                                                           .gitConnector(getGitConnector())
                                                            .branchName(branch_name)
                                                            .commitId(commitId)
                                                            .name(podName)
@@ -271,6 +276,7 @@ public class CIK8BuildTaskHandlerTestHelper {
     CIK8PodParams<CIK8ContainerParams> cik8PodParams = CIK8PodParams.<CIK8ContainerParams>builder()
                                                            .name(podName)
                                                            .namespace(namespace)
+                                                           .gitConnector(ConnectorDetails.builder().build())
                                                            .containerParamsList(containerParamsList)
                                                            .pvcParamList(Arrays.asList(PVCParams.builder()
                                                                                            .volumeName(volume1)
@@ -393,6 +399,7 @@ public class CIK8BuildTaskHandlerTestHelper {
     CIK8PodParams<CIK8ContainerParams> cik8PodParams = CIK8PodParams.<CIK8ContainerParams>builder()
                                                            .name(podName)
                                                            .namespace(namespace + " ")
+                                                           .gitConnector(getGitConnector())
                                                            .containerParamsList(containerParamsList)
                                                            .build();
 

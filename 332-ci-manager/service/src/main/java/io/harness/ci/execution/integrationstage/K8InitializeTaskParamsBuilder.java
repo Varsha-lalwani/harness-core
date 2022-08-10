@@ -13,13 +13,14 @@ import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParam
 import static io.harness.beans.sweepingoutputs.ContainerPortDetails.PORT_DETAILS;
 import static io.harness.beans.sweepingoutputs.PodCleanupDetails.CLEANUP_DETAILS;
 import static io.harness.beans.sweepingoutputs.StageInfraDetails.STAGE_INFRA_DETAILS;
-import static io.harness.ci.commonconstants.CIExecutionConstants.DRONE_WORKSPACE;
-import static io.harness.ci.commonconstants.CIExecutionConstants.GIT_CLONE_STEP_ID;
+import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_BUILD_EVENT;
+import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_COMMIT_BRANCH;
+import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_NETRC_MACHINE;
+import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_REMOTE_URL;
+import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_TAG;
 import static io.harness.ci.commonconstants.CIExecutionConstants.HARNESS_SERVICE_LOG_KEY_VARIABLE;
 import static io.harness.ci.commonconstants.CIExecutionConstants.POD_MAX_WAIT_UNTIL_READY_SECS;
 import static io.harness.ci.commonconstants.CIExecutionConstants.PORT_STARTING_RANGE;
-import static io.harness.ci.integrationstage.K8InitializeTaskUtils.RANDOM_LENGTH;
-import static io.harness.ci.integrationstage.K8InitializeTaskUtils.generateRandomAlphaNumericString;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.k8s.KubernetesConvention.getAccountIdentifier;
 
@@ -100,7 +101,6 @@ public class K8InitializeTaskParamsBuilder {
   @Inject CodebaseUtils codebaseUtils;
 
   private static String RUNTIME_CLASS_NAME = "gvisor";
-  private static String GIT_CLONE_PATH_VOLUME_KEY = "git-clone-step-path-";
 
   public CIK8InitializeTaskParams getK8InitializeTaskParams(
       InitializeStepInfo initializeStepInfo, Ambiance ambiance, String logPrefix) {
@@ -238,7 +238,7 @@ public class K8InitializeTaskParamsBuilder {
             initializeStepInfo.isSkipGitClone());
     Map<String, String> runtimeCodebaseVars = codebaseUtils.getRuntimeCodebaseVars(ambiance);
     Map<String, String> commonEnvVars = k8InitializeTaskUtils.getCommonStepEnvVariables(
-        k8PodDetails, k8InitializeTaskUtils.getWorkDir(), logPrefix, ambiance);
+        k8PodDetails, gitEnvVars, runtimeCodebaseVars, k8InitializeTaskUtils.getWorkDir(), logPrefix, ambiance);
 
     ConnectorDetails harnessInternalImageConnector =
         harnessImageUtils.getHarnessImageConnectorDetailsForK8(ngAccess, infrastructure);
@@ -275,10 +275,9 @@ public class K8InitializeTaskParamsBuilder {
         k8InitializeStepUtils.getStepConnectorRefs(initializeStepInfo.getStageElementConfig(), ambiance);
     for (ContainerDefinitionInfo containerDefinitionInfo : stageCtrDefinitions) {
       CIK8ContainerParams cik8ContainerParams = createCIK8ContainerParams(ngAccess, containerDefinitionInfo,
-          harnessInternalImageConnector, commonEnvVars, stoEnvVars, gitEnvVars, runtimeCodebaseVars, stepConnectors,
-          gitConnector, volumeToMountPath, k8InitializeTaskUtils.getWorkDir(),
-          k8InitializeTaskUtils.getCtrSecurityContext(infrastructure), logPrefix, secretVariableDetails,
-          githubApiTokenFunctorConnectors, os);
+          harnessInternalImageConnector, commonEnvVars, stoEnvVars, stepConnectors, volumeToMountPath,
+          k8InitializeTaskUtils.getWorkDir(), k8InitializeTaskUtils.getCtrSecurityContext(infrastructure), logPrefix,
+          secretVariableDetails, githubApiTokenFunctorConnectors, os);
       containerParams.add(cik8ContainerParams);
     }
 
@@ -294,12 +293,11 @@ public class K8InitializeTaskParamsBuilder {
 
   private CIK8ContainerParams createCIK8ContainerParams(NGAccess ngAccess,
       ContainerDefinitionInfo containerDefinitionInfo, ConnectorDetails harnessInternalImageConnector,
-      Map<String, String> commonEnvVars, Map<String, String> stoEnvVars, Map<String, String> gitEnvVars,
-      Map<String, String> runtimeCodebaseVars,
-      Map<String, List<K8BuildJobEnvInfo.ConnectorConversionInfo>> connectorRefs, ConnectorDetails gitConnector,
-      Map<String, String> volumeToMountPath, String workDirPath, ContainerSecurityContext ctrSecurityContext,
-      String logPrefix, List<SecretVariableDetails> secretVariableDetails,
-      Map<String, ConnectorDetails> githubApiTokenFunctorConnectors, OSType os) {
+      Map<String, String> commonEnvVars, Map<String, String> stoEnvVars,
+      Map<String, List<K8BuildJobEnvInfo.ConnectorConversionInfo>> connectorRefs, Map<String, String> volumeToMountPath,
+      String workDirPath, ContainerSecurityContext ctrSecurityContext, String logPrefix,
+      List<SecretVariableDetails> secretVariableDetails, Map<String, ConnectorDetails> githubApiTokenFunctorConnectors,
+      OSType os) {
     Map<String, String> envVars = new HashMap<>();
     if (isNotEmpty(containerDefinitionInfo.getEnvVars())) {
       envVars.putAll(containerDefinitionInfo.getEnvVars()); // Put customer input env variables
@@ -340,14 +338,15 @@ public class K8InitializeTaskParamsBuilder {
         k8InitializeTaskUtils.getSecretVariableDetails(ngAccess, containerDefinitionInfo, secretVariableDetails);
 
     Map<String, String> envVarsWithSecretRef = k8InitializeTaskUtils.removeEnvVarsWithSecretRef(envVars);
-    if(GIT_CLONE_STEP_ID.equals(containerDefinitionInfo.getStepIdentifier())) {
-      //codebase git connector
-      containerDefinitionInfo.setGitConnector(gitConnector);
 
-      envVars.putAll(gitEnvVars);
-
-      // Add runtime git vars, i.e. manual pull request execution data.
-      envVars.putAll(runtimeCodebaseVars);
+    //remove any codebase env vars from commonEnvVars which will overwrite git clone step envVars
+    String droneRemoteUrl = envVars.get(DRONE_REMOTE_URL);
+    if (isNotEmpty(droneRemoteUrl)) {
+      commonEnvVars.remove(DRONE_TAG);
+      commonEnvVars.remove(DRONE_NETRC_MACHINE);
+      commonEnvVars.remove(DRONE_BUILD_EVENT);
+      commonEnvVars.remove(DRONE_COMMIT_BRANCH);
+      commonEnvVars.remove(DRONE_REMOTE_URL);
     }
 
     envVars.putAll(commonEnvVars); //  commonEnvVars needs to be put in end because they overrides webhook parameters
@@ -364,21 +363,12 @@ public class K8InitializeTaskParamsBuilder {
     }
     boolean privileged = containerDefinitionInfo.getPrivileged() != null && containerDefinitionInfo.getPrivileged();
 
-    String droneWorkspace = envVars.get(DRONE_WORKSPACE);
-    if(isNotEmpty(droneWorkspace)) {
-      workDirPath = droneWorkspace;
-      if(!volumeToMountPath.containsValue(droneWorkspace)) {
-        volumeToMountPath.put(GIT_CLONE_PATH_VOLUME_KEY + generateRandomAlphaNumericString(RANDOM_LENGTH), droneWorkspace);
-      }
-    }
-
     CIK8ContainerParams cik8ContainerParams =
         CIK8ContainerParams.builder()
             .name(containerDefinitionInfo.getName())
             .containerResourceParams(containerDefinitionInfo.getContainerResourceParams())
             .containerType(containerDefinitionInfo.getContainerType())
             .envVars(envVars)
-            .gitConnector(containerDefinitionInfo.getGitConnector())
             .envVarsWithSecretRef(envVarsWithSecretRef)
             .containerSecrets(ContainerSecrets.builder()
                                   .secretVariableDetails(containerSecretVariableDetails)

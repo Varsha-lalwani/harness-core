@@ -11,7 +11,6 @@ import static io.harness.annotations.dev.HarnessTeam.CI;
 import static io.harness.beans.sweepingoutputs.CISweepingOutputNames.CODE_BASE_CONNECTOR_REF;
 import static io.harness.beans.sweepingoutputs.ContainerPortDetails.PORT_DETAILS;
 import static io.harness.beans.sweepingoutputs.StageInfraDetails.STAGE_INFRA_DETAILS;
-import static io.harness.ci.commonconstants.CIExecutionConstants.DRONE_WORKSPACE;
 import static io.harness.ci.commonconstants.CIExecutionConstants.LITE_ENGINE_PORT;
 import static io.harness.ci.commonconstants.CIExecutionConstants.TMP_PATH;
 import static io.harness.ci.states.InitializeTaskStep.LE_STATUS_TASK_TYPE;
@@ -33,7 +32,6 @@ import io.harness.beans.steps.CIStepInfoType;
 import io.harness.beans.steps.outcome.CIStepArtifactOutcome;
 import io.harness.beans.steps.outcome.CIStepOutcome;
 import io.harness.beans.steps.outcome.StepArtifacts;
-import io.harness.beans.steps.stepinfo.GitCloneStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
@@ -48,9 +46,7 @@ import io.harness.beans.sweepingoutputs.VmStageInfraDetails;
 import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 import io.harness.ci.buildstate.ConnectorUtils;
 import io.harness.ci.config.CIExecutionServiceConfig;
-import io.harness.ci.execution.CIExecutionConfigService;
 import io.harness.ci.integrationstage.IntegrationStageUtils;
-import io.harness.ci.integrationstage.InitializeStepUtils;
 import io.harness.ci.serializer.PluginCompatibleStepSerializer;
 import io.harness.ci.serializer.PluginStepProtobufSerializer;
 import io.harness.ci.serializer.RunStepProtobufSerializer;
@@ -69,7 +65,6 @@ import io.harness.delegate.beans.ci.k8s.K8sTaskExecutionResponse;
 import io.harness.delegate.beans.ci.vm.CIVmExecuteStepTaskParams;
 import io.harness.delegate.beans.ci.vm.VmTaskExecutionResponse;
 import io.harness.delegate.beans.ci.vm.dlite.DliteVmExecuteStepTaskParams;
-import io.harness.delegate.beans.ci.vm.steps.VmPluginStep;
 import io.harness.delegate.beans.ci.vm.steps.VmStepInfo;
 import io.harness.delegate.task.HDelegateTask;
 import io.harness.delegate.task.stepstatus.StepExecutionStatus;
@@ -146,7 +141,6 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
   @Inject private VmStepSerializer vmStepSerializer;
   @Inject private ConnectorUtils connectorUtils;
   @Inject private WaitNotifyEngine waitNotifyEngine;
-  @Inject private CIExecutionConfigService ciExecutionConfigService;
   @Inject private VmExecuteStepUtils vmExecuteStepUtils;
   @Inject private HostedVmSecretResolver hostedVmSecretResolver;
   @Inject private SerializedResponseDataHelper serializedResponseDataHelper;
@@ -248,7 +242,7 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
     String parkedTaskId = queueParkedDelegateTask(ambiance, timeoutInMillis, accountId, ciDelegateTaskExecutor);
     OSType os = IntegrationStageUtils.getK8OS(k8StageInfraDetails.getInfrastructure());
     UnitStep unitStep = serialiseStep(ciStepInfo, parkedTaskId, logKey, stepIdentifier,
-        getPort(ambiance, stepIdentifier), accountId, stepParametersName, stringTimeout, os);
+        getPort(ambiance, stepIdentifier), accountId, stepParametersName, stringTimeout, os, ambiance);
     String liteEngineTaskId =
         queueK8DelegateTask(ambiance, timeoutInMillis, accountId, ciDelegateTaskExecutor, unitStep, runtimeId);
 
@@ -322,14 +316,6 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
       poolId = infraDetails.getPoolId();
       volToMountPath = infraDetails.getVolToMountPathMap();
       workingDir = infraDetails.getWorkDir();
-    }
-
-    //GitClone step can override the workspace, get and set the value from the env variables
-    if (vmStepInfo instanceof VmPluginStep) {
-      final String droneWorkspace = ((VmPluginStep) vmStepInfo).getEnvVariables().get(DRONE_WORKSPACE);
-      if (isNotEmpty(droneWorkspace)) {
-        workingDir = droneWorkspace;
-      }
     }
 
     CIVmExecuteStepTaskParams ciVmExecuteStepTaskParams = CIVmExecuteStepTaskParams.builder()
@@ -549,17 +535,11 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
       Ambiance ambiance, StepElementParameters stepParameters, AsyncExecutableResponse executableResponse) {}
 
   private UnitStep serialiseStep(CIStepInfo ciStepInfo, String taskId, String logKey, String stepIdentifier,
-      Integer port, String accountId, String stepName, String timeout, OSType os) {
+      Integer port, String accountId, String stepName, String timeout, OSType os, Ambiance ambiance) {
     switch (ciStepInfo.getNonYamlInfo().getStepInfoType()) {
       case RUN:
         return runStepProtobufSerializer.serializeStepWithStepParameters((RunStepInfo) ciStepInfo, port, taskId, logKey,
             stepIdentifier, ParameterField.createValueField(Timeout.fromString(timeout)), accountId, stepName);
-      case GIT_CLONE:
-        GitCloneStepInfo gitCloneStepInfo = ((GitCloneStepInfo) ciStepInfo);
-        PluginStepInfo pluginStepInfo = InitializeStepUtils.createPluginStepInfo(gitCloneStepInfo,
-                ciExecutionConfigService, accountId, os );
-        return pluginStepProtobufSerializer.serializeStepWithStepParameters(pluginStepInfo, port, taskId, logKey,
-                stepIdentifier, ParameterField.createValueField(Timeout.fromString(timeout)), accountId, stepName);
       case PLUGIN:
         return pluginStepProtobufSerializer.serializeStepWithStepParameters((PluginStepInfo) ciStepInfo, port, taskId,
             logKey, stepIdentifier, ParameterField.createValueField(Timeout.fromString(timeout)), accountId, stepName);
@@ -575,9 +555,10 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
       case SAVE_CACHE_S3:
       case SECURITY:
       case RESTORE_CACHE_S3:
+      case GIT_CLONE:
         return pluginCompatibleStepSerializer.serializeStepWithStepParameters((PluginCompatibleStep) ciStepInfo, port,
             taskId, logKey, stepIdentifier, ParameterField.createValueField(Timeout.fromString(timeout)), accountId,
-            stepName, os);
+            stepName, os, ambiance);
       case RUN_TESTS:
         return runTestsStepProtobufSerializer.serializeStepWithStepParameters((RunTestsStepInfo) ciStepInfo, port,
             taskId, logKey, stepIdentifier, ParameterField.createValueField(Timeout.fromString(timeout)), accountId,
