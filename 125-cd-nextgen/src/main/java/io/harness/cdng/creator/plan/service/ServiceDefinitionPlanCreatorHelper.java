@@ -7,6 +7,7 @@
 
 package io.harness.cdng.creator.plan.service;
 
+import static io.harness.cdng.creator.plan.manifest.ManifestsPlanCreator.SERVICE_ENTITY_DEFINITION_TYPE_KEY;
 import static io.harness.cdng.manifest.ManifestType.SERVICE_OVERRIDE_SUPPORTED_MANIFEST_TYPES;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -26,6 +27,7 @@ import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.service.beans.AzureWebAppServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
+import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.cdng.utilities.ArtifactsUtility;
 import io.harness.cdng.utilities.AzureConfigsUtility;
 import io.harness.cdng.utilities.ConfigFileUtility;
@@ -84,6 +86,18 @@ public class ServiceDefinitionPlanCreatorHelper {
     // TODO: Find an efficient way to not pass whole service config
     metadataDependency.put(
         YamlTypes.SERVICE_CONFIG, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(actualServiceConfig)));
+    return metadataDependency;
+  }
+
+  public Map<String, ByteString> prepareMetadataManifestV2(String planNodeId,
+      List<ManifestConfigWrapper> finalManifests, ServiceDefinitionType serviceDefinitionType,
+      KryoSerializer kryoSerializer) {
+    Map<String, ByteString> metadataDependency = new HashMap<>();
+    metadataDependency.put(YamlTypes.UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(planNodeId)));
+    metadataDependency.put(
+        YamlTypes.MANIFEST_LIST_CONFIG, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(finalManifests)));
+    metadataDependency.put(
+        SERVICE_ENTITY_DEFINITION_TYPE_KEY, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(serviceDefinitionType)));
     return metadataDependency;
   }
 
@@ -225,10 +239,8 @@ public class ServiceDefinitionPlanCreatorHelper {
     PlanCreatorUtils.setYamlUpdate(manifestsYamlField, yamlUpdates);
     String manifestsPlanNodeId = "manifests-" + UUIDGenerator.generateUuid();
 
-    Map<String, ByteString> metadataDependency =
-        prepareMetadataV2(manifestsPlanNodeId, serviceV2Config, kryoSerializer);
-    metadataDependency.put(
-        YamlTypes.MANIFEST_LIST_CONFIG, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(finalManifests)));
+    Map<String, ByteString> metadataDependency = prepareMetadataManifestV2(
+        manifestsPlanNodeId, finalManifests, serviceV2Config.getServiceDefinition().getType(), kryoSerializer);
 
     Map<String, YamlField> dependenciesMap = new HashMap<>();
     dependenciesMap.put(manifestsPlanNodeId, manifestsYamlField);
