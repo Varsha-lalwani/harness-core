@@ -202,7 +202,8 @@ public class DelegateServiceGrpcClient {
       if (ex.getStatus() != null && isNotEmpty(ex.getStatus().getDescription())) {
         throw new DelegateServiceDriverException(ex.getStatus().getDescription());
       }
-      throw new DelegateServiceDriverException("Unexpected error occurred while submitting task.", ex);
+      throw new DelegateServiceDriverException(
+          "Unexpected error occurred while submitting task. " + ex.getMessage(), ex);
     }
   }
 
