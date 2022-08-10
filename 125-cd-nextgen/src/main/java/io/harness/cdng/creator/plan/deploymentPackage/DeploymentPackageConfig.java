@@ -52,36 +52,13 @@ public class DeploymentPackageConfig implements DeploymentPackageInfoConfig, Vis
   String uuid;
 
   ServiceDefinitionType deploymentType;
-  Boolean gitOpsEnabled;
-
-  // New Environment Yaml
-  // skipping variable creation from framework since these are supported through outcomes
-  //  @VariableExpression(skipVariableExpression = true) EnvironmentYamlV2 environment;
-  //
-  //  // Environment Group yaml
-  //  // todo: add expressions from env group outcomes
-  //  @VariableExpression(skipVariableExpression = true) EnvironmentGroupYaml environmentGroup;
-
-  PipelineInfrastructure infrastructure;
+  PipelineInfrastructure infrastructure; // change to the new infrastructure created
   @NotNull @VariableExpression(skipVariableExpression = true) ExecutionElementConfig execution;
-
-  // For Visitor Framework Impl
-  //  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
   @Override
   public VisitableChildren getChildrenToWalk() {
     List<VisitableChild> children = new ArrayList<>();
-    //    children.add(VisitableChild.builder().value(infrastructure).fieldName("infrastructure").build());
-    //    if (environment != null) {
-    //      children.add(VisitableChild.builder().value(environment).fieldName("environment").build());
-    //    }
-    //    if (environmentGroup != null) {
-    //      children.add(VisitableChild.builder().value(environmentGroup).fieldName("environmentGroup").build());
-    //    }
+    children.add(VisitableChild.builder().value(infrastructure).fieldName("infrastructure").build());
     return VisitableChildren.builder().visitableChildList(children).build();
-  }
-
-  public boolean getGitOpsEnabled() {
-    return gitOpsEnabled == Boolean.TRUE;
   }
 }

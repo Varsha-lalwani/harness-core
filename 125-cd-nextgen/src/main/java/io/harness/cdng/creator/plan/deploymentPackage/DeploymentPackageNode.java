@@ -40,11 +40,11 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(CDP)
 @RecasterAlias("io.harness.cdng.creator.plan.stage.DeploymentPackageNode")
 public class DeploymentPackageNode extends AbstractDeploymentPackageNode {
-  @JsonProperty("type") @NotNull StepType type = StepType.Deployment;
+  @JsonProperty("type") @NotNull DeploymentPackageType type = DeploymentPackageType.Deployment;
 
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
-  DeploymentPackageInfoConfig deploymentPackageInfoConfig;
+  DeploymentPackageConfig deploymentPackageConfig;
   @Override
   public String getType() {
     return StepSpecTypeConstants.DEPLOYMENT_TYPE_DEPLOYMENT_PACKAGE;
@@ -52,13 +52,13 @@ public class DeploymentPackageNode extends AbstractDeploymentPackageNode {
 
   @Override
   public DeploymentPackageInfoConfig getDeploymentPackageInfoConfig() {
-    return deploymentPackageInfoConfig;
+    return deploymentPackageConfig;
   }
 
-  public enum StepType {
+  public enum DeploymentPackageType {
     Deployment(StepSpecTypeConstants.DEPLOYMENT_TYPE_DEPLOYMENT_PACKAGE);
     @Getter String name;
-    StepType(String name) {
+    DeploymentPackageType(String name) {
       this.name = name;
     }
   }

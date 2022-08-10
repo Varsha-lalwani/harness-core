@@ -60,14 +60,11 @@ public abstract class AbstractDeploymentPackageNode {
   @NotNull @EntityName @Pattern(regexp = NGRegexValidatorConstants.NAME_PATTERN) @VariableExpression String name;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> description;
 
-  @VariableExpression List<NGVariable> variables;
   Map<String, String> tags;
 
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   @YamlSchemaTypes(value = {runtime})
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
-
-  //  @VariableExpression(skipVariableExpression = true) @JsonProperty("strategy") StrategyConfig strategy;
 
   @JsonIgnore public abstract String getType();
   @JsonIgnore public abstract DeploymentPackageInfoConfig getDeploymentPackageInfoConfig();
