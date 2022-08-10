@@ -170,7 +170,7 @@ public class K8sDeleteTaskHandler extends K8sTaskHandler {
 
       String resource_check = k8sDeleteTaskParameters.getResources();
 
-      if (k8sDeleteTaskParameters.isK8sPrevCanaryDeploy() == true && resource_check.contains("${k8s.canaryWorkload}")) {
+      if (k8sDeleteTaskParameters.isK8sPrevCanaryDeploy() && resource_check.contains("${k8s.canaryWorkload}")) {
         resourceIdsToDelete = getCanaryResourceIdsFromReleaseHistory(releaseName, executionLogCallback);
 
         if (isNotEmpty(resourceIdsToDelete)) {

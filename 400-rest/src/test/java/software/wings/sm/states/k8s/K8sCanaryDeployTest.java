@@ -151,6 +151,7 @@ public class K8sCanaryDeployTest extends CategoryTest {
     when(k8sStateHelper.fetchContainerInfrastructureMapping(context))
         .thenReturn(aGcpKubernetesInfrastructureMapping().build());
     doReturn(RELEASE_NAME).when(k8sCanaryDeploy).fetchReleaseName(any(), any());
+    doNothing().when(k8sCanaryDeploy).saveK8sCanaryDeployRun(any());
     doReturn(K8sDelegateManifestConfig.builder().build())
         .when(k8sCanaryDeploy)
         .createDelegateManifestConfig(any(), any());
@@ -193,6 +194,7 @@ public class K8sCanaryDeployTest extends CategoryTest {
         .thenReturn(aGcpKubernetesInfrastructureMapping().build());
     doReturn(kubernetesResources).when(k8sStateHelper).getResourcesFromSweepingOutput(any(), anyString());
     doReturn(RELEASE_NAME).when(k8sCanaryDeploy).fetchReleaseName(any(), any());
+    doNothing().when(k8sCanaryDeploy).saveK8sCanaryDeployRun(any());
     doReturn(K8sDelegateManifestConfig.builder().build())
         .when(k8sCanaryDeploy)
         .createDelegateManifestConfig(any(), any());

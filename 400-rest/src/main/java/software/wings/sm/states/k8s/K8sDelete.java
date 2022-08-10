@@ -119,13 +119,9 @@ public class K8sDelete extends AbstractK8sState {
 
       Activity activity = createActivity(context);
 
-      K8sCanaryDeleteServiceElement k8sCanaryDeleteServiceElement = fetchK8sCanaryDeleteServiceElement(context);
-      K8sTaskParameters k8sTaskParameters;
-      boolean wasCanaryDeployedPrev = false;
-      if (k8sCanaryDeleteServiceElement != null && k8sCanaryDeleteServiceElement.getPreviousDeployedK8sCanary()) {
-        wasCanaryDeployedPrev = true;
-      }
-      k8sTaskParameters =
+      boolean wasCanaryDeployedPrev = checkIfCanaryDeployedPrev(context);
+
+      K8sTaskParameters k8sTaskParameters =
           K8sDeleteTaskParameters.builder()
               .activityId(activity.getUuid())
               .releaseName(fetchReleaseName(context, infraMapping))
@@ -260,5 +256,14 @@ public class K8sDelete extends AbstractK8sState {
     return createK8sActivity(context, K8S_DELETE_COMMAND_NAME, getStateType(), activityService,
         ImmutableList.of(new K8sDummyCommandUnit(K8sCommandUnitConstants.Init),
             new K8sDummyCommandUnit(K8sCommandUnitConstants.Delete)));
+  }
+
+  private boolean checkIfCanaryDeployedPrev(ExecutionContext context) {
+    K8sCanaryDeleteServiceElement k8sCanaryDeleteServiceElement = fetchK8sCanaryDeleteServiceElement(context);
+    boolean checkCanaryDeploy = false;
+    if (k8sCanaryDeleteServiceElement != null && k8sCanaryDeleteServiceElement.getPreviousDeployedK8sCanary()) {
+      checkCanaryDeploy = true;
+    }
+    return checkCanaryDeploy;
   }
 }
