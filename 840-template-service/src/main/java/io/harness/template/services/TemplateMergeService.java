@@ -23,5 +23,5 @@ public interface TemplateMergeService {
   TemplateMergeResponseDTO applyTemplatesToYamlV2(
       String accountId, String orgId, String projectId, String yaml, boolean getMergedYamlWithTemplateField);
 
-  TemplateRetainVariablesResponse updateTemplateInputs(String sourceYaml, String yamlToBeUpdated);
+  TemplateRetainVariablesResponse updateTemplateInputs(String template, String originalTemplateInputs);
 }

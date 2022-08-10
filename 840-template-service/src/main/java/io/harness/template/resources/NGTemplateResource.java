@@ -41,7 +41,6 @@ import io.harness.ng.core.template.TemplateListType;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.ng.core.template.TemplateMetadataSummaryResponseDTO;
 import io.harness.ng.core.template.TemplateReferenceRequestDTO;
-import io.harness.ng.core.template.TemplateReferenceSummary;
 import io.harness.ng.core.template.TemplateRetainVariablesRequestDTO;
 import io.harness.ng.core.template.TemplateRetainVariablesResponse;
 import io.harness.ng.core.template.TemplateSummaryResponseDTO;
@@ -577,6 +576,30 @@ public class NGTemplateResource {
   }
 
   @POST
+  @Path("/v2/templateInputs/")
+  @ApiOperation(value = "Gets template input set and merged yaml", nickname = "getTemplateInputSetAndMergedYaml")
+  @Operation(operationId = "getsTemplateInputSetAndMergedYaml", summary = "Gets Template Input Set and Merged YAML",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Returns the Template Input Set and Merged YAML")
+      })
+  @Hidden
+  public ResponseDTO<TemplateRetainVariablesResponse>
+  getTemplateInputsYamlV2(@Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
+                              NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
+      @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgId,
+      @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
+      @NotNull TemplateRetainVariablesRequestDTO templateRetainVariablesRequestDTO) {
+    log.info("Get Template Input set and Merged yaml");
+    return ResponseDTO.newResponse(
+        templateMergeService.updateTemplateInputs(templateRetainVariablesRequestDTO.getTemplate(),
+            templateRetainVariablesRequestDTO.getOriginalTemplateInputs()));
+  }
+
+  @POST
   @Path("/applyTemplates")
   @ApiOperation(value = "Gets complete yaml with templateRefs resolved", nickname = "getYamlWithTemplateRefsResolved")
   @Operation(operationId = "getYamlWithTemplateRefsResolved", summary = "Gets complete yaml with templateRefs resolved",
@@ -724,26 +747,5 @@ public class NGTemplateResource {
       @NotNull TemplateReferenceRequestDTO templateReferenceRequestDTO) {
     return ResponseDTO.newResponse(templateReferenceHelper.getNestedTemplateReferences(
         accountId, orgId, projectId, templateReferenceRequestDTO.getYaml(), false));
-  }
-
-  @POST
-  @Path("/retainTemplateVariables")
-  @Operation(operationId = "retainTemplateVariables", summary = "retain Template Variables",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "default", description = "Retain the common templates variables when creating a new version")
-      })
-  @ApiOperation(value = "Retain variables for Template", nickname = "retainTemplateVariables")
-  @Hidden
-  public ResponseDTO<TemplateRetainVariablesResponse>
-  retainTemplateVariables(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
-      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
-      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId,
-      @NotNull TemplateRetainVariablesRequestDTO templateRetainVariablesRequestDTO) {
-    log.info("Retain Template Variables for new template version");
-    return ResponseDTO.newResponse(
-        templateMergeService.updateTemplateInputs(templateRetainVariablesRequestDTO.getOriginalTemplateInputs(),
-            templateRetainVariablesRequestDTO.getTemplateInputsTobeUpdated()));
   }
 }

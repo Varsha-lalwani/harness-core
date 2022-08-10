@@ -11,4 +11,5 @@ import lombok.Value;
 @Builder
 public class TemplateRetainVariablesResponse {
   String mergedTemplateInputs;
+  String templateInputs;
 }

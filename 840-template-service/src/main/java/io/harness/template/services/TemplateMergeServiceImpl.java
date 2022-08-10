@@ -116,24 +116,31 @@ public class TemplateMergeServiceImpl implements TemplateMergeService {
   }
 
   @Override
-  public TemplateRetainVariablesResponse updateTemplateInputs(String sourceYaml, String yamlToBeUpdated) {
-    JsonNode sourceInputSetFormatJsonNode;
-    JsonNode yamlToBeUpdatedJsonNode;
-    if (EmptyPredicate.isEmpty(sourceYaml)) {
-      throw new InvalidRequestException("Source Yaml cannot be empty.");
+  public TemplateRetainVariablesResponse updateTemplateInputs(String template, String originalTemplateInputs) {
+    JsonNode templateInputSetJsonNode;
+    JsonNode originalTemplateInputSetJsonNode;
+    String templateInputs = templateMergeServiceHelper.createTemplateInputsFromTemplate(template);
+    if (EmptyPredicate.isEmpty(originalTemplateInputs)) {
+      return TemplateRetainVariablesResponse.builder()
+          .templateInputs(templateInputs)
+          .mergedTemplateInputs(templateInputs)
+          .build();
     }
-    if (EmptyPredicate.isEmpty(yamlToBeUpdated)) {
-      return TemplateRetainVariablesResponse.builder().mergedTemplateInputs(yamlToBeUpdated).build();
+    if (EmptyPredicate.isEmpty(templateInputs)) {
+      return TemplateRetainVariablesResponse.builder().templateInputs("").mergedTemplateInputs("").build();
     }
     try {
-      sourceInputSetFormatJsonNode = YamlUtils.readTree(sourceYaml).getNode().getCurrJsonNode();
-      yamlToBeUpdatedJsonNode = YamlUtils.readTree(yamlToBeUpdated).getNode().getCurrJsonNode();
+      templateInputSetJsonNode = YamlUtils.readTree(templateInputs).getNode().getCurrJsonNode();
+      originalTemplateInputSetJsonNode = YamlUtils.readTree(originalTemplateInputs).getNode().getCurrJsonNode();
     } catch (IOException e) {
       throw new InvalidRequestException("Couldn't convert yaml to JsonNode");
     }
     JsonNode updatedJsonNode =
-        YamlRefreshHelper.refreshNodeFromSourceNode(sourceInputSetFormatJsonNode, yamlToBeUpdatedJsonNode);
-    return TemplateRetainVariablesResponse.builder().mergedTemplateInputs(convertToYaml(updatedJsonNode)).build();
+        YamlRefreshHelper.refreshNodeFromSourceNode(originalTemplateInputSetJsonNode, templateInputSetJsonNode);
+    return TemplateRetainVariablesResponse.builder()
+        .templateInputs(templateInputs)
+        .mergedTemplateInputs(convertToYaml(updatedJsonNode))
+        .build();
   }
 
   private String convertToYaml(JsonNode jsonNode) {

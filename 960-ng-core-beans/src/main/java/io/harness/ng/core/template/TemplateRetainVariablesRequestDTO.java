@@ -16,6 +16,6 @@ import lombok.Value;
 @Value
 @Builder
 public class TemplateRetainVariablesRequestDTO {
+  String template;
   String originalTemplateInputs;
-  String templateInputsTobeUpdated;
 }
