@@ -38,14 +38,14 @@ public class K8sDeleteTaskParameters extends K8sTaskParameters implements Manife
   private String resources;
   private boolean deleteNamespacesForRelease;
   private String filePaths;
-
+  private boolean k8sPrevCanaryDeploy;
   @Builder
   public K8sDeleteTaskParameters(String accountId, String appId, String commandName, String activityId,
       K8sTaskType k8sTaskType, K8sClusterConfig k8sClusterConfig, String workflowExecutionId, String releaseName,
       Integer timeoutIntervalInMin, K8sDelegateManifestConfig k8sDelegateManifestConfig, List<String> valuesYamlList,
       String resources, boolean deleteNamespacesForRelease, HelmVersion helmVersion, String filePaths,
       Set<String> delegateSelectors, boolean useLatestChartMuseumVersion, boolean useLatestKustomizeVersion,
-      boolean useNewKubectlVersion) {
+      boolean useNewKubectlVersion, boolean k8sPrevCanaryDeploy) {
     super(accountId, appId, commandName, activityId, k8sClusterConfig, workflowExecutionId, releaseName,
         timeoutIntervalInMin, k8sTaskType, helmVersion, delegateSelectors, useLatestChartMuseumVersion,
         useLatestKustomizeVersion, useNewKubectlVersion);
@@ -53,6 +53,7 @@ public class K8sDeleteTaskParameters extends K8sTaskParameters implements Manife
     this.valuesYamlList = valuesYamlList;
     this.resources = resources;
     this.filePaths = filePaths;
+    this.k8sPrevCanaryDeploy = k8sPrevCanaryDeploy;
     this.deleteNamespacesForRelease = deleteNamespacesForRelease;
   }
 
@@ -66,5 +67,9 @@ public class K8sDeleteTaskParameters extends K8sTaskParameters implements Manife
       capabilities.add(SelectorCapability.builder().selectors(delegateSelectors).build());
     }
     return capabilities;
+  }
+
+  public boolean isK8sPrevCanaryDeploy() {
+    return k8sPrevCanaryDeploy;
   }
 }

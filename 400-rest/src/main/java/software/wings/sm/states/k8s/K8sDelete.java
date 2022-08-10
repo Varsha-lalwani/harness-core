@@ -33,6 +33,7 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.tasks.ResponseData;
 
 import software.wings.api.RancherClusterElement;
+import software.wings.api.k8s.K8sCanaryDeleteServiceElement;
 import software.wings.api.k8s.K8sStateExecutionData;
 import software.wings.beans.Activity;
 import software.wings.beans.ContainerInfrastructureMapping;
@@ -117,8 +118,14 @@ public class K8sDelete extends AbstractK8sState {
       ContainerInfrastructureMapping infraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
 
       Activity activity = createActivity(context);
-
-      K8sTaskParameters k8sTaskParameters =
+      // Sweeping output here and check if its canary
+      K8sCanaryDeleteServiceElement k8sCanaryDeleteServiceElement = fetchK8sCanaryDeleteServiceElement(context);
+      K8sTaskParameters k8sTaskParameters;
+      boolean wasCanaryDeployedPrev = false;
+      if (k8sCanaryDeleteServiceElement != null && k8sCanaryDeleteServiceElement.getPreviousDeployedK8sCanary()) {
+        wasCanaryDeployedPrev = true;
+      }
+      k8sTaskParameters =
           K8sDeleteTaskParameters.builder()
               .activityId(activity.getUuid())
               .releaseName(fetchReleaseName(context, infraMapping))
@@ -127,6 +134,7 @@ public class K8sDelete extends AbstractK8sState {
               .resources(context.renderExpression(this.resources))
               .deleteNamespacesForRelease(deleteNamespacesForRelease)
               .timeoutIntervalInMin(stateTimeoutInMinutes)
+              .k8sPrevCanaryDeploy(wasCanaryDeployedPrev)
               .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
               .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
               .build();
