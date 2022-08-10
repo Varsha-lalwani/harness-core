@@ -1,15 +1,17 @@
 package io.harness.delegate.task.ecs;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.aws.v2.ecs.EcsV2Client;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
+import io.harness.delegate.beans.ecs.EcsMapper;
+import io.harness.delegate.beans.ecs.EcsTask;
 import io.harness.delegate.task.aws.AwsNgConfigMapper;
 import io.harness.exception.InvalidYamlException;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 import io.harness.serializer.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
+import io.harness.aws.beans.AwsInternalConfig;
 import org.apache.commons.collections.CollectionUtils;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.applicationautoscaling.model.DeleteScalingPolicyRequest;
@@ -20,12 +22,15 @@ import software.amazon.awssdk.services.applicationautoscaling.model.DescribeScal
 import software.amazon.awssdk.services.applicationautoscaling.model.DescribeScalingPoliciesResponse;
 import software.amazon.awssdk.services.applicationautoscaling.model.PutScalingPolicyRequest;
 import software.amazon.awssdk.services.applicationautoscaling.model.RegisterScalableTargetRequest;
-import software.amazon.awssdk.services.applicationautoscaling.model.ScalableDimension;
 import software.amazon.awssdk.services.applicationautoscaling.model.ServiceNamespace;
 import software.amazon.awssdk.services.ecs.model.CreateServiceRequest;
 import software.amazon.awssdk.services.ecs.model.CreateServiceResponse;
 import software.amazon.awssdk.services.ecs.model.DescribeServicesRequest;
 import software.amazon.awssdk.services.ecs.model.DescribeServicesResponse;
+import software.amazon.awssdk.services.ecs.model.DescribeTasksResponse;
+import software.amazon.awssdk.services.ecs.model.DesiredStatus;
+import software.amazon.awssdk.services.ecs.model.ListTasksRequest;
+import software.amazon.awssdk.services.ecs.model.ListTasksResponse;
 import software.amazon.awssdk.services.ecs.model.RegisterTaskDefinitionRequest;
 import software.amazon.awssdk.services.ecs.model.RegisterTaskDefinitionResponse;
 import software.amazon.awssdk.services.ecs.model.Service;
@@ -35,9 +40,11 @@ import software.amazon.awssdk.services.ecs.model.UpdateServiceResponse;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.concurrent.TimeUnit;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
@@ -47,10 +54,8 @@ import static java.lang.String.format;
 @Singleton
 @Slf4j
 public class EcsCommandTaskNGHelper {
-  @Inject
-  EcsV2Client ecsV2Client;
-  @Inject
-  private AwsNgConfigMapper awsNgConfigMapper;
+  @Inject private EcsV2Client ecsV2Client;
+  @Inject private AwsNgConfigMapper awsNgConfigMapper;
   private YamlUtils yamlUtils = new YamlUtils();
 
   public RegisterTaskDefinitionResponse createTaskDefinition(RegisterTaskDefinitionRequest registerTaskDefinitionRequest, String region, AwsConnectorDTO awsConnectorDTO) {
@@ -69,29 +74,6 @@ public class EcsCommandTaskNGHelper {
   public Optional<Service> describeService(String cluster, String serviceName, String region, AwsConnectorDTO awsConnectorDTO) {
     DescribeServicesResponse describeServicesResponse = ecsV2Client.describeService(awsNgConfigMapper.createAwsInternalConfig(awsConnectorDTO), cluster, serviceName, region);
     return CollectionUtils.isNotEmpty(describeServicesResponse.services()) ? Optional.of(describeServicesResponse.services().get(0)) : Optional.empty();
-  }
-
-  public UpdateServiceRequest convertCreateServiceRequestToUpdateServiceRequest(CreateServiceRequest createServiceRequest) {
-    UpdateServiceRequest updateServiceRequest = UpdateServiceRequest.builder()
-            .service(createServiceRequest.serviceName())
-            .serviceRegistries(createServiceRequest.serviceRegistries())
-            .capacityProviderStrategy(createServiceRequest.capacityProviderStrategy())
-            .cluster(createServiceRequest.cluster())
-            .deploymentConfiguration(createServiceRequest.deploymentConfiguration())
-            .desiredCount(createServiceRequest.desiredCount())
-            .enableECSManagedTags(createServiceRequest.enableECSManagedTags())
-            .healthCheckGracePeriodSeconds(createServiceRequest.healthCheckGracePeriodSeconds())
-            .loadBalancers(createServiceRequest.loadBalancers())
-            .enableExecuteCommand(createServiceRequest.enableExecuteCommand())
-            .networkConfiguration(createServiceRequest.networkConfiguration())
-            .overrideConfiguration(createServiceRequest.overrideConfiguration().isPresent() ? createServiceRequest.overrideConfiguration().get() : null)
-            .placementConstraints(createServiceRequest.placementConstraints())
-            .placementStrategy(createServiceRequest.placementStrategy())
-            .platformVersion(createServiceRequest.platformVersion())
-            .propagateTags(createServiceRequest.propagateTags())
-            .taskDefinition(createServiceRequest.taskDefinition())
-            .build();
-    return updateServiceRequest;
   }
 
   public WaiterResponse<DescribeServicesResponse> ecsServiceSteadyStateCheck(LogCallback deployLogCallback, AwsConnectorDTO awsConnectorDTO,
@@ -116,22 +98,22 @@ public class EcsCommandTaskNGHelper {
     return describeServicesResponseWaiterResponse;
   }
 
-  public DescribeScalableTargetsResponse listScalableTargets(AwsConnectorDTO awsConnectorDTO,
-                                                             String serviceArn , String region) {
+  public DescribeScalableTargetsResponse listScalableTargets(AwsConnectorDTO awsConnectorDTO, String cluster,
+                                                             String serviceName , String region) {
     DescribeScalableTargetsRequest describeScalableTargetsRequest = DescribeScalableTargetsRequest.builder()
             .maxResults(100)
             .serviceNamespace(ServiceNamespace.ECS)
-            .resourceIds(Collections.singletonList(serviceArn))
+            .resourceIds(Collections.singletonList(format("service/%s/%s", cluster, serviceName)))
             .build();
     return ecsV2Client.listScalableTargets(awsNgConfigMapper.createAwsInternalConfig(awsConnectorDTO), describeScalableTargetsRequest, region);
   }
 
   public DescribeScalingPoliciesResponse listScalingPolicies(AwsConnectorDTO awsConnectorDTO,
-                                                             String serviceArn , String region) {
+                                                             String cluster, String serviceName , String region) {
     DescribeScalingPoliciesRequest describeScalingPoliciesRequest = DescribeScalingPoliciesRequest.builder()
             .maxResults(100)
             .serviceNamespace(ServiceNamespace.ECS)
-            .resourceId(serviceArn)
+            .resourceId(format("service/%s/%s", cluster, serviceName))
             .build();
     return ecsV2Client.listScalingPolicies(awsNgConfigMapper.createAwsInternalConfig(awsConnectorDTO), describeScalingPoliciesRequest, region);
   }
@@ -166,6 +148,35 @@ public class EcsCommandTaskNGHelper {
     } else {
       logCallback.saveExecutionLog(format("Didn't find any Scaling Policies attached to service %s %n", serviceName), LogLevel.INFO);
     }
+  }
+
+  public List<EcsTask> getRunningEcsTasks(AwsConnectorDTO awsConnectorDTO,
+                                          String cluster, String serviceName, String region) {
+    String nextToken = null;
+    List<EcsTask> response = new ArrayList<>();
+    do {
+      ListTasksRequest.Builder listTasksRequestBuilder = ListTasksRequest.builder()
+              .cluster(cluster)
+              .serviceName(serviceName)
+              .desiredStatus(DesiredStatus.RUNNING);
+      //todo: confirm with Sainath
+      if(nextToken!=null) {
+        listTasksRequestBuilder.nextToken(nextToken);
+      }
+      ListTasksResponse listTasksResponse = ecsV2Client.listTaskArns(awsNgConfigMapper.createAwsInternalConfig(awsConnectorDTO),
+              listTasksRequestBuilder.build(), region);
+      nextToken = listTasksResponse.nextToken();
+      if(CollectionUtils.isNotEmpty(listTasksResponse.taskArns())) {
+        DescribeTasksResponse describeTasksResponse = ecsV2Client.getTasks(awsNgConfigMapper.createAwsInternalConfig(awsConnectorDTO),
+                cluster, listTasksResponse.taskArns(), region);
+        response.addAll( describeTasksResponse.tasks()
+                .stream()
+                .map(task -> EcsMapper.toEcsTask(task, serviceName))
+                .collect(Collectors.toList()));
+      }
+    }
+    while (nextToken != null);
+    return response;
   }
 
   public void deregisterScalableTargets(AwsConnectorDTO awsConnectorDTO, String serviceName,
@@ -278,7 +289,7 @@ public class EcsCommandTaskNGHelper {
       deleteScalingPolicies(ecsInfraConfig.getAwsConnectorDTO(), service.serviceName(), ecsInfraConfig.getCluster(), ecsInfraConfig.getRegion(), logCallback);
       deregisterScalableTargets(ecsInfraConfig.getAwsConnectorDTO(), service.serviceName(), ecsInfraConfig.getCluster(), ecsInfraConfig.getRegion(), logCallback);
 
-      UpdateServiceRequest updateServiceRequest = convertCreateServiceRequestToUpdateServiceRequest(createServiceRequest);
+      UpdateServiceRequest updateServiceRequest = EcsMapper.createServiceRequestToUpdateServiceRequest(createServiceRequest);
       logCallback.saveExecutionLog(format("Updating Service with name %s %n", updateServiceRequest.service()), LogLevel.INFO);
       UpdateServiceResponse updateServiceResponse = updateService(updateServiceRequest, ecsInfraConfig.getRegion(), ecsInfraConfig.getAwsConnectorDTO());
 

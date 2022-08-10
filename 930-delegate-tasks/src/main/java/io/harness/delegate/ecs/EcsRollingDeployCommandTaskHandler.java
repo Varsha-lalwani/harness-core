@@ -3,6 +3,7 @@ package io.harness.delegate.ecs;
 import com.google.inject.Inject;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.ecs.EcsRollingDeployResult;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.exception.EcsNGException;
@@ -82,13 +83,22 @@ public class EcsRollingDeployCommandTaskHandler extends EcsCommandTaskNGHandler 
       // replace cluster and task definition
       CreateServiceRequest createServiceRequest = createServiceRequestBuilder.cluster(ecsInfraConfig.getCluster()).taskDefinition(registerTaskDefinitionResponse.taskDefinition().taskDefinitionArn()).build();
 
-
       ecsCommandTaskHelper.createOrUpdateService(createServiceRequest, ecsScalableTargetManifestContentList,
               ecsScalingPolicyManifestContentList, ecsInfraConfig, deployLogCallback, timeoutInMillis);
-
+        EcsRollingDeployResult ecsRollingDeployResult = EcsRollingDeployResult.builder()
+                .region(ecsInfraConfig.getRegion())
+                .ecsTasks(ecsCommandTaskHelper.getRunningEcsTasks(ecsInfraConfig.getAwsConnectorDTO(), ecsInfraConfig.getCluster(),
+                        createServiceRequest.serviceName(), ecsInfraConfig.getRegion()))
+                .build();
+        EcsRollingDeployResponse ecsRollingDeployResponse =
+                EcsRollingDeployResponse.builder()
+                        .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+                        .ecsRollingDeployResult(ecsRollingDeployResult)
+                        .build();
       deployLogCallback.saveExecutionLog(color(format("%n Deployment Successful."), LogColor.Green, LogWeight.Bold),
               LogLevel.INFO, CommandExecutionStatus.SUCCESS);
-      return EcsRollingDeployResponse.builder().commandExecutionStatus(CommandExecutionStatus.SUCCESS).build();
+
+      return ecsRollingDeployResponse;
 
     } catch (Exception ex) {
       deployLogCallback.saveExecutionLog(color(format("%n Deployment Failed."), LogColor.Red, LogWeight.Bold),

@@ -9,10 +9,12 @@ import io.harness.cdng.ecs.beans.EcsExecutionPassThroughData;
 import io.harness.cdng.ecs.beans.EcsRollingRollbackDataOutcome;
 import io.harness.cdng.ecs.beans.EcsRollingRollbackOutcome;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
+import io.harness.cdng.instance.info.InstanceInfoService;
 import io.harness.cdng.serverless.ServerlessStepCommonHelper;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.ecs.EcsRollingRollbackResult;
+import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.task.ecs.EcsCommandTypeNG;
 import io.harness.delegate.task.ecs.EcsRollingRollbackConfig;
@@ -43,6 +45,8 @@ import io.harness.steps.StepHelper;
 import io.harness.supplier.ThrowingSupplier;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
 public class EcsRollingRollbackStep extends TaskExecutableWithRollbackAndRbac<EcsCommandResponse> {
@@ -59,7 +63,7 @@ public class EcsRollingRollbackStep extends TaskExecutableWithRollbackAndRbac<Ec
   @Inject private EcsStepCommonHelper ecsStepCommonHelper;
   @Inject private AccountService accountService;
   @Inject private StepHelper stepHelper;
-
+  @Inject private InstanceInfoService instanceInfoService;
 
 
   @Override
@@ -88,7 +92,8 @@ public class EcsRollingRollbackStep extends TaskExecutableWithRollbackAndRbac<Ec
   }
 
   private StepResponse generateStepResponse(
-          Ambiance ambiance, EcsRollingRollbackResponse ecsRollingRollbackResponse, StepResponse.StepResponseBuilder stepResponseBuilder) {
+          Ambiance ambiance, EcsRollingRollbackResponse ecsRollingRollbackResponse,
+          StepResponse.StepResponseBuilder stepResponseBuilder) {
     StepResponse stepResponse;
 
     if (ecsRollingRollbackResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
@@ -103,13 +108,21 @@ public class EcsRollingRollbackStep extends TaskExecutableWithRollbackAndRbac<Ec
 
       EcsRollingRollbackOutcome ecsRollingRollbackOutcome =
               EcsRollingRollbackOutcome.builder()
+                      .firstDeployment(ecsRollingRollbackResult.isFirstDeployment())
                       .build();
+
+      List<ServerInstanceInfo> serverInstanceInfos = ecsStepCommonHelper.getServerInstanceInfos(
+              ecsRollingRollbackResponse, ecsRollingRollbackResult.getInfrastructureKey());
+
+      StepResponse.StepOutcome stepOutcome =
+              instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance, serverInstanceInfos);
 
       executionSweepingOutputService.consume(ambiance,
               OutcomeExpressionConstants.ECS_ROLLING_ROLLBACK_OUTCOME, ecsRollingRollbackOutcome,
               StepOutcomeGroup.STEP.name());
 
       stepResponse = stepResponseBuilder.status(Status.SUCCEEDED)
+              .stepOutcome(stepOutcome)
               .stepOutcome(StepResponse.StepOutcome.builder()
                       .name(OutcomeExpressionConstants.OUTPUT)
                       .outcome(ecsRollingRollbackOutcome)
@@ -171,6 +184,7 @@ public class EcsRollingRollbackStep extends TaskExecutableWithRollbackAndRbac<Ec
                     .commandName(ECS_ROLLING_ROLLBACK_COMMAND_NAME)
                     .commandUnitsProgress(CommandUnitsProgress.builder().build())
                     .timeoutIntervalInMin(CDStepHelper.getTimeoutInMin(stepElementParameters))
+                    .ecsInfraConfig(ecsStepCommonHelper.getEcsInfraConfig(infrastructureOutcome, ambiance))
                     .build();
 
     return ecsStepCommonHelper

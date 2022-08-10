@@ -206,8 +206,10 @@ import io.harness.delegate.beans.connector.servicenow.connection.ServiceNowTestC
 import io.harness.delegate.beans.connector.splunkconnector.SplunkConnectionTaskParams;
 import io.harness.delegate.beans.connector.splunkconnector.SplunkConnectionTaskResponse;
 import io.harness.delegate.beans.connector.vaultconnector.VaultValidationParams;
-import io.harness.delegate.beans.ecs.EcsPrepareRollbackDataResult;
+import io.harness.delegate.beans.ecs.EcsContainer;
 import io.harness.delegate.beans.ecs.EcsRollingDeployResult;
+import io.harness.delegate.beans.ecs.EcsTask;
+import io.harness.delegate.beans.ecs.EcsPrepareRollbackDataResult;
 import io.harness.delegate.beans.ecs.EcsRollingRollbackResult;
 import io.harness.delegate.beans.executioncapability.AlwaysFalseValidationCapability;
 import io.harness.delegate.beans.executioncapability.AwsCliInstallationCapability;
@@ -436,6 +438,7 @@ import io.harness.delegate.task.ecs.EcsCommandTypeNG;
 import io.harness.delegate.task.ecs.EcsGitFetchFileConfig;
 import io.harness.delegate.task.ecs.EcsInfraConfig;
 import io.harness.delegate.task.ecs.EcsInfraType;
+import io.harness.delegate.task.ecs.EcsRollingRollbackConfig;
 import io.harness.delegate.task.ecs.request.EcsGitFetchRequest;
 import io.harness.delegate.task.ecs.request.EcsPrepareRollbackDataRequest;
 import io.harness.delegate.task.ecs.request.EcsRollingDeployRequest;
@@ -1664,6 +1667,9 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EcsRollingRollbackRequest.class, 573514);
     kryo.register(EcsRollingRollbackResponse.class, 573515);
     kryo.register(EcsRollingRollbackResult.class, 573516);
+    kryo.register(EcsTask.class, 573517);
+    kryo.register(EcsContainer.class, 573718);
+    kryo.register(EcsRollingRollbackConfig.class, 573719);
 
     kryo.register(AzurePackageArtifactConfig.class, 55410);
     kryo.register(AzureArtifactRequestDetails.class, 55411);

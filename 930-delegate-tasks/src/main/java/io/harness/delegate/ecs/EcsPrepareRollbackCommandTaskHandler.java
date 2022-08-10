@@ -2,7 +2,7 @@ package io.harness.delegate.ecs;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.Inject;
-import io.harness.aws.v2.ecs.EcsMapper;
+import io.harness.delegate.beans.ecs.EcsMapper;
 import io.harness.delegate.beans.ecs.EcsPrepareRollbackDataResult;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
@@ -18,7 +18,6 @@ import io.harness.exception.InvalidArgumentsException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
-import io.harness.serializer.YamlUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import software.amazon.awssdk.services.applicationautoscaling.model.DescribeScalableTargetsResponse;
@@ -35,8 +34,6 @@ import static java.lang.String.format;
 public class EcsPrepareRollbackCommandTaskHandler extends EcsCommandTaskNGHandler {
   @Inject
   private EcsCommandTaskNGHelper ecsCommandTaskHelper;
-  @Inject
-  EcsMapper ecsMapper;
   @Inject private EcsTaskHelperBase ecsTaskHelperBase;
 
   private EcsInfraConfig ecsInfraConfig;
@@ -71,19 +68,20 @@ public class EcsPrepareRollbackCommandTaskHandler extends EcsCommandTaskNGHandle
       Service service = optionalService.get();
 
       // Get createServiceRequestBuilderString from service
-      String createServiceRequestBuilderString = ecsMapper.createCreateServiceRequestFromService(service);
+      String createServiceRequestBuilderString = EcsMapper.createCreateServiceRequestFromService(service);
       prepareRollbackDataLogCallback.saveExecutionLog(format("Fetched Service Definition Details for Service %s", serviceName), LogLevel.INFO);
 
       // Get registerScalableTargetRequestBuilderStrings if present
       prepareRollbackDataLogCallback.saveExecutionLog(format("Fetching Scalable Target Details for Service %s..", serviceName), LogLevel.INFO);
-      DescribeScalableTargetsResponse describeScalableTargetsResponse = ecsCommandTaskHelper.listScalableTargets(ecsInfraConfig.getAwsConnectorDTO(), service.serviceArn(), ecsInfraConfig.getRegion());
+      DescribeScalableTargetsResponse describeScalableTargetsResponse = ecsCommandTaskHelper.listScalableTargets(ecsInfraConfig.getAwsConnectorDTO(),
+              ecsInfraConfig.getCluster(), service.serviceName(), ecsInfraConfig.getRegion());
 
 
       List<String> registerScalableTargetRequestBuilderStrings = null;
       if (describeScalableTargetsResponse != null && CollectionUtils.isNotEmpty(describeScalableTargetsResponse.scalableTargets())) {
         registerScalableTargetRequestBuilderStrings = describeScalableTargetsResponse.scalableTargets().stream().map(scalableTarget -> {
           try {
-            return ecsMapper.createRegisterScalableTargetRequestFromScalableTarget(scalableTarget);
+            return EcsMapper.createRegisterScalableTargetRequestFromScalableTarget(scalableTarget);
           } catch (JsonProcessingException e) {
             e.printStackTrace();
           }
@@ -96,13 +94,14 @@ public class EcsPrepareRollbackCommandTaskHandler extends EcsCommandTaskNGHandle
 
       // Get registerScalingPolicyRequestBuilderStrings if present
       prepareRollbackDataLogCallback.saveExecutionLog(format("Fetching Scaling Policy Details for Service %s..", serviceName), LogLevel.INFO);
-      DescribeScalingPoliciesResponse describeScalingPoliciesResponse = ecsCommandTaskHelper.listScalingPolicies(ecsInfraConfig.getAwsConnectorDTO(), service.serviceArn(), ecsInfraConfig.getRegion());
+      DescribeScalingPoliciesResponse describeScalingPoliciesResponse = ecsCommandTaskHelper.listScalingPolicies(ecsInfraConfig.getAwsConnectorDTO(),
+              ecsInfraConfig.getCluster(), service.serviceName(), ecsInfraConfig.getRegion());
 
       List<String> registerScalingPolicyRequestBuilderStrings = null;
       if (describeScalingPoliciesResponse != null && CollectionUtils.isNotEmpty(describeScalingPoliciesResponse.scalingPolicies())) {
         registerScalingPolicyRequestBuilderStrings = describeScalingPoliciesResponse.scalingPolicies().stream().map(scalingPolicy -> {
           try {
-            return ecsMapper.createPutScalingPolicyRequestFromScalingPolicy(scalingPolicy);
+            return EcsMapper.createPutScalingPolicyRequestFromScalingPolicy(scalingPolicy);
           } catch (JsonProcessingException e) {
             e.printStackTrace();
           }

@@ -31,6 +31,7 @@ import io.harness.perpetualtask.instancesync.AzureWebAppInstanceSyncPerpetualPro
 import io.harness.perpetualtask.instancesync.AzureWebAppNGInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.ContainerInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.CustomDeploymentInstanceSyncTaskParams;
+import io.harness.perpetualtask.instancesync.EcsInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.K8sInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.NativeHelmInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.PcfInstanceSyncPerpetualTaskParams;
@@ -114,6 +115,8 @@ public class PerpetualTaskWorkerModule extends AbstractModule {
         .to(ServerlessAwsLambdaInstanceSyncPerpetualTaskExecutor.class);
     mapBinder.addBinding(AzureWebAppNGInstanceSyncPerpetualTaskParams.class.getSimpleName())
         .to(AzureWebAppInstanceSyncPerpetualTaskExecutor.class);
+    mapBinder.addBinding(EcsInstanceSyncPerpetualTaskParams.class.getSimpleName())
+                    .to(EcsInstanceSyncPerpetualTaskExecutor.class);
     mapBinder.addBinding(PdcPerpetualTaskParamsNg.class.getSimpleName()).to(PdcPerpetualTaskExecutorNg.class);
 
     install(new FactoryModuleBuilder()
