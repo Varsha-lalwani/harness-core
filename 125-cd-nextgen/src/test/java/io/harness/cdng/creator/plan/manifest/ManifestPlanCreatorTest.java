@@ -7,11 +7,13 @@
 
 package io.harness.cdng.creator.plan.manifest;
 
+import static io.harness.cdng.creator.plan.manifest.ManifestsPlanCreator.SERVICE_ENTITY_DEFINITION_TYPE_KEY;
 import static io.harness.cdng.manifest.ManifestType.HELM_SUPPORTED_MANIFEST_TYPES;
 import static io.harness.cdng.manifest.ManifestType.K8S_SUPPORTED_MANIFEST_TYPES;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.ACASIAN;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
+import static io.harness.rule.OwnerRule.TATHAGAT;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -297,16 +299,9 @@ public class ManifestPlanCreatorTest extends CDNGTestBase {
   }
 
   @Test
-  @Owner(developers = ABOSII)
+  @Owner(developers = TATHAGAT)
   @Category(UnitTests.class)
   public void testCreatePlanForChildrenNodesWithServiceEntity() throws IOException {
-    NGServiceV2InfoConfig ngServiceV2InfoConfig =
-        NGServiceV2InfoConfig.builder()
-            .serviceDefinition(ServiceDefinition.builder().type(ServiceDefinitionType.KUBERNETES).build())
-            .identifier("SVC_ID")
-            .build();
-    Map<String, ByteString> metadataDependency = new HashMap<>();
-
     final ManifestConfigWrapper valuesManifest1 =
         ManifestConfigWrapper.builder()
             .manifest(ManifestConfig.builder().identifier("values_test1").type(ManifestConfigType.VALUES).build())
@@ -315,8 +310,9 @@ public class ManifestPlanCreatorTest extends CDNGTestBase {
         ManifestConfigWrapper.builder()
             .manifest(ManifestConfig.builder().identifier("values_test2").type(ManifestConfigType.VALUES).build())
             .build();
-    metadataDependency.put(
-        YamlTypes.SERVICE_ENTITY, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(ngServiceV2InfoConfig)));
+    Map<String, ByteString> metadataDependency = new HashMap<>();
+    metadataDependency.put(SERVICE_ENTITY_DEFINITION_TYPE_KEY,
+        ByteString.copyFrom(kryoSerializer.asDeflatedBytes(ServiceDefinitionType.KUBERNETES)));
     metadataDependency.put(YamlTypes.MANIFEST_LIST_CONFIG,
         ByteString.copyFrom(kryoSerializer.asDeflatedBytes(Arrays.asList(valuesManifest1, valuesManifest2))));
 
