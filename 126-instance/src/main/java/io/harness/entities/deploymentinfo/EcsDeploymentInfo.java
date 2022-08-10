@@ -16,6 +16,5 @@ public class EcsDeploymentInfo extends DeploymentInfo {
     @NotNull private String region;
     @NotNull private String clusterArn;
     @NotNull private String serviceName;
-    private String launchType;
     @NotNull private String infraStructureKey;
 }

@@ -25,8 +25,9 @@ public class EcsCanaryDeleteStepParameters
         extends EcsCanaryDeleteBaseStepInfo implements EcsSpecParameters {
   @Builder(builderMethodName = "infoBuilder")
   public EcsCanaryDeleteStepParameters(
-          ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    super(delegateSelectors);
+          ParameterField<List<TaskSelectorYaml>> delegateSelectors, String ecsCanaryDeployFnq,
+          String ecsCanaryDeleteFnq) {
+    super(delegateSelectors, ecsCanaryDeployFnq, ecsCanaryDeleteFnq);
   }
 
   public List<String> getCommandUnits() {

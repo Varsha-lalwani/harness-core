@@ -50,6 +50,10 @@ public interface EcsV2Client {
     WaiterResponse<DescribeServicesResponse> ecsServiceSteadyStateCheck(AwsInternalConfig awsConfig,
                                     DescribeServicesRequest describeServicesRequest, String region, int serviceSteadyStateTimeout);
 
+    WaiterResponse<DescribeServicesResponse> ecsServiceInactiveStateCheck(AwsInternalConfig awsConfig,
+                                                                          DescribeServicesRequest describeServicesRequest, String region,
+                                                                          int serviceInactiveStateTimeout);
+
     RegisterScalableTargetResponse registerScalableTarget(AwsInternalConfig awsConfig, RegisterScalableTargetRequest registerScalableTargetRequest,
                                                           String region);
 

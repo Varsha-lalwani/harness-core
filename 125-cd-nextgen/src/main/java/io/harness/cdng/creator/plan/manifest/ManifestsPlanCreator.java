@@ -198,9 +198,6 @@ public class ManifestsPlanCreator extends ChildrenPlanCreator<ManifestsListConfi
         validateDuplicateManifests(
             manifestList, HELM_SUPPORTED_MANIFEST_TYPES, ServiceDefinitionType.NATIVE_HELM.getYamlName());
         break;
-      case ECS:
-        validateDuplicateManifests(manifestList, ECS_SUPPORTED_MANIFEST_TYPES, ServiceDefinitionType.ECS.getYamlName());
-        break;
       default:
     }
   }
@@ -214,9 +211,6 @@ public class ManifestsPlanCreator extends ChildrenPlanCreator<ManifestsListConfi
             .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getParams().getType()));
 
     if (manifestIdTypeMap.values().size() > 1) {
-      if (deploymentType == "ECS") {
-        return;
-      }
       String manifestIdType = manifestIdTypeMap.entrySet()
                                   .stream()
                                   .map(entry -> String.format("%s : %s", entry.getKey(), entry.getValue()))

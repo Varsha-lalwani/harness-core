@@ -14,6 +14,7 @@ import static java.util.Objects.nonNull;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.azure.webapp.AzureWebAppRollbackStep;
 import io.harness.cdng.azure.webapp.AzureWebAppSlotDeploymentStep;
+import io.harness.cdng.ecs.EcsCanaryDeployStep;
 import io.harness.cdng.ecs.EcsRollingDeployStep;
 import io.harness.cdng.ecs.EcsRollingRollbackStep;
 import io.harness.cdng.helm.HelmDeployStep;
@@ -40,7 +41,8 @@ public class InstanceSyncStepResolver {
       K8sRollingRollbackStep.STEP_TYPE.getType(), HelmDeployStep.STEP_TYPE.getType(),
       HelmRollbackStep.STEP_TYPE.getType(), ServerlessAwsLambdaDeployStep.STEP_TYPE.getType(),
       AzureWebAppSlotDeploymentStep.STEP_TYPE.getType(), AzureWebAppRollbackStep.STEP_TYPE.getType(),
-      CommandStep.STEP_TYPE.getType(),EcsRollingDeployStep.STEP_TYPE.getType(), EcsRollingRollbackStep.STEP_TYPE.getType()));
+      CommandStep.STEP_TYPE.getType(),EcsRollingDeployStep.STEP_TYPE.getType(), EcsRollingRollbackStep.STEP_TYPE.getType(),
+      EcsCanaryDeployStep.STEP_TYPE.getType()));
 
   public boolean shouldRunInstanceSync(StepType stepType) {
     return nonNull(stepType) && INSTANCE_SYN_STEP_TYPES.contains(stepType.getType());

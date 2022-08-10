@@ -88,11 +88,6 @@ public class EcsRollingDeployStep extends TaskChainExecutableWithRollbackAndRbac
     try {
       ecsRollingDeployResponse = (EcsRollingDeployResponse) responseDataSupplier.get();
     } catch (Exception e) {
-      EcsNGException ecsNGException = ExceptionUtils.cause(EcsNGException.class, e);
-      if (ecsNGException == null) {
-        log.error("Error while processing ecs task response: {}", e.getMessage(), e);
-        return ecsStepCommonHelper.handleTaskException(ambiance, ecsExecutionPassThroughData, e);
-      }
       log.error("Error while processing ecs task response: {}", e.getMessage(), e);
       return ecsStepCommonHelper.handleTaskException(ambiance, ecsExecutionPassThroughData, e);
     }

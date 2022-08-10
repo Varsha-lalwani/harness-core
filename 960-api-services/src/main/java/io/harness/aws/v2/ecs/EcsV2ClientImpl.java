@@ -82,17 +82,12 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
 
     @Override
     public DeleteServiceResponse deleteService(AwsInternalConfig awsConfig, DeleteServiceRequest deleteServiceRequest, String region) {
-        try(EcsClient ecsClient = getEcsClient(awsConfig, region)) {
+        try(EcsClient ecsClient = (EcsClient)getClient(awsConfig, region)) {
+            super.logCall(client(), Thread.currentThread().getStackTrace()[1].getMethodName());
             return ecsClient.deleteService(deleteServiceRequest);
         }
-        catch(AwsServiceException awsServiceException) {
-            awsApiV2ExceptionHandler.handleAwsServiceException(awsServiceException);
-        }
-        catch(SdkException sdkException) {
-            awsApiV2ExceptionHandler.handleSdkException(sdkException);
-        }
         catch(Exception exception) {
-            awsApiV2ExceptionHandler.handleException(exception);
+            super.handleException(exception);
         }
         return DeleteServiceResponse.builder().build();
     }
@@ -120,6 +115,24 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             EcsWaiter ecsWaiter = getEcsWaiter(ecsClient, delayInSeconds, maxAttempts)){
             super.logCall(client(), Thread.currentThread().getStackTrace()[1].getMethodName());
             return ecsWaiter.waitUntilServicesStable(describeServicesRequest);
+        }
+        catch(Exception exception) {
+            super.handleException(exception);
+        }
+        return null;
+    }
+
+    @Override
+    public  WaiterResponse<DescribeServicesResponse> ecsServiceInactiveStateCheck(AwsInternalConfig awsConfig,
+                                                                                  DescribeServicesRequest describeServicesRequest, String region,
+                                                                                  int serviceInactiveStateTimeout) {
+        // Polling interval of 10 sec with total waiting done till a timeout of <serviceSteadyStateTimeout> min
+        int delayInSeconds=10;
+        int maxAttempts = (int) TimeUnit.MINUTES.toSeconds(serviceInactiveStateTimeout) / delayInSeconds;
+        try(EcsClient ecsClient = (EcsClient)getClient(awsConfig, region);
+            EcsWaiter ecsWaiter = getEcsWaiter(ecsClient, delayInSeconds, maxAttempts)){
+            super.logCall(client(), Thread.currentThread().getStackTrace()[1].getMethodName());
+            return ecsWaiter.waitUntilServicesInactive(describeServicesRequest);
         }
         catch(Exception exception) {
             super.handleException(exception);

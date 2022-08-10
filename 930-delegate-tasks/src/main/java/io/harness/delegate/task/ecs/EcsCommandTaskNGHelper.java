@@ -76,6 +76,7 @@ public class EcsCommandTaskNGHelper {
     DeleteServiceRequest deleteServiceRequest = DeleteServiceRequest.builder()
             .service(serviceName)
             .cluster(cluster)
+            .force(true)
             .build();
 
     return ecsV2Client.deleteService(awsNgConfigMapper.createAwsInternalConfig(awsConnectorDTO), deleteServiceRequest, region);
@@ -106,6 +107,30 @@ public class EcsCommandTaskNGHelper {
     }
 
     deployLogCallback.saveExecutionLog(format("Service %s reached steady state %n", serviceName), LogLevel.INFO);
+    return describeServicesResponseWaiterResponse;
+  }
+
+  public WaiterResponse<DescribeServicesResponse> ecsServiceInactiveStateCheck(LogCallback deployLogCallback, AwsConnectorDTO awsConnectorDTO,
+                                                                             String cluster, String serviceName, String region, int serviceInactiveStateTimeout) {
+    deployLogCallback.saveExecutionLog(format("Waiting for existing Service %s to reach inactive state %n", serviceName), LogLevel.INFO);
+
+    DescribeServicesRequest describeServicesRequest = DescribeServicesRequest.builder()
+            .services(Collections.singletonList(serviceName))
+            .cluster(cluster)
+            .build();
+
+    WaiterResponse<DescribeServicesResponse> describeServicesResponseWaiterResponse =
+            ecsV2Client.ecsServiceInactiveStateCheck(awsNgConfigMapper.createAwsInternalConfig(awsConnectorDTO),
+                    describeServicesRequest, region, serviceInactiveStateTimeout);
+
+    if (describeServicesResponseWaiterResponse.matched().exception().isPresent()) {
+
+      Throwable throwable = describeServicesResponseWaiterResponse.matched().exception().get();
+      deployLogCallback.saveExecutionLog(format("Existing Service %s failed to reach inactive state %n", serviceName), LogLevel.ERROR);
+      throw new RuntimeException(format("Existing Service %s failed to reach inactive state %n", serviceName), throwable);
+    }
+
+    deployLogCallback.saveExecutionLog(format("Existing Service %s reached inactive state %n", serviceName), LogLevel.INFO);
     return describeServicesResponseWaiterResponse;
   }
 
@@ -328,10 +353,16 @@ public class EcsCommandTaskNGHelper {
 
       Service service = optionalService.get();
 
+      logCallback.saveExecutionLog(format("Deleting existing Service with name %s %n", createServiceRequest.serviceName()), LogLevel.INFO);
+
       deleteService(service.serviceName(), service.clusterArn(), ecsInfraConfig.getRegion(), ecsInfraConfig.getAwsConnectorDTO());
 
-    }
+      ecsServiceInactiveStateCheck(logCallback, ecsInfraConfig.getAwsConnectorDTO(), createServiceRequest.cluster(),
+              createServiceRequest.serviceName(), ecsInfraConfig.getRegion(), (int) TimeUnit.MILLISECONDS.toMinutes(timeoutInMillis));
 
+      logCallback.saveExecutionLog(format("Deleted existing Service with name %s %n", createServiceRequest.serviceName()), LogLevel.INFO);
+
+    }
 
     logCallback.saveExecutionLog(format("Creating Service with name %s %n", createServiceRequest.serviceName()), LogLevel.INFO);
     CreateServiceResponse createServiceResponse = createService(createServiceRequest, ecsInfraConfig.getRegion(), ecsInfraConfig.getAwsConnectorDTO());
@@ -351,4 +382,5 @@ public class EcsCommandTaskNGHelper {
   public boolean isServiceActive(Service service) {
     return service != null && service.status().equals("ACTIVE");
   }
+
 }

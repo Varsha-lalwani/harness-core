@@ -21,6 +21,7 @@ public class EcsInstanceInfoMapper {
                 .startedBy(ecsInstanceInfo.getStartedBy())
                 .startedAt(ecsInstanceInfo.getStartedAt())
                 .version(ecsInstanceInfo.getVersion())
+                .cluster(getClusterNameFromClusterArn(ecsInstanceInfo.getClusterArn()))
                 .infraStructureKey(ecsInstanceInfo.getInfraStructureKey())
                 .build();
     }
@@ -39,5 +40,18 @@ public class EcsInstanceInfoMapper {
                 .version(ecsInstanceInfoDTO.getVersion())
                 .infraStructureKey(ecsInstanceInfoDTO.getInfraStructureKey())
                 .build();
+    }
+
+    public static String getClusterNameFromClusterArn(String clusterArn) {
+        int start=clusterArn.lastIndexOf("/");
+        if (start!=1) {
+            return clusterArn;
+        }
+        try{
+            return clusterArn.substring(start+1);
+        }
+        catch(Exception e) {
+            return clusterArn;
+        }
     }
 }

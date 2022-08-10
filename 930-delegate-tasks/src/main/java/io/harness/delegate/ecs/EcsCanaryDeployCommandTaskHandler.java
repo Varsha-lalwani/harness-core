@@ -3,6 +3,8 @@ package io.harness.delegate.ecs;
 import com.google.inject.Inject;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.ecs.EcsCanaryDeployResult;
+import io.harness.delegate.beans.ecs.EcsRollingDeployResult;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.exception.EcsNGException;
@@ -12,6 +14,7 @@ import io.harness.delegate.task.ecs.EcsInfraConfigHelper;
 import io.harness.delegate.task.ecs.EcsTaskHelperBase;
 import io.harness.delegate.task.ecs.request.EcsCanaryDeployRequest;
 import io.harness.delegate.task.ecs.request.EcsCommandRequest;
+import io.harness.delegate.task.ecs.response.EcsCanaryDeployResponse;
 import io.harness.delegate.task.ecs.response.EcsCommandResponse;
 import io.harness.delegate.task.ecs.response.EcsRollingDeployResponse;
 import io.harness.ecs.EcsCommandUnitConstants;
@@ -91,9 +94,20 @@ public class EcsCanaryDeployCommandTaskHandler extends EcsCommandTaskNGHandler {
       ecsCommandTaskHelper.createCanaryService(createServiceRequest, ecsScalableTargetManifestContentList,
               ecsScalingPolicyManifestContentList, ecsInfraConfig, deployLogCallback, timeoutInMillis);
 
+      EcsCanaryDeployResult ecsCanaryDeployResult = EcsCanaryDeployResult.builder()
+              .region(ecsInfraConfig.getRegion())
+              .ecsTasks(ecsCommandTaskHelper.getRunningEcsTasks(ecsInfraConfig.getAwsConnectorDTO(), ecsInfraConfig.getCluster(),
+                      createServiceRequest.serviceName(), ecsInfraConfig.getRegion()))
+              .canaryServiceName(canaryServiceName)
+              .build();
+
       deployLogCallback.saveExecutionLog(color(format("%n Deployment Successful."), LogColor.Green, LogWeight.Bold),
               LogLevel.INFO, CommandExecutionStatus.SUCCESS);
-      return EcsRollingDeployResponse.builder().commandExecutionStatus(CommandExecutionStatus.SUCCESS).build();
+
+      return EcsCanaryDeployResponse.builder()
+              .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+              .ecsCanaryDeployResult(ecsCanaryDeployResult)
+              .build();
 
     } catch (Exception ex) {
       deployLogCallback.saveExecutionLog(color(format("%n Deployment Failed."), LogColor.Red, LogWeight.Bold),

@@ -21,6 +21,7 @@ import io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.data.structure.HarnessStringUtils;
 import io.harness.delegate.beans.TaskData;
+import io.harness.delegate.beans.ecs.EcsCanaryDeployResult;
 import io.harness.delegate.beans.ecs.EcsRollingDeployResult;
 import io.harness.delegate.beans.ecs.EcsRollingRollbackResult;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
@@ -32,6 +33,7 @@ import io.harness.delegate.task.ecs.EcsGitFetchFileConfig;
 import io.harness.delegate.task.ecs.EcsInfraConfig;
 import io.harness.delegate.task.ecs.request.EcsCommandRequest;
 import io.harness.delegate.task.ecs.request.EcsGitFetchRequest;
+import io.harness.delegate.task.ecs.response.EcsCanaryDeployResponse;
 import io.harness.delegate.task.ecs.response.EcsCommandResponse;
 import io.harness.delegate.task.ecs.response.EcsGitFetchResponse;
 import io.harness.delegate.task.ecs.response.EcsRollingDeployResponse;
@@ -628,6 +630,12 @@ public class EcsStepCommonHelper extends EcsStepUtils {
               ((EcsRollingRollbackResponse) ecsCommandResponse).getEcsRollingRollbackResult();
       return EcsTaskToServerInstanceInfoMapper.toServerInstanceInfoList(ecsRollingRollbackResult.getEcsTasks(),
               infrastructureKey, ecsRollingRollbackResult.getRegion());
+    }
+    else if(ecsCommandResponse instanceof EcsCanaryDeployResponse) {
+      EcsCanaryDeployResult ecsCanaryDeployResult =
+              ((EcsCanaryDeployResponse) ecsCommandResponse).getEcsCanaryDeployResult();
+      return EcsTaskToServerInstanceInfoMapper.toServerInstanceInfoList(ecsCanaryDeployResult.getEcsTasks(),
+              infrastructureKey, ecsCanaryDeployResult.getRegion());
     }
     throw new GeneralException("Invalid ecs command response instance");
   }

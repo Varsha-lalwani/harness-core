@@ -185,11 +185,13 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(JenkinsBuildStepInfo.class, 12700);
     kryo.register(MergePRStepParams.class, 12604);
     kryo.register(MergePRStepInfo.class, 12605);
-    kryo.register(EcsInfrastructure.class, 12606);
 
     kryo.register(CustomFetchResponsePassThroughData.class, 12705);
     kryo.register(RollbackDeploymentInfo.class, 12606);
     kryo.register(CommandStepRollbackDeploymentInfo.class, 12607);
     kryo.register(ConfigFilesOutcome.class, 12608);
+
+    kryo.register(EcsInfrastructure.class, 12609);
+
   }
 }

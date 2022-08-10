@@ -77,7 +77,6 @@ public class EcsInstanceSyncHandler extends AbstractInstanceSyncHandler{
                 .serviceName(ecsServerInstanceInfo.getServiceName())
                 .region(ecsServerInstanceInfo.getRegion())
                 .clusterArn(ecsServerInstanceInfo.getClusterArn())
-                .launchType(ecsServerInstanceInfo.getLaunchType())
                 .infraStructureKey(ecsServerInstanceInfo.getInfraStructureKey()).build();
     }
 

@@ -5,6 +5,8 @@ import io.harness.account.services.AccountService;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.CDStepHelper;
+import io.harness.cdng.ecs.beans.EcsCanaryDeleteDataOutcome;
+import io.harness.cdng.ecs.beans.EcsCanaryDeleteOutcome;
 import io.harness.cdng.ecs.beans.EcsExecutionPassThroughData;
 import io.harness.cdng.ecs.beans.EcsRollingRollbackDataOutcome;
 import io.harness.cdng.ecs.beans.EcsRollingRollbackOutcome;
@@ -23,6 +25,7 @@ import io.harness.delegate.task.ecs.response.EcsCanaryDeleteResponse;
 import io.harness.delegate.task.ecs.response.EcsCommandResponse;
 import io.harness.delegate.task.ecs.response.EcsRollingRollbackResponse;
 import io.harness.exception.ExceptionUtils;
+import io.harness.exception.InvalidRequestException;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.plancreator.steps.common.StepElementParameters;
@@ -43,8 +46,11 @@ import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.steps.StepHelper;
+import io.harness.steps.StepUtils;
 import io.harness.supplier.ThrowingSupplier;
 import lombok.extern.slf4j.Slf4j;
+
+import static io.harness.exception.WingsException.USER;
 
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
@@ -54,15 +60,16 @@ public class EcsCanaryDeleteStep extends TaskExecutableWithRollbackAndRbac<EcsCo
           .setStepCategory(StepCategory.STEP)
           .build();
   public static final String ECS_CANARY_DELETE_COMMAND_NAME = "EcsCanaryDelete";
+  public static final String ECS_CANARY_DELETE_STEP_MISSING = "Canary Deploy step is not configured.";
+  public static final String ECS_CANARY_DELETE_STEP_ALREADY_EXECUTED = "Canary Service has already been deleted. Skipping delete canary service in rollback";
+  public static final String ECS_CANARY_DELETE_STEP_SKIPPED = "Ecs Canary Deploy Step was not executed. Skipping Canary Delete.";
 
-  @Inject
-  private ExecutionSweepingOutputService executionSweepingOutputService;
-  @Inject private ServerlessStepCommonHelper serverlessStepCommonHelper;
+
+  @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
   @Inject private OutcomeService outcomeService;
   @Inject private EcsStepCommonHelper ecsStepCommonHelper;
   @Inject private AccountService accountService;
   @Inject private StepHelper stepHelper;
-
 
 
   @Override
@@ -81,12 +88,13 @@ public class EcsCanaryDeleteStep extends TaskExecutableWithRollbackAndRbac<EcsCo
 
       stepResponse = generateStepResponse(ambiance, ecsCanaryDeleteResponse, stepResponseBuilder);
     } catch (Exception e) {
-      log.error("Error while processing Serverless Aws Lambda rollback response: {}", ExceptionUtils.getMessage(e), e);
+      log.error("Error while processing ecs canary delete response: {}", ExceptionUtils.getMessage(e), e);
       throw e;
     } finally {
       String accountName = accountService.getAccount(AmbianceUtils.getAccountId(ambiance)).getName();
       stepHelper.sendRollbackTelemetryEvent(
               ambiance, stepResponse == null ? Status.FAILED : stepResponse.getStatus(), accountName);
+      //todo: is this required: check with sainath
     }
     return stepResponse;
   }
@@ -105,18 +113,20 @@ public class EcsCanaryDeleteStep extends TaskExecutableWithRollbackAndRbac<EcsCo
       EcsCanaryDeleteResult ecsCanaryDeleteResult =
               ecsCanaryDeleteResponse.getEcsCanaryDeleteResult();
 
-      EcsRollingRollbackOutcome ecsRollingRollbackOutcome =
-              EcsRollingRollbackOutcome.builder()
+      EcsCanaryDeleteOutcome ecsCanaryDeleteOutcome =
+              EcsCanaryDeleteOutcome.builder()
+                      .canaryDeleted(ecsCanaryDeleteResult.isCanaryDeleted())
+                      .canaryServiceName(ecsCanaryDeleteResult.getCanaryServiceName())
                       .build();
 
       executionSweepingOutputService.consume(ambiance,
-              OutcomeExpressionConstants.ECS_ROLLING_ROLLBACK_OUTCOME, ecsRollingRollbackOutcome,
+              OutcomeExpressionConstants.ECS_CANARY_DELETE_OUTCOME, ecsCanaryDeleteOutcome,
               StepOutcomeGroup.STEP.name());
 
       stepResponse = stepResponseBuilder.status(Status.SUCCEEDED)
               .stepOutcome(StepResponse.StepOutcome.builder()
                       .name(OutcomeExpressionConstants.OUTPUT)
-                      .outcome(ecsRollingRollbackOutcome)
+                      .outcome(ecsCanaryDeleteOutcome)
                       .build())
               .build();
     }
@@ -128,6 +138,40 @@ public class EcsCanaryDeleteStep extends TaskExecutableWithRollbackAndRbac<EcsCo
 
     final String accountId = AmbianceUtils.getAccountId(ambiance);
 
+    EcsCanaryDeleteStepParameters ecsCanaryDeleteStepParameters =
+            (EcsCanaryDeleteStepParameters) stepElementParameters.getSpec();
+
+    if (EmptyPredicate.isEmpty(ecsCanaryDeleteStepParameters.getEcsCanaryDeployFnq())) {
+      throw new InvalidRequestException(ECS_CANARY_DELETE_STEP_MISSING, USER);
+    }
+
+    OptionalSweepingOutput ecsCanaryDeleteDataOptionalOutput =
+            executionSweepingOutputService.resolveOptional(ambiance,
+                    RefObjectUtils.getSweepingOutputRefObject(ecsCanaryDeleteStepParameters.getEcsCanaryDeployFnq() + "."
+                            + OutcomeExpressionConstants.ECS_CANARY_DELETE_DATA_OUTCOME));
+
+    if (!ecsCanaryDeleteDataOptionalOutput.isFound()) {
+      return skipTaskRequestOrThrowException(ambiance);
+    }
+
+    if (StepUtils.isStepInRollbackSection(ambiance) &&
+            EmptyPredicate.isNotEmpty(ecsCanaryDeleteStepParameters.getEcsCanaryDeleteFnq())) {
+        OptionalSweepingOutput existingCanaryDeleteOutput = executionSweepingOutputService.resolveOptional(ambiance,
+                RefObjectUtils.getSweepingOutputRefObject(
+                        ecsCanaryDeleteStepParameters.getEcsCanaryDeleteFnq() + "."
+                                + OutcomeExpressionConstants.ECS_CANARY_DELETE_OUTCOME));
+        if (existingCanaryDeleteOutput.isFound()) {
+          return TaskRequest.newBuilder()
+                  .setSkipTaskRequest(SkipTaskRequest.newBuilder()
+                          .setMessage(ECS_CANARY_DELETE_STEP_ALREADY_EXECUTED)
+                          .build())
+                  .build();
+        }
+    }
+
+    EcsCanaryDeleteDataOutcome ecsCanaryDeleteDataOutcome = (EcsCanaryDeleteDataOutcome)
+    ecsCanaryDeleteDataOptionalOutput.getOutput();
+
     InfrastructureOutcome infrastructureOutcome = (InfrastructureOutcome) outcomeService.resolve(
             ambiance, RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.INFRASTRUCTURE_OUTCOME));
 
@@ -137,6 +181,9 @@ public class EcsCanaryDeleteStep extends TaskExecutableWithRollbackAndRbac<EcsCo
                     .ecsCommandType(EcsCommandTypeNG.ECS_CANARY_DELETE)
                     .commandName(ECS_CANARY_DELETE_COMMAND_NAME)
                     .commandUnitsProgress(CommandUnitsProgress.builder().build())
+                    .ecsInfraConfig(ecsStepCommonHelper.getEcsInfraConfig(infrastructureOutcome, ambiance))
+                    .ecsServiceDefinitionManifestContent(ecsCanaryDeleteDataOutcome.getCreateServiceRequestBuilderString())
+                    .ecsServiceNameSuffix(ecsCanaryDeleteDataOutcome.getEcsServiceNameSuffix())
                     .timeoutIntervalInMin(CDStepHelper.getTimeoutInMin(stepElementParameters))
                     .build();
 
@@ -144,6 +191,18 @@ public class EcsCanaryDeleteStep extends TaskExecutableWithRollbackAndRbac<EcsCo
             .queueEcsTask(stepElementParameters, ecsCanaryDeleteRequest, ambiance,
                     EcsExecutionPassThroughData.builder().infrastructure(infrastructureOutcome).build(), true)
             .getTaskRequest();
+  }
+
+  private TaskRequest skipTaskRequestOrThrowException(Ambiance ambiance) {
+    if (StepUtils.isStepInRollbackSection(ambiance)) {
+      return TaskRequest.newBuilder()
+              .setSkipTaskRequest(SkipTaskRequest.newBuilder()
+                      .setMessage(ECS_CANARY_DELETE_STEP_SKIPPED)
+                      .build())
+              .build();
+    }
+
+    throw new InvalidRequestException(ECS_CANARY_DELETE_STEP_MISSING, USER);
   }
 
   @Override

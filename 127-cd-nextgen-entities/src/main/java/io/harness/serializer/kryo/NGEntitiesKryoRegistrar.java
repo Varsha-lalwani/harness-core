@@ -219,7 +219,9 @@ public class NGEntitiesKryoRegistrar implements KryoRegistrar {
     kryo.register(OverlayConfiguration.class, 12591);
     kryo.register(JenkinsArtifactConfig.class, 130012);
 
-    kryo.register(EcsScalingPolicyDefinitionManifest.class,130013);
+    kryo.register(ConfigFileOutcome.class, 130013);
+
+
     kryo.register(EcsServiceDefinitionManifest.class,130014);
     kryo.register(EcsTaskDefinitionManifest.class,130015);
     kryo.register(EcsTaskDefinitionManifestOutcome.class,130016);
@@ -229,8 +231,9 @@ public class NGEntitiesKryoRegistrar implements KryoRegistrar {
     kryo.register(EcsInfrastructureOutcome.class, 130020);
     kryo.register(EcsServiceSpec.class, 130021);
     kryo.register(EcsScalableTargetDefinitionManifest.class,130022);
+    kryo.register(EcsScalingPolicyDefinitionManifest.class,130023);
 
 
-    kryo.register(ConfigFileOutcome.class, 130013);
+
   }
 }

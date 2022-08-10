@@ -14,7 +14,6 @@ public class EcsDeploymentInfoMapper {
         return EcsDeploymentInfoDTO.builder()
                 .serviceName(ecsDeploymentInfo.getServiceName())
                 .clusterArn(ecsDeploymentInfo.getClusterArn())
-                .launchType(ecsDeploymentInfo.getLaunchType())
                 .region(ecsDeploymentInfo.getRegion())
                 .infraStructureKey(ecsDeploymentInfo.getInfraStructureKey())
                 .build();
@@ -24,7 +23,6 @@ public class EcsDeploymentInfoMapper {
         return EcsDeploymentInfo.builder()
                 .serviceName(ecsDeploymentInfoDTO.getServiceName())
                 .clusterArn(ecsDeploymentInfoDTO.getClusterArn())
-                .launchType(ecsDeploymentInfoDTO.getLaunchType())
                 .region(ecsDeploymentInfoDTO.getRegion())
                 .infraStructureKey(ecsDeploymentInfoDTO.getInfraStructureKey())
                 .build();

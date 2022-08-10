@@ -34,5 +34,6 @@ public class EcsCanaryDeleteRequest implements EcsCommandRequest, NestedAnnotati
   EcsInfraConfig ecsInfraConfig;
 
   @Expression(ALLOW_SECRETS) String ecsServiceDefinitionManifestContent;
+  String ecsServiceNameSuffix;
 
 }

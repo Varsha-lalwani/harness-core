@@ -26,7 +26,7 @@ public class EcsCanaryDeployResponse implements EcsCommandResponse {
   @NonFinal UnitProgressData unitProgressData;
   CommandExecutionStatus commandExecutionStatus;
   String errorMessage;
-  EcsCanaryDeployResult ecsRollingDeployResult;
+  EcsCanaryDeployResult ecsCanaryDeployResult;
 
   @Override
   public void setDelegateMetaInfo(DelegateMetaInfo metaInfo) {

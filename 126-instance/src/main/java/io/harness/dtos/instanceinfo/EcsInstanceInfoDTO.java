@@ -24,6 +24,7 @@ public class EcsInstanceInfoDTO extends InstanceInfoDTO  {
     private String launchType;
     @NotNull private String serviceName;
     @NotNull private List<EcsContainer> containers; // list of containers
+    private String cluster;
     private long startedAt;
     private String startedBy;
     private Long version;

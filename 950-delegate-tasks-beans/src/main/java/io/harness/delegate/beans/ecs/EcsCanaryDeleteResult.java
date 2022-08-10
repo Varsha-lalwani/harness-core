@@ -9,4 +9,6 @@ import lombok.Data;
 @Builder
 @OwnedBy(HarnessTeam.CDP)
 public class EcsCanaryDeleteResult {
+    boolean canaryDeleted;
+    String canaryServiceName;
 }

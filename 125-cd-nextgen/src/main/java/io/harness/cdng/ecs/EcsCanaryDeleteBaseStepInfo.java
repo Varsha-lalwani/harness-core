@@ -1,5 +1,6 @@
 package io.harness.cdng.ecs;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
@@ -27,6 +28,9 @@ public class EcsCanaryDeleteBaseStepInfo {
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
+
+  @JsonIgnore String ecsCanaryDeployFnq;
+  @JsonIgnore String ecsCanaryDeleteFnq;
 
 }
 

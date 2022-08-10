@@ -174,7 +174,6 @@ public class EcsRollingRollbackStep extends TaskExecutableWithRollbackAndRbac<Ec
 
     final String accountId = AmbianceUtils.getAccountId(ambiance);
 
-
     EcsRollingRollbackRequest ecsRollingRollbackRequest =
             EcsRollingRollbackRequest.builder()
                     .accountId(accountId)

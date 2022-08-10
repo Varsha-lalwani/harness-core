@@ -4,12 +4,17 @@ import com.google.inject.Inject;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.CDStepHelper;
+import io.harness.cdng.ecs.beans.EcsCanaryDeleteDataOutcome;
+import io.harness.cdng.ecs.beans.EcsCanaryDeployOutcome;
 import io.harness.cdng.ecs.beans.EcsExecutionPassThroughData;
 import io.harness.cdng.ecs.beans.EcsGitFetchFailurePassThroughData;
+import io.harness.cdng.ecs.beans.EcsPrepareRollbackDataPassThroughData;
 import io.harness.cdng.ecs.beans.EcsStepExceptionPassThroughData;
 import io.harness.cdng.ecs.beans.EcsStepExecutorParams;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
+import io.harness.cdng.instance.info.InstanceInfoService;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
+import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.delegate.beans.logstreaming.UnitProgressDataMapper;
 import io.harness.delegate.exception.EcsNGException;
@@ -27,6 +32,8 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
+import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
+import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
@@ -35,9 +42,11 @@ import io.harness.supplier.ThrowingSupplier;
 import io.harness.tasks.ResponseData;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
-public class EcsCanaryDeployStep extends EcsRollingDeployStep {
+public class EcsCanaryDeployStep extends TaskChainExecutableWithRollbackAndRbac implements EcsStepExecutor {
   public static final StepType STEP_TYPE = StepType.newBuilder()
           .setType(ExecutionNodeType.ECS_CANARY_DEPLOY.getYamlType())
           .setStepCategory(StepCategory.STEP)
@@ -48,9 +57,11 @@ public class EcsCanaryDeployStep extends EcsRollingDeployStep {
 
   private static final String canarySuffix = "Canary";
 
-  @Inject
-  private EcsStepCommonHelper ecsStepCommonHelper;
+  @Inject private EcsStepCommonHelper ecsStepCommonHelper;
   @Inject private EcsStepHelperImpl ecsStepHelper;
+  @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
+  @Inject private InstanceInfoService instanceInfoService;
+
 
   @Override
   public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
@@ -85,8 +96,26 @@ public class EcsCanaryDeployStep extends EcsRollingDeployStep {
             .ecsServiceNameSuffix(canarySuffix)
             .build();
 
-    return ecsStepCommonHelper.queueEcsTask(
+    TaskChainResponse response = ecsStepCommonHelper.queueEcsTask(
             stepElementParameters, ecsCanaryDeployRequest, ambiance, executionPassThroughData, true);
+
+    EcsCanaryDeleteDataOutcome ecsCanaryDeleteDataOutcome = EcsCanaryDeleteDataOutcome.builder()
+            .ecsServiceNameSuffix(canarySuffix)
+            .createServiceRequestBuilderString(ecsStepExecutorParams.getEcsServiceDefinitionManifestContent())
+            .build();
+
+    executionSweepingOutputService.consume(
+            ambiance, OutcomeExpressionConstants.ECS_CANARY_DELETE_DATA_OUTCOME, ecsCanaryDeleteDataOutcome,
+            StepOutcomeGroup.STEP.name());
+
+    return response;
+
+  }
+
+  @Override
+  public TaskChainResponse executeEcsPrepareRollbackTask(Ambiance ambiance, StepElementParameters stepParameters, EcsPrepareRollbackDataPassThroughData ecsStepPassThroughData, UnitProgressData unitProgressData) {
+    //nothing to prepare
+    return null;
   }
 
   @Override
@@ -107,11 +136,6 @@ public class EcsCanaryDeployStep extends EcsRollingDeployStep {
     try {
       ecsCanaryDeployResponse = (EcsCanaryDeployResponse) responseDataSupplier.get();
     } catch (Exception e) {
-      EcsNGException ecsNGException = ExceptionUtils.cause(EcsNGException.class, e);
-      if (ecsNGException == null) {
-        log.error("Error while processing ecs task response: {}", e.getMessage(), e);
-        return ecsStepCommonHelper.handleTaskException(ambiance, ecsExecutionPassThroughData, e);
-      }
       log.error("Error while processing ecs task response: {}", e.getMessage(), e);
       return ecsStepCommonHelper.handleTaskException(ambiance, ecsExecutionPassThroughData, e);
     }
@@ -122,14 +146,36 @@ public class EcsCanaryDeployStep extends EcsRollingDeployStep {
               .build();
     }
 
-//    List<ServerInstanceInfo> functionInstanceInfos = serverlessStepCommonHelper.getFunctionInstanceInfo(
-//            ecsCanaryDeployResponse, serverlessAwsLambdaStepHelper, infrastructureOutcome.getInfrastructureKey());
-//    StepResponse.StepOutcome stepOutcome =
-//            instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance, functionInstanceInfos);
-    // todo
-    StepResponse.StepOutcome stepOutcome = StepResponse.StepOutcome.builder()
-            .name(OutcomeExpressionConstants.DEPLOYMENT_INFO_OUTCOME)
+    EcsCanaryDeployOutcome ecsCanaryDeployOutcome = EcsCanaryDeployOutcome.builder()
+            .canaryServiceName(ecsCanaryDeployResponse.getEcsCanaryDeployResult().getCanaryServiceName())
             .build();
-    return stepResponseBuilder.status(Status.SUCCEEDED).stepOutcome(stepOutcome).build();
+
+    List<ServerInstanceInfo> serverInstanceInfos = ecsStepCommonHelper.getServerInstanceInfos(
+            ecsCanaryDeployResponse, infrastructureOutcome.getInfrastructureKey());
+    StepResponse.StepOutcome stepOutcome =
+            instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance, serverInstanceInfos);
+
+    executionSweepingOutputService.consume(ambiance,
+            OutcomeExpressionConstants.ECS_CANARY_DEPLOY_OUTCOME, ecsCanaryDeployOutcome,
+            StepOutcomeGroup.STEP.name());
+
+    return stepResponseBuilder
+            .status(Status.SUCCEEDED)
+            .stepOutcome(stepOutcome)
+            .stepOutcome(StepResponse.StepOutcome.builder()
+                    .name(OutcomeExpressionConstants.OUTPUT)
+                    .outcome(ecsCanaryDeployOutcome)
+                    .build())
+            .build();
+  }
+
+  @Override
+  public TaskChainResponse startChainLinkAfterRbac(Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage) {
+    return ecsStepCommonHelper.startChainLink(ambiance, stepParameters, ecsStepHelper);
+  }
+
+  @Override
+  public Class<StepElementParameters> getStepParametersClass() {
+    return StepElementParameters.class;
   }
 }

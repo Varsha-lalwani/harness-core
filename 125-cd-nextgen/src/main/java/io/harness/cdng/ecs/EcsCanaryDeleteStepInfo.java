@@ -44,8 +44,8 @@ public class EcsCanaryDeleteStepInfo extends EcsCanaryDeleteBaseStepInfo impleme
 
   @Builder(builderMethodName = "infoBuilder")
   public EcsCanaryDeleteStepInfo(
-          ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    super(delegateSelectors);
+          ParameterField<List<TaskSelectorYaml>> delegateSelectors, String ecsCanaryDeployFnq, String ecsCanaryDeleteFnq) {
+    super(delegateSelectors, ecsCanaryDeployFnq, ecsCanaryDeleteFnq);
   }
 
   @Override
