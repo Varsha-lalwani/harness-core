@@ -571,7 +571,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
         serviceInfoConfig, serviceOverrideConfig, environmentConfig);
 
     assertThat(finalManifests).hasSize(3);
-    assertThat(finalManifests).containsExactly(valuesManifest1, valuesManifest2, valuesManifest3);
+    assertThat(finalManifests).containsExactly(valuesManifest1, valuesManifest3, valuesManifest2);
   }
 
   @Test
@@ -733,7 +733,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
     final List<ManifestConfigWrapper> finalManifests = ServiceDefinitionPlanCreatorHelper.prepareFinalManifests(
         serviceInfoConfig, serviceOverrideConfig, environmentConfig);
     assertThat(finalManifests).hasSize(2);
-    assertThat(finalManifests).containsExactly(valuesManifest1, valuesManifest2);
+    assertThat(finalManifests).containsExactly(valuesManifest2, valuesManifest1);
   }
 
   @Test

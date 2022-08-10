@@ -280,10 +280,8 @@ public class ServiceDefinitionPlanCreatorHelper {
 
     checkCrossLocationDuplicateIdentifiers(svcOverrideManifests, envGlobalManifests, serviceV2Config.getIdentifier(),
         ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(), SERVICE_OVERRIDES);
-
-    finalManifests.addAll(svcOverrideManifests);
     finalManifests.addAll(envGlobalManifests);
-
+    finalManifests.addAll(svcOverrideManifests);
     return finalManifests;
   }
 
