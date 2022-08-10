@@ -26,7 +26,10 @@ import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.delegate.task.winrm.WinRmSessionConfig.WinRmSessionConfigBuilder;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
+import io.harness.shell.AbstractScriptExecutor;
 import io.harness.shell.ExecuteCommandResponse;
+import io.harness.shell.ScriptType;
+import io.harness.shell.ShellExecutorConfig;
 
 import software.wings.core.winrm.executors.WinRmExecutor;
 
@@ -43,6 +46,7 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
 
   @Inject private WinRmExecutorFactoryNG winRmExecutorFactoryNG;
   @Inject private WinRmConfigAuthEnhancer winRmConfigAuthEnhancer;
+  @Inject private ShellExecutorFactoryNG shellExecutorFactory;
 
   public WinRmShellScriptTaskNG(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {
@@ -60,14 +64,21 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
     CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
 
     try {
-      ShellScriptTaskResponseNG initStatus =
-          executeInit(shellScriptTaskParameters, commandUnitsProgress, this.getLogStreamingTaskClient());
+      if (shellScriptTaskParameters.isExecuteOnDelegate()) {
+        ShellScriptTaskResponseNG initStatus = executeInitOnDelegate(shellScriptTaskParameters, commandUnitsProgress);
+        if (CommandExecutionStatus.FAILURE.equals(initStatus.getStatus())) {
+          return initStatus;
+        }
+        return executeCommandOnDelegate(shellScriptTaskParameters, commandUnitsProgress);
+      } else {
+        ShellScriptTaskResponseNG initStatus =
+            executeInit(shellScriptTaskParameters, commandUnitsProgress, this.getLogStreamingTaskClient());
 
-      if (CommandExecutionStatus.FAILURE.equals(initStatus.getStatus())) {
-        return initStatus;
+        if (CommandExecutionStatus.FAILURE.equals(initStatus.getStatus())) {
+          return initStatus;
+        }
+        return executeCommand(shellScriptTaskParameters, commandUnitsProgress, this.getLogStreamingTaskClient());
       }
-
-      return executeCommand(shellScriptTaskParameters, commandUnitsProgress, this.getLogStreamingTaskClient());
     } catch (Exception e) {
       log.error("PowerShell Script Failed to execute.", e);
       return ShellScriptTaskResponseNG.builder()
@@ -76,6 +87,54 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
           .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
           .build();
     }
+  }
+
+  private ShellScriptTaskResponseNG executeInitOnDelegate(
+      WinRmShellScriptTaskParametersNG taskParameters, CommandUnitsProgress commandUnitsProgress) {
+    final ShellExecutorConfig config = ShellExecutorConfig.builder()
+                                           .accountId(taskParameters.getAccountId())
+                                           .executionId(taskParameters.getExecutionId())
+                                           .commandUnitName(INIT_UNIT)
+                                           .workingDirectory("/tmp")
+                                           .environment(taskParameters.getEnvironmentVariables())
+                                           .scriptType(ScriptType.POWERSHELL)
+                                           .build();
+
+    AbstractScriptExecutor executor =
+        shellExecutorFactory.getExecutor(config, getLogStreamingTaskClient(), commandUnitsProgress);
+
+    CommandExecutionStatus commandExecutionStatus =
+        executor.executeCommandString(getInitCommand(taskParameters.getWorkingDirectory()), true);
+    return ShellScriptTaskResponseNG.builder()
+        .status(commandExecutionStatus)
+        .errorMessage(getErrorMessage(commandExecutionStatus))
+        .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
+        .build();
+  }
+
+  private ShellScriptTaskResponseNG executeCommandOnDelegate(
+      WinRmShellScriptTaskParametersNG taskParameters, CommandUnitsProgress commandUnitsProgress) {
+    final ShellExecutorConfig config = ShellExecutorConfig.builder()
+                                           .accountId(taskParameters.getAccountId())
+                                           .executionId(taskParameters.getExecutionId())
+                                           .commandUnitName(COMMAND_UNIT)
+                                           .workingDirectory(taskParameters.getWorkingDirectory())
+                                           .environment(taskParameters.getEnvironmentVariables())
+                                           .scriptType(ScriptType.POWERSHELL)
+                                           .build();
+
+    AbstractScriptExecutor executor =
+        shellExecutorFactory.getExecutor(config, getLogStreamingTaskClient(), commandUnitsProgress);
+
+    ExecuteCommandResponse executeCommandResponse =
+        executor.executeCommandString(taskParameters.getScript(), taskParameters.getOutputVars());
+
+    return ShellScriptTaskResponseNG.builder()
+        .executeCommandResponse(executeCommandResponse)
+        .status(executeCommandResponse.getStatus())
+        .errorMessage(getErrorMessage(executeCommandResponse.getStatus()))
+        .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
+        .build();
   }
 
   private ShellScriptTaskResponseNG executeInit(WinRmShellScriptTaskParametersNG taskParameters,
