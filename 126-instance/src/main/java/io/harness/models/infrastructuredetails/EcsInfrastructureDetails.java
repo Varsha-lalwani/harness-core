@@ -10,5 +10,5 @@ import lombok.Value;
 @Builder
 public class EcsInfrastructureDetails extends InfrastructureDetails  {
     String region;
-    String clusterArn;
+    String cluster;
 }

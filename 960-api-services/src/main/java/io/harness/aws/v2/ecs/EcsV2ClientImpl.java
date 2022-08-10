@@ -154,6 +154,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             return ecsWaiter.waitUntilServicesInactive(describeServicesRequest);
         }
         catch(Exception exception) {
+            super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
         return null;
@@ -229,7 +230,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
-        return null;
+        return DescribeScalableTargetsResponse.builder().build();
     }
 
     @Override
@@ -262,7 +263,7 @@ public class EcsV2ClientImpl extends AwsClientHelper implements EcsV2Client {
             super.logError(client(), Thread.currentThread().getStackTrace()[1].getMethodName(), exception.getMessage());
             super.handleException(exception);
         }
-        return null;
+        return DescribeServicesResponse.builder().build();
     }
 
     @Override

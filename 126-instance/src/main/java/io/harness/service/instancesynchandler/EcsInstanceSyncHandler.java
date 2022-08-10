@@ -2,27 +2,21 @@ package io.harness.service.instancesynchandler;
 
 import io.harness.cdng.infra.beans.EcsInfrastructureOutcome;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
-import io.harness.cdng.infra.beans.ServerlessAwsLambdaInfrastructureOutcome;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.info.EcsServerInstanceInfo;
-import io.harness.delegate.beans.instancesync.info.ServerlessAwsLambdaServerInstanceInfo;
 import io.harness.dtos.deploymentinfo.DeploymentInfoDTO;
 import io.harness.dtos.deploymentinfo.EcsDeploymentInfoDTO;
-import io.harness.dtos.deploymentinfo.ServerlessAwsLambdaDeploymentInfoDTO;
 import io.harness.dtos.instanceinfo.EcsInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.InstanceInfoDTO;
-import io.harness.dtos.instanceinfo.ServerlessAwsLambdaInstanceInfoDTO;
 import io.harness.entities.InstanceType;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.models.infrastructuredetails.EcsInfrastructureDetails;
 import io.harness.models.infrastructuredetails.InfrastructureDetails;
-import io.harness.models.infrastructuredetails.ServerlessAwsLambdaInfrastructureDetails;
 import io.harness.ng.core.infrastructure.InfrastructureKind;
 import io.harness.perpetualtask.PerpetualTaskType;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
@@ -52,7 +46,7 @@ public class EcsInstanceSyncHandler extends AbstractInstanceSyncHandler{
                 (EcsInstanceInfoDTO) instanceInfoDTO;
         return EcsInfrastructureDetails.builder()
                 .region(ecsInstanceInfoDTO.getRegion())
-                .clusterArn(ecsInstanceInfoDTO.getClusterArn())
+                .cluster(getClusterNameFromClusterArn(ecsInstanceInfoDTO.getClusterArn()))
                 .build();
     }
 
@@ -103,5 +97,18 @@ public class EcsInstanceSyncHandler extends AbstractInstanceSyncHandler{
                 .version(ecsServerInstanceInfo.getVersion())
                 .infraStructureKey(ecsServerInstanceInfo.getInfraStructureKey())
                 .build();
+    }
+
+    private static String getClusterNameFromClusterArn(String clusterArn) {
+        int start=clusterArn.lastIndexOf("/");
+        if (start<0) {
+            return clusterArn;
+        }
+        try{
+            return clusterArn.substring(start+1);
+        }
+        catch(Exception e) {
+            return clusterArn;
+        }
     }
 }
