@@ -37,6 +37,7 @@ import io.harness.beans.quantity.unit.StorageQuantityUnit;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.CIStepInfoType;
+import io.harness.beans.steps.stepinfo.BackgroundStepInfo;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
@@ -263,6 +264,10 @@ public class K8InitializeStepUtils {
         return createRunStepContainerDefinition((RunStepInfo) ciStepInfo, integrationStage, ciExecutionArgs, portFinder,
             stepIndex, stepElement.getIdentifier(), stepElement.getName(), accountId, os, extraMemoryPerStep,
             extraCPUPerStep);
+      case BACKGROUND:
+        return createBackgroundStepContainerDefinition((BackgroundStepInfo) ciStepInfo, integrationStage,
+            ciExecutionArgs, portFinder, stepIndex, stepElement.getIdentifier(), stepElement.getName(), accountId, os,
+            extraMemoryPerStep, extraCPUPerStep);
       case DOCKER:
       case ECR:
       case ACR:
@@ -414,6 +419,55 @@ public class K8InitializeStepUtils {
         .privileged(runStepInfo.getPrivileged().getValue())
         .runAsUser(runAsUser)
         .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(runStepInfo.getImagePullPolicy()))
+        .build();
+  }
+
+  private ContainerDefinitionInfo createBackgroundStepContainerDefinition(BackgroundStepInfo backgroundStepInfo,
+      StageElementConfig integrationStage, CIExecutionArgs ciExecutionArgs, PortFinder portFinder, int stepIndex,
+      String identifier, String name, String accountId, OSType os, Integer extraMemoryPerStep,
+      Integer extraCPUPerStep) {
+    if (backgroundStepInfo.getImage() == null) {
+      throw new CIStageExecutionException("image can't be empty in k8s infrastructure");
+    }
+
+    if (backgroundStepInfo.getConnectorRef() == null) {
+      throw new CIStageExecutionException("connector ref can't be empty in k8s infrastructure");
+    }
+
+    Integer port = portFinder.getNextPort();
+
+    String containerName = format("%s%d", STEP_PREFIX, stepIndex);
+    Map<String, String> stepEnvVars = new HashMap<>();
+    stepEnvVars.putAll(getEnvVariables(integrationStage));
+    stepEnvVars.putAll(BuildEnvironmentUtils.getBuildEnvironmentVariables(ciExecutionArgs));
+    Map<String, String> envVars =
+        resolveMapParameter("envVariables", "Background", identifier, backgroundStepInfo.getEnvVariables(), false);
+    if (!isEmpty(envVars)) {
+      stepEnvVars.putAll(envVars);
+    }
+    Integer runAsUser = resolveIntegerParameter(backgroundStepInfo.getRunAsUser(), null);
+
+    return ContainerDefinitionInfo.builder()
+        .name(containerName)
+        .commands(StepContainerUtils.getCommand(os))
+        .args(StepContainerUtils.getArguments(port))
+        .envVars(stepEnvVars)
+        .stepIdentifier(identifier)
+        .secretVariables(getSecretVariables(integrationStage))
+        .containerImageDetails(ContainerImageDetails.builder()
+                                   .imageDetails(IntegrationStageUtils.getImageInfo(resolveStringParameter(
+                                       "Image", "Background", identifier, backgroundStepInfo.getImage(), true)))
+                                   .connectorIdentifier(resolveStringParameter("connectorRef", "Background", identifier,
+                                       backgroundStepInfo.getConnectorRef(), true))
+                                   .build())
+        .containerResourceParams(getStepContainerResource(backgroundStepInfo.getResources(), "Background", identifier,
+            accountId, extraMemoryPerStep, extraCPUPerStep))
+        .ports(Arrays.asList(port))
+        .containerType(CIContainerType.RUN)
+        .stepName(name)
+        .privileged(backgroundStepInfo.getPrivileged().getValue())
+        .runAsUser(runAsUser)
+        .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(backgroundStepInfo.getImagePullPolicy()))
         .build();
   }
 
@@ -868,6 +922,8 @@ public class K8InitializeStepUtils {
     switch (ciStepInfo.getNonYamlInfo().getStepInfoType()) {
       case RUN:
         return ((RunStepInfo) ciStepInfo).getResources();
+      case BACKGROUND:
+        return ((BackgroundStepInfo) ciStepInfo).getResources();
       case PLUGIN:
         return ((PluginStepInfo) ciStepInfo).getResources();
       case RUN_TESTS:

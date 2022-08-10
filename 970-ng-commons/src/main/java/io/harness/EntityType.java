@@ -275,7 +275,10 @@ public enum EntityType {
       ModuleType.CD, EntityTypeConstants.JENKINS_BUILD, IdentifierRef.class, EntityYamlRootNames.JENKINS_BUILD),
   @JsonProperty(EntityTypeConstants.BUILD_AND_PUSH_ACR)
   BUILD_AND_PUSH_ACR(ModuleType.CI, EntityTypeConstants.BUILD_AND_PUSH_ACR, IdentifierRef.class,
-      EntityYamlRootNames.BUILD_AND_PUSH_ACR);
+      EntityYamlRootNames.BUILD_AND_PUSH_ACR),
+  @JsonProperty(EntityTypeConstants.BACKGROUND_STEP)
+  BACKGROUND_STEP(ModuleType.CI, EntityTypeConstants.BACKGROUND_STEP, IdentifierRef.class,
+      EntityYamlRootNames.BACKGROUND_STEP);
 
   private final ModuleType moduleType;
   String yamlName;

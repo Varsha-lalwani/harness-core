@@ -34,6 +34,7 @@ import io.harness.ci.plan.creator.step.CIPMSStepFilterJsonCreator;
 import io.harness.ci.plan.creator.step.CIPMSStepPlanCreator;
 import io.harness.ci.plan.creator.step.CIStepFilterJsonCreatorV2;
 import io.harness.ci.plancreator.ArtifactoryUploadStepPlanCreator;
+import io.harness.ci.plancreator.BackgroundStepPlanCreator;
 import io.harness.ci.plancreator.BuildAndPushACRStepPlanCreator;
 import io.harness.ci.plancreator.BuildAndPushECRStepPlanCreator;
 import io.harness.ci.plancreator.BuildAndPushGCRStepPlanCreator;
@@ -81,6 +82,7 @@ public class CIPipelineServiceInfoProvider implements PipelineServiceInfoProvide
     planCreators.add(new IntegrationStagePMSPlanCreator());
     planCreators.add(new CIPMSStepPlanCreator());
     planCreators.add(new RunStepPlanCreator());
+    planCreators.add(new BackgroundStepPlanCreator());
     planCreators.add(new RunTestStepPlanCreator());
     planCreators.add(new S3UploadStepPlanCreator());
     planCreators.add(new SaveCacheGCSStepPlanCreator());
@@ -149,6 +151,12 @@ public class CIPipelineServiceInfoProvider implements PipelineServiceInfoProvide
                                .setType(StepSpecTypeConstants.RUN)
                                .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("Build").build())
                                .build();
+
+    StepInfo backgroundStepInfo = StepInfo.newBuilder()
+                                      .setName("Background")
+                                      .setType(StepSpecTypeConstants.BACKGROUND)
+                                      .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("Build").build())
+                                      .build();
 
     StepInfo runTestsStepInfo = StepInfo.newBuilder()
                                     .setName("Run Tests")
@@ -244,6 +252,7 @@ public class CIPipelineServiceInfoProvider implements PipelineServiceInfoProvide
     List<StepInfo> stepInfos = new ArrayList<>();
 
     stepInfos.add(runStepInfo);
+    stepInfos.add(backgroundStepInfo);
     stepInfos.add(uploadToGCS);
     stepInfos.add(ecrPushBuilds);
     stepInfos.add(uploadToS3);

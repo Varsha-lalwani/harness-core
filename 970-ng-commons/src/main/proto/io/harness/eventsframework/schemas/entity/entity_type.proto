@@ -102,4 +102,5 @@ enum EntityTypeProtoEnum {
   TEMPLATE_STAGE = 89;
   EMAIL_STEP = 90;
   BUILD_AND_PUSH_ACR = 91;
+  BACKGROUND_STEP = 92;
 }
