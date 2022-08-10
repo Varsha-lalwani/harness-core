@@ -63,10 +63,10 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
     GlobalContext globalContext = outboxEvent.getGlobalContext();
     ServiceOverrideUpsertEvent serviceOverrideUpsertEvent =
         objectMapper.readValue(outboxEvent.getEventData(), ServiceOverrideUpsertEvent.class);
-    AuditEntry auditEntry =
+    final AuditEntry auditEntry =
         AuditEntry.builder()
             .action(Action.UPSERT)
-            .module(ModuleType.CORE)
+            .module(ModuleType.CD)
             .insertId(outboxEvent.getId())
             .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
             .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
@@ -89,10 +89,10 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
     GlobalContext globalContext = outboxEvent.getGlobalContext();
     ServiceOverrideDeleteEvent serviceOverrideDeleteEvent =
         objectMapper.readValue(outboxEvent.getEventData(), ServiceOverrideDeleteEvent.class);
-    AuditEntry auditEntry =
+    final AuditEntry auditEntry =
         AuditEntry.builder()
             .action(Action.DELETE)
-            .module(ModuleType.CORE)
+            .module(ModuleType.CD)
             .insertId(outboxEvent.getId())
             .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
             .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))

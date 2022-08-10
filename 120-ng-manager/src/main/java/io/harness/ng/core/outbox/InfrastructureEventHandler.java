@@ -65,15 +65,15 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     InfrastructureCreateEvent infrastructureCreateEvent =
         objectMapper.readValue(outboxEvent.getEventData(), InfrastructureCreateEvent.class);
     final InfrastructureEntity infrastructure = infrastructureCreateEvent.getInfrastructureEntity();
-    AuditEntry auditEntry = AuditEntry.builder()
-                                .action(Action.CREATE)
-                                .module(ModuleType.CD)
-                                .insertId(outboxEvent.getId())
-                                .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
-                                .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
-                                .timestamp(outboxEvent.getCreatedAt())
-                                .newYaml(infrastructure.getYaml())
-                                .build();
+    final AuditEntry auditEntry = AuditEntry.builder()
+                                      .action(Action.CREATE)
+                                      .module(ModuleType.CD)
+                                      .insertId(outboxEvent.getId())
+                                      .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                      .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+                                      .timestamp(outboxEvent.getCreatedAt())
+                                      .newYaml(infrastructure.getYaml())
+                                      .build();
 
     Principal principal = null;
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
@@ -89,15 +89,15 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     InfrastructureUpsertEvent infrastructureUpsertEvent =
         objectMapper.readValue(outboxEvent.getEventData(), InfrastructureUpsertEvent.class);
     final InfrastructureEntity infrastructure = infrastructureUpsertEvent.getInfrastructureEntity();
-    AuditEntry auditEntry = AuditEntry.builder()
-                                .action(Action.UPSERT)
-                                .module(ModuleType.CD)
-                                .insertId(outboxEvent.getId())
-                                .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
-                                .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
-                                .timestamp(outboxEvent.getCreatedAt())
-                                .newYaml(infrastructure.getYaml())
-                                .build();
+    final AuditEntry auditEntry = AuditEntry.builder()
+                                      .action(Action.UPSERT)
+                                      .module(ModuleType.CD)
+                                      .insertId(outboxEvent.getId())
+                                      .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                      .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+                                      .timestamp(outboxEvent.getCreatedAt())
+                                      .newYaml(infrastructure.getYaml())
+                                      .build();
 
     Principal principal = null;
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
@@ -113,16 +113,16 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
         objectMapper.readValue(outboxEvent.getEventData(), InfrastructureUpdateEvent.class);
     final InfrastructureEntity newInfrastructure = infrastructureUpdateEvent.getNewInfrastructureEntity();
     final InfrastructureEntity oldInfrastructure = infrastructureUpdateEvent.getOldInfrastructureEntity();
-    AuditEntry auditEntry = AuditEntry.builder()
-                                .action(Action.UPDATE)
-                                .module(ModuleType.CD)
-                                .insertId(outboxEvent.getId())
-                                .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
-                                .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
-                                .timestamp(outboxEvent.getCreatedAt())
-                                .newYaml(newInfrastructure.getYaml())
-                                .oldYaml(oldInfrastructure.getYaml())
-                                .build();
+    final AuditEntry auditEntry = AuditEntry.builder()
+                                      .action(Action.UPDATE)
+                                      .module(ModuleType.CD)
+                                      .insertId(outboxEvent.getId())
+                                      .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                      .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+                                      .timestamp(outboxEvent.getCreatedAt())
+                                      .newYaml(newInfrastructure.getYaml())
+                                      .oldYaml(oldInfrastructure.getYaml())
+                                      .build();
 
     Principal principal = null;
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
@@ -137,15 +137,15 @@ public class InfrastructureEventHandler implements OutboxEventHandler {
     InfrastructureDeleteEvent infrastructureDeleteEvent =
         objectMapper.readValue(outboxEvent.getEventData(), InfrastructureDeleteEvent.class);
     final InfrastructureEntity infrastructure = infrastructureDeleteEvent.getInfrastructureEntity();
-    AuditEntry auditEntry = AuditEntry.builder()
-                                .action(Action.DELETE)
-                                .module(ModuleType.CD)
-                                .insertId(outboxEvent.getId())
-                                .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
-                                .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
-                                .timestamp(outboxEvent.getCreatedAt())
-                                .oldYaml(infrastructure.getYaml())
-                                .build();
+    final AuditEntry auditEntry = AuditEntry.builder()
+                                      .action(Action.DELETE)
+                                      .module(ModuleType.CD)
+                                      .insertId(outboxEvent.getId())
+                                      .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                      .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+                                      .timestamp(outboxEvent.getCreatedAt())
+                                      .oldYaml(infrastructure.getYaml())
+                                      .build();
 
     Principal principal = null;
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {

@@ -113,7 +113,6 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
                              .serviceOverride(requestServiceOverride)
                              .build());
 
-      // todo: events for outbox service
       return tempResult;
     }));
   }
