@@ -11,11 +11,13 @@ import static io.harness.NGConstants.HARNESS_SECRET_MANAGER_IDENTIFIER;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.helpers.GlobalSecretManagerUtils.GLOBAL_ACCOUNT_ID;
 import static io.harness.remote.client.RestClientUtils.getResponse;
+import static io.harness.security.encryption.AccessType.APP_ROLE;
 import static io.harness.security.encryption.EncryptionType.AWS_SECRETS_MANAGER;
 import static io.harness.security.encryption.EncryptionType.AZURE_VAULT;
 import static io.harness.security.encryption.EncryptionType.VAULT;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.connector.services.NGConnectorSecretManagerService;
@@ -32,7 +34,9 @@ import io.harness.secretmanagerclient.dto.SecretManagerMetadataDTO;
 import io.harness.secretmanagerclient.dto.SecretManagerMetadataRequestDTO;
 import io.harness.secretmanagerclient.remote.SecretManagerClient;
 import io.harness.security.encryption.EncryptionConfig;
+import io.harness.utils.featureflaghelper.NGFeatureFlagHelperService;
 
+import software.wings.beans.BaseVaultConfig;
 import software.wings.beans.VaultConfig;
 
 import com.google.inject.Inject;
@@ -64,6 +68,7 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
   ;
   private final RetryRegistry registry = RetryRegistry.of(config);
   private final Retry retry = registry.retry("cgManagerSecretService", config);
+  private final NGFeatureFlagHelperService ngFeatureFlagHelperService;
 
   @Override
   public SecretManagerConfigDTO createSecretManager(@NotNull SecretManagerConfigDTO secretManagerConfig) {
@@ -100,6 +105,13 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
                                      .validateSecretManagerConfiguration(accountIdentifier, encryptionConfig);
             } else {
               VaultConfig vaultConfig = (VaultConfig) encryptionConfig;
+              if (APP_ROLE.equals(vaultConfig.getAccessType())
+                  && (ngFeatureFlagHelperService.isEnabled(
+                      accountIdentifier, FeatureName.DO_NOT_RENEW_APPROLE_TOKEN))) {
+                BaseVaultConfig baseVaultConfig = (BaseVaultConfig) encryptionConfig;
+                baseVaultConfig.setDoNotRenewAppRoleToken(true);
+                vaultConfig = (VaultConfig) baseVaultConfig;
+              }
               if (!vaultConfig.isReadOnly()) {
                 validationResult = vaultEncryptorsRegistry.getVaultEncryptor(VAULT).validateSecretManagerConfiguration(
                     accountIdentifier, vaultConfig);
