@@ -14,25 +14,25 @@ import static io.harness.pms.yaml.YAMLFieldNameConstants.SPEC;
 import static io.harness.pms.yaml.YAMLFieldNameConstants.TEMPLATE;
 import static io.harness.pms.yaml.YAMLFieldNameConstants.VARIABLES;
 
+import static java.util.Objects.isNull;
+
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
-import io.harness.accesscontrol.acl.api.Resource;
-import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.exception.ngexception.NGTemplateException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.ng.core.template.TemplateEntityType;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.security.annotations.NextGenManagerAuth;
-import io.harness.template.beans.PermissionTypes;
 import io.harness.template.beans.TemplateResponseDTO;
 import io.harness.template.remote.TemplateResourceClient;
 import io.harness.utils.YamlPipelineUtils;
@@ -125,13 +125,14 @@ public class DeploymentPackage {
           NGCommonEntityConstants.VERSION_LABEL_KEY) String versionLabel,
       @Parameter(description = "Specifies whether Template is deleted or not") @QueryParam(
           NGCommonEntityConstants.DELETED_KEY) @DefaultValue("false") boolean deleted) {
-    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
-        Resource.of(TEMPLATE, templateIdentifier), PermissionTypes.TEMPLATE_VIEW_PERMISSION);
     log.info(
         String.format("Retrieving Template with identifier %s and versionLabel %s in project %s, org %s, account %s",
             templateIdentifier, versionLabel, projectId, orgId, accountId));
     TemplateResponseDTO response = NGRestUtils.getResponse(
         templateResourceClient.get(templateIdentifier, accountId, orgId, projectId, versionLabel, deleted));
+    if (!response.getTemplateEntityType().equals(TemplateEntityType.DEPLOYMENT_PACKAGE_TEMPLATE)) {
+      throw new InvalidRequestException("Template identifier provided is not a deploymentPackage template");
+    }
     return ResponseDTO.newResponse(getVariables(response.getYaml()));
   }
 
@@ -157,71 +158,62 @@ public class DeploymentPackage {
           NGCommonEntityConstants.VERSION_LABEL_KEY) String versionLabel,
       @Parameter(description = "Specifies whether Template is deleted or not") @QueryParam(
           NGCommonEntityConstants.DELETED_KEY) @DefaultValue("false") boolean deleted) {
-    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
-        Resource.of(TEMPLATE, templateIdentifier), PermissionTypes.TEMPLATE_VIEW_PERMISSION);
     log.info(
         String.format("Retrieving Template with identifier %s and versionLabel %s in project %s, org %s, account %s",
             templateIdentifier, versionLabel, projectId, orgId, accountId));
     TemplateResponseDTO response = NGRestUtils.getResponse(
         templateResourceClient.get(templateIdentifier, accountId, orgId, projectId, versionLabel, deleted));
+    if (!response.getTemplateEntityType().equals(TemplateEntityType.DEPLOYMENT_PACKAGE_TEMPLATE)) {
+      throw new InvalidRequestException("Template identifier provided is not a deploymentPackage template");
+    }
     return ResponseDTO.newResponse(getConnectors(response.getYaml()));
   }
 
   private ObjectNode getInfra(String yaml) {
     try {
       if (isEmpty(yaml)) {
-        throw new NGTemplateException("Template yaml to create template inputs cannot be empty");
+        throw new InvalidRequestException("Template yaml to create template inputs cannot be empty");
       }
       YamlField templateYamlField = YamlUtils.readTree(yaml).getNode().getField(TEMPLATE);
       if (templateYamlField == null) {
         log.error("Yaml provided is not a template yaml. Yaml:\n" + yaml);
-        throw new NGTemplateException("Yaml provided is not a template yaml.");
+        throw new InvalidRequestException("Yaml provided is not a template yaml.");
       }
       ObjectNode templateNode = (ObjectNode) templateYamlField.getNode().getCurrJsonNode();
       JsonNode templateSpec = templateNode.get(SPEC);
-      if (isEmpty(templateSpec.toString())) {
+      if (isNull(templateSpec) || isEmpty(templateSpec.toString())) {
         log.error("Template yaml provided does not have spec in it.");
-        throw new NGTemplateException("Template yaml provided does not have spec in it.");
+        throw new InvalidRequestException("Template yaml provided does not have spec in it.");
       }
       JsonNode templateInfra = templateSpec.get(PIPELINE_INFRASTRUCTURE);
-      if (isEmpty(templateInfra.toString())) {
+      if (isNull(templateInfra) || isEmpty(templateInfra.toString())) {
         log.error("Template yaml provided does not have infrastructure in it.");
-        throw new NGTemplateException("Template yaml provided does not have infrastructure in it.");
+        throw new InvalidRequestException("Template yaml provided does not have infrastructure in it.");
       }
       return (ObjectNode) templateInfra;
     } catch (IOException e) {
       log.error("Error occurred while fetching template infrastructure " + e);
-      throw new NGTemplateException("Error occurred while fetching template infrastructure ", e);
+      throw new InvalidRequestException("Error occurred while fetching template infrastructure ", e);
     }
   }
 
   private String getVariables(String yaml) {
-    try {
-      ObjectNode templateInfra = getInfra(yaml);
-      JsonNode templateVariables = templateInfra.get(VARIABLES);
-      if (isEmpty(templateVariables.toString())) {
-        log.error("Template yaml provided does not have variables in it.");
-        return "Template yaml provided does not have variables in it.";
-      }
-      return YamlPipelineUtils.writeYamlString(templateVariables);
-    } catch (Exception e) {
-      log.error("Error occurred while fetching template infrastructure variables " + e);
-      return "Error occurred while fetching template infrastructure variables " + e;
+    ObjectNode templateInfra = getInfra(yaml);
+    JsonNode templateVariables = templateInfra.get(VARIABLES);
+    if (isNull(templateVariables) || isEmpty(templateVariables.toString())) {
+      log.error("Template yaml provided does not have variables in it.");
+      throw new InvalidRequestException("Template yaml provided does not have variables in it.");
     }
+    return YamlPipelineUtils.writeYamlString(templateVariables);
   }
 
   private String getConnectors(String yaml) {
-    try {
-      ObjectNode templateInfra = getInfra(yaml);
-      JsonNode templateConnectors = templateInfra.get(CONNECTOR_REFS);
-      if (isEmpty(templateConnectors.toString())) {
-        log.error("Template yaml provided does not have infrastructure connectors in it.");
-        return "Template yaml provided does not have infrastructure connectors in it.";
-      }
-      return YamlPipelineUtils.writeYamlString(templateConnectors);
-    } catch (NGTemplateException e) {
-      log.error("Error occurred while fetching template infrastructure connectors " + e);
-      return "Error occurred while fetching template infrastructure connectors " + e;
+    ObjectNode templateInfra = getInfra(yaml);
+    JsonNode templateConnectors = templateInfra.get(CONNECTOR_REFS);
+    if (isNull(templateConnectors) || isEmpty(templateConnectors.toString())) {
+      log.error("Template yaml provided does not have infrastructure connectors in it.");
+      throw new InvalidRequestException("Template yaml provided does not have infrastructure connectors in it.");
     }
+    return YamlPipelineUtils.writeYamlString(templateConnectors);
   }
 }
