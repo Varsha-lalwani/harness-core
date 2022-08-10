@@ -67,21 +67,21 @@ import org.mockito.MockitoAnnotations;
 public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
   @Mock KryoSerializer kryoSerializer;
 
-  private final static String SVC_REF = "SVC_REF";
-  private final static String ENV_REF = "ENV_REF";
-  private final static ManifestConfigWrapper k8sManifest =
+  private static final String SVC_REF = "SVC_REF";
+  private static final String ENV_REF = "ENV_REF";
+  private static final ManifestConfigWrapper k8sManifest =
       ManifestConfigWrapper.builder()
           .manifest(ManifestConfig.builder().identifier("k8s_test1").type(ManifestConfigType.K8_MANIFEST).build())
           .build();
-  private final static ManifestConfigWrapper valuesManifest1 =
+  private static final ManifestConfigWrapper valuesManifest1 =
       ManifestConfigWrapper.builder()
           .manifest(ManifestConfig.builder().identifier("values_test1").type(ManifestConfigType.VALUES).build())
           .build();
-  private final static ManifestConfigWrapper valuesManifest2 =
+  private static final ManifestConfigWrapper valuesManifest2 =
       ManifestConfigWrapper.builder()
           .manifest(ManifestConfig.builder().identifier("values_test2").type(ManifestConfigType.VALUES).build())
           .build();
-  private final static ManifestConfigWrapper valuesManifest3 =
+  private static final ManifestConfigWrapper valuesManifest3 =
       ManifestConfigWrapper.builder()
           .manifest(ManifestConfig.builder().identifier("values_test3").type(ManifestConfigType.VALUES).build())
           .build();
@@ -734,5 +734,50 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
         serviceInfoConfig, serviceOverrideConfig, environmentConfig);
     assertThat(finalManifests).hasSize(2);
     assertThat(finalManifests).containsExactly(valuesManifest1, valuesManifest2);
+  }
+
+  @Test
+  @Owner(developers = TATHAGAT)
+  @Category(UnitTests.class)
+  public void testPrepareFinalManifestsDuplicateManifestsWithin() {
+    final NGServiceV2InfoConfig serviceInfoConfig =
+        NGServiceV2InfoConfig.builder()
+            .identifier(SVC_REF)
+            .serviceDefinition(ServiceDefinition.builder().serviceSpec(KubernetesServiceSpec.builder().build()).build())
+            .build();
+    final NGServiceOverrideConfig serviceOverrideConfig =
+        NGServiceOverrideConfig.builder()
+            .serviceOverrideInfoConfig(NGServiceOverrideInfoConfig.builder()
+                                           .serviceRef(SVC_REF)
+                                           .environmentRef(ENV_REF)
+                                           .manifests(Arrays.asList(valuesManifest1, valuesManifest1))
+                                           .build())
+            .build();
+    final NGEnvironmentConfig environmentConfig =
+        NGEnvironmentConfig.builder()
+            .ngEnvironmentInfoConfig(NGEnvironmentInfoConfig.builder()
+                                         .identifier(ENV_REF)
+                                         .ngEnvironmentGLobalOverride(NGEnvironmentGlobalOverride.builder().build())
+                                         .build())
+            .build();
+
+    // service overrides manifest identifier duplication
+    assertThatThrownBy(()
+                           -> ServiceDefinitionPlanCreatorHelper.prepareFinalManifests(
+                               serviceInfoConfig, serviceOverrideConfig, environmentConfig))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage(
+            "Found duplicate manifest identifiers [values_test1] in SERVICE_OVERRIDES for service [SVC_REF] and environment [ENV_REF]");
+
+    // environment global overrides manifest identifier duplication
+    serviceOverrideConfig.getServiceOverrideInfoConfig().setManifests(EMPTY_LIST);
+    environmentConfig.getNgEnvironmentInfoConfig().setNgEnvironmentGLobalOverride(
+        NGEnvironmentGlobalOverride.builder().manifests(Arrays.asList(valuesManifest1, valuesManifest1)).build());
+    assertThatThrownBy(()
+                           -> ServiceDefinitionPlanCreatorHelper.prepareFinalManifests(
+                               serviceInfoConfig, serviceOverrideConfig, environmentConfig))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage(
+            "Found duplicate manifest identifiers [values_test1] in ENVIRONMENT_GLOBAL_OVERRIDES for service [SVC_REF] and environment [ENV_REF]");
   }
 }

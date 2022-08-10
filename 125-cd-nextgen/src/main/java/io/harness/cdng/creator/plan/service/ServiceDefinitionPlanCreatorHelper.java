@@ -12,6 +12,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static java.lang.String.format;
+import static java.util.Collections.EMPTY_LIST;
 
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
 import io.harness.cdng.azure.webapp.ApplicationSettingsParameters;
@@ -57,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -259,28 +261,81 @@ public class ServiceDefinitionPlanCreatorHelper {
       NGServiceOverrideConfig serviceOverrideConfig, NGEnvironmentConfig ngEnvironmentConfig) {
     final List<ManifestConfigWrapper> svcManifests = getManifests(serviceV2Config);
     List<ManifestConfigWrapper> finalManifests = new ArrayList<>(svcManifests);
+    final List<ManifestConfigWrapper> svcOverrideManifests =
+        getAndValidateSvcOverrideManifests(serviceV2Config, serviceOverrideConfig, ngEnvironmentConfig, svcManifests);
+    final List<ManifestConfigWrapper> envGlobalManifests =
+        getAndValidateEnvGlobalManifests(serviceV2Config, ngEnvironmentConfig, svcManifests);
 
-    if (serviceOverrideConfig != null) {
-      final List<ManifestConfigWrapper> svcOverrideManifests =
-          fetchSvcOverrideManifests(Collections.singletonList(serviceOverrideConfig));
-      checkDuplicateManifestIdentifiers(svcManifests, svcOverrideManifests, serviceV2Config.getIdentifier(),
-          ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(), SERVICE_OVERRIDES);
-      validateAllowedManifestTypesInOverrides(svcOverrideManifests, SERVICE_OVERRIDES);
-      finalManifests.addAll(svcOverrideManifests);
-    }
-    final List<ManifestConfigWrapper> envGlobalManifests = getEnvGlobalManifests(ngEnvironmentConfig);
-    checkDuplicateManifestIdentifiers(svcManifests, envGlobalManifests, serviceV2Config.getIdentifier(),
-        ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(), ENVIRONMENT_GLOBAL_OVERRIDES);
-    validateAllowedManifestTypesInOverrides(envGlobalManifests, ENVIRONMENT_GLOBAL_OVERRIDES);
+    checkCrossLocationDuplicateIdentifiers(svcOverrideManifests, envGlobalManifests, serviceV2Config.getIdentifier(),
+        ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(), SERVICE_OVERRIDES);
+
+    finalManifests.addAll(svcOverrideManifests);
     finalManifests.addAll(envGlobalManifests);
 
     return finalManifests;
   }
 
+  @NotNull
+  private List<ManifestConfigWrapper> getAndValidateEnvGlobalManifests(NGServiceV2InfoConfig serviceV2Config,
+      NGEnvironmentConfig ngEnvironmentConfig, List<ManifestConfigWrapper> svcManifests) {
+    final List<ManifestConfigWrapper> envGlobalManifests = getEnvGlobalManifests(ngEnvironmentConfig);
+
+    checkCrossLocationDuplicateIdentifiers(svcManifests, envGlobalManifests, serviceV2Config.getIdentifier(),
+        ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(),
+        ServiceDefinitionPlanCreatorHelper.ENVIRONMENT_GLOBAL_OVERRIDES);
+    checkDuplicateManifestIdentifiersWithIn(envGlobalManifests, serviceV2Config.getIdentifier(),
+        ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(),
+        ServiceDefinitionPlanCreatorHelper.ENVIRONMENT_GLOBAL_OVERRIDES);
+
+    validateAllowedManifestTypesInOverrides(
+        envGlobalManifests, ServiceDefinitionPlanCreatorHelper.ENVIRONMENT_GLOBAL_OVERRIDES);
+    return envGlobalManifests;
+  }
+
+  @NotNull
+  private List<ManifestConfigWrapper> getAndValidateSvcOverrideManifests(NGServiceV2InfoConfig serviceV2Config,
+      NGServiceOverrideConfig serviceOverrideConfig, NGEnvironmentConfig ngEnvironmentConfig,
+      List<ManifestConfigWrapper> svcManifests) {
+    if (serviceOverrideConfig == null) {
+      return EMPTY_LIST;
+    }
+    List<ManifestConfigWrapper> svcOverrideManifests =
+        getSvcOverrideManifests(Collections.singletonList(serviceOverrideConfig));
+
+    checkCrossLocationDuplicateIdentifiers(svcManifests, svcOverrideManifests, serviceV2Config.getIdentifier(),
+        ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(), SERVICE_OVERRIDES);
+    checkDuplicateManifestIdentifiersWithIn(svcOverrideManifests, serviceV2Config.getIdentifier(),
+        ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(), SERVICE_OVERRIDES);
+
+    validateAllowedManifestTypesInOverrides(svcOverrideManifests, SERVICE_OVERRIDES);
+    return svcOverrideManifests;
+  }
+
+  private static void checkDuplicateManifestIdentifiersWithIn(
+      List<ManifestConfigWrapper> manifests, String svcIdentifier, String envIdentifier, String overrideLocation) {
+    Set<String> uniqueIds = new HashSet<>();
+    Set<String> duplicateIds = new HashSet<>();
+
+    manifests.stream().map(ManifestConfigWrapper::getManifest).map(ManifestConfig::getIdentifier).forEach(id -> {
+      if (uniqueIds.contains(id)) {
+        duplicateIds.add(id);
+      } else {
+        uniqueIds.add(id);
+      }
+    });
+
+    if (isNotEmpty(duplicateIds)) {
+      throw new InvalidRequestException(
+          format("Found duplicate manifest identifiers [%s] in %s for service [%s] and environment [%s]",
+              duplicateIds.stream().map(Object::toString).collect(Collectors.joining(",")), overrideLocation,
+              svcIdentifier, envIdentifier));
+    }
+  }
+
   @NonNull
   private static List<ManifestConfigWrapper> getEnvGlobalManifests(NGEnvironmentConfig ngEnvironmentConfig) {
     if (checkManifestAvailability(ngEnvironmentConfig)) {
-      return Collections.EMPTY_LIST;
+      return EMPTY_LIST;
     }
     return ngEnvironmentConfig.getNgEnvironmentInfoConfig().getNgEnvironmentGLobalOverride().getManifests();
   }
@@ -311,17 +366,16 @@ public class ServiceDefinitionPlanCreatorHelper {
     }
   }
 
-  private static void checkDuplicateManifestIdentifiers(List<ManifestConfigWrapper> svcManifests,
-      List<ManifestConfigWrapper> svcOverrideManifests, String svcIdentifier, String envIdentifier,
-      String overrideLocation) {
-    if (isEmpty(svcManifests) || isEmpty(svcOverrideManifests)) {
+  private static void checkCrossLocationDuplicateIdentifiers(List<ManifestConfigWrapper> manifestsA,
+      List<ManifestConfigWrapper> manifestsB, String svcIdentifier, String envIdentifier, String overrideLocation) {
+    if (isEmpty(manifestsA) || isEmpty(manifestsB)) {
       return;
     }
-    Set<String> overridesIdentifiers = svcOverrideManifests.stream()
+    Set<String> overridesIdentifiers = manifestsB.stream()
                                            .map(ManifestConfigWrapper::getManifest)
                                            .map(ManifestConfig::getIdentifier)
                                            .collect(Collectors.toSet());
-    List<String> duplicateManifestIds = svcManifests.stream()
+    List<String> duplicateManifestIds = manifestsA.stream()
                                             .map(ManifestConfigWrapper::getManifest)
                                             .map(ManifestConfig::getIdentifier)
                                             .filter(overridesIdentifiers::contains)
@@ -338,7 +392,7 @@ public class ServiceDefinitionPlanCreatorHelper {
     return CollectionUtils.emptyIfNull(serviceV2Config.getServiceDefinition().getServiceSpec().getManifests());
   }
 
-  private List<ManifestConfigWrapper> fetchSvcOverrideManifests(
+  private List<ManifestConfigWrapper> getSvcOverrideManifests(
       @NonNull List<NGServiceOverrideConfig> serviceOverrideConfigs) {
     return serviceOverrideConfigs.stream()
         .map(NGServiceOverrideConfig::getServiceOverrideInfoConfig)
