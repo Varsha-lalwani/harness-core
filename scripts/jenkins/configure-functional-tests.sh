@@ -25,10 +25,10 @@ replace_text "distributedLockImplementation: MONGO" "distributedLockImplementati
 
 replace_text "uri: mongodb://localhost:27017/harness" "uri: ${MONGO_URI}" 350-event-server/event-service-config.yml
 replace_text "uri: mongodb://localhost:27017/harness" "uri: ${MONGO_URI}" 210-command-library-server/command-library-server-config.yml
-replace_text "uri: mongodb://localhost:27017/harnessci" "uri: ${MONGO_URI}_ci" 310-ci-manager/ci-manager-config.yml
-replace_text "uri: mongodb://localhost:27017/harness" "uri: ${MONGO_URI}" 310-ci-manager/ci-manager-config.yml
+replace_text "uri: mongodb://localhost:27017/harnessci" "uri: ${MONGO_URI}_ci" 332-ci-manager/config/ci-manager-config.yml
+replace_text "uri: mongodb://localhost:27017/harness" "uri: ${MONGO_URI}" 332-ci-manager/config/ci-manager-config.yml
 
-CONFIG_FILES=(360-cg-manager/config.yml 350-event-server/event-service-config.yml 210-command-library-server/command-library-server-config.yml 310-ci-manager/ci-manager-config.yml)
+CONFIG_FILES=(360-cg-manager/config.yml 350-event-server/event-service-config.yml 210-command-library-server/command-library-server-config.yml 332-ci-manager/config/ci-manager-config.yml)
 
 for config_file in ${CONFIG_FILES[@]}; do
   mongo_uri_count=$(grep -P "^\s*uri: mongodb://.*:27017" $config_file | grep -v localhost:27017 | wc -l | awk '{print $1}')
