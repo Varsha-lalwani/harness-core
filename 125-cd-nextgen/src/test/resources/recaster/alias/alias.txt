@@ -384,3 +384,6 @@ io.harness.plancreator.strategy.ExpressionAxisConfig
 io.harness.cdng.service.beans.ServiceUseFromStageV2
 io.harness.ng.core.environment.beans.NGEnvironmentGlobalOverride
 io.harness.cdng.execution.ExecutionInfoKeyOutput
+io.harness.cdng.azure.config.yaml.ApplicationSettingsConfiguration
+io.harness.cdng.azure.config.yaml.ConnectionStringsConfiguration
+io.harness.cdng.azure.config.yaml.StartupCommandConfiguration
