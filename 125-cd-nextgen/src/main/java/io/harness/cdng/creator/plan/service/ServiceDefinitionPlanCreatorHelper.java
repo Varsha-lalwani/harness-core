@@ -57,7 +57,6 @@ import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -292,12 +291,9 @@ public class ServiceDefinitionPlanCreatorHelper {
     checkCrossLocationDuplicateIdentifiers(svcManifests, envGlobalManifests, serviceV2Config.getIdentifier(),
         ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(),
         ServiceDefinitionPlanCreatorHelper.ENVIRONMENT_GLOBAL_OVERRIDES);
-    checkDuplicateManifestIdentifiersWithIn(envGlobalManifests, serviceV2Config.getIdentifier(),
-        ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(),
-        ServiceDefinitionPlanCreatorHelper.ENVIRONMENT_GLOBAL_OVERRIDES);
-
     validateAllowedManifestTypesInOverrides(
         envGlobalManifests, ServiceDefinitionPlanCreatorHelper.ENVIRONMENT_GLOBAL_OVERRIDES);
+
     return envGlobalManifests;
   }
 
@@ -312,29 +308,9 @@ public class ServiceDefinitionPlanCreatorHelper {
 
     checkCrossLocationDuplicateIdentifiers(svcManifests, svcOverrideManifests, serviceV2Config.getIdentifier(),
         ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(), SERVICE_OVERRIDES);
-    checkDuplicateManifestIdentifiersWithIn(svcOverrideManifests, serviceV2Config.getIdentifier(),
-        ngEnvironmentConfig.getNgEnvironmentInfoConfig().getIdentifier(), SERVICE_OVERRIDES);
-
     validateAllowedManifestTypesInOverrides(svcOverrideManifests, SERVICE_OVERRIDES);
+
     return svcOverrideManifests;
-  }
-
-  private static void checkDuplicateManifestIdentifiersWithIn(
-      List<ManifestConfigWrapper> manifests, String svcIdentifier, String envIdentifier, String overrideLocation) {
-    Set<String> uniqueIds = new HashSet<>();
-    Set<String> duplicateIds = new HashSet<>();
-
-    manifests.stream().map(ManifestConfigWrapper::getManifest).map(ManifestConfig::getIdentifier).forEach(id -> {
-      if (!uniqueIds.add(id)) {
-        duplicateIds.add(id);
-      }
-    });
-    if (isNotEmpty(duplicateIds)) {
-      throw new InvalidRequestException(
-          format("Found duplicate manifest identifiers [%s] in %s for service [%s] and environment [%s]",
-              duplicateIds.stream().map(Object::toString).collect(Collectors.joining(",")), overrideLocation,
-              svcIdentifier, envIdentifier));
-    }
   }
 
   @NonNull
