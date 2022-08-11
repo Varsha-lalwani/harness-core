@@ -321,7 +321,7 @@ public class AmbianceExpressionEvaluatorTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
-  public void testStringReplacerWithExpressionModes() {
+  public void testResolveExpressionWithExpressionModes() {
     EngineExpressionEvaluator expressionEvaluator = prepareEngineExpressionEvaluator(ImmutableMap.of("key1", "val1"));
 
     // key1 is set in context, so for each mode the returned value would be val1.
@@ -366,6 +366,31 @@ public class AmbianceExpressionEvaluatorTest extends OrchestrationTestBase {
     assertThatThrownBy(
         () -> expressionEvaluator.resolve("abc<+invalidKey> def", ExpressionMode.THROW_EXCEPTION_IF_UNRESOLVED))
         .isInstanceOf(UnresolvedExpressionsException.class);
+  }
+
+  @Test
+  @Owner(developers = BRIJESH)
+  @Category(UnitTests.class)
+  public void testEvaluateExpressionWithExpressionModes() {
+    EngineExpressionEvaluator expressionEvaluator = prepareEngineExpressionEvaluator(ImmutableMap.of("key1", "val1"));
+
+    // key1 is set in context, so for each mode the returned value would be val1.
+    assertThat(
+        expressionEvaluator.evaluateExpression("<+key1>", ExpressionMode.RETURN_ORIGINAL_EXPRESSION_IF_UNRESOLVED))
+        .isEqualTo("val1");
+    assertThat(expressionEvaluator.evaluateExpression("<+key1>", ExpressionMode.RETURN_NULL_IF_UNRESOLVED))
+        .isEqualTo("val1");
+    assertThat(expressionEvaluator.evaluateExpression("<+key1>", ExpressionMode.THROW_EXCEPTION_IF_UNRESOLVED))
+        .isEqualTo("val1");
+
+    // expression will not be evaluated, and mode is RETURN_ORIGINAL_EXPRESSION_IF_UNRESOLVED, so original expression
+    // will be returned.
+    assertThat(expressionEvaluator.evaluateExpression(
+                   "<+invalidKey>", ExpressionMode.RETURN_ORIGINAL_EXPRESSION_IF_UNRESOLVED))
+        .isEqualTo("<+invalidKey>");
+    // expression will not be evaluated, and mode is RETURN_NULL_IF_UNRESOLVED, so null value would be returned.
+    assertThat(expressionEvaluator.evaluateExpression("<+invalidKey>", ExpressionMode.RETURN_NULL_IF_UNRESOLVED))
+        .isEqualTo(null);
   }
 
   private Pair<Map<String, Object>, Object> executeResolve(EngineExpressionEvaluator evaluator, Object o) {

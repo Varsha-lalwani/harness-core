@@ -171,9 +171,10 @@ public class EngineExpressionEvaluator {
     return ExpressionEvaluatorUtils.updateExpressions(o, new ResolveFunctorImpl(this, expressionMode));
   }
 
-  public PartialEvaluateResult partialResolve(Object o) {
+  public PartialEvaluateResult partialResolve(Object o, ExpressionMode expressionMode) {
     Map<String, Object> partialCtx = new HashMap<>();
-    Object res = ExpressionEvaluatorUtils.updateExpressions(o, new PartialResolveFunctorImpl(this, partialCtx));
+    Object res =
+        ExpressionEvaluatorUtils.updateExpressions(o, new PartialResolveFunctorImpl(this, partialCtx, expressionMode));
     return PartialEvaluateResult.createCompleteResult(res, partialCtx);
   }
 
@@ -665,6 +666,9 @@ public class EngineExpressionEvaluator {
         if (value == null) {
           String finalExpression = createExpression(expression);
           unresolvedExpressions.add(finalExpression);
+          if (expressionMode == ExpressionMode.RETURN_ORIGINAL_EXPRESSION_IF_UNRESOLVED) {
+            value = EngineExpressionEvaluator.EXPR_START + expression + EngineExpressionEvaluator.EXPR_END;
+          }
         }
 
         String name = prefix + ++varIndex + suffix;
@@ -755,15 +759,18 @@ public class EngineExpressionEvaluator {
   public static class PartialResolveFunctorImpl implements ExpressionResolveFunctor {
     private final EngineExpressionEvaluator expressionEvaluator;
     private final Map<String, Object> partialCtx;
+    private final ExpressionMode expressionMode;
 
-    public PartialResolveFunctorImpl(EngineExpressionEvaluator expressionEvaluator, Map<String, Object> partialCtx) {
+    public PartialResolveFunctorImpl(
+        EngineExpressionEvaluator expressionEvaluator, Map<String, Object> partialCtx, ExpressionMode expressionMode) {
       this.expressionEvaluator = expressionEvaluator;
       this.partialCtx = partialCtx;
+      this.expressionMode = expressionMode;
     }
 
     @Override
     public String processString(String expression) {
-      PartialEvaluateResult result = expressionEvaluator.partialRenderExpression(expression);
+      PartialEvaluateResult result = expressionEvaluator.partialRenderExpression(expression, null, expressionMode);
       if (EmptyPredicate.isNotEmpty(result.getPartialCtx())) {
         partialCtx.putAll(result.getPartialCtx());
       }
