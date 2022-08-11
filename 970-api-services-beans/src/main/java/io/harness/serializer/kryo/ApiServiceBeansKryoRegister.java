@@ -434,6 +434,6 @@ public class ApiServiceBeansKryoRegister implements KryoRegistrar {
     kryo.register(ServiceNowTemplate.class, 97113);
     kryo.register(FileSourceType.class, 97115);
     kryo.register(DockerRegistryProviderType.class, 19434);
-    kryo.register(HelmCommandType.class, 980032);
+    kryo.register(HelmCommandType.class, 98400);
   }
 }

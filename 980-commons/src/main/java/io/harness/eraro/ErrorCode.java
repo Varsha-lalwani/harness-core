@@ -629,7 +629,9 @@ public enum ErrorCode {
 
   SPOTINST_NULL_ERROR,
   SCM_UNEXPECTED_ERROR,
-  DUPLICATE_FILE_IMPORT;
+  DUPLICATE_FILE_IMPORT,
+  AZURE_APP_SERVICES_TASK_EXCEPTION;
+
   private Status status = BAD_REQUEST;
   private String description;
 

@@ -33,7 +33,7 @@ import lombok.Value;
     description = "This contains details of the Template Metadata Summary Response")
 @OwnedBy(CDC)
 public class TemplateMetadataSummaryResponseDTO {
-  String accountIdentifier;
+  String accountId;
 
   String orgIdentifier;
   String projectIdentifier;
@@ -44,7 +44,7 @@ public class TemplateMetadataSummaryResponseDTO {
   Map<String, String> tags;
 
   String versionLabel;
-  Boolean isStableTemplate;
+  Boolean stableTemplate;
 
   TemplateEntityType templateEntityType;
   String childType;

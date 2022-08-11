@@ -132,6 +132,10 @@ public class NGTemplateSchemaServiceImpl implements NGTemplateSchemaService {
     String orgIdentifier = templateEntity.getOrgIdentifier();
     String templateYaml = templateEntity.getYaml();
     long start = System.currentTimeMillis();
+    if (!TemplateYamlSchemaMergeHelper.isFeatureFlagEnabled(
+            FeatureName.TEMPLATE_SCHEMA_VALIDATION, accountIdentifier, accountClient)) {
+      return;
+    }
     try {
       Scope scope = templateEntity.getTemplateScope() != null ? templateEntity.getTemplateScope()
           : projectIdentifier != null                         ? Scope.PROJECT
