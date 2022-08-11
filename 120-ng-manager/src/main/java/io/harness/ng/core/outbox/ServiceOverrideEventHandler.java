@@ -18,6 +18,7 @@ import io.harness.audit.client.api.AuditClientService;
 import io.harness.context.GlobalContext;
 import io.harness.ng.core.events.OutboxEventConstants;
 import io.harness.ng.core.events.ServiceOverrideDeleteEvent;
+import io.harness.ng.core.events.ServiceOverrideUpdateEvent;
 import io.harness.ng.core.events.ServiceOverrideUpsertEvent;
 import io.harness.ng.core.serviceoverride.beans.ServiceOverrideRequest;
 import io.harness.outbox.OutboxEvent;
@@ -32,7 +33,7 @@ import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@OwnedBy(HarnessTeam.CDP)
+@OwnedBy(HarnessTeam.CDC)
 public class ServiceOverrideEventHandler implements OutboxEventHandler {
   private final ObjectMapper objectMapper;
   private final AuditClientService auditClientService;
@@ -49,6 +50,8 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
       switch (outboxEvent.getEventType()) {
         case OutboxEventConstants.SERVICE_OVERRIDE_UPSERTED:
           return handlerServiceOverrideUpserted(outboxEvent);
+        case OutboxEventConstants.SERVICE_OVERRIDE_UPDATED:
+          return handlerServiceOverrideUpdated(outboxEvent);
         case OutboxEventConstants.SERVICE_OVERRIDE_DELETED:
           return handlerServiceOverrideDeleted(outboxEvent);
         default:
@@ -73,6 +76,36 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
             .timestamp(outboxEvent.getCreatedAt())
             .newYaml(getYamlString(ServiceOverrideRequest.builder()
                                        .serviceOverride(serviceOverrideUpsertEvent.getServiceOverride())
+                                       .build()))
+            .build();
+
+    Principal principal = null;
+
+    if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
+      principal = new ServicePrincipal(NG_MANAGER.getServiceId());
+    } else {
+      principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
+    }
+    return auditClientService.publishAudit(auditEntry, fromSecurityPrincipal(principal), globalContext);
+  }
+
+  private boolean handlerServiceOverrideUpdated(OutboxEvent outboxEvent) throws IOException {
+    GlobalContext globalContext = outboxEvent.getGlobalContext();
+    ServiceOverrideUpdateEvent serviceOverrideUpdateEvent =
+        objectMapper.readValue(outboxEvent.getEventData(), ServiceOverrideUpdateEvent.class);
+    final AuditEntry auditEntry =
+        AuditEntry.builder()
+            .action(Action.UPDATE)
+            .module(ModuleType.CD)
+            .insertId(outboxEvent.getId())
+            .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+            .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+            .timestamp(outboxEvent.getCreatedAt())
+            .oldYaml(getYamlString(ServiceOverrideRequest.builder()
+                                       .serviceOverride(serviceOverrideUpdateEvent.getOldServiceOverride())
+                                       .build()))
+            .newYaml(getYamlString(ServiceOverrideRequest.builder()
+                                       .serviceOverride(serviceOverrideUpdateEvent.getNewServiceOverride())
                                        .build()))
             .build();
 

@@ -23,7 +23,9 @@ import io.harness.eventsframework.api.Producer;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
 import io.harness.ng.core.events.ServiceOverrideDeleteEvent;
+import io.harness.ng.core.events.ServiceOverrideUpdateEvent;
 import io.harness.ng.core.events.ServiceOverrideUpsertEvent;
+import io.harness.ng.core.infrastructure.entity.InfrastructureEntity;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity.NGServiceOverridesEntityKeys;
 import io.harness.ng.core.serviceoverride.services.ServiceOverrideService;
@@ -95,6 +97,9 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
         requestServiceOverride.getServiceRef());
     validateOverrideValues(requestServiceOverride);
     Criteria criteria = getServiceOverrideEqualityCriteria(requestServiceOverride);
+    Optional<NGServiceOverridesEntity> serviceOverrideOptional = get(requestServiceOverride.getAccountId(),
+        requestServiceOverride.getOrgIdentifier(), requestServiceOverride.getProjectIdentifier(),
+        requestServiceOverride.getEnvironmentRef(), requestServiceOverride.getServiceRef());
 
     return Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
       NGServiceOverridesEntity tempResult = serviceOverrideRepository.upsert(criteria, requestServiceOverride);
@@ -104,13 +109,14 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
             requestServiceOverride.getProjectIdentifier(), requestServiceOverride.getOrgIdentifier(),
             requestServiceOverride.getEnvironmentRef(), requestServiceOverride.getServiceRef()));
       }
-      outboxService.save(ServiceOverrideUpsertEvent.builder()
+      outboxService.save(ServiceOverrideUpdateEvent.builder()
                              .accountIdentifier(requestServiceOverride.getAccountId())
                              .orgIdentifier(requestServiceOverride.getOrgIdentifier())
                              .projectIdentifier(requestServiceOverride.getProjectIdentifier())
                              .environmentRef(requestServiceOverride.getEnvironmentRef())
                              .serviceRef(requestServiceOverride.getServiceRef())
-                             .serviceOverride(requestServiceOverride)
+                             .newServiceOverride(requestServiceOverride)
+                             .oldServiceOverride(serviceOverrideOptional.get())
                              .build());
 
       return tempResult;

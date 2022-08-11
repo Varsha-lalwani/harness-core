@@ -279,9 +279,23 @@ public class InfrastructureEntityServiceImpl implements InfrastructureEntityServ
       validateInfraList(infraEntities);
       populateDefaultNameIfNotPresent(infraEntities);
       modifyInfraRequestBatch(infraEntities);
-      List<InfrastructureEntity> outputInfrastructureEntitiesList =
-          (List<InfrastructureEntity>) infrastructureRepository.saveAll(infraEntities);
-      return new PageImpl<>(outputInfrastructureEntitiesList);
+
+      return Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
+        List<InfrastructureEntity> outputInfrastructureEntitiesList =
+            (List<InfrastructureEntity>) infrastructureRepository.saveAll(infraEntities);
+        for (InfrastructureEntity infraEntity : infraEntities) {
+          outboxService.save(InfrastructureCreateEvent.builder()
+                                 .accountIdentifier(infraEntity.getAccountId())
+                                 .orgIdentifier(infraEntity.getOrgIdentifier())
+                                 .projectIdentifier(infraEntity.getProjectIdentifier())
+                                 .envIdentifier(infraEntity.getEnvIdentifier())
+                                 .infrastructureEntity(infraEntity)
+                                 .build());
+        }
+
+        return new PageImpl<>(outputInfrastructureEntitiesList);
+      }));
+
     } catch (DuplicateKeyException ex) {
       throw new DuplicateFieldException(
           getDuplicateInfrastructureExistsErrorMessage(accountId, ex.getMessage()), USER, ex);
