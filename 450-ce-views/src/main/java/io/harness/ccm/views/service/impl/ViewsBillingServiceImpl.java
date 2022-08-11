@@ -316,16 +316,20 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
       List<QLCEViewGroupBy> groupBy, List<QLCEViewAggregation> aggregateFunction, List<QLCEViewSortCriteria> sort,
       String cloudProviderTableName, Integer limit, Integer offset, ViewQueryParams queryParams) {
     boolean isClusterPerspective = isClusterTableQuery(filters, queryParams);
+    log.info("isClusterPerspective: {}", isClusterPerspective);
     String businessMappingId = viewsQueryHelper.getBusinessMappingIdFromGroupBy(groupBy);
+    log.info("businessMappingId: {}", businessMappingId);
 
     // If group by business mapping is present, query unified table
     isClusterPerspective = isClusterPerspective && businessMappingId == null;
+    log.info("isClusterPerspective: {}", isClusterPerspective);
 
     // Conversion field is not null in case entity id to name conversion is required for a field
     String conversionField = null;
     if (isDataGroupedByAwsAccount(filters, groupBy) && !queryParams.isUsedByTimeSeriesStats()) {
       conversionField = AWS_ACCOUNT_FIELD;
     }
+    log.info("conversionField: {}", conversionField);
     Map<String, ViewCostData> costTrendData = new HashMap<>();
     long startTimeForTrendData = 0L;
     if (!queryParams.isUsedByTimeSeriesStats()) {
@@ -333,23 +337,30 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
           bigQuery, filters, groupBy, aggregateFunction, sort, cloudProviderTableName, limit, offset, queryParams);
       startTimeForTrendData = getStartTimeForTrendFilters(filters);
     }
+    log.info("costTrendData: {}", costTrendData);
+    log.info("startTimeForTrendData: {}", startTimeForTrendData);
     SelectQuery query = getQuery(filters, groupBy, aggregateFunction, sort, cloudProviderTableName, queryParams);
+    log.info("query: {}", query.toString());
     query.addCustomization(new PgLimitClause(limit));
     query.addCustomization(new PgOffsetClause(offset));
+    log.info("query: {}", query.toString());
     QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query.toString()).build();
     TableResult result;
     try {
       result = bigQuery.query(queryConfig);
+      log.info("result: {}", result.toString());
     } catch (InterruptedException e) {
       log.error("Failed to getEntityStatsDataPoints. {}", e);
       Thread.currentThread().interrupt();
       return null;
     }
-    return costCategoriesPostFetchResponseUpdate(
-        convertToEntityStatsData(result, costTrendData, startTimeForTrendData, isClusterPerspective,
+    QLCEViewGridData gridData = convertToEntityStatsData(result, costTrendData, startTimeForTrendData, isClusterPerspective,
             queryParams.isUsedByTimeSeriesStats(), queryParams.isSkipRoundOff(), conversionField,
-            queryParams.getAccountId(), groupBy),
-        businessMappingId);
+            queryParams.getAccountId(), groupBy);
+    log.info("GridData: {}", gridData);
+    gridData = costCategoriesPostFetchResponseUpdate(gridData, businessMappingId);
+    log.info("GridData: {}", gridData);
+    return gridData;
   }
 
   @Override
@@ -1130,6 +1141,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
       long startTimeForTrend, boolean isClusterPerspective, boolean isUsedByTimeSeriesStats, boolean skipRoundOff,
       String conversionField, String accountId, List<QLCEViewGroupBy> groupBy) {
     if (isClusterPerspective) {
+      log.info("this is cluster perspective");
       return convertToEntityStatsDataForCluster(
           result, costTrendData, startTimeForTrend, isUsedByTimeSeriesStats, skipRoundOff, groupBy);
     }
@@ -1141,6 +1153,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
 
     List<QLCEViewEntityStatsDataPoint> entityStatsDataPoints = new ArrayList<>();
     for (FieldValueList row : result.iterateAll()) {
+      log.info("Row: {}", row);
       QLCEViewEntityStatsDataPointBuilder dataPointBuilder = QLCEViewEntityStatsDataPoint.builder();
       Double cost = null;
       String name = DEFAULT_GRID_ENTRY_NAME;
@@ -1187,6 +1200,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     List<QLCEViewEntityStatsDataPoint> entityStatsDataPoints = new ArrayList<>();
     Set<String> instanceTypes = new HashSet<>();
     for (FieldValueList row : result.iterateAll()) {
+      log.info("Row: {}", row);
       QLCEViewEntityStatsDataPointBuilder dataPointBuilder = QLCEViewEntityStatsDataPoint.builder();
       ClusterDataBuilder clusterDataBuilder = ClusterData.builder();
       Double cost = null;
