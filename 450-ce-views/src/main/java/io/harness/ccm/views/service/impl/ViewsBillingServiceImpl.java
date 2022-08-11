@@ -28,12 +28,7 @@ import static io.harness.ccm.views.graphql.ViewMetaDataConstants.entityConstantM
 import static io.harness.ccm.views.graphql.ViewMetaDataConstants.entityConstantMinStartTime;
 import static io.harness.ccm.views.graphql.ViewMetaDataConstants.entityConstantSystemCost;
 import static io.harness.ccm.views.graphql.ViewMetaDataConstants.entityConstantUnallocatedCost;
-import static io.harness.ccm.views.graphql.ViewsQueryBuilder.K8S_NODE;
-import static io.harness.ccm.views.graphql.ViewsQueryBuilder.K8S_POD;
-import static io.harness.ccm.views.graphql.ViewsQueryBuilder.K8S_POD_FARGATE;
-import static io.harness.ccm.views.graphql.ViewsQueryBuilder.K8S_PV;
-import static io.harness.ccm.views.graphql.ViewsQueryBuilder.LABEL_KEY_ALIAS;
-import static io.harness.ccm.views.graphql.ViewsQueryBuilder.LABEL_VALUE_ALIAS;
+import static io.harness.ccm.views.graphql.ViewsQueryBuilder.*;
 import static io.harness.ccm.views.utils.ClusterTableKeys.ACTUAL_IDLE_COST;
 import static io.harness.ccm.views.utils.ClusterTableKeys.AVG_CPU_UTILIZATION_VALUE;
 import static io.harness.ccm.views.utils.ClusterTableKeys.AVG_MEMORY_UTILIZATION_VALUE;
@@ -952,22 +947,29 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
       ViewQueryParams queryParams) {
     List<ViewRule> viewRuleList = new ArrayList<>();
 
+    log.info("groupBy: {}", groupBy);
     // Removing group by none if present
     boolean skipDefaultGroupBy = false;
     if (viewsQueryHelper.isGroupByNonePresent(groupBy)) {
       skipDefaultGroupBy = true;
+      log.info("skipDeafultGroupBy: {}", skipDefaultGroupBy);
       groupBy = viewsQueryHelper.removeGroupByNone(groupBy);
+      log.info("groupBy: {}", groupBy);
     }
 
     List<QLCEViewGroupBy> modifiedGroupBy = groupBy != null ? new ArrayList<>(groupBy) : new ArrayList<>();
+    log.info("modifiedGroupBy: {}", modifiedGroupBy);
     Optional<QLCEViewFilterWrapper> viewMetadataFilter = getViewMetadataFilter(filters);
+    log.info("viewMetadataFilter: {}", viewMetadataFilter);
 
     List<QLCEViewRule> rules = AwsAccountFieldHelper.removeAccountNameFromAWSAccountRuleFilter(getRuleFilters(filters));
+    log.info("rules: {}", rules);
     if (!rules.isEmpty()) {
       for (QLCEViewRule rule : rules) {
         viewRuleList.add(convertQLCEViewRuleToViewRule(rule));
       }
     }
+    log.info("viewRuleList: {}", viewRuleList);
 
     if (viewMetadataFilter.isPresent()) {
       QLCEViewMetadataFilter metadataFilter = viewMetadataFilter.get().getViewMetadataFilter();
@@ -975,6 +977,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
       if (!metadataFilter.isPreview()) {
         CEView ceView = viewService.get(viewId);
         viewRuleList = ceView.getViewRules();
+        log.info("viewRuleList: {}", viewRuleList);
         if (ceView.getViewVisualization() != null) {
           ViewVisualization viewVisualization = ceView.getViewVisualization();
           ViewField defaultGroupByField = viewVisualization.getGroupBy();
@@ -984,26 +987,34 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
           }
           modifiedGroupBy = getModifiedGroupBy(groupBy, defaultGroupByField, defaultTimeGranularity,
               queryParams.isTimeTruncGroupByRequired(), skipDefaultGroupBy);
+          log.info("modifiedGroupBy: {}", modifiedGroupBy);
         }
       }
     }
     List<QLCEViewFilter> idFilters =
         AwsAccountFieldHelper.removeAccountNameFromAWSAccountIdFilter(getIdFilters(filters));
+    log.info("idFilters: {}", idFilters);
     List<QLCEViewTimeFilter> timeFilters = getTimeFilters(filters);
+    log.info("timeFilters: {}", timeFilters);
 
     // account id is not passed in current gen queries
     if (queryParams.getAccountId() != null) {
       boolean isPodQuery = false;
       if (isClusterPerspective(filters) || queryParams.isClusterQuery()) {
         isPodQuery = isPodQuery(modifiedGroupBy);
+        log.info("isPodQuery: {}", isPodQuery);
         if (isInstanceDetailsQuery(modifiedGroupBy)) {
           idFilters.add(getFilterForInstanceDetails(modifiedGroupBy));
         }
+        log.info("idFilters: {}", idFilters);
         modifiedGroupBy = addAdditionalRequiredGroupBy(modifiedGroupBy);
+        log.info("modifiedGroupBy: {}", modifiedGroupBy);
         // Changes column name for product to clustername in case of cluster perspective
         idFilters = getModifiedIdFilters(addNotNullFilters(idFilters, modifiedGroupBy), true);
+        log.info("idFilters: {}", idFilters);
         // Changes column name for cost to billingamount
         aggregateFunction = getModifiedAggregations(aggregateFunction);
+        log.info("aggregateFunction: {}", aggregateFunction);
         sort = getModifiedSort(sort);
       }
       cloudProviderTableName = getUpdatedCloudProviderTableName(filters, modifiedGroupBy, aggregateFunction,
@@ -1690,6 +1701,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     groupByList.forEach(groupBy -> {
       if (groupBy.getEntityGroupBy() != null) {
         switch (groupBy.getEntityGroupBy().getFieldName()) {
+          case GROUP_BY_ECS_TASK_ID:
           case GROUP_BY_INSTANCE_ID:
           case GROUP_BY_INSTANCE_NAME:
           case GROUP_BY_INSTANCE_TYPE:
@@ -1848,6 +1860,8 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
       values = new String[] {K8S_NODE};
     } else if (entityGroupBy.contains(GROUP_BY_STORAGE)) {
       values = new String[] {K8S_PV};
+    } else if (entityGroupBy.contains(GROUP_BY_ECS_TASK_ID)) {
+      values = new String[] {ECS_TASK_EC2, ECS_TASK_FARGATE};
     } else {
       values = new String[] {K8S_POD, K8S_POD_FARGATE};
     }
