@@ -61,6 +61,7 @@ import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandE
 import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandResponse;
 import software.wings.helpers.ext.cloudformation.response.CloudFormationCreateStackResponse;
 import software.wings.helpers.ext.cloudformation.response.CloudFormationRollbackInfo;
+import software.wings.service.impl.aws.manager.AwsCFHelperServiceManagerImpl;
 import software.wings.service.impl.aws.manager.AwsHelperServiceManager;
 import software.wings.service.intfc.ActivityService;
 import software.wings.service.intfc.AppService;
@@ -82,6 +83,7 @@ import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.ManagerExecutionLogCallback;
 import software.wings.stencils.DefaultValue;
 
+import com.esotericsoftware.kryo.NotNull;
 import com.github.reinert.jjschema.Attributes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -117,6 +119,7 @@ public abstract class CloudFormationState extends State {
   @Inject protected SweepingOutputService sweepingOutputService;
   @Inject protected FeatureFlagService featureFlagService;
   @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
+  @Inject protected transient AwsCFHelperServiceManagerImpl awsCFHelperServiceManager;
 
   @FieldNameConstants.Include @Attributes(title = "Provisioner") @Getter @Setter protected String provisionerId;
   @Attributes(title = "Region")
@@ -129,7 +132,8 @@ public abstract class CloudFormationState extends State {
   @Attributes(title = "CloudFormationRoleArn") @Getter @Setter private String cloudFormationRoleArn;
   @Attributes(title = "Use Custom Stack Name") @Getter @Setter protected boolean useCustomStackName;
   @Attributes(title = "Custom Stack Name") @Getter @Setter protected String customStackName;
-
+  @Attributes(title = "Is Cloud Provider as Expression") @Getter @Setter private boolean infraCloudProviderAsExpression;
+  @Attributes(title = "Cloud Provider Expression") @NotNull @Getter @Setter private String infraCloudProviderExpression;
   private static final int IDSIZE = 8;
   private static final Set<Character> ALLOWED_CHARS =
       Sets.newHashSet(Lists.charactersOf("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"));
@@ -220,12 +224,32 @@ public abstract class CloudFormationState extends State {
       } else {
         awsConfig = getAwsConfig(awsConfigId);
       }
+    } else if (isInfraCloudProviderAsExpression()) {
+      awsConfig = resolveInfraStructureProviderFromExpression(context);
     } else {
       awsConfig = getAwsConfig(awsConfigId);
     }
     AwsHelperServiceManager.setAmazonClientSDKDefaultBackoffStrategyIfExists(context, awsConfig);
 
     return buildAndQueueDelegateTask(executionContext, cloudFormationInfrastructureProvisioner, awsConfig, activityId);
+  }
+
+  public AwsConfig resolveInfraStructureProviderFromExpression(ExecutionContext context) {
+    if (isEmpty(getInfraCloudProviderExpression())) {
+      throw new InvalidRequestException("Infrastructure Provider expression is set but value not provided", USER);
+    }
+
+    String expression = getInfraCloudProviderExpression();
+    String renderedExpression = context.renderExpression(expression);
+
+    if (isEmpty(renderedExpression)) {
+      log.error("[EMPTY_EXPRESSION] Rendered expression is: [{}]. Original Expression: [{}], Context: [{}]",
+          renderedExpression, expression, context.asMap());
+      throw new InvalidRequestException("Infrastructure provider expression is invalid", USER);
+    }
+    SettingAttribute settingAttribute =
+        settingsService.getSettingAttributeByName(context.getAccountId(), renderedExpression);
+    return (AwsConfig) settingAttribute.getValue();
   }
 
   protected void setTimeOutOnRequest(CloudFormationCommandRequest request) {
