@@ -20,6 +20,7 @@ import software.wings.beans.EnvSummary;
 import software.wings.beans.WorkflowExecution;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.infrastructure.instance.Instance;
+import software.wings.service.impl.WorkflowExecutionServiceHelper;
 import software.wings.service.impl.event.timeseries.TimeSeriesBatchEventInfo;
 import software.wings.service.impl.event.timeseries.TimeSeriesBatchEventInfo.DataPoint;
 import software.wings.service.impl.event.timeseries.TimeSeriesEventInfo;
@@ -139,6 +140,9 @@ public class UsageMetricsEventPublisher {
         && workflowExecution.getPipelineSummary().getPipelineId() != null) {
       stringData.put(EventProcessor.PARENT_PIPELINE_ID, workflowExecution.getPipelineSummary().getPipelineId());
     }
+
+    stringData.put(EventProcessor.CAUSE, WorkflowExecutionServiceHelper.getCause(workflowExecution));
+
     if (!Lists.isNullOrEmpty(workflowExecution.getWorkflowIds())) {
       listData.put(EventProcessor.WORKFLOWS, workflowExecution.getWorkflowIds());
     }

@@ -9,14 +9,7 @@ package io.harness.migrations;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.migrations.timescaledb.data.AddAccountNameInAccountTable;
-import io.harness.migrations.timescaledb.data.AddWorkflowExecutionFailureDetails;
-import io.harness.migrations.timescaledb.data.MigrateWorkflowsToTimeScaleDB;
-import io.harness.migrations.timescaledb.data.OptimizeNodeRecommendationQuery;
-import io.harness.migrations.timescaledb.data.PodInfoPartialIndexForSyncQuery;
-import io.harness.migrations.timescaledb.data.SetInstancesDeployedInDeployment;
-import io.harness.migrations.timescaledb.data.SetRollbackDurationInDeployment;
-import io.harness.migrations.timescaledb.data.UpdateEnvSvcCPInDeployment;
+import io.harness.migrations.timescaledb.data.*;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -37,6 +30,8 @@ public class TimescaleDBDataMigrationList {
         .add(Pair.of(7, AddAccountNameInAccountTable.class))
         .add(Pair.of(8, PodInfoPartialIndexForSyncQuery.class))
         .add(Pair.of(9, AddParentPipelineDataToDeployment.class))
+        .add(Pair.of(10, AddWorkflowExecutionFailureDetails.class))
+        .add(Pair.of(11, SyncWorkflowExecutionDataFromMongo.class))
         .build();
   }
 }

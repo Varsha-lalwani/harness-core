@@ -34,10 +34,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.Key;
@@ -109,37 +106,49 @@ public class AddWorkflowExecutionFailureDetails implements TimeScaleDBDataMigrat
 
   private void bulkSetFailureDetails(String accountId, String collectionName, String appId) {
     log.info(debugLine + "Migrating all workflowExecutions for account " + accountId);
-    long executionsCount = createQuery(accountId, appId).count();
-    List<WorkflowExecution> workflowExecutions = createQuery(accountId, appId).limit(1000).asList();
-    List<WorkflowExecution> workflowExecutionsWithFailureDetails =
-        workflowExecutionService.getWorkflowExecutionsWithFailureDetails(appId, workflowExecutions);
+
+    final DBCollection collection = wingsPersistence.getCollection(DEFAULT_STORE, collectionName);
+
+    BasicDBObject objectsToBeUpdated =
+            new BasicDBObject("accountId", accountId)
+                    .append("appId", appId)
+                    .append(WorkflowExecutionKeys.status, new BasicDBObject("$in", ExecutionStatus.resumableStatuses.stream().map(Enum::name).collect(Collectors.toList())));
+    BasicDBObject projection = new BasicDBObject("_id", Boolean.TRUE);
+    DBCursor dataRecords = collection.find(objectsToBeUpdated, projection)
+            .sort(new BasicDBObject().append(WorkflowExecutionKeys.createdAt, -1))
+            .limit(5);
+
+    List<WorkflowExecution> workflowExecutions = new ArrayList<>();
 
     int updated = 0;
-    int batched = 0;
-    int offset = 0;
     try (Connection connection = timeScaleDBService.getDBConnection();
          PreparedStatement updateStatement = connection.prepareStatement(update_statement)) {
-      while (workflowExecutionsWithFailureDetails.iterator().hasNext()) {
-        WorkflowExecution workflowExecution = workflowExecutionsWithFailureDetails.iterator().next();
-
-        updateStatement.setString(1, workflowExecution.getFailureDetails());
-        updateStatement.setString(2, workflowExecution.getFailedStepNames());
-        updateStatement.setString(3, workflowExecution.getFailedStepTypes());
-        updateStatement.setString(4, workflowExecution.getUuid());
-        updateStatement.addBatch();
+      while (dataRecords.hasNext()) {
+        DBObject record = dataRecords.next();
+        String uuId = (String) record.get("_id");
+        workflowExecutions.add(WorkflowExecution.builder().uuid(uuId).build());
         updated++;
-        batched++;
 
-        if (updated != 0 && updated % 1000 == 0 && updated < executionsCount) {
+        if (updated != 0 && updated %5 == 0) {
+          List<WorkflowExecution> workflowExecutionsWithFailureDetails = workflowExecutionService.getWorkflowExecutionsWithFailureDetails(appId, workflowExecutions);
+          for(WorkflowExecution workflowExecution: workflowExecutionsWithFailureDetails){
+            updateStatement.setString(1, workflowExecution.getFailureDetails());
+            updateStatement.setString(2, workflowExecution.getFailedStepNames());
+            updateStatement.setString(3, workflowExecution.getFailedStepTypes());
+            updateStatement.setString(4, workflowExecution.getUuid());
+            updateStatement.addBatch();
+          }
           int[] affectedRecords = updateStatement.executeBatch();
           sleep(Duration.ofMillis(100));
-          workflowExecutionsWithFailureDetails = createQuery(accountId, appId).limit(1000).offset(updated).asList();
-          batched = 0;
+          dataRecords = collection.find(objectsToBeUpdated, projection)
+                  .sort(new BasicDBObject().append(WorkflowExecutionKeys.createdAt, -1))
+                  .skip(updated)
+                  .limit(5);
           log.info(debugLine + "Number of records updated for {} is: {}", collectionName, updated);
         }
       }
 
-      if (batched != 0) {
+      if (updated %5!=0) {
         int[] affectedRecords = updateStatement.executeBatch();
         log.info(debugLine + "Number of records updated for {} is: {}", collectionName, updated);
       }
@@ -148,15 +157,6 @@ public class AddWorkflowExecutionFailureDetails implements TimeScaleDBDataMigrat
               + "Exception occurred migrating parent pipeline id to timescale deployments for accountId {}, appId {}",
           accountId, appId, e);
     }
-  }
-
-  private Query<WorkflowExecution> createQuery(String accountId, String appId) {
-    return wingsPersistence.createQuery(WorkflowExecution.class, excludeAuthority)
-        .filter(WorkflowExecutionKeys.accountId, accountId)
-        .filter(WorkflowExecutionKeys.appId, appId)
-        .field(WorkflowExecutionKeys.status)
-        .in(ExecutionStatus.resumableStatuses)
-        .order(Sort.descending(WorkflowExecutionKeys.createdAt));
   }
 
   private void updateWorkflowExecutionWithFailureDetails(WorkflowExecution workflowExecution) {
