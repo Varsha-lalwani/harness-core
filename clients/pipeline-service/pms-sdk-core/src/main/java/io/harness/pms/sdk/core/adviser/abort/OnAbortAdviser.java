@@ -9,6 +9,7 @@ package io.harness.pms.sdk.core.adviser.abort;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.pms.contracts.execution.Status.ABORTED;
+import static io.harness.pms.contracts.execution.Status.INPUT_WAITING;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -46,8 +47,8 @@ public class OnAbortAdviser implements Adviser {
   @Override
   public boolean canAdvise(AdvisingEvent advisingEvent) {
     OnAbortAdviserParameters adviserParameters = extractParameters(advisingEvent);
-    boolean canAdvise =
-        StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus()) || ABORTED == advisingEvent.getToStatus();
+    boolean canAdvise = StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus())
+        || ABORTED == advisingEvent.getToStatus() || advisingEvent.getFromStatus() == INPUT_WAITING;
     List<FailureType> failureTypesList = getAllFailureTypes(advisingEvent);
     if (adviserParameters != null && !isEmpty(failureTypesList)) {
       return canAdvise && !Collections.disjoint(adviserParameters.getApplicableFailureTypes(), failureTypesList);

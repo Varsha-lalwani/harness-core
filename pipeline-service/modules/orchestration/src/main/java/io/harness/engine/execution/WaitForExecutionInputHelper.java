@@ -11,16 +11,35 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.OrchestrationPublisherName;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.pms.data.PmsEngineExpressionService;
+import io.harness.engine.utils.OrchestrationUtils;
 import io.harness.execution.ExecutionInputInstance;
+import io.harness.execution.NodeExecution;
+import io.harness.expression.EngineExpressionEvaluator;
+import io.harness.plan.Node;
+import io.harness.plan.PlanNode;
+import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.execution.utils.AmbianceUtils;
+import io.harness.pms.sdk.core.execution.NodeExecutionUtils;
+import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
+import io.harness.pms.timeout.SdkTimeoutTrackerParameters;
+import io.harness.serializer.KryoSerializer;
+import io.harness.timeout.TimeoutParameters;
+import io.harness.timeout.contracts.TimeoutObtainment;
 import io.harness.waiter.WaitNotifyEngine;
 
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import java.time.Duration;
 import java.util.EnumSet;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(PIPELINE)
@@ -31,23 +50,48 @@ public class WaitForExecutionInputHelper {
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private ExecutionInputService executionInputService;
   @Inject @Named(OrchestrationPublisherName.PUBLISHER_NAME) private String publisherName;
-  public void waitForExecutionInput(Ambiance ambiance, String nodeExecutionId, String executionInputTemplate) {
+
+  @Inject private KryoSerializer kryoSerializer;
+  @Inject private PmsEngineExpressionService pmsEngineExpressionService;
+  @Inject private PmsFeatureFlagService pmsFeatureFlagService;
+
+  public boolean waitForExecutionInput(Ambiance ambiance, String nodeExecutionId, PlanNode node) {
+    if (!pmsFeatureFlagService.isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.NG_EXECUTION_INPUT)
+        || EmptyPredicate.isEmpty(node.getExecutionInputTemplate())) {
+      return false;
+    }
+    ExecutionInputInstance instance = executionInputService.getExecutionInputInstance(nodeExecutionId);
+    // If instance is already there then that means we have already processed the user input.
+    if (instance != null) {
+      return false;
+    }
     Long currentTime = System.currentTimeMillis();
     String inputInstanceId = UUIDGenerator.generateUuid();
+    EngineExpressionEvaluator evaluator = pmsEngineExpressionService.prepareExpressionEvaluator(ambiance);
+    long timeout = 0;
+    // Here we check what is the timeout of the step and add the same timeout for callback.
+    for (TimeoutObtainment timeoutObtainment : node.getTimeoutObtainments()) {
+      TimeoutParameters timeoutParameters =
+          OrchestrationUtils.buildTimeoutParameters(kryoSerializer, evaluator, timeoutObtainment);
+      timeout = timeoutParameters.getTimeoutMillis();
+    }
+
     WaitForExecutionInputCallback waitForExecutionInputCallback = WaitForExecutionInputCallback.builder()
                                                                       .nodeExecutionId(nodeExecutionId)
                                                                       .ambiance(ambiance)
                                                                       .inputInstanceId(inputInstanceId)
                                                                       .build();
-    waitNotifyEngine.waitForAllOn(publisherName, waitForExecutionInputCallback, inputInstanceId);
+    waitNotifyEngine.waitForAllOnInList(
+        publisherName, waitForExecutionInputCallback, Lists.newArrayList(inputInstanceId), Duration.ofMillis(timeout));
     executionInputService.save(ExecutionInputInstance.builder()
                                    .inputInstanceId(inputInstanceId)
                                    .nodeExecutionId(nodeExecutionId)
-                                   .template(executionInputTemplate)
+                                   .template(node.getExecutionInputTemplate())
                                    .createdAt(currentTime)
                                    .validUntil(currentTime + MILLIS_IN_SIX_MONTHS)
                                    .build());
     // Updating the current node status. InputWaitingStatusUpdateHandler will update status of parent recursively.
     nodeExecutionService.updateStatusWithOps(nodeExecutionId, Status.INPUT_WAITING, null, EnumSet.noneOf(Status.class));
+    return true;
   }
 }

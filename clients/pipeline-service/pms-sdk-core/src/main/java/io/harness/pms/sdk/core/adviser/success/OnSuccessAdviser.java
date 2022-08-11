@@ -14,6 +14,7 @@ import io.harness.pms.contracts.advisers.AdviseType;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.advisers.NextStepAdvise;
+import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.sdk.core.adviser.Adviser;
 import io.harness.pms.sdk.core.adviser.AdvisingEvent;
@@ -42,6 +43,7 @@ public class OnSuccessAdviser implements Adviser {
 
   @Override
   public boolean canAdvise(AdvisingEvent advisingEvent) {
-    return StatusUtils.positiveStatuses().contains(advisingEvent.getToStatus());
+    return StatusUtils.positiveStatuses().contains(advisingEvent.getToStatus())
+        || advisingEvent.getFromStatus() == Status.INPUT_WAITING;
   }
 }

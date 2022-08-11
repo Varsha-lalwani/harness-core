@@ -15,6 +15,7 @@ import io.harness.pms.contracts.advisers.AdviseType;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.advisers.IgnoreFailureAdvise;
+import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.sdk.core.adviser.Adviser;
@@ -46,7 +47,8 @@ public class IgnoreAdviser implements Adviser {
   @Override
   public boolean canAdvise(AdvisingEvent advisingEvent) {
     IgnoreAdviserParameters parameters = extractParameters(advisingEvent);
-    boolean canAdvise = StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus());
+    boolean canAdvise = StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus())
+        || advisingEvent.getFromStatus() == Status.INPUT_WAITING;
     List<FailureType> failureTypesList = getAllFailureTypes(advisingEvent);
     if (parameters != null && !isEmpty(failureTypesList)) {
       return canAdvise && !Collections.disjoint(parameters.getApplicableFailureTypes(), failureTypesList);

@@ -17,6 +17,7 @@ import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.advisers.InterventionWaitAdvise;
 import io.harness.pms.contracts.commons.RepairActionCode;
+import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.sdk.core.adviser.Adviser;
@@ -58,7 +59,8 @@ public class ManualInterventionAdviser implements Adviser {
   @Override
   public boolean canAdvise(AdvisingEvent advisingEvent) {
     boolean canAdvise = StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus())
-        && advisingEvent.getFromStatus() != INTERVENTION_WAITING;
+        && advisingEvent.getFromStatus() != INTERVENTION_WAITING
+        && advisingEvent.getFromStatus() == Status.INPUT_WAITING;
     ManualInterventionAdviserParameters parameters = extractParameters(advisingEvent);
     List<FailureType> failureTypesList = getAllFailureTypes(advisingEvent);
     if (parameters != null && !isEmpty(failureTypesList)) {

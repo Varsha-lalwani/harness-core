@@ -12,8 +12,12 @@ import static io.harness.pms.yaml.validation.RuntimeInputValuesValidator.validat
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.engine.OrchestrationEngine;
+import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.ExecutionInputInstance;
+import io.harness.execution.NodeExecution;
+import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.merger.YamlConfig;
 import io.harness.pms.merger.fqn.FQN;
 import io.harness.pms.merger.helpers.MergeHelper;
@@ -24,6 +28,7 @@ import io.harness.waiter.WaitNotifyEngine;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -41,6 +46,8 @@ public class ExecutionInputServiceImpl implements ExecutionInputService {
   @Inject WaitNotifyEngine waitNotifyEngine;
   @Inject ExecutionInputRepository executionInputRepository;
   @Inject ExecutionInputServiceHelper executionInputServiceHelper;
+  @Inject NodeExecutionService nodeExecutionService;
+  @Inject OrchestrationEngine engine;
   @Override
   // TODO(BRIJESH): Use lock so that only one input can be processed and only one doneWith should be called.
   public boolean continueExecution(String nodeExecutionId, String executionInputYaml) {
@@ -53,6 +60,21 @@ public class ExecutionInputServiceImpl implements ExecutionInputService {
     }
     waitNotifyEngine.doneWith(executionInputInstance.getInputInstanceId(),
         ExecutionInputData.builder().inputInstanceId(executionInputInstance.getInputInstanceId()).build());
+    return true;
+  }
+
+  @Override
+  public boolean continueWithDefault(String nodeExecutionId) {
+    try {
+      mergeUserInputInTemplate(nodeExecutionId, "");
+    } catch (NoSuchElementException ex) {
+      log.error("User input could not be processed for nodeExecutionId {}", nodeExecutionId, ex);
+      return false;
+    }
+
+    NodeExecution nodeExecution = nodeExecutionService.updateStatusWithOps(
+        nodeExecutionId, Status.QUEUED, null, EnumSet.of(Status.INPUT_WAITING));
+    engine.startNodeExecution(nodeExecution.getAmbiance());
     return true;
   }
 
@@ -80,6 +102,9 @@ public class ExecutionInputServiceImpl implements ExecutionInputService {
     Optional<ExecutionInputInstance> optional = executionInputRepository.findByNodeExecutionId(nodeExecutionId);
     if (optional.isPresent()) {
       ExecutionInputInstance executionInputInstance = optional.get();
+      if (EmptyPredicate.isEmpty(executionInputYaml)) {
+        executionInputYaml = executionInputInstance.getTemplate();
+      }
       executionInputInstance.setUserInput(executionInputYaml);
 
       Map<FQN, String> invalidFQNsInInputSet =
