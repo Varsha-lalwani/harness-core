@@ -34,6 +34,7 @@ import io.harness.shell.ShellExecutorConfig;
 import software.wings.core.winrm.executors.WinRmExecutor;
 
 import com.google.inject.Inject;
+import java.util.Collections;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -103,11 +104,12 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
     AbstractScriptExecutor executor =
         shellExecutorFactory.getExecutor(config, getLogStreamingTaskClient(), commandUnitsProgress);
 
-    CommandExecutionStatus commandExecutionStatus =
-        executor.executeCommandString(getInitCommand(taskParameters.getWorkingDirectory()), true);
+    ExecuteCommandResponse executeCommandResponse = executor.executeCommandString("echo test", Collections.emptyList());
+
     return ShellScriptTaskResponseNG.builder()
-        .status(commandExecutionStatus)
-        .errorMessage(getErrorMessage(commandExecutionStatus))
+        .executeCommandResponse(executeCommandResponse)
+        .status(executeCommandResponse.getStatus())
+        .errorMessage(getErrorMessage(executeCommandResponse.getStatus()))
         .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
         .build();
   }

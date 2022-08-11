@@ -68,8 +68,6 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
   @Override
   public TaskRequest obtainTask(
       Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage) {
-    ILogStreamingStepClient logStreamingStepClient = logStreamingStepClientFactory.getLogStreamingStepClient(ambiance);
-    logStreamingStepClient.openStream(ShellScriptTaskNG.COMMAND_UNIT);
     ShellScriptStepParameters shellScriptStepParameters = (ShellScriptStepParameters) stepParameters.getSpec();
     TaskParameters taskParameters =
         shellScriptHelperService.buildShellScriptTaskParametersNG(ambiance, shellScriptStepParameters);
@@ -86,6 +84,8 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
 
   private TaskRequest obtainBashTask(Ambiance ambiance, StepElementParameters stepParameters,
       ShellScriptStepParameters shellScriptStepParameters, TaskParameters taskParameters) {
+    ILogStreamingStepClient logStreamingStepClient = logStreamingStepClientFactory.getLogStreamingStepClient(ambiance);
+    logStreamingStepClient.openStream(ShellScriptTaskNG.COMMAND_UNIT);
     TaskData taskData =
         TaskData.builder()
             .async(true)
@@ -102,6 +102,13 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
 
   private TaskRequest obtainPowerShellTask(Ambiance ambiance, StepElementParameters stepParameters,
       ShellScriptStepParameters shellScriptStepParameters, TaskParameters taskParameters) {
+    ILogStreamingStepClient logStreamingStepClient = logStreamingStepClientFactory.getLogStreamingStepClient(ambiance);
+
+    List<String> units = Arrays.asList(WinRmShellScriptTaskNG.INIT_UNIT, WinRmShellScriptTaskNG.COMMAND_UNIT);
+    for (String unit : units) {
+      logStreamingStepClient.openStream(unit);
+    }
+
     TaskData taskData =
         TaskData.builder()
             .async(true)
@@ -109,10 +116,8 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
             .parameters(new Object[] {taskParameters})
             .timeout(StepUtils.getTimeoutMillis(stepParameters.getTimeout(), StepUtils.DEFAULT_STEP_TIMEOUT))
             .build();
-    return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
-        CollectionUtils.emptyIfNull(StepUtils.generateLogKeys(StepUtils.generateLogAbstractions(ambiance),
-            Arrays.asList(WinRmShellScriptTaskNG.INIT_UNIT, WinRmShellScriptTaskNG.COMMAND_UNIT))),
-        Arrays.asList(WinRmShellScriptTaskNG.INIT_UNIT, WinRmShellScriptTaskNG.COMMAND_UNIT), null,
+    return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer, units,
+        TaskType.WIN_RM_SHELL_SCRIPT_TASK_NG.getDisplayName(),
         TaskSelectorYaml.toTaskSelector(shellScriptStepParameters.getDelegateSelectors()),
         stepHelper.getEnvironmentType(ambiance));
   }
@@ -169,7 +174,7 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
     } finally {
       ILogStreamingStepClient logStreamingStepClient =
           logStreamingStepClientFactory.getLogStreamingStepClient(ambiance);
-      logStreamingStepClient.closeStream(ShellScriptTaskNG.COMMAND_UNIT);
+      logStreamingStepClient.closeAllOpenStreamsWithPrefix(StepUtils.generateLogKeys(ambiance, emptyList()).get(0));
     }
   }
 }
