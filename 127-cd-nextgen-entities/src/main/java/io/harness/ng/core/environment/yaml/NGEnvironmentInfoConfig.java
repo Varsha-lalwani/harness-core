@@ -64,7 +64,7 @@ public class NGEnvironmentInfoConfig {
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) String description;
   @ApiModelProperty(required = true) EnvironmentType type;
   @Valid List<NGVariable> variables;
-  @JsonProperty("overrides") NGEnvironmentGlobalOverride ngEnvironmentGLobalOverride;
+  @JsonProperty("overrides") NGEnvironmentGlobalOverride ngEnvironmentGlobalOverride;
   @AssertTrue(message = "duplicate variables are present. Please remove them and retry")
   private boolean isValid() {
     try {

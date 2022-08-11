@@ -11,7 +11,9 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.Visitable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,4 +36,13 @@ public class NGEnvironmentGlobalOverride implements Visitable {
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
   String uuid;
+
+  @Override
+  public VisitableChildren getChildrenToWalk() {
+    VisitableChildren children = VisitableChildren.builder().build();
+    if (EmptyPredicate.isNotEmpty(manifests)) {
+      manifests.forEach(manifest -> children.add("manifests", manifest));
+    }
+    return children;
+  }
 }

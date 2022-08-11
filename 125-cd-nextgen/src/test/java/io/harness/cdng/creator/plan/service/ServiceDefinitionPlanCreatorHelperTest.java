@@ -561,7 +561,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
             .ngEnvironmentInfoConfig(
                 NGEnvironmentInfoConfig.builder()
                     .identifier(ENV_REF)
-                    .ngEnvironmentGLobalOverride(NGEnvironmentGlobalOverride.builder()
+                    .ngEnvironmentGlobalOverride(NGEnvironmentGlobalOverride.builder()
                                                      .manifests(Collections.singletonList(valuesManifest3))
                                                      .build())
                     .build())
@@ -599,7 +599,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
         NGEnvironmentConfig.builder()
             .ngEnvironmentInfoConfig(NGEnvironmentInfoConfig.builder()
                                          .identifier(ENV_REF)
-                                         .ngEnvironmentGLobalOverride(NGEnvironmentGlobalOverride.builder().build())
+                                         .ngEnvironmentGlobalOverride(NGEnvironmentGlobalOverride.builder().build())
                                          .build())
             .build();
     // service overrides manifest type validation
@@ -611,7 +611,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
 
     // environment global overrides manifest type validation
     serviceOverrideConfig.getServiceOverrideInfoConfig().setManifests(EMPTY_LIST);
-    environmentConfig.getNgEnvironmentInfoConfig().setNgEnvironmentGLobalOverride(
+    environmentConfig.getNgEnvironmentInfoConfig().setNgEnvironmentGlobalOverride(
         NGEnvironmentGlobalOverride.builder().manifests(Arrays.asList(k8sManifest, valuesManifest3)).build());
     assertThatThrownBy(()
                            -> ServiceDefinitionPlanCreatorHelper.prepareFinalManifests(
@@ -646,7 +646,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
         NGEnvironmentConfig.builder()
             .ngEnvironmentInfoConfig(NGEnvironmentInfoConfig.builder()
                                          .identifier(ENV_REF)
-                                         .ngEnvironmentGLobalOverride(NGEnvironmentGlobalOverride.builder().build())
+                                         .ngEnvironmentGlobalOverride(NGEnvironmentGlobalOverride.builder().build())
                                          .build())
             .build();
 
@@ -660,7 +660,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
 
     // environment global overrides manifest identifier duplication
     serviceOverrideConfig.getServiceOverrideInfoConfig().setManifests(EMPTY_LIST);
-    environmentConfig.getNgEnvironmentInfoConfig().setNgEnvironmentGLobalOverride(
+    environmentConfig.getNgEnvironmentInfoConfig().setNgEnvironmentGlobalOverride(
         NGEnvironmentGlobalOverride.builder().manifests(Arrays.asList(valuesManifest1, valuesManifest2)).build());
     assertThatThrownBy(()
                            -> ServiceDefinitionPlanCreatorHelper.prepareFinalManifests(
@@ -693,7 +693,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
         NGEnvironmentConfig.builder()
             .ngEnvironmentInfoConfig(NGEnvironmentInfoConfig.builder()
                                          .identifier(ENV_REF)
-                                         .ngEnvironmentGLobalOverride(NGEnvironmentGlobalOverride.builder().build())
+                                         .ngEnvironmentGlobalOverride(NGEnvironmentGlobalOverride.builder().build())
                                          .build())
             .build();
 
@@ -725,7 +725,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
             .ngEnvironmentInfoConfig(
                 NGEnvironmentInfoConfig.builder()
                     .identifier(ENV_REF)
-                    .ngEnvironmentGLobalOverride(
+                    .ngEnvironmentGlobalOverride(
                         NGEnvironmentGlobalOverride.builder().manifests(singletonList(valuesManifest2)).build())
                     .build())
             .build();
@@ -757,7 +757,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
         NGEnvironmentConfig.builder()
             .ngEnvironmentInfoConfig(NGEnvironmentInfoConfig.builder()
                                          .identifier(ENV_REF)
-                                         .ngEnvironmentGLobalOverride(NGEnvironmentGlobalOverride.builder().build())
+                                         .ngEnvironmentGlobalOverride(NGEnvironmentGlobalOverride.builder().build())
                                          .build())
             .build();
 
@@ -771,7 +771,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
 
     // environment global overrides manifest identifier duplication
     serviceOverrideConfig.getServiceOverrideInfoConfig().setManifests(EMPTY_LIST);
-    environmentConfig.getNgEnvironmentInfoConfig().setNgEnvironmentGLobalOverride(
+    environmentConfig.getNgEnvironmentInfoConfig().setNgEnvironmentGlobalOverride(
         NGEnvironmentGlobalOverride.builder().manifests(Arrays.asList(valuesManifest1, valuesManifest1)).build());
     assertThatThrownBy(()
                            -> ServiceDefinitionPlanCreatorHelper.prepareFinalManifests(
