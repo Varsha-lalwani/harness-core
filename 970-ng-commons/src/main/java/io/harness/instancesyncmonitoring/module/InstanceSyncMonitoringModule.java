@@ -9,6 +9,7 @@ package io.harness.instancesyncmonitoring.module;
 
 import io.harness.instancesyncmonitoring.service.InstanceSyncMonitoringService;
 import io.harness.instancesyncmonitoring.service.InstanceSyncMonitoringServiceImpl;
+import io.harness.metrics.modules.MetricsModule;
 
 import com.google.inject.AbstractModule;
 import lombok.NoArgsConstructor;
@@ -17,6 +18,7 @@ import lombok.NoArgsConstructor;
 public class InstanceSyncMonitoringModule extends AbstractModule {
   @Override
   protected void configure() {
+    install(new MetricsModule());
     bind(InstanceSyncMonitoringService.class).to(InstanceSyncMonitoringServiceImpl.class);
   }
 }
