@@ -607,7 +607,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
                            -> ServiceDefinitionPlanCreatorHelper.prepareFinalManifests(
                                serviceInfoConfig, serviceOverrideConfig, environmentConfig))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage("Unsupported Manifest Types: [K8sManifest] found for SERVICE_OVERRIDES");
+        .hasMessage("Unsupported Manifest Types: [K8sManifest] found for service overrides");
 
     // environment global overrides manifest type validation
     serviceOverrideConfig.getServiceOverrideInfoConfig().setManifests(EMPTY_LIST);
@@ -617,7 +617,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
                            -> ServiceDefinitionPlanCreatorHelper.prepareFinalManifests(
                                serviceInfoConfig, serviceOverrideConfig, environmentConfig))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage("Unsupported Manifest Types: [K8sManifest] found for ENVIRONMENT_GLOBAL_OVERRIDES");
+        .hasMessage("Unsupported Manifest Types: [K8sManifest] found for environment global overrides");
   }
 
   @Test
@@ -656,7 +656,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
                                serviceInfoConfig, serviceOverrideConfig, environmentConfig))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage(
-            "Found duplicate manifest identifiers [values_test1] in SERVICE_OVERRIDES for service [SVC_REF] and environment [ENV_REF]");
+            "Found duplicate manifest identifiers [values_test1] in service overrides for service [SVC_REF] and environment [ENV_REF]");
 
     // environment global overrides manifest identifier duplication
     serviceOverrideConfig.getServiceOverrideInfoConfig().setManifests(EMPTY_LIST);
@@ -667,7 +667,7 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
                                serviceInfoConfig, serviceOverrideConfig, environmentConfig))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage(
-            "Found duplicate manifest identifiers [values_test1,values_test2] in ENVIRONMENT_GLOBAL_OVERRIDES for service [SVC_REF] and environment [ENV_REF]");
+            "Found duplicate manifest identifiers [values_test1,values_test2] in environment global overrides for service [SVC_REF] and environment [ENV_REF]");
   }
 
   @Test
@@ -734,50 +734,5 @@ public class ServiceDefinitionPlanCreatorHelperTest extends CategoryTest {
         serviceInfoConfig, serviceOverrideConfig, environmentConfig);
     assertThat(finalManifests).hasSize(2);
     assertThat(finalManifests).containsExactly(valuesManifest2, valuesManifest1);
-  }
-
-  @Test
-  @Owner(developers = TATHAGAT)
-  @Category(UnitTests.class)
-  public void testPrepareFinalManifestsDuplicateManifestsWithin() {
-    final NGServiceV2InfoConfig serviceInfoConfig =
-        NGServiceV2InfoConfig.builder()
-            .identifier(SVC_REF)
-            .serviceDefinition(ServiceDefinition.builder().serviceSpec(KubernetesServiceSpec.builder().build()).build())
-            .build();
-    final NGServiceOverrideConfig serviceOverrideConfig =
-        NGServiceOverrideConfig.builder()
-            .serviceOverrideInfoConfig(NGServiceOverrideInfoConfig.builder()
-                                           .serviceRef(SVC_REF)
-                                           .environmentRef(ENV_REF)
-                                           .manifests(Arrays.asList(valuesManifest1, valuesManifest1))
-                                           .build())
-            .build();
-    final NGEnvironmentConfig environmentConfig =
-        NGEnvironmentConfig.builder()
-            .ngEnvironmentInfoConfig(NGEnvironmentInfoConfig.builder()
-                                         .identifier(ENV_REF)
-                                         .ngEnvironmentGlobalOverride(NGEnvironmentGlobalOverride.builder().build())
-                                         .build())
-            .build();
-
-    // service overrides manifest identifier duplication
-    assertThatThrownBy(()
-                           -> ServiceDefinitionPlanCreatorHelper.prepareFinalManifests(
-                               serviceInfoConfig, serviceOverrideConfig, environmentConfig))
-        .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Found duplicate manifest identifiers [values_test1] in SERVICE_OVERRIDES for service [SVC_REF] and environment [ENV_REF]");
-
-    // environment global overrides manifest identifier duplication
-    serviceOverrideConfig.getServiceOverrideInfoConfig().setManifests(EMPTY_LIST);
-    environmentConfig.getNgEnvironmentInfoConfig().setNgEnvironmentGlobalOverride(
-        NGEnvironmentGlobalOverride.builder().manifests(Arrays.asList(valuesManifest1, valuesManifest1)).build());
-    assertThatThrownBy(()
-                           -> ServiceDefinitionPlanCreatorHelper.prepareFinalManifests(
-                               serviceInfoConfig, serviceOverrideConfig, environmentConfig))
-        .isInstanceOf(InvalidRequestException.class)
-        .hasMessage(
-            "Found duplicate manifest identifiers [values_test1] in ENVIRONMENT_GLOBAL_OVERRIDES for service [SVC_REF] and environment [ENV_REF]");
   }
 }
