@@ -99,6 +99,7 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
                                            .workingDirectory("/tmp")
                                            .environment(taskParameters.getEnvironmentVariables())
                                            .scriptType(ScriptType.POWERSHELL)
+                                           .closeLogStream(true)
                                            .build();
 
     AbstractScriptExecutor executor =
@@ -123,6 +124,7 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
                                            .workingDirectory(taskParameters.getWorkingDirectory())
                                            .environment(taskParameters.getEnvironmentVariables())
                                            .scriptType(ScriptType.POWERSHELL)
+                                           //        .closeLogStream(true)
                                            .build();
 
     AbstractScriptExecutor executor =
