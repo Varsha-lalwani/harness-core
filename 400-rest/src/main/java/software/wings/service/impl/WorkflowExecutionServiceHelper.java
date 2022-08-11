@@ -7,33 +7,24 @@
 
 package software.wings.service.impl;
 
-import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.beans.OrchestrationWorkflowType.BUILD;
-import static io.harness.beans.WorkflowType.ORCHESTRATION;
-import static io.harness.beans.WorkflowType.PIPELINE;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.exception.WingsException.USER;
-import static io.harness.expression.ExpressionEvaluator.matchesVariablePattern;
-import static io.harness.validation.Validator.notNullCheck;
-
-import static software.wings.beans.VariableType.ENTITY;
-
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-
-import com.google.common.collect.ImmutableMap;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.beans.*;
+import io.harness.beans.CreatedByType;
+import io.harness.beans.ExecutionCause;
+import io.harness.beans.ExecutionStatus;
+import io.harness.beans.OrchestrationWorkflowType;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.ff.FeatureFlagService;
-
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.Sort;
 import software.wings.api.CanaryWorkflowStandardParams;
 import software.wings.api.DeploymentType;
 import software.wings.api.WorkflowElement;
@@ -52,78 +43,60 @@ import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.deployment.WorkflowVariablesMetadata;
 import software.wings.dl.WingsPersistence;
-import software.wings.graphql.datafetcher.user.UserController;
-import software.wings.graphql.schema.query.QLExecutionQueryParameters;
-import software.wings.graphql.schema.query.QLTriggerQueryParameters;
-import software.wings.graphql.schema.type.*;
-import software.wings.service.intfc.InfrastructureDefinitionService;
-import software.wings.service.intfc.InfrastructureMappingService;
-import software.wings.service.intfc.PipelineService;
-import software.wings.service.intfc.StateExecutionService;
-import software.wings.service.intfc.WorkflowExecutionService;
-import software.wings.service.intfc.WorkflowService;
+import software.wings.service.intfc.*;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.StateExecutionInstance.StateExecutionInstanceKeys;
 import software.wings.sm.StateMachine;
 import software.wings.sm.WorkflowStandardParams;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.mongodb.morphia.query.Query;
-import org.mongodb.morphia.query.Sort;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.OrchestrationWorkflowType.BUILD;
+import static io.harness.beans.WorkflowType.ORCHESTRATION;
+import static io.harness.beans.WorkflowType.PIPELINE;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.exception.WingsException.USER;
+import static io.harness.expression.ExpressionEvaluator.matchesVariablePattern;
+import static io.harness.validation.Validator.notNullCheck;
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static software.wings.beans.VariableType.ENTITY;
 
 @OwnedBy(CDC)
 @Singleton
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
 public class WorkflowExecutionServiceHelper {
-  @Inject
-  private WorkflowExecutionService workflowExecutionService;
-  @Inject
-  private WorkflowService workflowService;
-  @Inject
-  private InfrastructureDefinitionService infrastructureDefinitionService;
-  @Inject
-  private InfrastructureMappingService infrastructureMappingService;
-  @Inject
-  private PipelineService pipelineService;
-  @Inject
-  private FeatureFlagService featureFlagService;
-  @Inject
-  private WingsPersistence wingsPersistence;
-  @Inject
-  private StateExecutionService stateExecutionService;
+  @Inject private WorkflowExecutionService workflowExecutionService;
+  @Inject private WorkflowService workflowService;
+  @Inject private InfrastructureDefinitionService infrastructureDefinitionService;
+  @Inject private InfrastructureMappingService infrastructureMappingService;
+  @Inject private PipelineService pipelineService;
+  @Inject private FeatureFlagService featureFlagService;
+  @Inject private WingsPersistence wingsPersistence;
+  @Inject private StateExecutionService stateExecutionService;
 
   public WorkflowVariablesMetadata fetchWorkflowVariables(
-          String appId, ExecutionArgs executionArgs, String workflowExecutionId) {
+      String appId, ExecutionArgs executionArgs, String workflowExecutionId) {
     List<Variable> workflowVariables = fetchWorkflowVariables(appId, executionArgs);
     if (isBlank(workflowExecutionId) || isEmpty(workflowVariables)) {
       return new WorkflowVariablesMetadata(workflowVariables);
     }
     WorkflowExecution workflowExecution = workflowExecutionService.getWorkflowExecution(appId, workflowExecutionId);
     if (workflowExecution == null || workflowExecution.getExecutionArgs() == null
-            || executionArgs.getWorkflowType() != workflowExecution.getWorkflowType()
-            || (ORCHESTRATION == workflowExecution.getWorkflowType()
+        || executionArgs.getWorkflowType() != workflowExecution.getWorkflowType()
+        || (ORCHESTRATION == workflowExecution.getWorkflowType()
             && !executionArgs.getOrchestrationId().equals(workflowExecution.getWorkflowId()))
-            || (PIPELINE == workflowExecution.getWorkflowType()
+        || (PIPELINE == workflowExecution.getWorkflowType()
             && (workflowExecution.getPipelineExecution() == null
-            || workflowExecution.getPipelineExecution().getPipeline() == null
-            || !executionArgs.getPipelineId().equals(workflowExecution.getPipelineExecution().getPipelineId())))) {
+                || workflowExecution.getPipelineExecution().getPipeline() == null
+                || !executionArgs.getPipelineId().equals(workflowExecution.getPipelineExecution().getPipelineId())))) {
       return new WorkflowVariablesMetadata(workflowVariables);
     }
 
@@ -158,7 +131,7 @@ public class WorkflowExecutionServiceHelper {
 
   @NotNull
   public WorkflowExecution obtainExecution(Workflow workflow, StateMachine stateMachine, String resolveEnvId,
-                                           String pipelineExecutionId, @NotNull ExecutionArgs executionArgs) {
+      String pipelineExecutionId, @NotNull ExecutionArgs executionArgs) {
     WorkflowExecution workflowExecution = WorkflowExecution.builder().build();
     workflowExecution.setAppId(workflow.getAppId());
     workflowExecution.setAccountId(workflow.getAccountId());
@@ -186,48 +159,48 @@ public class WorkflowExecutionServiceHelper {
       if (services.size() == 1) {
         Service targetService = services.get(0);
         boolean useSweepingOutput = targetService.getDeploymentType() == DeploymentType.SSH
-                || targetService.getDeploymentType() == DeploymentType.WINRM;
+            || targetService.getDeploymentType() == DeploymentType.WINRM;
         workflowExecution.setUseSweepingOutputs(useSweepingOutput);
       }
     }
 
     workflowExecution.setInfraDefinitionIds(
-            workflowService.getResolvedInfraDefinitionIds(workflow, workflowVariables, resolveEnvId));
+        workflowService.getResolvedInfraDefinitionIds(workflow, workflowVariables, resolveEnvId));
     workflowExecution.setCloudProviderIds(infrastructureDefinitionService.fetchCloudProviderIds(
-            workflow.getAppId(), workflowExecution.getInfraDefinitionIds()));
+        workflow.getAppId(), workflowExecution.getInfraDefinitionIds()));
     return workflowExecution;
   }
 
   @NotNull
   public WorkflowStandardParams obtainWorkflowStandardParams(
-          String appId, String envId, @NotNull ExecutionArgs executionArgs, Workflow workflow) {
+      String appId, String envId, @NotNull ExecutionArgs executionArgs, Workflow workflow) {
     WorkflowStandardParams stdParams;
     if (workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == OrchestrationWorkflowType.CANARY
-            || workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == OrchestrationWorkflowType.BASIC
-            || workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == OrchestrationWorkflowType.ROLLING
-            || workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == OrchestrationWorkflowType.MULTI_SERVICE
-            || workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == BUILD
-            || workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == OrchestrationWorkflowType.BLUE_GREEN) {
+        || workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == OrchestrationWorkflowType.BASIC
+        || workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == OrchestrationWorkflowType.ROLLING
+        || workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == OrchestrationWorkflowType.MULTI_SERVICE
+        || workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == BUILD
+        || workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType() == OrchestrationWorkflowType.BLUE_GREEN) {
       stdParams = new CanaryWorkflowStandardParams();
 
       if (workflow.getOrchestrationWorkflow() instanceof CanaryOrchestrationWorkflow) {
         CanaryOrchestrationWorkflow canaryOrchestrationWorkflow =
-                (CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow();
+            (CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow();
         if (canaryOrchestrationWorkflow.getUserVariables() != null) {
           stdParams.setWorkflowElement(WorkflowElement.builder()
-                  .variables(fetchWorkflowVariablesFromOrchestrationWorkflow(
-                          canaryOrchestrationWorkflow, executionArgs))
-                  .build());
+                                           .variables(fetchWorkflowVariablesFromOrchestrationWorkflow(
+                                               canaryOrchestrationWorkflow, executionArgs))
+                                           .build());
         }
         if (isNotEmpty(canaryOrchestrationWorkflow.getWorkflowPhaseIds())
-                && canaryOrchestrationWorkflow.getRollbackWorkflowPhaseIdMap().get(
-                canaryOrchestrationWorkflow.getWorkflowPhaseIds().get(0))
+            && canaryOrchestrationWorkflow.getRollbackWorkflowPhaseIdMap().get(
+                   canaryOrchestrationWorkflow.getWorkflowPhaseIds().get(0))
                 != null) {
           stdParams.setLastDeployPhaseId(canaryOrchestrationWorkflow.getWorkflowPhaseIds().get(
-                  canaryOrchestrationWorkflow.getWorkflowPhaseIds().size() - 1));
+              canaryOrchestrationWorkflow.getWorkflowPhaseIds().size() - 1));
           stdParams.setLastRollbackPhaseId(canaryOrchestrationWorkflow.getRollbackWorkflowPhaseIdMap()
-                  .get(canaryOrchestrationWorkflow.getWorkflowPhaseIds().get(0))
-                  .getUuid());
+                                               .get(canaryOrchestrationWorkflow.getWorkflowPhaseIds().get(0))
+                                               .getUuid());
         }
       }
     } else {
@@ -242,7 +215,7 @@ public class WorkflowExecutionServiceHelper {
 
     if (isNotEmpty(executionArgs.getHelmCharts())) {
       stdParams.setHelmChartIds(
-              executionArgs.getHelmCharts().stream().map(HelmChart::getUuid).filter(Objects::nonNull).collect(toList()));
+          executionArgs.getHelmCharts().stream().map(HelmChart::getUuid).filter(Objects::nonNull).collect(toList()));
     }
 
     stdParams.setExecutionCredential(executionArgs.getExecutionCredential());
@@ -254,7 +227,7 @@ public class WorkflowExecutionServiceHelper {
   }
 
   private Map<String, Object> fetchWorkflowVariablesFromOrchestrationWorkflow(
-          CanaryOrchestrationWorkflow orchestrationWorkflow, ExecutionArgs executionArgs) {
+      CanaryOrchestrationWorkflow orchestrationWorkflow, ExecutionArgs executionArgs) {
     Map<String, Object> variables = new HashMap<>();
     if (orchestrationWorkflow.getUserVariables() == null) {
       return variables;
@@ -267,10 +240,10 @@ public class WorkflowExecutionServiceHelper {
 
       // no input from user
       if (executionArgs == null || isEmpty(executionArgs.getWorkflowVariables())
-              || isBlank(executionArgs.getWorkflowVariables().get(variable.getName()))) {
+          || isBlank(executionArgs.getWorkflowVariables().get(variable.getName()))) {
         if (variable.isMandatory() && isBlank(variable.getValue())) {
           throw new InvalidRequestException(
-                  "Workflow variable [" + variable.getName() + "] is mandatory for execution", USER);
+              "Workflow variable [" + variable.getName() + "] is mandatory for execution", USER);
         }
         if (isBlank(variable.getValue())) {
           setVariables(variable.getName(), "", variables);
@@ -284,7 +257,7 @@ public class WorkflowExecutionServiceHelper {
         if (isNotEmpty(variable.getValue())) {
           if (!variable.getAllowedList().contains(variable.getValue())) {
             throw new InvalidRequestException("Workflow variable value [" + variable.getValue()
-                    + " is not in Allowed Values [" + variable.getAllowedList() + "]");
+                + " is not in Allowed Values [" + variable.getAllowedList() + "]");
           }
         }
       }
@@ -309,8 +282,8 @@ public class WorkflowExecutionServiceHelper {
     if (ORCHESTRATION == executionArgs.getWorkflowType()) {
       Workflow workflow = workflowService.readWorkflowWithoutServices(appId, executionArgs.getOrchestrationId());
       workflowVariables = (workflow == null || workflow.getOrchestrationWorkflow() == null)
-              ? null
-              : workflow.getOrchestrationWorkflow().getUserVariables();
+          ? null
+          : workflow.getOrchestrationWorkflow().getUserVariables();
     } else {
       workflowVariables = pipelineService.getPipelineVariables(appId, executionArgs.getPipelineId());
     }
@@ -332,7 +305,7 @@ public class WorkflowExecutionServiceHelper {
    * @return true if entity-type variables are reset, otherwise false
    */
   private boolean populateWorkflowVariablesValues(
-          List<Variable> workflowVariables, Map<String, String> oldWorkflowVariablesMap) {
+      List<Variable> workflowVariables, Map<String, String> oldWorkflowVariablesMap) {
     // NOTE: workflowVariables and oldWorkflowVariablesMap are not empty.
     // oldEntityVariableNames is a set of all the names of old ENTITY workflow variables.
     if (oldWorkflowVariablesMap == null) {
@@ -353,7 +326,7 @@ public class WorkflowExecutionServiceHelper {
       }
       String oldValue = oldWorkflowVariablesMap.get(name);
       if (!StringUtils.isBlank(oldValue)
-              && (EmptyPredicate.isEmpty(variable.getAllowedList()) || variable.getAllowedList().contains(oldValue))) {
+          && (EmptyPredicate.isEmpty(variable.getAllowedList()) || variable.getAllowedList().contains(oldValue))) {
         // not updating value if variable itself is updated
         variable.setValue(oldValue);
       }
@@ -380,7 +353,7 @@ public class WorkflowExecutionServiceHelper {
   }
 
   public static boolean calculateCdPageCandidate(
-          String pipelineExecutionId, String pipelineResumeId, boolean latestPipelineResume) {
+      String pipelineExecutionId, String pipelineResumeId, boolean latestPipelineResume) {
     boolean cdPageCandidate;
     if (isNotEmpty(pipelineResumeId)) {
       cdPageCandidate = latestPipelineResume;
@@ -396,14 +369,14 @@ public class WorkflowExecutionServiceHelper {
   }
 
   public WorkflowVariablesMetadata fetchWorkflowVariablesForRunningExecution(
-          String appId, String workflowExecutionId, String pipelineStageElementId) {
+      String appId, String workflowExecutionId, String pipelineStageElementId) {
     List<Variable> workflowVariables =
-            fetchWorkflowVariablesRunningPipeline(appId, workflowExecutionId, pipelineStageElementId);
+        fetchWorkflowVariablesRunningPipeline(appId, workflowExecutionId, pipelineStageElementId);
     return new WorkflowVariablesMetadata(workflowVariables);
   }
 
   private List<Variable> fetchWorkflowVariablesRunningPipeline(
-          String appId, String pipelineExecutionId, String pipelineStageElementId) {
+      String appId, String pipelineExecutionId, String pipelineStageElementId) {
     WorkflowExecution pipelineExecution = workflowExecutionService.getWorkflowExecution(appId, pipelineExecutionId);
 
     notNullCheck("No Executions found for given PipelineExecutionId " + pipelineExecutionId, pipelineExecution);
@@ -422,17 +395,17 @@ public class WorkflowExecutionServiceHelper {
         String workflowId = (String) pipelineStageElement.getProperties().get("workflowId");
         if (isEmpty(workflowId)) {
           throw new InvalidRequestException(
-                  String.format("No workflow found in pipelineStage: %s for given stageElementId: %s ",
-                          pipelineStageElement.getName(), pipelineStageElementId));
+              String.format("No workflow found in pipelineStage: %s for given stageElementId: %s ",
+                  pipelineStageElement.getName(), pipelineStageElementId));
         }
 
         Workflow workflow = workflowService.readWorkflow(appId, workflowId);
         notNullCheck(
-                "Not able to load workflow associated with given PipelineStageElementId: " + pipelineStageElementId,
-                workflow);
+            "Not able to load workflow associated with given PipelineStageElementId: " + pipelineStageElementId,
+            workflow);
         notNullCheck(
-                "Not able to load workflow associated with given PipelineStageElementId: " + pipelineStageElementId,
-                workflow.getOrchestrationWorkflow());
+            "Not able to load workflow associated with given PipelineStageElementId: " + pipelineStageElementId,
+            workflow.getOrchestrationWorkflow());
         List<Variable> variables = workflow.getOrchestrationWorkflow().getUserVariables();
         if (isEmpty(variables)) {
           return variables;
@@ -450,29 +423,29 @@ public class WorkflowExecutionServiceHelper {
         }
         Map<String, String> resolvedVariablesValues = pipelineStageElement.getWorkflowVariables();
         return CanaryOrchestrationWorkflow.reorderUserVariables(
-                getRuntimeVariablesForStage(args, runtimeInputsConfig, variables, vars, resolvedVariablesValues));
+            getRuntimeVariablesForStage(args, runtimeInputsConfig, variables, vars, resolvedVariablesValues));
       }
     }
     throw new InvalidRequestException(
-            " No PipelineStage found for given PipelineStageElementId: " + pipelineStageElementId);
+        " No PipelineStage found for given PipelineStageElementId: " + pipelineStageElementId);
   }
 
   @VisibleForTesting
   public static List<Variable> getRuntimeVariablesForStage(ExecutionArgs args, RuntimeInputsConfig runtimeInputsConfig,
-                                                           List<Variable> workflowVariables, List<Variable> pipelineVariables, Map<String, String> resolvedVariablesValues) {
+      List<Variable> workflowVariables, List<Variable> pipelineVariables, Map<String, String> resolvedVariablesValues) {
     List<Variable> runtimeVariables =
-            workflowVariables.stream()
-                    .filter(t -> runtimeInputsConfig.getRuntimeInputVariables().contains(t.getName()))
-                    .collect(toList());
+        workflowVariables.stream()
+            .filter(t -> runtimeInputsConfig.getRuntimeInputVariables().contains(t.getName()))
+            .collect(toList());
 
     Set<String> pipelineVarsName = runtimeVariables.stream()
-            .map(v -> ExpressionEvaluator.getName(resolvedVariablesValues.get(v.getName())))
-            .collect(Collectors.toSet());
+                                       .map(v -> ExpressionEvaluator.getName(resolvedVariablesValues.get(v.getName())))
+                                       .collect(Collectors.toSet());
 
     Set<String> runtimePipelineVarNames = pipelineVariables.stream()
-            .filter(v -> Boolean.TRUE.equals(v.getRuntimeInput()))
-            .map(Variable::getName)
-            .collect(Collectors.toSet());
+                                              .filter(v -> Boolean.TRUE.equals(v.getRuntimeInput()))
+                                              .map(Variable::getName)
+                                              .collect(Collectors.toSet());
     Map<String, String> wfVariables = new HashMap<>();
     for (Map.Entry<String, String> entry : args.getWorkflowVariables().entrySet()) {
       if (!runtimePipelineVarNames.contains(entry.getKey())) {
@@ -487,7 +460,7 @@ public class WorkflowExecutionServiceHelper {
       }
       if (variable.obtainEntityType() != null) {
         PipelineServiceImpl.setParentAndRelatedFieldsForRuntime(
-                pipelineVariables, wfVariables, variable.getName(), variable, variable.obtainEntityType());
+            pipelineVariables, wfVariables, variable.getName(), variable, variable.obtainEntityType());
       }
     }
 
@@ -505,16 +478,16 @@ public class WorkflowExecutionServiceHelper {
     }
 
     CanaryOrchestrationWorkflow orchestrationWorkflow =
-            (CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow();
+        (CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow();
 
     return orchestrationWorkflow.getWorkflowPhases()
-            .stream()
-            .map(phase
-                    -> infrastructureMappingService.getInfraMappingWithDeploymentType(workflow.getAppId(),
-                    workflowService.getResolvedServiceIdFromPhase(phase, workflowVariables),
-                    workflowService.getResolvedInfraDefinitionIdFromPhase(phase, workflowVariables)))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+        .stream()
+        .map(phase
+            -> infrastructureMappingService.getInfraMappingWithDeploymentType(workflow.getAppId(),
+                workflowService.getResolvedServiceIdFromPhase(phase, workflowVariables),
+                workflowService.getResolvedInfraDefinitionIdFromPhase(phase, workflowVariables)))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 
   public String fetchFailureDetails(String appId, String workflowExecutionId) {
@@ -535,8 +508,8 @@ public class WorkflowExecutionServiceHelper {
   }
 
   private void prepareFailedSteps(String appId, String workflowExecutionId,
-                                  List<StateExecutionInstance> allExecutionInstances, HashSet<String> parentInstances,
-                                  Map<String, StringJoiner> executionDetails) {
+      List<StateExecutionInstance> allExecutionInstances, HashSet<String> parentInstances,
+      Map<String, StringJoiner> executionDetails) {
     for (StateExecutionInstance stateExecutionInstance : allExecutionInstances) {
       String failureDetails = "";
       if (!parentInstances.contains(stateExecutionInstance.getUuid())) {
@@ -558,30 +531,30 @@ public class WorkflowExecutionServiceHelper {
         }
       }
       StateExecutionInstance phaseExecution = stateExecutionService.fetchCurrentPhaseStateExecutionInstance(
-              appId, workflowExecutionId, stateExecutionInstance.getUuid());
+          appId, workflowExecutionId, stateExecutionInstance.getUuid());
       StateExecutionInstance phaseStepExecution = stateExecutionService.fetchCurrentPhaseStepStateExecutionInstance(
-              appId, workflowExecutionId, stateExecutionInstance.getUuid());
+          appId, workflowExecutionId, stateExecutionInstance.getUuid());
       if (phaseExecution != null && isNotEmpty(failureDetails)
-              && executionDetails.get(phaseExecution.getUuid()) != null) {
+          && executionDetails.get(phaseExecution.getUuid()) != null) {
         executionDetails.get(phaseExecution.getUuid()).add(failureDetails);
       } else if (phaseStepExecution != null && isNotEmpty(failureDetails)) {
         executionDetails.put(stateExecutionInstance.getUuid(),
-                new StringJoiner("").add(
-                        String.format("%s failed: [%s]", phaseStepExecution.getDisplayName(), failureDetails)));
+            new StringJoiner("").add(
+                String.format("%s failed: [%s]", phaseStepExecution.getDisplayName(), failureDetails)));
       } else if (isNotEmpty(failureDetails)) {
         // Error Handling for Rejected Pipeline
         executionDetails.put(
-                generateUuid(), new StringJoiner("").add(String.format("WorkflowExecutionFailed : [%s]", failureDetails)));
+            generateUuid(), new StringJoiner("").add(String.format("WorkflowExecutionFailed : [%s]", failureDetails)));
       }
     }
   }
 
   private void prepareFailedPhases(List<StateExecutionInstance> allExecutionInstances, HashSet<String> parentInstances,
-                                   Map<String, StringJoiner> executionDetails) {
+      Map<String, StringJoiner> executionDetails) {
     for (StateExecutionInstance stateExecutionInstance : allExecutionInstances) {
       if (stateExecutionInstance.getStateType().equals("PHASE")) {
         executionDetails.put(stateExecutionInstance.getUuid(),
-                new StringJoiner(", ", String.format("%s failed: [", stateExecutionInstance.getDisplayName()), "]"));
+            new StringJoiner(", ", String.format("%s failed: [", stateExecutionInstance.getDisplayName()), "]"));
       }
       parentInstances.add(stateExecutionInstance.getParentInstanceId());
     }
@@ -589,40 +562,40 @@ public class WorkflowExecutionServiceHelper {
 
   private List<StateExecutionInstance> fetchAllFailedExecutionInstances(String appId, String workflowExecutionId) {
     Query<StateExecutionInstance> query = wingsPersistence.createQuery(StateExecutionInstance.class)
-            .filter(StateExecutionInstanceKeys.appId, appId)
-            .filter(StateExecutionInstanceKeys.executionUuid, workflowExecutionId)
-            .field(StateExecutionInstanceKeys.status)
-            .in(ExecutionStatus.resumableStatuses)
-            .order(Sort.ascending(StateExecutionInstanceKeys.endTs));
+                                              .filter(StateExecutionInstanceKeys.appId, appId)
+                                              .filter(StateExecutionInstanceKeys.executionUuid, workflowExecutionId)
+                                              .field(StateExecutionInstanceKeys.status)
+                                              .in(ExecutionStatus.resumableStatuses)
+                                              .order(Sort.ascending(StateExecutionInstanceKeys.endTs));
 
     return query.project(StateExecutionInstanceKeys.uuid, true)
+        .project(StateExecutionInstanceKeys.stateType, true)
+        .project(StateExecutionInstanceKeys.displayName, true)
+        .project(StateExecutionInstanceKeys.parentInstanceId, true)
+        .project(StateExecutionInstanceKeys.stateName, true)
+        .project(StateExecutionInstanceKeys.stateExecutionMap, true)
+        .asList();
+  }
+
+  private Map<String, List<StateExecutionInstance>> fetchFailedExecutionInstanceMap(
+      String appId, List<String> workflowExecutionIds) {
+    Query<StateExecutionInstance> query = wingsPersistence.createQuery(StateExecutionInstance.class)
+                                              .filter(StateExecutionInstanceKeys.appId, appId)
+                                              .field(StateExecutionInstanceKeys.executionUuid)
+                                              .in(workflowExecutionIds)
+                                              .field(StateExecutionInstanceKeys.status)
+                                              .in(ExecutionStatus.resumableStatuses)
+                                              .order(Sort.ascending(StateExecutionInstanceKeys.endTs));
+
+    List<StateExecutionInstance> stateExecutionInstances =
+        query.project(StateExecutionInstanceKeys.uuid, true)
             .project(StateExecutionInstanceKeys.stateType, true)
             .project(StateExecutionInstanceKeys.displayName, true)
             .project(StateExecutionInstanceKeys.parentInstanceId, true)
             .project(StateExecutionInstanceKeys.stateName, true)
             .project(StateExecutionInstanceKeys.stateExecutionMap, true)
+            .project(StateExecutionInstanceKeys.executionUuid, true)
             .asList();
-  }
-
-  private Map<String, List<StateExecutionInstance>> fetchFailedExecutionInstanceMap(
-          String appId, List<String> workflowExecutionIds) {
-    Query<StateExecutionInstance> query = wingsPersistence.createQuery(StateExecutionInstance.class)
-            .filter(StateExecutionInstanceKeys.appId, appId)
-            .field(StateExecutionInstanceKeys.executionUuid)
-            .in(workflowExecutionIds)
-            .field(StateExecutionInstanceKeys.status)
-            .in(ExecutionStatus.resumableStatuses)
-            .order(Sort.ascending(StateExecutionInstanceKeys.endTs));
-
-    List<StateExecutionInstance> stateExecutionInstances =
-            query.project(StateExecutionInstanceKeys.uuid, true)
-                    .project(StateExecutionInstanceKeys.stateType, true)
-                    .project(StateExecutionInstanceKeys.displayName, true)
-                    .project(StateExecutionInstanceKeys.parentInstanceId, true)
-                    .project(StateExecutionInstanceKeys.stateName, true)
-                    .project(StateExecutionInstanceKeys.stateExecutionMap, true)
-                    .project(StateExecutionInstanceKeys.executionUuid, true)
-                    .asList();
 
     if (stateExecutionInstances == null) {
       return new HashMap<>();
@@ -639,11 +612,11 @@ public class WorkflowExecutionServiceHelper {
     StringJoiner failedStepTypes = new StringJoiner(", ");
 
     List<StateExecutionInstance> allExecutionInstances =
-            fetchAllFailedExecutionInstances(workflowExecution.getAppId(), workflowExecution.getUuid());
+        fetchAllFailedExecutionInstances(workflowExecution.getAppId(), workflowExecution.getUuid());
 
     prepareFailedPhases(allExecutionInstances, parentInstances, executionDetails);
     prepareFailedSteps(workflowExecution.getAppId(), workflowExecution.getUuid(), allExecutionInstances,
-            parentInstances, executionDetails);
+        parentInstances, executionDetails);
 
     if (isNotEmpty(executionDetails)) {
       executionDetails.forEach((id, message) -> {
@@ -661,9 +634,9 @@ public class WorkflowExecutionServiceHelper {
   }
 
   public List<WorkflowExecution> populateFailureDetailsWithStepInfo(
-          String appId, List<WorkflowExecution> workflowExecutions) {
+      String appId, List<WorkflowExecution> workflowExecutions) {
     Map<String, List<StateExecutionInstance>> stateExecutionInstanceMap = fetchFailedExecutionInstanceMap(
-            appId, workflowExecutions.stream().map(WorkflowExecution::getUuid).collect(toList()));
+        appId, workflowExecutions.stream().map(WorkflowExecution::getUuid).collect(toList()));
     List<WorkflowExecution> workflowExecutionsWithFailureDetails = new ArrayList<>();
     stateExecutionInstanceMap.forEach((executionId, stateExecutionInstances) -> {
       Map<String, StringJoiner> executionDetails = new LinkedHashMap<>();
@@ -685,7 +658,7 @@ public class WorkflowExecutionServiceHelper {
       }
 
       WorkflowExecution requiredWorkflowExecution =
-              workflowExecutions.stream().filter(we -> executionId.equals(we.getUuid())).findFirst().orElse(null);
+          workflowExecutions.stream().filter(we -> executionId.equals(we.getUuid())).findFirst().orElse(null);
       if (requiredWorkflowExecution != null) {
         requiredWorkflowExecution.setFailureDetails(failureMessage.toString());
         requiredWorkflowExecution.setFailedStepNames(failedStepNames.toString());
@@ -697,7 +670,6 @@ public class WorkflowExecutionServiceHelper {
   }
 
   public static String getCause(WorkflowExecution workflowExecution) {
-
     if (workflowExecution.getPipelineExecutionId() != null) {
       return ExecutionCause.ExecutedAlongPipeline.name();
     } else {

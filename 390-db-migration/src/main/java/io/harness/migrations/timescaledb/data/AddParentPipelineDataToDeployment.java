@@ -7,29 +7,26 @@
 
 package io.harness.migrations.timescaledb.data;
 
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.persistence.HPersistence.DEFAULT_STORE;
-import static io.harness.threading.Morpheus.sleep;
-
+import com.google.inject.Inject;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import io.harness.beans.CreatedByType;
 import io.harness.beans.ExecutionCause;
 import io.harness.beans.FeatureName;
 import io.harness.beans.WorkflowType;
-import io.harness.data.structure.CollectionUtils;
 import io.harness.ff.FeatureFlagService;
 import io.harness.migrations.TimeScaleDBDataMigration;
 import io.harness.timescaledb.TimeScaleDBService;
-
+import lombok.extern.slf4j.Slf4j;
+import org.mongodb.morphia.Key;
 import software.wings.beans.Application;
-import software.wings.beans.WorkflowExecution;
+import software.wings.beans.Application.ApplicationKeys;
 import software.wings.beans.WorkflowExecution.WorkflowExecutionKeys;
 import software.wings.dl.WingsPersistence;
-import software.wings.service.impl.WorkflowExecutionServiceHelper;
 import software.wings.service.intfc.WorkflowExecutionService;
-import software.wings.utils.Utils;
 
-import com.google.inject.Inject;
-import com.mongodb.*;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,8 +36,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.mongodb.morphia.Key;
+
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.persistence.HPersistence.DEFAULT_STORE;
+import static io.harness.threading.Morpheus.sleep;
 
 @Slf4j
 public class AddParentPipelineDataToDeployment implements TimeScaleDBDataMigration {
@@ -73,7 +72,7 @@ public class AddParentPipelineDataToDeployment implements TimeScaleDBDataMigrati
       for (String accountId : accountIds) {
         try {
           List<Key<Application>> appIdKeyList = wingsPersistence.createQuery(Application.class)
-                                                    .filter(Application.ApplicationKeys.accountId, accountId)
+                                                    .filter(ApplicationKeys.accountId, accountId)
                                                     .asKeyList();
 
           if (isNotEmpty(appIdKeyList)) {
@@ -113,14 +112,14 @@ public class AddParentPipelineDataToDeployment implements TimeScaleDBDataMigrati
                                    .append(WorkflowExecutionKeys.pipelineSummary, Boolean.TRUE)
                                    .append(WorkflowExecutionKeys.workflowIds, Boolean.TRUE)
                                    .append(WorkflowExecutionKeys.workflowType, Boolean.TRUE)
-    .append(WorkflowExecutionKeys.pipelineExecutionId, Boolean.TRUE)
-    .append(WorkflowExecutionKeys.createdByType, Boolean.TRUE)
-    .append(WorkflowExecutionKeys.deploymentTriggerId, Boolean.TRUE)
-            .append(WorkflowExecutionKeys.triggeredBy, Boolean.TRUE);
+                                   .append(WorkflowExecutionKeys.pipelineExecutionId, Boolean.TRUE)
+                                   .append(WorkflowExecutionKeys.createdByType, Boolean.TRUE)
+                                   .append(WorkflowExecutionKeys.deploymentTriggerId, Boolean.TRUE)
+                                   .append(WorkflowExecutionKeys.triggeredBy, Boolean.TRUE);
 
     DBCursor dataRecords = collection.find(objectsToBeUpdated, projection)
                                .sort(new BasicDBObject().append(WorkflowExecutionKeys.createdAt, -1))
-                               .limit(5);
+                               .limit(1000);
 
     int updated = 0;
     int batched = 0;
@@ -140,21 +139,24 @@ public class AddParentPipelineDataToDeployment implements TimeScaleDBDataMigrati
 
         updateStatement.setString(1, parentPipelineId);
         Array array = null;
-        if(workflowIds!=null && WorkflowType.PIPELINE.name().equals(workflowType)){
+        if (workflowIds != null && WorkflowType.PIPELINE.name().equals(workflowType)) {
           array = connection.createArrayOf("text", workflowIds.toArray());
         }
         updateStatement.setArray(2, array);
         String cause = getCause(record);
-        updateStatement.setString(3,cause);
+        updateStatement.setString(3, cause);
         updateStatement.setString(4, uuId);
         updateStatement.addBatch();
         updated++;
         batched++;
 
-        if (updated != 0 && updated % 5 == 0) {
+        if (updated != 0 && updated % 1000 == 0) {
           int[] affectedRecords = updateStatement.executeBatch();
           sleep(Duration.ofMillis(100));
-          dataRecords = collection.find(objectsToBeUpdated, projection).sort(new BasicDBObject().append(WorkflowExecutionKeys.createdAt, -1)).skip(updated).limit(5);
+          dataRecords = collection.find(objectsToBeUpdated, projection)
+                            .sort(new BasicDBObject().append(WorkflowExecutionKeys.createdAt, -1))
+                            .skip(updated)
+                            .limit(1000);
           batched = 0;
           log.info(debugLine + "Number of records updated for {} is: {}", collectionName, updated);
         }
@@ -174,12 +176,11 @@ public class AddParentPipelineDataToDeployment implements TimeScaleDBDataMigrati
   }
 
   public static String getCause(DBObject record) {
-
     if (record.get(WorkflowExecutionKeys.pipelineExecutionId) != null) {
       return ExecutionCause.ExecutedAlongPipeline.name();
     } else {
-      String createdByType = (String)record.get(WorkflowExecutionKeys.createdByType);
-      if (CreatedByType.API_KEY.name().equals( createdByType)) {
+      String createdByType = (String) record.get(WorkflowExecutionKeys.createdByType);
+      if (CreatedByType.API_KEY.name().equals(createdByType)) {
         return ExecutionCause.ExecutedByAPIKey.name();
       } else if (record.get(WorkflowExecutionKeys.deploymentTriggerId) != null) {
         return ExecutionCause.ExecutedByTrigger.name();

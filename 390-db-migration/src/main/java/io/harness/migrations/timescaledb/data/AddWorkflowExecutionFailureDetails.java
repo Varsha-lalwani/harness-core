@@ -7,39 +7,43 @@
 
 package io.harness.migrations.timescaledb.data;
 
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.persistence.HPersistence.DEFAULT_STORE;
-import static io.harness.persistence.HQuery.excludeAuthority;
-import static io.harness.threading.Morpheus.sleep;
-
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import io.harness.beans.ExecutionStatus;
 import io.harness.beans.FeatureName;
 import io.harness.ff.FeatureFlagService;
 import io.harness.migrations.TimeScaleDBDataMigration;
 import io.harness.timescaledb.DBUtils;
 import io.harness.timescaledb.TimeScaleDBService;
-
+import lombok.extern.slf4j.Slf4j;
+import org.mongodb.morphia.Key;
 import software.wings.beans.Application;
+import software.wings.beans.Application.ApplicationKeys;
 import software.wings.beans.WorkflowExecution;
 import software.wings.beans.WorkflowExecution.WorkflowExecutionKeys;
 import software.wings.dl.WingsPersistence;
 import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.utils.Utils;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.mongodb.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.mongodb.morphia.Key;
-import org.mongodb.morphia.query.Query;
-import org.mongodb.morphia.query.Sort;
+
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.persistence.HPersistence.DEFAULT_STORE;
+import static io.harness.threading.Morpheus.sleep;
 
 /**
  * This will migrate the last 30 days of top level executions to TimeScaleDB
@@ -76,7 +80,7 @@ public class AddWorkflowExecutionFailureDetails implements TimeScaleDBDataMigrat
       for (String accountId : accountIds) {
         try {
           List<Key<Application>> appIdKeyList = wingsPersistence.createQuery(Application.class)
-                                                    .filter(Application.ApplicationKeys.accountId, accountId)
+                                                    .filter(ApplicationKeys.accountId, accountId)
                                                     .asKeyList();
 
           if (isNotEmpty(appIdKeyList)) {
@@ -110,13 +114,15 @@ public class AddWorkflowExecutionFailureDetails implements TimeScaleDBDataMigrat
     final DBCollection collection = wingsPersistence.getCollection(DEFAULT_STORE, collectionName);
 
     BasicDBObject objectsToBeUpdated =
-            new BasicDBObject("accountId", accountId)
-                    .append("appId", appId)
-                    .append(WorkflowExecutionKeys.status, new BasicDBObject("$in", ExecutionStatus.resumableStatuses.stream().map(Enum::name).collect(Collectors.toList())));
+        new BasicDBObject("accountId", accountId)
+            .append("appId", appId)
+            .append(WorkflowExecutionKeys.status,
+                new BasicDBObject(
+                    "$in", ExecutionStatus.resumableStatuses.stream().map(Enum::name).collect(Collectors.toList())));
     BasicDBObject projection = new BasicDBObject("_id", Boolean.TRUE);
     DBCursor dataRecords = collection.find(objectsToBeUpdated, projection)
-            .sort(new BasicDBObject().append(WorkflowExecutionKeys.createdAt, -1))
-            .limit(5);
+                               .sort(new BasicDBObject().append(WorkflowExecutionKeys.createdAt, -1))
+                               .limit(1000);
 
     List<WorkflowExecution> workflowExecutions = new ArrayList<>();
 
@@ -129,9 +135,10 @@ public class AddWorkflowExecutionFailureDetails implements TimeScaleDBDataMigrat
         workflowExecutions.add(WorkflowExecution.builder().uuid(uuId).build());
         updated++;
 
-        if (updated != 0 && updated %5 == 0) {
-          List<WorkflowExecution> workflowExecutionsWithFailureDetails = workflowExecutionService.getWorkflowExecutionsWithFailureDetails(appId, workflowExecutions);
-          for(WorkflowExecution workflowExecution: workflowExecutionsWithFailureDetails){
+        if (updated != 0 && updated % 1000 == 0) {
+          List<WorkflowExecution> workflowExecutionsWithFailureDetails =
+              workflowExecutionService.getWorkflowExecutionsWithFailureDetails(appId, workflowExecutions);
+          for (WorkflowExecution workflowExecution : workflowExecutionsWithFailureDetails) {
             updateStatement.setString(1, workflowExecution.getFailureDetails());
             updateStatement.setString(2, workflowExecution.getFailedStepNames());
             updateStatement.setString(3, workflowExecution.getFailedStepTypes());
@@ -141,14 +148,14 @@ public class AddWorkflowExecutionFailureDetails implements TimeScaleDBDataMigrat
           int[] affectedRecords = updateStatement.executeBatch();
           sleep(Duration.ofMillis(100));
           dataRecords = collection.find(objectsToBeUpdated, projection)
-                  .sort(new BasicDBObject().append(WorkflowExecutionKeys.createdAt, -1))
-                  .skip(updated)
-                  .limit(5);
+                            .sort(new BasicDBObject().append(WorkflowExecutionKeys.createdAt, -1))
+                            .skip(updated)
+                            .limit(1000);
           log.info(debugLine + "Number of records updated for {} is: {}", collectionName, updated);
         }
       }
 
-      if (updated %5!=0) {
+      if (updated % 1000 != 0) {
         int[] affectedRecords = updateStatement.executeBatch();
         log.info(debugLine + "Number of records updated for {} is: {}", collectionName, updated);
       }
