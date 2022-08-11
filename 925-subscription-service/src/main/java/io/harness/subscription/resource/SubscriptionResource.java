@@ -100,7 +100,7 @@ public class SubscriptionResource {
         ApiResponse(responseCode = "default", description = "Returns product prices")
       })
   @NGAccessControlCheck(resourceType = ResourceTypes.LICENSE, permission = VIEW_LICENSE_PERMISSION)
-  public ResponseDTO<EnumMap<UsageKey, Double>>
+  public ResponseDTO<EnumMap<UsageKey, Long>>
   retrieveRecommendedUsage(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
                                NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier,
       @io.swagger.v3.oas.annotations.parameters.RequestBody(

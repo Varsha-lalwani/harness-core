@@ -82,7 +82,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
   }
 
   @Override
-  public EnumMap<UsageKey, Double> getRecommendation(
+  public EnumMap<UsageKey, Long> getRecommendation(
       String accountIdentifier, ModuleType moduleType, EnumMap<UsageKey, Long> usage) {
     List<ModuleLicense> currentLicenses =
         licenseRepository.findByAccountIdentifierAndModuleType(accountIdentifier, moduleType);
@@ -123,19 +123,19 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         throw new InvalidRequestException(String.format("Cannot get recommendation for module %s,", moduleType));
     }
 
-    EnumMap<UsageKey, Double> recommendedValues = new EnumMap<>(UsageKey.class);
+    EnumMap<UsageKey, Long> recommendedValues = new EnumMap<>(UsageKey.class);
 
     LicenseType licenseType = latestLicense.getLicenseType();
     Edition edition = latestLicense.getEdition();
     if (licenseType.equals(LicenseType.TRIAL)) {
       baseValues.forEach((key, value) -> {
         double recommendedValue = Math.max(value, usage.get(key)) * 1.2d;
-        recommendedValues.put(key, recommendedValue);
+        recommendedValues.put(key, (long) recommendedValue);
       });
     } else if (licenseType.equals(LicenseType.PAID) || edition.equals(Edition.FREE)) {
       baseValues.forEach((key, value) -> {
         double recommendedValue = usage.get(key) * 1.2d;
-        recommendedValues.put(key, recommendedValue);
+        recommendedValues.put(key, (long) recommendedValue);
       });
     } else {
       throw new InvalidRequestException(
