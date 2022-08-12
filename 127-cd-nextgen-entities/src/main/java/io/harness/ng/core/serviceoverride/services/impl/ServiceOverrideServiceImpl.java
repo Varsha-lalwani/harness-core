@@ -22,10 +22,9 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.eventsframework.api.Producer;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
+import io.harness.ng.core.events.ServiceOverrideCreateEvent;
 import io.harness.ng.core.events.ServiceOverrideDeleteEvent;
 import io.harness.ng.core.events.ServiceOverrideUpdateEvent;
-import io.harness.ng.core.events.ServiceOverrideUpsertEvent;
-import io.harness.ng.core.infrastructure.entity.InfrastructureEntity;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity;
 import io.harness.ng.core.serviceoverride.beans.NGServiceOverridesEntity.NGServiceOverridesEntityKeys;
 import io.harness.ng.core.serviceoverride.services.ServiceOverrideService;
@@ -97,6 +96,7 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
         requestServiceOverride.getServiceRef());
     validateOverrideValues(requestServiceOverride);
     Criteria criteria = getServiceOverrideEqualityCriteria(requestServiceOverride);
+
     Optional<NGServiceOverridesEntity> serviceOverrideOptional = get(requestServiceOverride.getAccountId(),
         requestServiceOverride.getOrgIdentifier(), requestServiceOverride.getProjectIdentifier(),
         requestServiceOverride.getEnvironmentRef(), requestServiceOverride.getServiceRef());
@@ -109,16 +109,26 @@ public class ServiceOverrideServiceImpl implements ServiceOverrideService {
             requestServiceOverride.getProjectIdentifier(), requestServiceOverride.getOrgIdentifier(),
             requestServiceOverride.getEnvironmentRef(), requestServiceOverride.getServiceRef()));
       }
-      outboxService.save(ServiceOverrideUpdateEvent.builder()
-                             .accountIdentifier(requestServiceOverride.getAccountId())
-                             .orgIdentifier(requestServiceOverride.getOrgIdentifier())
-                             .projectIdentifier(requestServiceOverride.getProjectIdentifier())
-                             .environmentRef(requestServiceOverride.getEnvironmentRef())
-                             .serviceRef(requestServiceOverride.getServiceRef())
-                             .newServiceOverride(requestServiceOverride)
-                             .oldServiceOverride(serviceOverrideOptional.get())
-                             .build());
-
+      if (serviceOverrideOptional.isPresent()) {
+        outboxService.save(ServiceOverrideUpdateEvent.builder()
+                               .accountIdentifier(requestServiceOverride.getAccountId())
+                               .orgIdentifier(requestServiceOverride.getOrgIdentifier())
+                               .projectIdentifier(requestServiceOverride.getProjectIdentifier())
+                               .environmentRef(requestServiceOverride.getEnvironmentRef())
+                               .serviceRef(requestServiceOverride.getServiceRef())
+                               .newServiceOverride(requestServiceOverride)
+                               .oldServiceOverride(serviceOverrideOptional.get())
+                               .build());
+      } else {
+        outboxService.save(ServiceOverrideCreateEvent.builder()
+                               .accountIdentifier(requestServiceOverride.getAccountId())
+                               .orgIdentifier(requestServiceOverride.getOrgIdentifier())
+                               .projectIdentifier(requestServiceOverride.getProjectIdentifier())
+                               .environmentRef(requestServiceOverride.getEnvironmentRef())
+                               .serviceRef(requestServiceOverride.getServiceRef())
+                               .serviceOverride(requestServiceOverride)
+                               .build());
+      }
       return tempResult;
     }));
   }

@@ -17,6 +17,7 @@ import io.harness.audit.beans.ResourceScopeDTO;
 import io.harness.audit.client.api.AuditClientService;
 import io.harness.context.GlobalContext;
 import io.harness.ng.core.events.OutboxEventConstants;
+import io.harness.ng.core.events.ServiceOverrideCreateEvent;
 import io.harness.ng.core.events.ServiceOverrideDeleteEvent;
 import io.harness.ng.core.events.ServiceOverrideUpdateEvent;
 import io.harness.ng.core.events.ServiceOverrideUpsertEvent;
@@ -48,6 +49,8 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
   public boolean handle(OutboxEvent outboxEvent) {
     try {
       switch (outboxEvent.getEventType()) {
+        case OutboxEventConstants.SERVICE_OVERRIDE_CREATED:
+          return handlerServiceOverrideCreated(outboxEvent);
         case OutboxEventConstants.SERVICE_OVERRIDE_UPSERTED:
           return handlerServiceOverrideUpserted(outboxEvent);
         case OutboxEventConstants.SERVICE_OVERRIDE_UPDATED:
@@ -62,22 +65,44 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
       return false;
     }
   }
+
+  private boolean handlerServiceOverrideCreated(OutboxEvent outboxEvent) throws IOException {
+    GlobalContext globalContext = outboxEvent.getGlobalContext();
+    ServiceOverrideCreateEvent serviceOverrideCreateEvent =
+        objectMapper.readValue(outboxEvent.getEventData(), ServiceOverrideCreateEvent.class);
+    final AuditEntry auditEntry = AuditEntry.builder()
+                                      .action(Action.CREATE)
+                                      .module(ModuleType.CD)
+                                      .insertId(outboxEvent.getId())
+                                      .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                      .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+                                      .timestamp(outboxEvent.getCreatedAt())
+                                      .newYaml(serviceOverrideCreateEvent.getServiceOverride().getYaml())
+                                      .build();
+
+    Principal principal = null;
+
+    if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
+      principal = new ServicePrincipal(NG_MANAGER.getServiceId());
+    } else {
+      principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
+    }
+    return auditClientService.publishAudit(auditEntry, fromSecurityPrincipal(principal), globalContext);
+  }
+
   private boolean handlerServiceOverrideUpserted(OutboxEvent outboxEvent) throws IOException {
     GlobalContext globalContext = outboxEvent.getGlobalContext();
     ServiceOverrideUpsertEvent serviceOverrideUpsertEvent =
         objectMapper.readValue(outboxEvent.getEventData(), ServiceOverrideUpsertEvent.class);
-    final AuditEntry auditEntry =
-        AuditEntry.builder()
-            .action(Action.UPSERT)
-            .module(ModuleType.CD)
-            .insertId(outboxEvent.getId())
-            .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
-            .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
-            .timestamp(outboxEvent.getCreatedAt())
-            .newYaml(getYamlString(ServiceOverrideRequest.builder()
-                                       .serviceOverride(serviceOverrideUpsertEvent.getServiceOverride())
-                                       .build()))
-            .build();
+    final AuditEntry auditEntry = AuditEntry.builder()
+                                      .action(Action.UPSERT)
+                                      .module(ModuleType.CD)
+                                      .insertId(outboxEvent.getId())
+                                      .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                      .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+                                      .timestamp(outboxEvent.getCreatedAt())
+                                      .newYaml(serviceOverrideUpsertEvent.getServiceOverride().getYaml())
+                                      .build();
 
     Principal principal = null;
 
@@ -93,21 +118,16 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
     GlobalContext globalContext = outboxEvent.getGlobalContext();
     ServiceOverrideUpdateEvent serviceOverrideUpdateEvent =
         objectMapper.readValue(outboxEvent.getEventData(), ServiceOverrideUpdateEvent.class);
-    final AuditEntry auditEntry =
-        AuditEntry.builder()
-            .action(Action.UPDATE)
-            .module(ModuleType.CD)
-            .insertId(outboxEvent.getId())
-            .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
-            .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
-            .timestamp(outboxEvent.getCreatedAt())
-            .oldYaml(getYamlString(ServiceOverrideRequest.builder()
-                                       .serviceOverride(serviceOverrideUpdateEvent.getOldServiceOverride())
-                                       .build()))
-            .newYaml(getYamlString(ServiceOverrideRequest.builder()
-                                       .serviceOverride(serviceOverrideUpdateEvent.getNewServiceOverride())
-                                       .build()))
-            .build();
+    final AuditEntry auditEntry = AuditEntry.builder()
+                                      .action(Action.UPDATE)
+                                      .module(ModuleType.CD)
+                                      .insertId(outboxEvent.getId())
+                                      .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                      .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+                                      .timestamp(outboxEvent.getCreatedAt())
+                                      .oldYaml(serviceOverrideUpdateEvent.getOldServiceOverride().getYaml())
+                                      .newYaml(serviceOverrideUpdateEvent.getNewServiceOverride().getYaml())
+                                      .build();
 
     Principal principal = null;
 
@@ -122,18 +142,16 @@ public class ServiceOverrideEventHandler implements OutboxEventHandler {
     GlobalContext globalContext = outboxEvent.getGlobalContext();
     ServiceOverrideDeleteEvent serviceOverrideDeleteEvent =
         objectMapper.readValue(outboxEvent.getEventData(), ServiceOverrideDeleteEvent.class);
-    final AuditEntry auditEntry =
-        AuditEntry.builder()
-            .action(Action.DELETE)
-            .module(ModuleType.CD)
-            .insertId(outboxEvent.getId())
-            .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
-            .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
-            .timestamp(outboxEvent.getCreatedAt())
-            .oldYaml(getYamlString(ServiceOverrideRequest.builder()
-                                       .serviceOverride(serviceOverrideDeleteEvent.getServiceOverride())
-                                       .build()))
-            .build();
+    final AuditEntry auditEntry = AuditEntry.builder()
+                                      .action(Action.DELETE)
+                                      .module(ModuleType.CD)
+                                      .insertId(outboxEvent.getId())
+                                      .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                      .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+                                      .timestamp(outboxEvent.getCreatedAt())
+                                      .oldYaml(serviceOverrideDeleteEvent.getServiceOverride().getYaml())
+
+                                      .build();
 
     Principal principal = null;
     if (globalContext.get(PRINCIPAL_CONTEXT) == null) {
