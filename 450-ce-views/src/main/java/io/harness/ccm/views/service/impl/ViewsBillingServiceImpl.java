@@ -389,6 +389,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     }
 
     SelectQuery query = getQuery(filters, groupBy, aggregateFunction, sort, cloudProviderTableName, queryParams);
+    log.info("getTimeSeriesStats query: {}", query.toString());
     QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query.toString()).build();
     try {
       return bigQuery.query(queryConfig);
@@ -444,6 +445,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     List<QLCEViewTimeFilter> trendTimeFilters = getTrendFilters(timeFilters);
     SelectQuery prevTrendStatsQuery = getTrendStatsQuery(
         filters, idFilters, trendTimeFilters, aggregateFunction, viewRuleList, cloudProviderTableName, queryParams);
+    log.info("prevTrendStatsQuery: {}", prevTrendStatsQuery);
 
     Instant trendStartInstant = Instant.ofEpochMilli(getTimeFilter(trendTimeFilters, AFTER).getValue().longValue());
 
