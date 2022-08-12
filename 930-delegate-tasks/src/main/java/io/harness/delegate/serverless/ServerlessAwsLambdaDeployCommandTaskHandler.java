@@ -86,7 +86,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
   @Override
   protected ServerlessCommandResponse executeTaskInternal(ServerlessCommandRequest serverlessCommandRequest,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, ILogStreamingTaskClient iLogStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     if (!(serverlessCommandRequest instanceof ServerlessDeployRequest)) {
       throw new InvalidArgumentsException(
           Pair.of("serverlessCommandRequest", "Must be instance of ServerlessDeployRequest"));
@@ -119,8 +119,8 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
     serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessDeployRequest.getServerlessInfraConfig());
 
-    LogCallback setupDirectoryLogCallback = serverlessTaskHelperBase.getLogCallback(
-        iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true, commandUnitsProgress);
+    LogCallback setupDirectoryLogCallback = serverlessTaskHelperBase.getLogCallback(iLogStreamingTaskClient,
+        ServerlessCommandUnitConstants.setupDirectory.toString(), true, commandUnitsProgress, taskId);
     try {
       setupDirectory(serverlessDeployRequest, setupDirectoryLogCallback, serverlessDelegateTaskParams);
     } catch (Exception ex) {
@@ -130,8 +130,8 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
       throw ex;
     }
 
-    LogCallback artifactLogCallback = serverlessTaskHelperBase.getLogCallback(
-        iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true, commandUnitsProgress);
+    LogCallback artifactLogCallback = serverlessTaskHelperBase.getLogCallback(iLogStreamingTaskClient,
+        ServerlessCommandUnitConstants.artifact.toString(), true, commandUnitsProgress, taskId);
     try {
       serverlessTaskHelperBase.fetchArtifacts(serverlessDeployRequest.getServerlessArtifactConfig(),
           serverlessDeployRequest.getSidecarServerlessArtifactConfigs(), artifactLogCallback,
@@ -145,8 +145,8 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
 
     serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
 
-    LogCallback configureCredsLogCallback = serverlessTaskHelperBase.getLogCallback(
-        iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true, commandUnitsProgress);
+    LogCallback configureCredsLogCallback = serverlessTaskHelperBase.getLogCallback(iLogStreamingTaskClient,
+        ServerlessCommandUnitConstants.configureCred.toString(), true, commandUnitsProgress, taskId);
 
     try {
       serverlessAwsCommandTaskHelper.setUpConfigureCredential(serverlessAwsLambdaConfig, configureCredsLogCallback,
@@ -160,7 +160,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
       throw ex;
     }
     LogCallback pluginLogCallback = serverlessTaskHelperBase.getLogCallback(
-        iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress, taskId);
     try {
       serverlessAwsCommandTaskHelper.installPlugins(serverlessManifestSchema, serverlessDelegateTaskParams,
           pluginLogCallback, serverlessClient, timeoutInMillis, serverlessManifestConfig);
@@ -172,7 +172,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
     }
 
     LogCallback deployLogCallback = serverlessTaskHelperBase.getLogCallback(
-        iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true, commandUnitsProgress);
+        iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true, commandUnitsProgress, taskId);
     try {
       return deploy(serverlessDeployRequest, deployLogCallback, serverlessDelegateTaskParams);
     } catch (Exception ex) {

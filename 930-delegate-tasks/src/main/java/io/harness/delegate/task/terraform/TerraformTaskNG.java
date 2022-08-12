@@ -52,8 +52,8 @@ public class TerraformTaskNG extends AbstractDelegateRunnableTask {
     TerraformTaskNGParameters taskParameters = (TerraformTaskNGParameters) parameters;
     CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
 
-    LogCallback logCallback = getLogCallback(
-        getLogStreamingTaskClient(), taskParameters.getTerraformCommandUnit().name(), true, commandUnitsProgress);
+    LogCallback logCallback = getLogCallback(getLogStreamingTaskClient(),
+        taskParameters.getTerraformCommandUnit().name(), true, commandUnitsProgress, getTaskId());
 
     if (!tfTaskTypeToHandlerMap.containsKey(taskParameters.getTaskType())) {
       throw new UnexpectedTypeException(
@@ -73,7 +73,7 @@ public class TerraformTaskNG extends AbstractDelegateRunnableTask {
   }
 
   public LogCallback getLogCallback(ILogStreamingTaskClient logStreamingTaskClient, String commandUnitName,
-      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
+      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress, String taskId) {
     return new NGDelegateLogCallback(
         logStreamingTaskClient, commandUnitName, shouldOpenStream, commandUnitsProgress, taskId);
   }

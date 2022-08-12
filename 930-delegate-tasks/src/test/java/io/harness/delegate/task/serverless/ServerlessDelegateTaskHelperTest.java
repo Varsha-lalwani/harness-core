@@ -77,9 +77,9 @@ public class ServerlessDelegateTaskHelperTest extends CategoryTest {
     ServerlessCommandResponse serverlessCommandResponse = ServerlessDeployResponse.builder().build();
     doReturn(serverlessCommandResponse)
         .when(serverlessAwsLambdaDeployCommandTaskHandler)
-        .executeTask(eq(serverlessCommandRequest), any(), eq(iLogStreamingTaskClient), eq(commandUnitsProgress));
-    assertThat(
-        serverlessDelegateTaskHelper.getServerlessCommandResponse(serverlessCommandRequest, iLogStreamingTaskClient))
+        .executeTask(eq(serverlessCommandRequest), any(), eq(iLogStreamingTaskClient), eq(commandUnitsProgress), null);
+    assertThat(serverlessDelegateTaskHelper.getServerlessCommandResponse(
+                   serverlessCommandRequest, iLogStreamingTaskClient, null))
         .isEqualTo(serverlessCommandResponse);
   }
 
@@ -98,6 +98,6 @@ public class ServerlessDelegateTaskHelperTest extends CategoryTest {
             .commandUnitsProgress(commandUnitsProgress)
             .build();
     ServerlessCommandResponse serverlessCommandResponse = ServerlessDeployResponse.builder().build();
-    serverlessDelegateTaskHelper.getServerlessCommandResponse(serverlessCommandRequest, iLogStreamingTaskClient);
+    serverlessDelegateTaskHelper.getServerlessCommandResponse(serverlessCommandRequest, iLogStreamingTaskClient, null);
   }
 }

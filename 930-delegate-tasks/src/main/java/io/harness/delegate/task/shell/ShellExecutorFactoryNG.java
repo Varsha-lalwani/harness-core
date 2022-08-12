@@ -24,22 +24,22 @@ import java.util.Map;
 @Singleton
 public class ShellExecutorFactoryNG {
   public ScriptProcessExecutor getExecutor(ShellExecutorConfig shellExecutorConfig,
-      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress, String taskId) {
     return new ScriptProcessExecutor(
-        getExecutionLogCallback(shellExecutorConfig, logStreamingTaskClient, commandUnitsProgress), true,
+        getExecutionLogCallback(shellExecutorConfig, logStreamingTaskClient, commandUnitsProgress, taskId), true,
         shellExecutorConfig);
   }
 
   public FileBasedProcessScriptExecutorNG getFileBasedExecutor(ShellExecutorConfig shellExecutorConfig,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress,
-      Map<String, ArtifactCommandUnitHandler> artifactCommandHandlers) {
+      Map<String, ArtifactCommandUnitHandler> artifactCommandHandlers, String taskId) {
     return new FileBasedProcessScriptExecutorNG(
-        getExecutionLogCallback(shellExecutorConfig, logStreamingTaskClient, commandUnitsProgress), true,
+        getExecutionLogCallback(shellExecutorConfig, logStreamingTaskClient, commandUnitsProgress, taskId), true,
         artifactCommandHandlers);
   }
 
   private static LogCallback getExecutionLogCallback(ShellExecutorConfig shellExecutorConfig,
-      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress, String taskId) {
     return new NGDelegateLogCallback(
         logStreamingTaskClient, shellExecutorConfig.getCommandUnitName(), false, commandUnitsProgress, taskId);
   }

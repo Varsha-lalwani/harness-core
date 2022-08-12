@@ -22,12 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class ServerlessCommandTaskHandler {
   public ServerlessCommandResponse executeTask(ServerlessCommandRequest serverlessCommandRequest,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, ILogStreamingTaskClient iLogStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     return executeTaskInternal(
-        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
   }
 
   protected abstract ServerlessCommandResponse executeTaskInternal(ServerlessCommandRequest serverlessCommandRequest,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, ILogStreamingTaskClient iLogStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception;
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception;
 }

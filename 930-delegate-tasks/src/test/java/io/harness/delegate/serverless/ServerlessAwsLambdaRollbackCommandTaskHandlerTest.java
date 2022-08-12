@@ -133,23 +133,23 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
     doReturn(initLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
+            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress, null);
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
     doReturn(rollbackLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true,
+            commandUnitsProgress, null);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
     doReturn(serverlessAwsLambdaManifestSchema)
         .when(serverlessAwsCommandTaskHelper)
@@ -161,7 +161,8 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
 
     ServerlessRollbackResponse serverlessRollbackResponse =
         (ServerlessRollbackResponse) serverlessAwsLambdaRollbackCommandTaskHandler.executeTaskInternal(
-            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress,
+            null);
 
     assertThat(serverlessRollbackResponse.getServerlessRollbackResult()).isEqualTo(serverlessAwsLambdaRollbackResult);
     assertThat(serverlessRollbackResponse.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
@@ -186,23 +187,23 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
     doReturn(initLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
+            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress, null);
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
     doReturn(rollbackLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true,
+            commandUnitsProgress, null);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
     doReturn(serverlessAwsLambdaManifestSchema)
         .when(serverlessAwsCommandTaskHelper)
@@ -229,7 +230,8 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
 
     ServerlessRollbackResponse serverlessRollbackResponse =
         (ServerlessRollbackResponse) serverlessAwsLambdaRollbackCommandTaskHandler.executeTaskInternal(
-            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress,
+            null);
 
     verify(serverlessAwsCommandTaskHelper, times(1))
         .rollback(serverlessClient, serverlessDelegateTaskParams, rollbackLogCallback,
@@ -258,23 +260,23 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
     doReturn(initLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
+            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress, null);
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
     doReturn(rollbackLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true,
+            commandUnitsProgress, null);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
     doReturn(serverlessAwsLambdaManifestSchema)
         .when(serverlessAwsCommandTaskHelper)
@@ -317,7 +319,8 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
 
     ServerlessRollbackResponse serverlessRollbackResponse =
         (ServerlessRollbackResponse) serverlessAwsLambdaRollbackCommandTaskHandler.executeTaskInternal(
-            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress,
+            null);
 
     verify(serverlessAwsCommandTaskHelper, times(1))
         .cloudFormationStackExists(rollbackLogCallback, serverlessCommandRequest, manifestContent);
@@ -344,23 +347,23 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
     doReturn(initLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
+            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress, null);
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
     doReturn(rollbackLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true,
+            commandUnitsProgress, null);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
     doReturn(serverlessAwsLambdaManifestSchema)
         .when(serverlessAwsCommandTaskHelper)
@@ -402,7 +405,8 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
 
     ServerlessRollbackResponse serverlessRollbackResponse =
         (ServerlessRollbackResponse) serverlessAwsLambdaRollbackCommandTaskHandler.executeTaskInternal(
-            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress,
+            null);
 
     verify(serverlessAwsCommandTaskHelper, times(1))
         .cloudFormationStackExists(rollbackLogCallback, serverlessCommandRequest, manifestContent);
@@ -425,13 +429,13 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doThrow(IOException.class)
         .when(serverlessTaskHelperBase)
         .fetchManifestFilesAndWriteToDirectory(serverlessManifestConfig, serverlessRollbackRequest.getAccountId(),
             setupDirectoryLogCallback, serverlessDelegateTaskParams);
     serverlessAwsLambdaRollbackCommandTaskHandler.executeTaskInternal(
-        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -446,19 +450,19 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
     doReturn(rollbackLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true,
+            commandUnitsProgress, null);
 
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
 
@@ -478,7 +482,7 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
             serverlessAwsLambdaInfraConfig, new HashMap<>());
 
     serverlessAwsLambdaRollbackCommandTaskHandler.executeTaskInternal(
-        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
   }
 
   @Test
@@ -492,23 +496,23 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
     doReturn(initLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
+            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress, null);
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
     doReturn(rollbackLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true,
+            commandUnitsProgress, null);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
     doReturn(serverlessAwsLambdaManifestSchema)
         .when(serverlessAwsCommandTaskHelper)
@@ -535,7 +539,7 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
         .fetchFunctionOutputFromCloudFormationTemplate(any());
 
     serverlessAwsLambdaRollbackCommandTaskHandler.executeTaskInternal(
-        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
   }
 
   @Test
@@ -555,7 +559,9 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
                                                             .accountId(accountId)
                                                             .build();
 
-    doReturn(initLogCallback).when(serverlessTaskHelperBase).getLogCallback(any(), anyString(), anyBoolean(), any());
+    doReturn(initLogCallback)
+        .when(serverlessTaskHelperBase)
+        .getLogCallback(any(), anyString(), anyBoolean(), any(), null);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
     doReturn(serverlessAwsLambdaManifestSchema)
         .when(serverlessAwsCommandTaskHelper)
@@ -592,7 +598,8 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
         .getServerlessAwsLambdaCredentialType((ServerlessAwsLambdaInfraConfig) serverlessInfraConfig);
     ServerlessRollbackResponse serverlessRollbackResponse =
         (ServerlessRollbackResponse) serverlessAwsLambdaRollbackCommandTaskHandler.executeTaskInternal(
-            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress,
+            null);
 
     assertThat(serverlessRollbackResponse.getServerlessRollbackResult()).isEqualTo(serverlessAwsLambdaRollbackResult);
     assertThat(serverlessRollbackResponse.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);

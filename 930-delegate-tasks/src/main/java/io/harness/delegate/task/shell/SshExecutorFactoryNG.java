@@ -22,22 +22,22 @@ import java.util.Map;
 @OwnedBy(HarnessTeam.CDC)
 public class SshExecutorFactoryNG {
   public ScriptSshExecutor getExecutor(SshSessionConfig sshSessionConfig,
-      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress, String taskId) {
     return new ScriptSshExecutor(
-        getExecutionLogCallback(sshSessionConfig, logStreamingTaskClient, commandUnitsProgress), true,
+        getExecutionLogCallback(sshSessionConfig, logStreamingTaskClient, commandUnitsProgress, taskId), true,
         sshSessionConfig);
   }
 
   public FileBasedSshScriptExecutorNG getFileBasedExecutor(SshSessionConfig sshSessionConfig,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress,
-      Map<String, ArtifactCommandUnitHandler> artifactCommandHandlers) {
+      Map<String, ArtifactCommandUnitHandler> artifactCommandHandlers, String taskId) {
     return new FileBasedSshScriptExecutorNG(
-        getExecutionLogCallback(sshSessionConfig, logStreamingTaskClient, commandUnitsProgress), true, sshSessionConfig,
-        artifactCommandHandlers);
+        getExecutionLogCallback(sshSessionConfig, logStreamingTaskClient, commandUnitsProgress, taskId), true,
+        sshSessionConfig, artifactCommandHandlers);
   }
 
   private static LogCallback getExecutionLogCallback(SshSessionConfig sshSessionConfig,
-      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress, String taskId) {
     return new NGDelegateLogCallback(
         logStreamingTaskClient, sshSessionConfig.getCommandUnitName(), true, commandUnitsProgress, taskId);
   }

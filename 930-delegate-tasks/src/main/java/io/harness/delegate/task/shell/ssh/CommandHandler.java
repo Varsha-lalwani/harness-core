@@ -26,5 +26,5 @@ public interface CommandHandler {
 
   CommandExecutionStatus handle(CommandTaskParameters parameters, NgCommandUnit commandUnit,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress,
-      Map<String, Object> taskContext);
+      Map<String, Object> taskContext, String taskId);
 }

@@ -61,7 +61,7 @@ public class WinRmCopyCommandHandler implements CommandHandler {
   @Override
   public CommandExecutionStatus handle(CommandTaskParameters parameters, NgCommandUnit commandUnit,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress,
-      Map<String, Object> taskContext) {
+      Map<String, Object> taskContext, String taskId) {
     if (!(parameters instanceof WinrmTaskParameters)) {
       throw new InvalidRequestException("Invalid task parameters submitted for command task.");
     }
@@ -83,7 +83,8 @@ public class WinRmCopyCommandHandler implements CommandHandler {
     WinRmSessionConfig config =
         winRmConfigAuthEnhancer.configureAuthentication(winRmCommandTaskParameters, configBuilder);
     FileBasedWinRmExecutorNG executor = winRmExecutorFactoryNG.getFiledBasedWinRmExecutor(config,
-        winRmCommandTaskParameters.isDisableWinRMCommandEncodingFFSet(), logStreamingTaskClient, commandUnitsProgress);
+        winRmCommandTaskParameters.isDisableWinRMCommandEncodingFFSet(), logStreamingTaskClient, commandUnitsProgress,
+        taskId);
 
     if (EmptyPredicate.isEmpty(copyCommandUnit.getDestinationPath())) {
       log.info("Destination path no provided for copy command unit");

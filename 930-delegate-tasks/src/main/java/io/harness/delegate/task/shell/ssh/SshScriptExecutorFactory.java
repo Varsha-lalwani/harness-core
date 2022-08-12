@@ -34,37 +34,39 @@ public class SshScriptExecutorFactory {
   @Inject private SshSessionConfigMapper sshSessionConfigMapper;
   @Inject private Map<String, ArtifactCommandUnitHandler> artifactCommandHandlers;
 
-  public AbstractScriptExecutor getExecutor(SshExecutorFactoryContext context) {
-    return context.isExecuteOnDelegate() ? getScriptProcessExecutor(context) : getScriptSshExecutor(context);
+  public AbstractScriptExecutor getExecutor(SshExecutorFactoryContext context, String taskId) {
+    return context.isExecuteOnDelegate() ? getScriptProcessExecutor(context, taskId)
+                                         : getScriptSshExecutor(context, taskId);
   }
 
-  public FileBasedScriptExecutorNG getFileBasedExecutor(SshExecutorFactoryContext context) {
-    return context.isExecuteOnDelegate() ? getFileBasedScriptProcessExecutor(context)
-                                         : getFileBasedScriptSshExecutor(context);
+  public FileBasedScriptExecutorNG getFileBasedExecutor(SshExecutorFactoryContext context, String taskId) {
+    return context.isExecuteOnDelegate() ? getFileBasedScriptProcessExecutor(context, taskId)
+                                         : getFileBasedScriptSshExecutor(context, taskId);
   }
 
-  private ScriptSshExecutor getScriptSshExecutor(SshExecutorFactoryContext context) {
+  private ScriptSshExecutor getScriptSshExecutor(SshExecutorFactoryContext context, String taskId) {
     SshSessionConfig sshSessionConfig = generateSshSessionConfig(context);
     return sshExecutorFactoryNG.getExecutor(
-        sshSessionConfig, context.getILogStreamingTaskClient(), context.getCommandUnitsProgress());
+        sshSessionConfig, context.getILogStreamingTaskClient(), context.getCommandUnitsProgress(), taskId);
   }
 
-  private FileBasedSshScriptExecutorNG getFileBasedScriptSshExecutor(SshExecutorFactoryContext context) {
+  private FileBasedSshScriptExecutorNG getFileBasedScriptSshExecutor(SshExecutorFactoryContext context, String taskId) {
     SshSessionConfig sshSessionConfig = generateSshSessionConfig(context);
     return sshExecutorFactoryNG.getFileBasedExecutor(sshSessionConfig, context.getILogStreamingTaskClient(),
-        context.getCommandUnitsProgress(), artifactCommandHandlers);
+        context.getCommandUnitsProgress(), artifactCommandHandlers, taskId);
   }
 
-  private ScriptProcessExecutor getScriptProcessExecutor(SshExecutorFactoryContext context) {
+  private ScriptProcessExecutor getScriptProcessExecutor(SshExecutorFactoryContext context, String taskId) {
     ShellExecutorConfig config = getShellExecutorConfig(context);
     return shellExecutorFactory.getExecutor(
-        config, context.getILogStreamingTaskClient(), context.getCommandUnitsProgress());
+        config, context.getILogStreamingTaskClient(), context.getCommandUnitsProgress(), taskId);
   }
 
-  private FileBasedProcessScriptExecutorNG getFileBasedScriptProcessExecutor(SshExecutorFactoryContext context) {
+  private FileBasedProcessScriptExecutorNG getFileBasedScriptProcessExecutor(
+      SshExecutorFactoryContext context, String taskId) {
     ShellExecutorConfig config = getShellExecutorConfig(context);
-    return shellExecutorFactory.getFileBasedExecutor(
-        config, context.getILogStreamingTaskClient(), context.getCommandUnitsProgress(), artifactCommandHandlers);
+    return shellExecutorFactory.getFileBasedExecutor(config, context.getILogStreamingTaskClient(),
+        context.getCommandUnitsProgress(), artifactCommandHandlers, taskId);
   }
 
   private ShellExecutorConfig getShellExecutorConfig(SshExecutorFactoryContext context) {

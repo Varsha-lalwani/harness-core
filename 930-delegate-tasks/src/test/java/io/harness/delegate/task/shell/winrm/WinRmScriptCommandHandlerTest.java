@@ -68,11 +68,11 @@ public class WinRmScriptCommandHandlerTest {
                                                   .outputVariables(outputVariables)
                                                   .build();
     WinRmExecutor executor = mock(WinRmExecutor.class);
-    when(winRmExecutorFactoryNG.getExecutor(any(), anyBoolean(), any(), any())).thenReturn(executor);
+    when(winRmExecutorFactoryNG.getExecutor(any(), anyBoolean(), any(), any(), null)).thenReturn(executor);
     when(executor.executeCommandString(command, outputVariables))
         .thenReturn(ExecuteCommandResponse.builder().status(CommandExecutionStatus.SUCCESS).build());
     CommandExecutionStatus result = winRmScriptCommandHandler.handle(winrmTaskParameters, scriptCommandUnit,
-        iLogStreamingTaskClient, CommandUnitsProgress.builder().build(), taskContext);
+        iLogStreamingTaskClient, CommandUnitsProgress.builder().build(), taskContext, null);
     assertThat(result).isEqualTo(CommandExecutionStatus.SUCCESS);
   }
 }

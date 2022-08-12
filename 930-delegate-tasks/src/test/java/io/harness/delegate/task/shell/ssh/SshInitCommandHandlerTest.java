@@ -95,11 +95,11 @@ public class SshInitCommandHandlerTest extends CategoryTest {
                                            .commandUnits(Arrays.asList(initCommandUnit))
                                            .build();
 
-    doReturn(scriptSshExecutor).when(sshScriptExecutorFactory).getExecutor(any());
+    doReturn(scriptSshExecutor).when(sshScriptExecutorFactory).getExecutor(any(), null);
     when(scriptSshExecutor.executeCommandString(PRE_INIT_CMD, true)).thenReturn(CommandExecutionStatus.FAILURE);
 
     CommandExecutionStatus status = sshInitCommandHandler.handle(
-        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext);
+        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext, null);
     assertThat(status).isEqualTo(CommandExecutionStatus.FAILURE);
   }
 
@@ -114,11 +114,11 @@ public class SshInitCommandHandlerTest extends CategoryTest {
                                            .commandUnits(Arrays.asList(initCommandUnit))
                                            .build();
 
-    doReturn(scriptProcessExecutor).when(sshScriptExecutorFactory).getExecutor(any());
+    doReturn(scriptProcessExecutor).when(sshScriptExecutorFactory).getExecutor(any(), null);
     when(scriptProcessExecutor.executeCommandString(PRE_INIT_CMD, true)).thenReturn(CommandExecutionStatus.FAILURE);
 
     CommandExecutionStatus status = sshInitCommandHandler.handle(
-        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext);
+        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext, null);
     assertThat(status).isEqualTo(CommandExecutionStatus.FAILURE);
   }
 
@@ -133,13 +133,13 @@ public class SshInitCommandHandlerTest extends CategoryTest {
                                               .commandUnits(Arrays.asList(initCommandUnit, scriptNoTailCommandUnit))
                                               .build();
 
-    doReturn(scriptSshExecutor).when(sshScriptExecutorFactory).getExecutor(any());
+    doReturn(scriptSshExecutor).when(sshScriptExecutorFactory).getExecutor(any(), null);
     when(scriptSshExecutor.executeCommandString(PRE_INIT_CMD, true)).thenReturn(CommandExecutionStatus.SUCCESS);
     when(scriptSshExecutor.executeCommandString(eq(PRINT_ENV), any(StringBuffer.class)))
         .thenReturn(CommandExecutionStatus.SUCCESS);
 
     CommandExecutionStatus status = sshInitCommandHandler.handle(
-        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext);
+        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext, null);
     assertThat(status).isEqualTo(CommandExecutionStatus.SUCCESS);
 
     ScriptCommandUnit scriptCommandUnit = (ScriptCommandUnit) parameters.getCommandUnits()
@@ -163,13 +163,13 @@ public class SshInitCommandHandlerTest extends CategoryTest {
                                               .commandUnits(Arrays.asList(initCommandUnit, scriptNoTailCommandUnit))
                                               .build();
 
-    doReturn(scriptProcessExecutor).when(sshScriptExecutorFactory).getExecutor(any());
+    doReturn(scriptProcessExecutor).when(sshScriptExecutorFactory).getExecutor(any(), null);
     when(scriptProcessExecutor.executeCommandString(PRE_INIT_CMD, true)).thenReturn(CommandExecutionStatus.SUCCESS);
     when(scriptProcessExecutor.executeCommandString(eq(PRINT_ENV), any(StringBuffer.class)))
         .thenReturn(CommandExecutionStatus.SUCCESS);
 
     CommandExecutionStatus status = sshInitCommandHandler.handle(
-        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext);
+        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext, null);
     assertThat(status).isEqualTo(CommandExecutionStatus.SUCCESS);
 
     ScriptCommandUnit scriptCommandUnit = (ScriptCommandUnit) parameters.getCommandUnits()
@@ -193,13 +193,13 @@ public class SshInitCommandHandlerTest extends CategoryTest {
                                               .commandUnits(Arrays.asList(initCommandUnit, scriptWithTailCommandUnit))
                                               .build();
 
-    doReturn(scriptSshExecutor).when(sshScriptExecutorFactory).getExecutor(any());
+    doReturn(scriptSshExecutor).when(sshScriptExecutorFactory).getExecutor(any(), null);
     when(scriptSshExecutor.executeCommandString(PRE_INIT_CMD, true)).thenReturn(CommandExecutionStatus.SUCCESS);
     when(scriptSshExecutor.executeCommandString(eq(PRINT_ENV), any(StringBuffer.class)))
         .thenReturn(CommandExecutionStatus.SUCCESS);
 
     CommandExecutionStatus status = sshInitCommandHandler.handle(
-        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext);
+        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext, null);
     assertThat(status).isEqualTo(CommandExecutionStatus.SUCCESS);
 
     ScriptCommandUnit scriptCommandUnit = (ScriptCommandUnit) parameters.getCommandUnits()
@@ -225,13 +225,13 @@ public class SshInitCommandHandlerTest extends CategoryTest {
                                               .commandUnits(Arrays.asList(initCommandUnit, scriptWithTailCommandUnit))
                                               .build();
 
-    doReturn(scriptProcessExecutor).when(sshScriptExecutorFactory).getExecutor(any());
+    doReturn(scriptProcessExecutor).when(sshScriptExecutorFactory).getExecutor(any(), null);
     when(scriptProcessExecutor.executeCommandString(PRE_INIT_CMD, true)).thenReturn(CommandExecutionStatus.SUCCESS);
     when(scriptProcessExecutor.executeCommandString(eq(PRINT_ENV), any(StringBuffer.class)))
         .thenReturn(CommandExecutionStatus.SUCCESS);
 
     CommandExecutionStatus status = sshInitCommandHandler.handle(
-        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext);
+        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext, null);
     assertThat(status).isEqualTo(CommandExecutionStatus.SUCCESS);
 
     ScriptCommandUnit scriptCommandUnit = (ScriptCommandUnit) parameters.getCommandUnits()
@@ -258,13 +258,13 @@ public class SshInitCommandHandlerTest extends CategoryTest {
             .commandUnits(Arrays.asList(initCommandUnit, scriptWithTailFileCommandUnit))
             .build();
 
-    doReturn(scriptSshExecutor).when(sshScriptExecutorFactory).getExecutor(any());
+    doReturn(scriptSshExecutor).when(sshScriptExecutorFactory).getExecutor(any(), null);
     when(scriptSshExecutor.executeCommandString(PRE_INIT_CMD, true)).thenReturn(CommandExecutionStatus.SUCCESS);
     when(scriptSshExecutor.executeCommandString(eq(PRINT_ENV), any(StringBuffer.class)))
         .thenReturn(CommandExecutionStatus.SUCCESS);
 
     CommandExecutionStatus status = sshInitCommandHandler.handle(
-        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext);
+        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext, null);
     assertThat(status).isEqualTo(CommandExecutionStatus.SUCCESS);
     ScriptCommandUnit scriptCommandUnit = (ScriptCommandUnit) parameters.getCommandUnits()
                                               .stream()
@@ -291,13 +291,13 @@ public class SshInitCommandHandlerTest extends CategoryTest {
             .commandUnits(Arrays.asList(initCommandUnit, scriptWithTailFileCommandUnit))
             .build();
 
-    doReturn(scriptProcessExecutor).when(sshScriptExecutorFactory).getExecutor(any());
+    doReturn(scriptProcessExecutor).when(sshScriptExecutorFactory).getExecutor(any(), null);
     when(scriptProcessExecutor.executeCommandString(PRE_INIT_CMD, true)).thenReturn(CommandExecutionStatus.SUCCESS);
     when(scriptProcessExecutor.executeCommandString(eq(PRINT_ENV), any(StringBuffer.class)))
         .thenReturn(CommandExecutionStatus.SUCCESS);
 
     CommandExecutionStatus status = sshInitCommandHandler.handle(
-        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext);
+        parameters, initCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext, null);
     assertThat(status).isEqualTo(CommandExecutionStatus.SUCCESS);
     ScriptCommandUnit scriptCommandUnit = (ScriptCommandUnit) parameters.getCommandUnits()
                                               .stream()
@@ -318,14 +318,14 @@ public class SshInitCommandHandlerTest extends CategoryTest {
   public void testShouldHandleInvalidArguments() {
     assertThatThrownBy(()
                            -> sshInitCommandHandler.handle(WinrmTaskParameters.builder().build(), initCommandUnit,
-                               logStreamingTaskClient, commandUnitsProgress, taskContext))
+                               logStreamingTaskClient, commandUnitsProgress, taskContext, null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Invalid task parameters submitted for command task.");
 
-    assertThatThrownBy(
-        ()
-            -> sshInitCommandHandler.handle(SshCommandTaskParameters.builder().build(),
-                NgCleanupCommandUnit.builder().build(), logStreamingTaskClient, commandUnitsProgress, taskContext))
+    assertThatThrownBy(()
+                           -> sshInitCommandHandler.handle(SshCommandTaskParameters.builder().build(),
+                               NgCleanupCommandUnit.builder().build(), logStreamingTaskClient, commandUnitsProgress,
+                               taskContext, null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Invalid command unit specified for command task.");
   }

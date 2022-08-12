@@ -125,28 +125,28 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
     doReturn(initLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
+            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress, null);
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(artifactLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true,
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
 
     doReturn(deployLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true,
+            commandUnitsProgress, null);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
 
     ServerlessClient serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
@@ -175,7 +175,8 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
 
     ServerlessDeployResponse serverlessDeployResponse =
         (ServerlessDeployResponse) serverlessAwsLambdaDeployCommandTaskHandler.executeTaskInternal(
-            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress,
+            null);
 
     assertThat(serverlessDeployResponse.getServerlessDeployResult()).isEqualTo(serverlessAwsLambdaDeployResult);
     assertThat(serverlessDeployResponse.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
@@ -188,7 +189,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
 
     doThrow(IOException.class)
         .when(serverlessTaskHelperBase)
@@ -197,7 +198,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
             serverlessDeployRequest.getAccountId(), setupDirectoryLogCallback, serverlessDelegateTaskParams);
 
     serverlessAwsLambdaDeployCommandTaskHandler.executeTaskInternal(
-        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -207,9 +208,9 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     serverlessAwsLambdaDeployCommandTaskHandler.executeTaskInternal(
-        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -219,17 +220,17 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(artifactLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true,
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     serverlessAwsLambdaDeployCommandTaskHandler.executeTaskInternal(
-        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -239,19 +240,19 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
     doReturn(initLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
+            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress, null);
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(artifactLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true,
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
     ServerlessClient serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
     doReturn(intiServerlessCliResponse)
@@ -260,10 +261,10 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
             configureCredsLogCallback, true, timeout * 60000, new HashMap<>());
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
     serverlessAwsLambdaDeployCommandTaskHandler.executeTaskInternal(
-        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -273,23 +274,23 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
     doReturn(initLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
+            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress, null);
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(artifactLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true,
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
 
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
 
@@ -301,7 +302,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
             configureCredsLogCallback, true, timeout * 60000, new HashMap<>());
 
     serverlessAwsLambdaDeployCommandTaskHandler.executeTaskInternal(
-        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
   }
 
   @Test
@@ -315,31 +316,31 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
     doReturn(initLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
+            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress, null);
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(artifactLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true,
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
     doReturn(prepareRollbackLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollbackData.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(deployLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true,
+            commandUnitsProgress, null);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
     doReturn(serverlessAwsLambdaManifestSchema)
         .when(serverlessAwsCommandTaskHelper)
@@ -374,7 +375,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
         .fetchFunctionOutputFromCloudFormationTemplate(any());
 
     serverlessAwsLambdaDeployCommandTaskHandler.executeTaskInternal(
-        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
   }
 
   @Test(expected = ServerlessNGException.class)
@@ -384,31 +385,31 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
     doReturn(initLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
+            iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress, null);
     doReturn(setupDirectoryLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(artifactLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.artifact.toString(), true,
+            commandUnitsProgress, null);
     doReturn(configureCredsLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(pluginLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true,
+            commandUnitsProgress, null);
     doReturn(prepareRollbackLogCallback)
         .when(serverlessTaskHelperBase)
         .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollbackData.toString(), true,
-            commandUnitsProgress);
+            commandUnitsProgress, null);
     doReturn(deployLogCallback)
         .when(serverlessTaskHelperBase)
-        .getLogCallback(
-            iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true, commandUnitsProgress);
+        .getLogCallback(iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true,
+            commandUnitsProgress, null);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
     doReturn(serverlessAwsLambdaManifestSchema)
         .when(serverlessAwsCommandTaskHelper)
@@ -448,6 +449,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
 
     ServerlessDeployResponse serverlessDeployResponse =
         (ServerlessDeployResponse) serverlessAwsLambdaDeployCommandTaskHandler.executeTaskInternal(
-            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+            serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress,
+            null);
   }
 }

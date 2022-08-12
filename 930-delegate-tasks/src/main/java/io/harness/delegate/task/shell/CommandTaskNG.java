@@ -100,8 +100,8 @@ public class CommandTaskNG extends AbstractDelegateRunnableTask {
     Map<String, Object> taskContext = new LinkedHashMap<>();
     for (NgCommandUnit commandUnit : parameters.getCommandUnits()) {
       CommandHandler handler = commandUnitHandlers.get(Pair.of(commandUnit.getCommandUnitType(), scriptType.name()));
-      status =
-          handler.handle(parameters, commandUnit, this.getLogStreamingTaskClient(), commandUnitsProgress, taskContext);
+      status = handler.handle(
+          parameters, commandUnit, this.getLogStreamingTaskClient(), commandUnitsProgress, taskContext, getTaskId());
       if (CommandExecutionStatus.FAILURE.equals(status)) {
         break;
       }

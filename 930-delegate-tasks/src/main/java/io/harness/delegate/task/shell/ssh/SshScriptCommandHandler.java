@@ -31,7 +31,7 @@ public class SshScriptCommandHandler implements CommandHandler {
   @Override
   public CommandExecutionStatus handle(CommandTaskParameters parameters, NgCommandUnit commandUnit,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress,
-      Map<String, Object> taskContext) {
+      Map<String, Object> taskContext, String taskId) {
     if (!(parameters instanceof SshCommandTaskParameters)) {
       throw new InvalidRequestException("Invalid task parameters submitted for command task.");
     }
@@ -59,7 +59,7 @@ public class SshScriptCommandHandler implements CommandHandler {
 
     context.getEnvironmentVariables().putAll((Map<String, String>) taskContext.get(RESOLVED_ENV_VARIABLES_KEY));
 
-    AbstractScriptExecutor executor = sshScriptExecutorFactory.getExecutor(context);
+    AbstractScriptExecutor executor = sshScriptExecutorFactory.getExecutor(context, taskId);
 
     return executor.executeCommandString(scriptCommandUnit.getCommand(), sshCommandTaskParameters.getOutputVariables())
         .getStatus();

@@ -72,7 +72,7 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
   @Override
   protected ServerlessCommandResponse executeTaskInternal(ServerlessCommandRequest serverlessCommandRequest,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, ILogStreamingTaskClient iLogStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     if (!(serverlessCommandRequest instanceof ServerlessRollbackRequest)) {
       throw new InvalidArgumentsException(
           Pair.of("serverlessCommandRequest", "Must be instance of ServerlessRollbackRequest"));
@@ -104,8 +104,8 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
     environmentVariables =
         serverlessAwsCommandTaskHelper.getAwsCredentialsEnvironmentVariables(serverlessDelegateTaskParams);
 
-    LogCallback setupDirectoryLogCallback = serverlessTaskHelperBase.getLogCallback(
-        iLogStreamingTaskClient, ServerlessCommandUnitConstants.setupDirectory.toString(), true, commandUnitsProgress);
+    LogCallback setupDirectoryLogCallback = serverlessTaskHelperBase.getLogCallback(iLogStreamingTaskClient,
+        ServerlessCommandUnitConstants.setupDirectory.toString(), true, commandUnitsProgress, taskId);
     try {
       setupDirectory(serverlessRollbackRequest, setupDirectoryLogCallback, serverlessDelegateTaskParams);
     } catch (Exception ex) {
@@ -117,8 +117,8 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
 
     serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
 
-    LogCallback configureCredsLogCallback = serverlessTaskHelperBase.getLogCallback(
-        iLogStreamingTaskClient, ServerlessCommandUnitConstants.configureCred.toString(), true, commandUnitsProgress);
+    LogCallback configureCredsLogCallback = serverlessTaskHelperBase.getLogCallback(iLogStreamingTaskClient,
+        ServerlessCommandUnitConstants.configureCred.toString(), true, commandUnitsProgress, taskId);
 
     try {
       serverlessAwsCommandTaskHelper.setUpConfigureCredential(serverlessAwsLambdaConfig, configureCredsLogCallback,
@@ -132,7 +132,7 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
       throw ex;
     }
     LogCallback pluginLogCallback = serverlessTaskHelperBase.getLogCallback(
-        iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress);
+        iLogStreamingTaskClient, ServerlessCommandUnitConstants.plugin.toString(), true, commandUnitsProgress, taskId);
     try {
       serverlessAwsCommandTaskHelper.installPlugins(serverlessManifestSchema, serverlessDelegateTaskParams,
           pluginLogCallback, serverlessClient, timeoutInMillis, serverlessManifestConfig);
@@ -144,8 +144,8 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
       throw ex;
     }
 
-    LogCallback rollbackLogCallback = serverlessTaskHelperBase.getLogCallback(
-        iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
+    LogCallback rollbackLogCallback = serverlessTaskHelperBase.getLogCallback(iLogStreamingTaskClient,
+        ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress, taskId);
     try {
       return rollback(serverlessRollbackRequest, rollbackLogCallback, serverlessDelegateTaskParams);
     } catch (Exception ex) {

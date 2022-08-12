@@ -43,7 +43,7 @@ public class ServerlessCommandTask extends AbstractDelegateRunnableTask {
   public ServerlessCommandResponse run(TaskParameters parameters) {
     ServerlessCommandRequest serverlessCommandRequest = (ServerlessCommandRequest) parameters;
     return serverlessDelegateTaskHelper.getServerlessCommandResponse(
-        serverlessCommandRequest, getLogStreamingTaskClient());
+        serverlessCommandRequest, getLogStreamingTaskClient(), getTaskId());
   }
 
   @Override

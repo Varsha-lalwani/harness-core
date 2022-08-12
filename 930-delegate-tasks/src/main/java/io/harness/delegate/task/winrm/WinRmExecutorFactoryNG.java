@@ -28,19 +28,21 @@ public class WinRmExecutorFactoryNG {
   @Inject private ArtifactoryRequestMapper artifactoryRequestMapper;
 
   public WinRmExecutor getExecutor(WinRmSessionConfig config, boolean disableCommandEncoding,
-      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
-    return new DefaultWinRmExecutor(getExecutionLogCallback(config, logStreamingTaskClient, commandUnitsProgress), true,
-        config, disableCommandEncoding);
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress, String taskId) {
+    return new DefaultWinRmExecutor(
+        getExecutionLogCallback(config, logStreamingTaskClient, commandUnitsProgress, taskId), true, config,
+        disableCommandEncoding);
   }
 
   public FileBasedWinRmExecutorNG getFiledBasedWinRmExecutor(WinRmSessionConfig config, boolean disableCommandEncoding,
-      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
-    return new FileBasedWinRmExecutorNG(getExecutionLogCallback(config, logStreamingTaskClient, commandUnitsProgress),
-        true, config, disableCommandEncoding, secretDecryptionService, artifactoryRequestMapper);
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress, String taskId) {
+    return new FileBasedWinRmExecutorNG(
+        getExecutionLogCallback(config, logStreamingTaskClient, commandUnitsProgress, taskId), true, config,
+        disableCommandEncoding, secretDecryptionService, artifactoryRequestMapper);
   }
 
   private static LogCallback getExecutionLogCallback(WinRmSessionConfig sessionConfig,
-      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress, String taskId) {
     return new NGDelegateLogCallback(
         logStreamingTaskClient, sessionConfig.getCommandUnitName(), true, commandUnitsProgress, taskId);
   }

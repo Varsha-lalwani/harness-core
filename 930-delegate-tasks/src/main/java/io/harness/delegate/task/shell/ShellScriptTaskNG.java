@@ -62,8 +62,8 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
 
     if (taskParameters.isExecuteOnDelegate()) {
       ShellExecutorConfig shellExecutorConfig = getShellExecutorConfig(taskParameters);
-      ScriptProcessExecutor executor =
-          shellExecutorFactory.getExecutor(shellExecutorConfig, this.getLogStreamingTaskClient(), commandUnitsProgress);
+      ScriptProcessExecutor executor = shellExecutorFactory.getExecutor(
+          shellExecutorConfig, this.getLogStreamingTaskClient(), commandUnitsProgress, getTaskId());
       // TODO: check later
       // if (taskParameters.isLocalOverrideFeatureFlag()) {
       //   taskParameters.setScript(delegateLocalConfigService.replacePlaceholdersWithLocalConfig(taskParameters.getScript()));
@@ -79,8 +79,8 @@ public class ShellScriptTaskNG extends AbstractDelegateRunnableTask {
     } else {
       try {
         SshSessionConfig sshSessionConfig = getSshSessionConfig(taskParameters);
-        ScriptSshExecutor executor =
-            sshExecutorFactoryNG.getExecutor(sshSessionConfig, this.getLogStreamingTaskClient(), commandUnitsProgress);
+        ScriptSshExecutor executor = sshExecutorFactoryNG.getExecutor(
+            sshSessionConfig, this.getLogStreamingTaskClient(), commandUnitsProgress, getTaskId());
         ExecuteCommandResponse executeCommandResponse =
             executor.executeCommandString(taskParameters.getScript(), taskParameters.getOutputVars());
         return ShellScriptTaskResponseNG.builder()

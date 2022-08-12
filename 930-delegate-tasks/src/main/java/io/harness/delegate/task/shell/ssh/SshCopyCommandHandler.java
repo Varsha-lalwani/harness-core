@@ -60,7 +60,7 @@ public class SshCopyCommandHandler implements CommandHandler {
   @Override
   public CommandExecutionStatus handle(CommandTaskParameters parameters, NgCommandUnit commandUnit,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress,
-      Map<String, Object> taskContext) {
+      Map<String, Object> taskContext, String taskId) {
     if (!(parameters instanceof SshCommandTaskParameters)) {
       throw new InvalidRequestException("Invalid task parameters submitted for command task.");
     }
@@ -100,7 +100,7 @@ public class SshCopyCommandHandler implements CommandHandler {
 
     CommandExecutionStatus result = CommandExecutionStatus.SUCCESS;
     FileBasedAbstractScriptExecutorNG executor =
-        (FileBasedAbstractScriptExecutorNG) sshScriptExecutorFactory.getFileBasedExecutor(context);
+        (FileBasedAbstractScriptExecutorNG) sshScriptExecutorFactory.getFileBasedExecutor(context, taskId);
     if (FileSourceType.ARTIFACT.equals(copyCommandUnit.getSourceType())) {
       log.info("About to copy artifact");
       if (sshCommandTaskParameters.getArtifactDelegateConfig() == null) {

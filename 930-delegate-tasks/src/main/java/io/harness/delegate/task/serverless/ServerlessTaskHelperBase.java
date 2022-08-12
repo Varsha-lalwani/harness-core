@@ -117,7 +117,7 @@ public class ServerlessTaskHelperBase {
   private static final String SIDECAR_ARTIFACT_FILE_NAME_PREFIX = "sidecar-artifact-";
 
   public LogCallback getLogCallback(ILogStreamingTaskClient logStreamingTaskClient, String commandUnitName,
-      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
+      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress, String taskId) {
     return new NGDelegateLogCallback(
         logStreamingTaskClient, commandUnitName, shouldOpenStream, commandUnitsProgress, taskId);
   }

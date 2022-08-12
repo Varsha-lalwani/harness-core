@@ -85,16 +85,16 @@ public class SshScriptCommandHandlerTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void testShouldExecuteCommandWithSshExecutor() {
-    doReturn(scriptSshExecutor).when(sshScriptExecutorFactory).getExecutor(any());
+    doReturn(scriptSshExecutor).when(sshScriptExecutorFactory).getExecutor(any(), null);
     when(scriptSshExecutor.executeCommandString(COMMAND, outputVariables))
         .thenReturn(ExecuteCommandResponse.builder().status(CommandExecutionStatus.SUCCESS).build());
 
     CommandExecutionStatus status = sshScriptCommandHandler.handle(
-        getParameters(false), scriptCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext);
+        getParameters(false), scriptCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext, null);
     assertThat(status).isEqualTo(CommandExecutionStatus.SUCCESS);
     ArgumentCaptor<SshExecutorFactoryContext> contextArgumentCaptor =
         ArgumentCaptor.forClass(SshExecutorFactoryContext.class);
-    verify(sshScriptExecutorFactory).getExecutor(contextArgumentCaptor.capture());
+    verify(sshScriptExecutorFactory).getExecutor(contextArgumentCaptor.capture(), null);
     assertContextData(contextArgumentCaptor.getValue(), false);
   }
 
@@ -102,16 +102,16 @@ public class SshScriptCommandHandlerTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void testShouldExecuteCommandWithScriptProcessExecutorOnDelegate() {
-    doReturn(scriptProcessExecutor).when(sshScriptExecutorFactory).getExecutor(any());
+    doReturn(scriptProcessExecutor).when(sshScriptExecutorFactory).getExecutor(any(), null);
     when(scriptProcessExecutor.executeCommandString(COMMAND, outputVariables))
         .thenReturn(ExecuteCommandResponse.builder().status(CommandExecutionStatus.SUCCESS).build());
 
     CommandExecutionStatus status = sshScriptCommandHandler.handle(
-        getParameters(true), scriptCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext);
+        getParameters(true), scriptCommandUnit, logStreamingTaskClient, commandUnitsProgress, taskContext, null);
     assertThat(status).isEqualTo(CommandExecutionStatus.SUCCESS);
     ArgumentCaptor<SshExecutorFactoryContext> contextArgumentCaptor =
         ArgumentCaptor.forClass(SshExecutorFactoryContext.class);
-    verify(sshScriptExecutorFactory).getExecutor(contextArgumentCaptor.capture());
+    verify(sshScriptExecutorFactory).getExecutor(contextArgumentCaptor.capture(), null);
     assertContextData(contextArgumentCaptor.getValue(), true);
   }
 
@@ -121,13 +121,13 @@ public class SshScriptCommandHandlerTest extends CategoryTest {
   public void testShouldHandleInvalidArguments() {
     assertThatThrownBy(()
                            -> sshScriptCommandHandler.handle(WinrmTaskParameters.builder().build(), scriptCommandUnit,
-                               logStreamingTaskClient, commandUnitsProgress, taskContext))
+                               logStreamingTaskClient, commandUnitsProgress, taskContext, null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Invalid task parameters submitted for command task.");
 
     assertThatThrownBy(()
                            -> sshScriptCommandHandler.handle(getParameters(false), NgInitCommandUnit.builder().build(),
-                               logStreamingTaskClient, commandUnitsProgress, taskContext))
+                               logStreamingTaskClient, commandUnitsProgress, taskContext, null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Invalid command unit specified for command task.");
   }

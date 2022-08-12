@@ -38,8 +38,8 @@ public class ServerlessDelegateTaskHelper {
 
   private static final String WORKING_DIR_BASE = "./repository/serverless/";
 
-  public ServerlessCommandResponse getServerlessCommandResponse(
-      ServerlessCommandRequest serverlessCommandRequest, ILogStreamingTaskClient iLogStreamingTaskClient) {
+  public ServerlessCommandResponse getServerlessCommandResponse(ServerlessCommandRequest serverlessCommandRequest,
+      ILogStreamingTaskClient iLogStreamingTaskClient, String taskId) {
     CommandUnitsProgress commandUnitsProgress = serverlessCommandRequest.getCommandUnitsProgress() != null
         ? serverlessCommandRequest.getCommandUnitsProgress()
         : CommandUnitsProgress.builder().build();
@@ -57,8 +57,8 @@ public class ServerlessDelegateTaskHelper {
       waitForDirectoryToBeAccessibleOutOfProcess(workingDirectory, 10);
       ServerlessDelegateTaskParams serverlessDelegateTaskParams =
           ServerlessDelegateTaskParams.builder().workingDirectory(workingDirectory).build();
-      ServerlessCommandResponse serverlessCommandResponse = commandTaskHandler.executeTask(
-          serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+      ServerlessCommandResponse serverlessCommandResponse = commandTaskHandler.executeTask(serverlessCommandRequest,
+          serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, taskId);
       serverlessCommandResponse.setCommandUnitsProgress(
           UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress));
       return serverlessCommandResponse;

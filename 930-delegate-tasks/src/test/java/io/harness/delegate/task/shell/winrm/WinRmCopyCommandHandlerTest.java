@@ -71,7 +71,7 @@ public class WinRmCopyCommandHandlerTest {
 
   @Before
   public void setup() {
-    when(winRmExecutorFactoryNG.getFiledBasedWinRmExecutor(any(), anyBoolean(), any(), any()))
+    when(winRmExecutorFactoryNG.getFiledBasedWinRmExecutor(any(), anyBoolean(), any(), any(), null))
         .thenReturn(fileBasedWinRmExecutorNG);
     when(secretDecryptionService.decrypt(any(), any()))
         .thenReturn(
@@ -90,7 +90,7 @@ public class WinRmCopyCommandHandlerTest {
     when(fileBasedWinRmExecutorNG.copyConfigFiles(any(ConfigFileParameters.class)))
         .thenReturn(CommandExecutionStatus.SUCCESS);
     CommandExecutionStatus result = winRmCopyCommandHandler.handle(winrmTaskParameters, copyConfigCommandUnit,
-        iLogStreamingTaskClient, CommandUnitsProgress.builder().build(), taskContext);
+        iLogStreamingTaskClient, CommandUnitsProgress.builder().build(), taskContext, null);
     assertThat(result).isEqualTo(CommandExecutionStatus.SUCCESS);
   }
 
@@ -103,7 +103,7 @@ public class WinRmCopyCommandHandlerTest {
 
     when(fileBasedWinRmExecutorNG.copyArtifacts(any(), any())).thenReturn(CommandExecutionStatus.SUCCESS);
     CommandExecutionStatus result = winRmCopyCommandHandler.handle(winrmTaskParameters, copyArtifactCommandUnit,
-        iLogStreamingTaskClient, CommandUnitsProgress.builder().build(), taskContext);
+        iLogStreamingTaskClient, CommandUnitsProgress.builder().build(), taskContext, null);
     assertThat(result).isEqualTo(CommandExecutionStatus.SUCCESS);
   }
 

@@ -76,7 +76,7 @@ public class ServerlessAwsLambdaPrepareRollbackCommandTaskHandler extends Server
   @Override
   protected ServerlessCommandResponse executeTaskInternal(ServerlessCommandRequest serverlessCommandRequest,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, ILogStreamingTaskClient iLogStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     if (!(serverlessCommandRequest instanceof ServerlessPrepareRollbackDataRequest)) {
       throw new InvalidArgumentsException(
           Pair.of("serverlessCommandRequest", "Must be instance of ServerlessPrepareRollbackDataRequest"));
@@ -107,8 +107,8 @@ public class ServerlessAwsLambdaPrepareRollbackCommandTaskHandler extends Server
     serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessPrepareRollbackDataRequest.getServerlessInfraConfig());
 
-    LogCallback executionLogCallback = serverlessTaskHelperBase.getLogCallback(
-        iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollbackData.toString(), true, commandUnitsProgress);
+    LogCallback executionLogCallback = serverlessTaskHelperBase.getLogCallback(iLogStreamingTaskClient,
+        ServerlessCommandUnitConstants.rollbackData.toString(), true, commandUnitsProgress, taskId);
     try {
       setupDirectory(serverlessPrepareRollbackDataRequest, executionLogCallback, serverlessDelegateTaskParams);
     } catch (Exception ex) {

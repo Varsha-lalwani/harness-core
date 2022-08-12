@@ -46,7 +46,7 @@ public class WinRmScriptCommandHandler implements CommandHandler {
   @Override
   public CommandExecutionStatus handle(CommandTaskParameters parameters, NgCommandUnit commandUnit,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress,
-      Map<String, Object> taskContext) {
+      Map<String, Object> taskContext, String taskId) {
     if (!(parameters instanceof WinrmTaskParameters)) {
       throw new InvalidRequestException("Invalid task parameters submitted for command task.");
     }
@@ -67,8 +67,9 @@ public class WinRmScriptCommandHandler implements CommandHandler {
 
     WinRmSessionConfig config =
         winRmConfigAuthEnhancer.configureAuthentication(winRmCommandTaskParameters, configBuilder);
-    WinRmExecutor executor = winRmExecutorFactoryNG.getExecutor(config,
-        winRmCommandTaskParameters.isDisableWinRMCommandEncodingFFSet(), logStreamingTaskClient, commandUnitsProgress);
+    WinRmExecutor executor =
+        winRmExecutorFactoryNG.getExecutor(config, winRmCommandTaskParameters.isDisableWinRMCommandEncodingFFSet(),
+            logStreamingTaskClient, commandUnitsProgress, taskId);
     return executor
         .executeCommandString(scriptCommandUnit.getCommand(), winRmCommandTaskParameters.getOutputVariables())
         .getStatus();
