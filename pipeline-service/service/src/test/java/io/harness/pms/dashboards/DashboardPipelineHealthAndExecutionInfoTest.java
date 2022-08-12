@@ -162,14 +162,16 @@ public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
             "ac", "or", "pr", "pip", startInterval, endInterval, "CI");
 
     List<PipelineExecutionInfo> pipelineExecutionInfoList = new ArrayList<>();
-    pipelineExecutionInfoList.add(PipelineExecutionInfo.builder()
-                                      .date(1617235200000L)
-                                      .count(PipelineCountInfo.builder().total(2).success(0).failure(2).build())
-                                      .build());
-    pipelineExecutionInfoList.add(PipelineExecutionInfo.builder()
-                                      .date(1617321600000L)
-                                      .count(PipelineCountInfo.builder().total(3).success(1).failure(2).build())
-                                      .build());
+    pipelineExecutionInfoList.add(
+        PipelineExecutionInfo.builder()
+            .date(1617235200000L)
+            .count(PipelineCountInfo.builder().total(2).success(0).failure(2).aborted(1).expired(1).build())
+            .build());
+    pipelineExecutionInfoList.add(
+        PipelineExecutionInfo.builder()
+            .date(1617321600000L)
+            .count(PipelineCountInfo.builder().total(3).success(1).failure(2).aborted(1).build())
+            .build());
     pipelineExecutionInfoList.add(PipelineExecutionInfo.builder()
                                       .date(1617408000000L)
                                       .count(PipelineCountInfo.builder().total(1).success(0).failure(1).build())
