@@ -168,23 +168,18 @@ public class K8sDeleteTaskHandler extends K8sTaskHandler {
       kubernetesConfig =
           containerDeploymentDelegateHelper.getKubernetesConfig(k8sDeleteTaskParameters.getK8sClusterConfig(), false);
 
-      String resource_check = k8sDeleteTaskParameters.getResources();
+      String resourcesToDelete = k8sDeleteTaskParameters.getResources();
 
-      if (k8sDeleteTaskParameters.isK8sPrevCanaryDeploy() && resource_check.contains("${k8s.canaryWorkload}")) {
+      if (k8sDeleteTaskParameters.isK8sCanaryDelete() && resourcesToDelete.contains("${k8s.canaryWorkload}")) {
         resourceIdsToDelete = getCanaryResourceIdsFromReleaseHistory(releaseName, executionLogCallback);
 
         if (isNotEmpty(resourceIdsToDelete)) {
           executionLogCallback.saveExecutionLog(color("\nResources to delete are: ", White, Bold)
               + color(getResourcesInStringFormat(resourceIdsToDelete), Gray));
-        }
-        executionLogCallback.saveExecutionLog("\n\nDone.", INFO, SUCCESS);
-
-        if (isEmpty(resourceIdsToDelete)) {
+        } else {
           executionLogCallback.saveExecutionLog(color("No canary workloads to be deleted. Skipping.\n", White, Bold));
-          executionLogCallback.saveExecutionLog("\nDone.", INFO, SUCCESS);
-          return true;
         }
-
+        executionLogCallback.saveExecutionLog("\nDone.", INFO, SUCCESS);
         return true;
       }
       if (StringUtils.isEmpty(k8sDeleteTaskParameters.getResources())) {

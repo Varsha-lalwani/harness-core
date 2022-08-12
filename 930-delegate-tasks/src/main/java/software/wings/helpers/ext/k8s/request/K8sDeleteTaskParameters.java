@@ -69,7 +69,7 @@ public class K8sDeleteTaskParameters extends K8sTaskParameters implements Manife
     return capabilities;
   }
 
-  public boolean isK8sPrevCanaryDeploy() {
+  public boolean isK8sCanaryDelete() {
     return k8sPrevCanaryDeploy;
   }
 }
