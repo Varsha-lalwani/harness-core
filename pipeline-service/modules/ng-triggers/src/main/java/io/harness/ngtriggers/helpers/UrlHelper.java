@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Slf4j
-@OwnedBy(HarnessTeam.CI)
+@OwnedBy(HarnessTeam.SPG)
 public class UrlHelper {
   @Inject private AccountClient accountClient;
 

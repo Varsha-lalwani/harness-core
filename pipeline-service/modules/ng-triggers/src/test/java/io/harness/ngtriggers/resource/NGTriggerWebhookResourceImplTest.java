@@ -113,6 +113,33 @@ public class NGTriggerWebhookResourceImplTest extends CategoryTest {
   @Test
   @Owner(developers = VINICIUS)
   @Category(UnitTests.class)
+  public void testProcessWebhookEvent() {
+    HttpHeaders headers = mock(HttpHeaders.class);
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getBaseUri()).thenReturn(URI.create("base_url/"));
+    when(headers.getRequestHeaders()).thenReturn(new MultivaluedHashMap<>());
+    doReturn("base_ui_url/").when(urlHelper).getBaseUrl(any());
+    String executionUuid = "executionUuid";
+    TriggerWebhookEventBuilder triggerWebhookEventBuilder = TriggerWebhookEvent.builder()
+                                                                .accountId(accountIdentifier)
+                                                                .orgIdentifier(orgIdentifier)
+                                                                .projectIdentifier(projectIdentifier)
+                                                                .pipelineIdentifier(pipelineIdentifier)
+                                                                .triggerIdentifier(triggerIdentifier)
+                                                                .uuid(executionUuid);
+    TriggerWebhookEvent eventEntity = triggerWebhookEventBuilder.build();
+    when(ngTriggerElementMapper.toNGTriggerWebhookEventForCustom(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(triggerWebhookEventBuilder);
+    doNothing().when(triggerWebhookValidator).applyValidationsForCustomWebhook(any());
+    when(ngTriggerService.addEventToQueue(any())).thenReturn(eventEntity);
+    ResponseDTO<String> response = ngTriggerWebhookConfigResource.processWebhookEvent(
+        accountIdentifier, orgIdentifier, projectIdentifier, pipelineIdentifier, triggerIdentifier, "payload", headers);
+    assertThat(response.getData()).isEqualTo(executionUuid);
+  }
+
+  @Test
+  @Owner(developers = VINICIUS)
+  @Category(UnitTests.class)
   public void testProcessWebhookEventV2() {
     HttpHeaders headers = mock(HttpHeaders.class);
     UriInfo uriInfo = mock(UriInfo.class);
