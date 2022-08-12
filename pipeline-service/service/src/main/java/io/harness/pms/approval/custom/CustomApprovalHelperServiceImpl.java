@@ -10,6 +10,10 @@ package io.harness.pms.approval.custom;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.delegate.task.shell.ShellScriptTaskNG.COMMAND_UNIT;
 
+import static software.wings.beans.TaskType.SHELL_SCRIPT_TASK_NG;
+import static software.wings.beans.TaskType.WIN_RM_SHELL_SCRIPT_TASK_NG;
+
+import static com.google.protobuf.Duration.newBuilder;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -19,6 +23,7 @@ import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.TaskSelector;
 import io.harness.delegate.TaskType;
 import io.harness.delegate.task.TaskParameters;
+import io.harness.delegate.task.shell.WinRmShellScriptTaskNG;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.shell.ShellScriptTaskNG;
 import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
@@ -46,6 +51,7 @@ import io.harness.steps.approval.step.entities.ApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance.ApprovalInstanceKeys;
 import io.harness.steps.shellscript.ShellScriptHelperService;
 import io.harness.steps.shellscript.ShellScriptStepParameters;
+import io.harness.steps.shellscript.ShellType;
 import io.harness.waiter.NotifyCallback;
 import io.harness.waiter.WaitNotifyEngine;
 
@@ -154,6 +160,17 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
 
   private TaskRequest prepareCustomApprovalTaskRequest(
       Ambiance ambiance, CustomApprovalInstance instance, TaskParameters stepParameters) {
+    if (ShellType.Bash.equals(instance.getShellType())) {
+      return prepareBashCustomApprovalTaskRequest(ambiance, instance, stepParameters);
+    } else if (ShellType.PowerShell.equals(instance.getShellType())) {
+      return preparePowerShellCustomApprovalTaskRequest(ambiance, instance, stepParameters);
+    } else {
+      throw new InvalidRequestException(format("Shell %s is not supported", instance.getShellType()));
+    }
+  }
+
+  private TaskRequest prepareBashCustomApprovalTaskRequest(
+      Ambiance ambiance, CustomApprovalInstance instance, TaskParameters stepParameters) {
     TaskData taskData = TaskData.builder()
                             .async(true)
                             .taskType(software.wings.beans.TaskType.SHELL_SCRIPT_TASK_NG.name())
@@ -165,6 +182,26 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
         CollectionUtils.emptyIfNull(StepUtils.generateLogKeys(
             StepUtils.generateLogAbstractions(ambiance), Collections.singletonList(ShellScriptTaskNG.COMMAND_UNIT))),
         null, null, selectors, stepHelper.getEnvironmentType(ambiance));
+  }
+
+  private TaskRequest preparePowerShellCustomApprovalTaskRequest(
+      Ambiance ambiance, CustomApprovalInstance instance, TaskParameters stepParameters) {
+    TaskDetails taskDetails =
+        TaskDetails.newBuilder()
+            .setKryoParameters(ByteString.copyFrom(kryoSerializer.asDeflatedBytes(stepParameters) == null
+                    ? new byte[] {}
+                    : kryoSerializer.asDeflatedBytes(stepParameters)))
+            .setExecutionTimeout(
+                newBuilder().setSeconds(instance.getScriptTimeout().getValue().getTimeoutInMillis() / 1000).build())
+            .setMode(TaskMode.ASYNC)
+            .setParked(false)
+            .setType(TaskType.newBuilder().setType(WIN_RM_SHELL_SCRIPT_TASK_NG.name()).build())
+            .build();
+
+    List<TaskSelector> selectors = TaskSelectorYaml.toTaskSelector(instance.getDelegateSelectors());
+    return StepUtils.prepareTaskRequest(ambiance, taskDetails,
+        Lists.newArrayList(WinRmShellScriptTaskNG.INIT_UNIT, WinRmShellScriptTaskNG.COMMAND_UNIT), selectors, null,
+        true);
   }
 
   private void validateField(String name, String value) {
