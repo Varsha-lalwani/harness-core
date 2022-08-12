@@ -12,7 +12,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.validation.Validator.notNullCheck;
 
-import static software.wings.security.PermissionAttribute.PermissionType.APP;
+import static software.wings.security.PermissionAttribute.PermissionType.LOGGED_IN;
 import static software.wings.security.PermissionAttribute.ResourceType.APPLICATION;
 
 import io.harness.beans.PageRequest;
@@ -60,8 +60,8 @@ import lombok.extern.slf4j.Slf4j;
 @Consumes("application/json")
 @Slf4j
 @Scope(APPLICATION)
-@AuthRule(permissionType = APP)
-@ApiKeyAuthorized(permissionType = APP)
+@AuthRule(permissionType = LOGGED_IN)
+@ApiKeyAuthorized(permissionType = LOGGED_IN)
 public class TriggerResource {
   private TriggerService triggerService;
 
