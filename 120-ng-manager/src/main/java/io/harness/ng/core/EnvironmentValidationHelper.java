@@ -7,25 +7,13 @@
 
 package io.harness.ng.core;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-
-import static java.lang.String.format;
-
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.cdng.manifest.yaml.ManifestConfig;
-import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
-import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.environment.beans.Environment;
 import io.harness.ng.core.environment.services.EnvironmentService;
 
 import com.google.inject.Inject;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -41,22 +29,5 @@ public class EnvironmentValidationHelper {
       throw new NotFoundException(String.format("environment [%s] not found.", envIdentifier));
     }
     return true;
-  }
-
-  public static void checkDuplicateManifestIdentifiersWithIn(List<ManifestConfigWrapper> manifests) {
-    if (isEmpty(manifests)) {
-      return;
-    }
-    Set<String> uniqueIds = new HashSet<>();
-    Set<String> duplicateIds = new HashSet<>();
-    manifests.stream().map(ManifestConfigWrapper::getManifest).map(ManifestConfig::getIdentifier).forEach(id -> {
-      if (!uniqueIds.add(id)) {
-        duplicateIds.add(id);
-      }
-    });
-    if (isNotEmpty(duplicateIds)) {
-      throw new InvalidRequestException(format("Found duplicate manifest identifiers [%s]",
-          duplicateIds.stream().map(Object::toString).collect(Collectors.joining(","))));
-    }
   }
 }
