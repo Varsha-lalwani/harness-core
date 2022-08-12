@@ -43,7 +43,10 @@ public enum ServiceDefinitionType {
   AZURE_WEBAPP("Azure Web Apps",
       Lists.newArrayList(ExecutionStrategyType.BASIC, ExecutionStrategyType.BLUE_GREEN, ExecutionStrategyType.CANARY,
           ExecutionStrategyType.DEFAULT),
-      ServiceSpecType.AZURE_WEBAPP);
+      ServiceSpecType.AZURE_WEBAPP),
+  @JsonProperty(ServiceSpecType.DEPLOYMENT_TEMPLATE)
+  DEPLOYMENT_TEMPLATE(ServiceSpecType.DEPLOYMENT_TEMPLATE, Lists.newArrayList(ExecutionStrategyType.DEFAULT),
+  ServiceSpecType.DEPLOYMENT_TEMPLATE);
 
   /*
   //Unsupported for now

@@ -25,7 +25,8 @@ public enum InfrastructureType {
   @JsonProperty(InfrastructureKind.SERVERLESS_AWS_LAMBDA)
   SERVERLESS_AWS_LAMBDA(InfrastructureKind.SERVERLESS_AWS_LAMBDA),
   @JsonProperty(InfrastructureKind.AZURE_WEB_APP) AZURE_WEB_APP(InfrastructureKind.AZURE_WEB_APP),
-  @JsonProperty(InfrastructureKind.SSH_WINRM_AWS) SSH_WINRM_AWS(InfrastructureKind.SSH_WINRM_AWS);
+  @JsonProperty(InfrastructureKind.SSH_WINRM_AWS) SSH_WINRM_AWS(InfrastructureKind.SSH_WINRM_AWS),
+  @JsonProperty(InfrastructureKind.DEPLOYMENT_TEMPLATE) DEPLOYMENT_TEMPLATE(InfrastructureKind.DEPLOYMENT_TEMPLATE);
 
   private final String displayName;
 
