@@ -109,7 +109,7 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
   private void handlePollingEventInternal(
       PersistenceIterator<ApprovalInstance> iterator, CustomApprovalInstance instance) {
     Ambiance ambiance = instance.getAmbiance();
-    NGLogCallback logCallback = new NGLogCallback(logStreamingStepClientFactory, ambiance, COMMAND_UNIT, false);
+    NGLogCallback logCallback = getLogCallback(ambiance, instance);
 
     try {
       log.info("Polling custom approval instance");
@@ -140,6 +140,12 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
       log.warn("Error creating task for running the shell script approval while polling", ex);
       resetNextIteration(iterator, instance);
     }
+  }
+
+  private NGLogCallback getLogCallback(Ambiance ambiance, CustomApprovalInstance instance) {
+    final String unit =
+        ShellType.Bash.equals(instance.getShellType()) ? COMMAND_UNIT : WinRmShellScriptTaskNG.INIT_UNIT;
+    return new NGLogCallback(logStreamingStepClientFactory, ambiance, unit, false);
   }
 
   private TaskParameters buildShellScriptTaskParametersNG(
