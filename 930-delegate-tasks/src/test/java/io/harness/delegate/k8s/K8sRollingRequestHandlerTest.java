@@ -120,7 +120,7 @@ public class K8sRollingRequestHandlerTest extends CategoryTest {
             any(Kubectl.class), anyList(), any(K8sDelegateTaskParams.class), eq(logCallback), eq(true), anyLong());
 
     K8sDeployResponse response = rollingRequestHandler.executeTask(
-        rollingDeployRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, getTaskId());
+        rollingDeployRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getK8sNGTaskResponse()).isNotNull();
   }
