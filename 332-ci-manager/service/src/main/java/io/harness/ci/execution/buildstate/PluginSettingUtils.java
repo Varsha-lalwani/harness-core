@@ -17,6 +17,7 @@ import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParam
 import static io.harness.beans.steps.CIStepInfoType.GIT_CLONE;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_BUILD_EVENT;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_COMMIT_BRANCH;
+import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_REMOTE_URL;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_TAG;
 import static io.harness.ci.commonconstants.CIExecutionConstants.CLIENT_CERTIFICATE;
 import static io.harness.ci.commonconstants.CIExecutionConstants.CLIENT_ID;
@@ -25,6 +26,7 @@ import static io.harness.ci.commonconstants.CIExecutionConstants.DRONE_WORKSPACE
 import static io.harness.ci.commonconstants.CIExecutionConstants.GIT_CLONE_DEPTH_ATTRIBUTE;
 import static io.harness.ci.commonconstants.CIExecutionConstants.GIT_CLONE_MANUAL_DEPTH;
 import static io.harness.ci.commonconstants.CIExecutionConstants.GIT_SSL_NO_VERIFY;
+import static io.harness.ci.commonconstants.CIExecutionConstants.PATH_SEPARATOR;
 import static io.harness.ci.commonconstants.CIExecutionConstants.PLUGIN_ACCESS_KEY;
 import static io.harness.ci.commonconstants.CIExecutionConstants.PLUGIN_ARTIFACT_FILE_VALUE;
 import static io.harness.ci.commonconstants.CIExecutionConstants.PLUGIN_ASSUME_ROLE;
@@ -34,6 +36,7 @@ import static io.harness.ci.commonconstants.CIExecutionConstants.PLUGIN_PASSW;
 import static io.harness.ci.commonconstants.CIExecutionConstants.PLUGIN_SECRET_KEY;
 import static io.harness.ci.commonconstants.CIExecutionConstants.PLUGIN_URL;
 import static io.harness.ci.commonconstants.CIExecutionConstants.PLUGIN_USERNAME;
+import static io.harness.ci.commonconstants.CIExecutionConstants.STEP_MOUNT_PATH;
 import static io.harness.ci.commonconstants.CIExecutionConstants.TENANT_ID;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -69,6 +72,7 @@ import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.pod.EnvVariableEnum;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.ngexception.CIStageExecutionException;
+import io.harness.exception.ngexception.CIStageExecutionUserException;
 import io.harness.ng.core.NGAccess;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
@@ -710,7 +714,7 @@ public class PluginSettingUtils {
     final ConnectorDetails gitConnector = codebaseUtils.getGitConnector(ngAccess, connectorRef);
 
     // Set the Git Connector Reference environment variables
-    final String repoName = gitCloneStepInfo.getRepoName().getValue();
+    String repoName = gitCloneStepInfo.getRepoName().getValue();
     final Map<String, String> gitEnvVars = codebaseUtils.getGitEnvVariables(gitConnector, repoName);
     map.putAll(gitEnvVars);
 
@@ -725,7 +729,24 @@ public class PluginSettingUtils {
 
     String cloneDir =
         resolveStringParameter("cloneDirectory", "GitClone", identifier, gitCloneStepInfo.getCloneDirectory(), false);
-    setOptionalEnvironmentVariable(map, DRONE_WORKSPACE, cloneDir);
+    if (cloneDir != null) {
+      cloneDir = cloneDir.trim();
+    }
+    if (isEmpty(cloneDir)) {
+      if (repoName != null) {
+        repoName = repoName.trim();
+      }
+      if (isEmpty(repoName)) {
+        repoName = getRepoNameFromRepoUrl(gitEnvVars.get(DRONE_REMOTE_URL));
+      }
+      cloneDir = STEP_MOUNT_PATH + PATH_SEPARATOR + repoName;
+    }
+    if (STEP_MOUNT_PATH.equals(cloneDir)) {
+      throw new CIStageExecutionUserException(
+          format("%s is an invalid value for the cloneDirectory field in the GitClone step with identifier %s",
+              STEP_MOUNT_PATH, identifier));
+    }
+    setMandatoryEnvironmentVariable(map, DRONE_WORKSPACE, cloneDir);
 
     Integer depth = null;
     final ParameterField<Integer> depthParameter = gitCloneStepInfo.getDepth();
@@ -806,6 +827,31 @@ public class PluginSettingUtils {
       }
     }
     return buildTypeAndValue;
+  }
+
+  /**
+   * Get Repo Name from Repo Url.
+   *
+   * Note that GIT SSH URLs aren't actually URLs or URIs, but rather follow a legacy scp-like syntax
+   * @param repoUrl the git url or scp-like ssh path
+   * @return the repository from the url or by default "repository"
+   */
+  public static String getRepoNameFromRepoUrl(String repoUrl) {
+    String repoName = "repository";
+    if (!isEmpty(repoUrl)) {
+      int lastPathSeparatorIndex = repoUrl.lastIndexOf(PATH_SEPARATOR);
+      if (lastPathSeparatorIndex != -1) {
+        repoUrl = repoUrl.substring(lastPathSeparatorIndex + 1);
+      }
+      int lastDotIndex = repoUrl.lastIndexOf(".");
+      if (lastDotIndex != -1) {
+        repoUrl = repoUrl.substring(0, lastDotIndex);
+      }
+      if (!isEmpty(repoUrl)) {
+        repoName = repoUrl;
+      }
+    }
+    return repoName;
   }
 
   // converts map "key1":"value1","key2":"value2" to string "key1=value1,key2=value2"

@@ -8,6 +8,7 @@
 package io.harness.ci.stateutils.buildstate;
 
 import static io.harness.ci.buildstate.PluginSettingUtils.TAG_BUILD_EVENT;
+import static io.harness.ci.buildstate.PluginSettingUtils.getRepoNameFromRepoUrl;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_BUILD_EVENT;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_COMMIT_BRANCH;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_NETRC_MACHINE;
@@ -16,6 +17,8 @@ import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_TAG;
 import static io.harness.ci.commonconstants.CIExecutionConstants.DRONE_WORKSPACE;
 import static io.harness.ci.commonconstants.CIExecutionConstants.GIT_CLONE_MANUAL_DEPTH;
 import static io.harness.ci.commonconstants.CIExecutionConstants.GIT_SSL_NO_VERIFY;
+import static io.harness.ci.commonconstants.CIExecutionConstants.PATH_SEPARATOR;
+import static io.harness.ci.commonconstants.CIExecutionConstants.STEP_MOUNT_PATH;
 import static io.harness.rule.OwnerRule.ALEKSANDAR;
 import static io.harness.rule.OwnerRule.JAMES_RICKS;
 import static io.harness.rule.OwnerRule.RAGHAV_GUPTA;
@@ -50,6 +53,7 @@ import io.harness.ci.buildstate.ConnectorUtils;
 import io.harness.ci.buildstate.PluginSettingUtils;
 import io.harness.ci.executionplan.CIExecutionTestBase;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
+import io.harness.exception.ngexception.CIStageExecutionUserException;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.rule.Owner;
@@ -498,16 +502,18 @@ public class PluginSettingUtilsTest extends CIExecutionTestBase {
   public void shouldGetGitClonePluginCompatibleStepInfoBuildTypeTagEnvVariables() {
     BuildType buildType = BuildType.TAG;
     String buildValue = "myTag";
+    String repoName = "myRepoName";
 
     final ParameterField<Build> buildParameter = createBuildParameter(buildType, buildValue);
     final GitCloneStepInfo stepInfo = GitCloneStepInfo.builder()
                                           .connectorRef(ParameterField.createValueField("myConnectorRef"))
                                           .build(buildParameter)
-                                          .repoName(ParameterField.createValueField("myRepoName"))
+                                          .repoName(ParameterField.createValueField(repoName))
                                           .build();
     Map<String, String> expected = new HashMap<>();
     expected.put(DRONE_TAG, buildValue);
     expected.put(DRONE_BUILD_EVENT, TAG_BUILD_EVENT);
+    expected.put(DRONE_WORKSPACE, STEP_MOUNT_PATH + PATH_SEPARATOR + repoName);
     expected.put(GIT_SSL_NO_VERIFY, String.valueOf(false));
     expected.put("PLUGIN_DEPTH", GIT_CLONE_MANUAL_DEPTH.toString());
 
@@ -564,14 +570,123 @@ public class PluginSettingUtilsTest extends CIExecutionTestBase {
   @Test
   @Owner(developers = JAMES_RICKS)
   @Category(UnitTests.class)
-  public void shouldGetGitClonePluginCompatibleStepInfoNoDepthNoBuildEnvVariables() {
+  public void shouldGetGitClonePluginCompatibleStepInfoNoCloneDirAccountUrlEnvVariables() {
+    BuildType buildType = BuildType.BRANCH;
+    String buildValue = "main";
+    boolean sslVerify = true;
+    String connectorRef = "myConnectorRef";
+    String repoName = "myrepository";
+    String scmProvider = "my.scmprovider.com";
+    String scmUrl = "https://"
+        + "my.scmprovider.com"
+        + "/organization/" + repoName + ".git";
+    Integer depth = 22;
+
+    ConnectorDetails connectorDetails = ConnectorDetails.builder().build();
+    when(codebaseUtils.getGitConnector(any(), eq(connectorRef))).thenReturn(connectorDetails);
+    Map<String, String> gitEnvVars = new HashMap<>();
+    gitEnvVars.put(DRONE_REMOTE_URL, scmUrl);
+    gitEnvVars.put(DRONE_NETRC_MACHINE, scmProvider);
+    when(codebaseUtils.getGitEnvVariables(connectorDetails, repoName)).thenReturn(gitEnvVars);
+
+    final ParameterField<Build> buildParameter = createBuildParameter(buildType, buildValue);
+    final GitCloneStepInfo stepInfo = GitCloneStepInfo.builder()
+                                          .sslVerify(ParameterField.createValueField(sslVerify))
+                                          .build(buildParameter)
+                                          .connectorRef(ParameterField.createValueField(connectorRef))
+                                          .repoName(ParameterField.createValueField(repoName))
+                                          .depth(ParameterField.createValueField(depth))
+                                          .build();
+
+    Map<String, String> expected = new HashMap<>();
+    expected.putAll(gitEnvVars);
+    expected.put(GIT_SSL_NO_VERIFY, String.valueOf(!sslVerify));
+    expected.put(DRONE_COMMIT_BRANCH, buildValue);
+    expected.put(DRONE_WORKSPACE, STEP_MOUNT_PATH + PATH_SEPARATOR + repoName);
+    expected.put("PLUGIN_DEPTH", depth.toString());
+
+    Ambiance ambiance = Ambiance.newBuilder().build();
+    Map<String, String> actual =
+        pluginSettingUtils.getPluginCompatibleEnvVariables(stepInfo, "identifier", 100, ambiance, Type.K8);
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test
+  @Owner(developers = JAMES_RICKS)
+  @Category(UnitTests.class)
+  public void shouldGetGitClonePluginCompatibleStepInfoNoCloneDirRepoUrlEnvVariables() {
+    BuildType buildType = BuildType.BRANCH;
+    String buildValue = "main";
+    boolean sslVerify = true;
+    String connectorRef = "myConnectorRef";
+    String repoName = "myrepository";
+    String scmProvider = "my.scmprovider.com";
+    String scmUrl = "https://"
+        + "my.scmprovider.com"
+        + "/organization/" + repoName + ".git";
+    Integer depth = 22;
+
+    ConnectorDetails connectorDetails = ConnectorDetails.builder().build();
+    when(codebaseUtils.getGitConnector(any(), eq(connectorRef))).thenReturn(connectorDetails);
+    Map<String, String> gitEnvVars = new HashMap<>();
+    gitEnvVars.put(DRONE_REMOTE_URL, scmUrl);
+    gitEnvVars.put(DRONE_NETRC_MACHINE, scmProvider);
+    when(codebaseUtils.getGitEnvVariables(connectorDetails, null)).thenReturn(gitEnvVars);
+
+    final ParameterField<Build> buildParameter = createBuildParameter(buildType, buildValue);
+    final GitCloneStepInfo stepInfo = GitCloneStepInfo.builder()
+                                          .sslVerify(ParameterField.createValueField(sslVerify))
+                                          .build(buildParameter)
+                                          .connectorRef(ParameterField.createValueField(connectorRef))
+                                          .repoName(ParameterField.createValueField(null))
+                                          .depth(ParameterField.createValueField(depth))
+                                          .build();
+
+    Map<String, String> expected = new HashMap<>();
+    expected.putAll(gitEnvVars);
+    expected.put(GIT_SSL_NO_VERIFY, String.valueOf(!sslVerify));
+    expected.put(DRONE_COMMIT_BRANCH, buildValue);
+    expected.put(DRONE_WORKSPACE, STEP_MOUNT_PATH + PATH_SEPARATOR + repoName);
+    expected.put("PLUGIN_DEPTH", depth.toString());
+
+    Ambiance ambiance = Ambiance.newBuilder().build();
+    Map<String, String> actual =
+        pluginSettingUtils.getPluginCompatibleEnvVariables(stepInfo, "identifier", 100, ambiance, Type.K8);
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test(expected = CIStageExecutionUserException.class)
+  @Owner(developers = JAMES_RICKS)
+  @Category(UnitTests.class)
+  public void shouldGetGitClonePluginCompatibleStepInfoInvalidCloneDirEnvVariables() {
+    BuildType buildType = BuildType.TAG;
+    String buildValue = "myTag";
+    String cloneDir = "/harness";
+
+    final ParameterField<Build> buildParameter = createBuildParameter(buildType, buildValue);
     final GitCloneStepInfo stepInfo = GitCloneStepInfo.builder()
                                           .connectorRef(ParameterField.createValueField("myConnectorRef"))
-                                          .repoName(ParameterField.createValueField("myRepoName"))
+                                          .build(buildParameter)
+                                          .repoName(ParameterField.createValueField(null))
+                                          .cloneDirectory(ParameterField.createValueField(cloneDir))
+                                          .build();
+    Ambiance ambiance = Ambiance.newBuilder().build();
+    pluginSettingUtils.getPluginCompatibleEnvVariables(stepInfo, "identifier", 100, ambiance, Type.K8);
+  }
+
+  @Test
+  @Owner(developers = JAMES_RICKS)
+  @Category(UnitTests.class)
+  public void shouldGetGitClonePluginCompatibleStepInfoNoDepthNoBuildEnvVariables() {
+    String repoName = "myRepoName";
+    final GitCloneStepInfo stepInfo = GitCloneStepInfo.builder()
+                                          .connectorRef(ParameterField.createValueField("myConnectorRef"))
+                                          .repoName(ParameterField.createValueField(repoName))
                                           .build();
 
     Map<String, String> expected = new HashMap<>();
     expected.put(GIT_SSL_NO_VERIFY, String.valueOf(false));
+    expected.put(DRONE_WORKSPACE, STEP_MOUNT_PATH + PATH_SEPARATOR + repoName);
 
     Ambiance ambiance = Ambiance.newBuilder().build();
     Map<String, String> actual =
@@ -584,16 +699,18 @@ public class PluginSettingUtilsTest extends CIExecutionTestBase {
   @Category(UnitTests.class)
   public void shouldGetGitClonePluginCompatibleStepInfoZeroDepthEnvVariables() {
     boolean sslVerify = false;
+    String repoName = "myRepoName";
 
     final GitCloneStepInfo stepInfo = GitCloneStepInfo.builder()
                                           .connectorRef(ParameterField.createValueField("myConnectorRef"))
-                                          .repoName(ParameterField.createValueField("myRepoName"))
+                                          .repoName(ParameterField.createValueField(repoName))
                                           .sslVerify(ParameterField.createValueField(sslVerify))
                                           .depth(ParameterField.createValueField(0))
                                           .build();
 
     Map<String, String> expected = new HashMap<>();
     expected.put(GIT_SSL_NO_VERIFY, String.valueOf(!sslVerify));
+    expected.put(DRONE_WORKSPACE, STEP_MOUNT_PATH + PATH_SEPARATOR + repoName);
 
     Ambiance ambiance = Ambiance.newBuilder().build();
     Map<String, String> actual =
@@ -613,5 +730,34 @@ public class PluginSettingUtilsTest extends CIExecutionTestBase {
     }
     final Build build = builder().spec(buildSpec).type(buildType).build();
     return ParameterField.<Build>builder().value(build).build();
+  }
+
+  @Test
+  @Owner(developers = JAMES_RICKS)
+  @Category(UnitTests.class)
+  public void getRepoNameFromRepoUrlTest() {
+    String githubSsh = "git@github.com:organization/repo.git";
+    assertThat(getRepoNameFromRepoUrl(githubSsh)).isEqualTo("repo");
+
+    String githubHttps = "https://github.com/organization/repo.git";
+    assertThat(getRepoNameFromRepoUrl(githubHttps)).isEqualTo("repo");
+
+    String gitlabSsh = "git@gitlab.com:organization/repo.git";
+    assertThat(getRepoNameFromRepoUrl(gitlabSsh)).isEqualTo("repo");
+
+    String gitlabHttps = "https://gitlab.com/organization/repo.git";
+    assertThat(getRepoNameFromRepoUrl(gitlabHttps)).isEqualTo("repo");
+
+    String bitbucketSsh = "git@bitbucket.org:organization/repo.git";
+    assertThat(getRepoNameFromRepoUrl(bitbucketSsh)).isEqualTo("repo");
+
+    String bitbucketHttps = "https://username@bitbucket.org/organization/repo.git";
+    assertThat(getRepoNameFromRepoUrl(bitbucketHttps)).isEqualTo("repo");
+
+    String withExtraDotGits = "git@github.com:organization/repo.with.extra.git.git";
+    assertThat(getRepoNameFromRepoUrl(withExtraDotGits)).isEqualTo("repo.with.extra.git");
+
+    String empty = "";
+    assertThat(getRepoNameFromRepoUrl(empty)).isEqualTo("repository");
   }
 }
