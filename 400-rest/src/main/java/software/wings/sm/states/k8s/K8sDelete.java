@@ -130,7 +130,7 @@ public class K8sDelete extends AbstractK8sState {
               .resources(context.renderExpression(this.resources))
               .deleteNamespacesForRelease(deleteNamespacesForRelease)
               .timeoutIntervalInMin(stateTimeoutInMinutes)
-              .k8sPrevCanaryDeploy(wasCanaryDeployedPrev)
+              .k8sCanaryDelete(wasCanaryDeployedPrev)
               .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
               .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
               .build();

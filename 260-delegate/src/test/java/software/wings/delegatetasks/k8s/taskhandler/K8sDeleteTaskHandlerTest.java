@@ -228,7 +228,7 @@ public class K8sDeleteTaskHandlerTest extends WingsBaseTest {
     doReturn(true).when(k8sTaskHelper).fetchManifestFilesAndWriteToDirectory(any(), any(), any(), anyLong());
 
     K8sDeleteTaskParameters deleteAllResources =
-        K8sDeleteTaskParameters.builder().k8sPrevCanaryDeploy(true).resources("${k8s.canaryWorkload}").build();
+        K8sDeleteTaskParameters.builder().k8sCanaryDelete(true).resources("${k8s.canaryWorkload}").build();
     final K8sTaskExecutionResponse taskResponse = handler.executeTaskInternal(deleteAllResources, taskParams);
 
     verify(k8sTaskHelperBase, times(1)).getReleaseHistoryData(any(), any());
