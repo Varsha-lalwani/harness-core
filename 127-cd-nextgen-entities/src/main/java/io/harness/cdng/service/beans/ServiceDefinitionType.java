@@ -46,7 +46,7 @@ public enum ServiceDefinitionType {
 
   @JsonProperty(ServiceSpecType.ECS)
   ECS("ECS",
-          Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.BLUE_GREEN, ExecutionStrategyType.CANARY,
+          Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.CANARY,
                   ExecutionStrategyType.DEFAULT),
   ServiceSpecType.ECS);
 

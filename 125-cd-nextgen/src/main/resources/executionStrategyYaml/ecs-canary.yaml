@@ -12,14 +12,14 @@ spec:
           identifier: canaryDepoyment
           steps:
             - step:
-                name: "Canary Deployment"
-                identifier: canaryDeployment
+                name: "ECS Canary Deploy"
+                identifier: ecsCanaryDeploy
                 type: EcsCanaryDeploy
                 timeout: 10m
                 spec: {}
             - step:
-                name: "Canary Delete"
-                identifier: canaryDelete
+                name: "ECS Canary Delete"
+                identifier: ecsCanaryDelete
                 type: EcsCanaryDelete
                 timeout: 10m
                 spec: {}
@@ -28,21 +28,21 @@ spec:
           identifier: primaryDepoyment
           steps:
             - step:
-                name: "Rolling Deployment"
-                identifier: rollingDeployment
+                name: "ECS Rolling Deploy"
+                identifier: ecsRollingDeploy
                 type: EcsRollingDeploy
                 timeout: 10m
                 spec: {}
     rollbackSteps:
       - step:
-          name: "Canary Delete"
-          identifier: rollbackCanaryDelete
+          name: "ECS Canary Delete"
+          identifier: ecsRollbackCanaryDelete
           type: EcsCanaryDelete
           timeout: 10m
           spec: {}
       - step:
-          name: "Rolling Rollback"
-          identifier: rollingRollback
-          type: EcsRollback
+          name: "ECS Rolling Rollback"
+          identifier: ecsRollingRollback
+          type: EcsRollingRollback
           timeout: 10m
           spec: {}

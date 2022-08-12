@@ -8,15 +8,15 @@ spec:
   execution:
     steps:
       - step:
-          name: "Rolling Deployment"
-          identifier: rollingDeployment
+          name: "ECS Rolling Deploy"
+          identifier: ecsRollingDeploy
           type: EcsRollingDeploy
           timeout: 10m
           spec: {}
     rollbackSteps:
       - step:
-          name: "Rollback Rolling Deployment"
-          identifier: rollbackRollingDeployment
-          type: EcsRollback
+          name: "ECS Rolling Rollback"
+          identifier: ecsRollingRollback
+          type: EcsRollingRollback
           timeout: 10m
           spec: {}
