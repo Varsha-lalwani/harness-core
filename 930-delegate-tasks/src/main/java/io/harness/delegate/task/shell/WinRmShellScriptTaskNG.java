@@ -106,7 +106,8 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
     AbstractScriptExecutor executor =
         shellExecutorFactory.getExecutor(config, getLogStreamingTaskClient(), commandUnitsProgress);
 
-    ExecuteCommandResponse executeCommandResponse = executor.executeCommandString("echo test", Collections.emptyList());
+    ExecuteCommandResponse executeCommandResponse =
+        executor.executeCommandString(getInitCommand(taskParameters.getWorkingDirectory()), Collections.emptyList());
 
     updateStatus(commandUnitsProgress, INIT_UNIT, executeCommandResponse.getStatus());
 
