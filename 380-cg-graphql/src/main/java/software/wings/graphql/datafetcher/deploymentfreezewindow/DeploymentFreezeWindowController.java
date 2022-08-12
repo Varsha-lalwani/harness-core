@@ -72,8 +72,7 @@ public class DeploymentFreezeWindowController {
     // EXCLUDE APP SELECTIONS POPULATED
     List<ApplicationFilter> excludeAppSelections = new ArrayList<>();
     if (qlCreateDeploymentFreezeWindowInput.getExcludeFreezeWindows() != null) {
-      excludeAppSelections =
-          populateAppSelectionsEntity(qlCreateDeploymentFreezeWindowInput.getExcludeFreezeWindows());
+      excludeAppSelections = populateAppSelectionsEntity(qlCreateDeploymentFreezeWindowInput.getExcludeFreezeWindows());
     }
 
     // TIME RANGE POPULATED
@@ -453,24 +452,24 @@ public class DeploymentFreezeWindowController {
 
       List<String> envIds = new ArrayList<>();
       if (appIds.size() == 1
-              && applicationFilter.getEnvSelection().getFilterType().equals(EnvironmentFilterType.CUSTOM)) {
+          && applicationFilter.getEnvSelection().getFilterType().equals(EnvironmentFilterType.CUSTOM)) {
         envIds = ((CustomEnvFilter) applicationFilter.getEnvSelection()).getEnvironments();
       }
 
       List<String> servIds = new ArrayList<>();
       if (appIds.size() == 1
-              && applicationFilter.getServiceSelection().getFilterType().equals(ServiceFilterType.CUSTOM)) {
+          && applicationFilter.getServiceSelection().getFilterType().equals(ServiceFilterType.CUSTOM)) {
         servIds = applicationFilter.getServiceSelection().getServices();
       }
 
       QLFreezeWindow qlFreezeWindow = QLFreezeWindow.builder()
-              .appFilter(applicationFilter.getFilterType())
-              .envFilterType(applicationFilter.getEnvSelection().getFilterType())
-              .appIds(appIds)
-              .envIds(envIds)
-              .servIds(servIds)
-              .servFilterType(applicationFilter.getServiceSelection().getFilterType())
-              .build();
+                                          .appFilter(applicationFilter.getFilterType())
+                                          .envFilterType(applicationFilter.getEnvSelection().getFilterType())
+                                          .appIds(appIds)
+                                          .envIds(envIds)
+                                          .servIds(servIds)
+                                          .servFilterType(applicationFilter.getServiceSelection().getFilterType())
+                                          .build();
 
       qlFreezeWindowList.add(qlFreezeWindow);
     }
@@ -531,8 +530,8 @@ public class DeploymentFreezeWindowController {
     }
   }
 
-  private void validateAppSelections(TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig, String accountId,
-      Boolean excluded) {
+  private void validateAppSelections(
+      TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig, String accountId, Boolean excluded) {
     List<ApplicationFilter> appSelections =
         excluded ? timeRangeBasedFreezeConfig.getExcludeAppSelections() : timeRangeBasedFreezeConfig.getAppSelections();
 

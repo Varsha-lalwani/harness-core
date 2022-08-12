@@ -193,8 +193,8 @@ public class TimeRangeBasedFreezeConfigYamlHandler
         applicationFilterYamlHandler =
             yamlHandlerFactory.getYamlHandler(YamlType.APPLICATION_FILTER, entry.getFilterType().name());
         ChangeContext.Builder clonedContext = cloneFileChangeContext(changeContext, entry);
-        excludeApplicationFilters.add(applicationFilterYamlHandler.upsertFromYaml(clonedContext.build(),
-            changeSetContext));
+        excludeApplicationFilters.add(
+            applicationFilterYamlHandler.upsertFromYaml(clonedContext.build(), changeSetContext));
       }
     }
 

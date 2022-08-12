@@ -36,7 +36,6 @@ import software.wings.service.intfc.UserGroupService;
 import com.google.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -66,13 +65,13 @@ public class DeploymentFreezeWindowControllerTest extends AbstractDataFetcherTes
                                                        .servIds(null)
                                                        .build();
     QLFreezeWindowInput qlValidExcludeFreezeWindowInput = QLFreezeWindowInput.builder()
-                                                       .appFilter(BlackoutWindowFilterType.CUSTOM)
-                                                       .envTypeFilter(QLEnvironmentTypeFilterInput.ALL)
-                                                       .serviceTypeFilter(QLServiceTypeFilterInput.ALL)
-                                                       .appIds(Collections.singletonList("app1"))
-                                                       .envIds(null)
-                                                       .servIds(null)
-                                                       .build();
+                                                              .appFilter(BlackoutWindowFilterType.CUSTOM)
+                                                              .envTypeFilter(QLEnvironmentTypeFilterInput.ALL)
+                                                              .serviceTypeFilter(QLServiceTypeFilterInput.ALL)
+                                                              .appIds(Collections.singletonList("app1"))
+                                                              .envIds(null)
+                                                              .servIds(null)
+                                                              .build();
 
     QLSetupInput qlValidSetupInput = QLSetupInput.builder().isDurationBased(true).duration(3600000L).build();
 
@@ -122,13 +121,13 @@ public class DeploymentFreezeWindowControllerTest extends AbstractDataFetcherTes
                                                        .servIds(null)
                                                        .build();
     QLFreezeWindowInput qlValidExcludeFreezeWindowInput = QLFreezeWindowInput.builder()
-                                                       .appFilter(BlackoutWindowFilterType.ALL)
-                                                       .envTypeFilter(QLEnvironmentTypeFilterInput.ALL)
-                                                       .serviceTypeFilter(QLServiceTypeFilterInput.ALL)
-                                                       .appIds(null)
-                                                       .envIds(null)
-                                                       .servIds(null)
-                                                       .build();
+                                                              .appFilter(BlackoutWindowFilterType.ALL)
+                                                              .envTypeFilter(QLEnvironmentTypeFilterInput.ALL)
+                                                              .serviceTypeFilter(QLServiceTypeFilterInput.ALL)
+                                                              .appIds(null)
+                                                              .envIds(null)
+                                                              .servIds(null)
+                                                              .build();
 
     QLSetupInput qlValidSetupInput = QLSetupInput.builder().isDurationBased(true).duration(3600000L).build();
 
@@ -158,14 +157,13 @@ public class DeploymentFreezeWindowControllerTest extends AbstractDataFetcherTes
                                                        .servIds(null)
                                                        .build();
     QLFreezeWindowInput updatedExcludeFreezeWindowInput = QLFreezeWindowInput.builder()
-                                                       .appFilter(BlackoutWindowFilterType.CUSTOM)
-                                                       .envTypeFilter(QLEnvironmentTypeFilterInput.CUSTOM)
-                                                       .serviceTypeFilter(QLServiceTypeFilterInput.ALL)
-                                                       .appIds(Collections.singletonList("app1"))
-                                                       .envIds(Collections.singletonList("env1"))
-                                                       .servIds(null)
-                                                       .build();
-
+                                                              .appFilter(BlackoutWindowFilterType.CUSTOM)
+                                                              .envTypeFilter(QLEnvironmentTypeFilterInput.CUSTOM)
+                                                              .serviceTypeFilter(QLServiceTypeFilterInput.ALL)
+                                                              .appIds(Collections.singletonList("app1"))
+                                                              .envIds(Collections.singletonList("env1"))
+                                                              .servIds(null)
+                                                              .build();
 
     QLSetupInput updatedSetupInput = QLSetupInput.builder().isDurationBased(true).duration(4600000L).build();
 

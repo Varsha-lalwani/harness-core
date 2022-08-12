@@ -48,7 +48,6 @@ import com.google.inject.Inject;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -98,13 +97,13 @@ public class CreateDeploymentFreezeWindowDataFetcherTest extends AbstractDataFet
                                                        .servIds(null)
                                                        .build();
     QLFreezeWindowInput qlValidExcludeFreezeWindowInput = QLFreezeWindowInput.builder()
-                                                       .appFilter(BlackoutWindowFilterType.CUSTOM)
-                                                       .envTypeFilter(QLEnvironmentTypeFilterInput.ALL)
-                                                       .serviceTypeFilter(QLServiceTypeFilterInput.ALL)
-                                                       .appIds(Collections.singletonList("app1"))
-                                                       .envIds(null)
-                                                       .servIds(null)
-                                                       .build();
+                                                              .appFilter(BlackoutWindowFilterType.CUSTOM)
+                                                              .envTypeFilter(QLEnvironmentTypeFilterInput.ALL)
+                                                              .serviceTypeFilter(QLServiceTypeFilterInput.ALL)
+                                                              .appIds(Collections.singletonList("app1"))
+                                                              .envIds(null)
+                                                              .servIds(null)
+                                                              .build();
 
     QLSetupInput qlValidSetupInput = QLSetupInput.builder().isDurationBased(true).duration(3600000L).build();
 
@@ -125,9 +124,8 @@ public class CreateDeploymentFreezeWindowDataFetcherTest extends AbstractDataFet
 
     ApplicationFilter applicationFilter =
         new AllAppFilter(BlackoutWindowFilterType.ALL, environmentFilter, serviceFilter);
-    ApplicationFilter excludeApplicationFilter =
-            new CustomAppFilter(BlackoutWindowFilterType.CUSTOM, environmentFilter, Collections.singletonList("app1"),
-                serviceFilter);
+    ApplicationFilter excludeApplicationFilter = new CustomAppFilter(
+        BlackoutWindowFilterType.CUSTOM, environmentFilter, Collections.singletonList("app1"), serviceFilter);
 
     TimeRange timeRange = new TimeRange(System.currentTimeMillis(), System.currentTimeMillis() + 3600000, "time-zone",
         true, 3600000L, System.currentTimeMillis() + 3600000, TimeRangeOccurrence.ANNUAL, false);
@@ -158,13 +156,13 @@ public class CreateDeploymentFreezeWindowDataFetcherTest extends AbstractDataFet
                                         .servIds(null)
                                         .build();
     QLFreezeWindow qlExcludeFreezeWindow = QLFreezeWindow.builder()
-            .appFilter(BlackoutWindowFilterType.CUSTOM)
-            .envFilterType(EnvironmentFilterType.ALL)
-            .servFilterType(ServiceFilterType.ALL)
-            .appIds(Collections.singletonList("app1"))
-            .envIds(null)
-            .servIds(null)
-            .build();
+                                               .appFilter(BlackoutWindowFilterType.CUSTOM)
+                                               .envFilterType(EnvironmentFilterType.ALL)
+                                               .servFilterType(ServiceFilterType.ALL)
+                                               .appIds(Collections.singletonList("app1"))
+                                               .envIds(null)
+                                               .servIds(null)
+                                               .build();
     QLSetup qlSetup = QLSetup.builder().isDurationBased(true).duration(3600000L).build();
 
     QLDeploymentFreezeWindow qlDeploymentFreezeWindow = QLDeploymentFreezeWindow.builder()
@@ -236,9 +234,8 @@ public class CreateDeploymentFreezeWindowDataFetcherTest extends AbstractDataFet
     ApplicationFilter applicationFilter =
         new AllAppFilter(BlackoutWindowFilterType.ALL, environmentFilter, serviceFilter);
 
-    ApplicationFilter excludeApplicationFilter =
-            new CustomAppFilter(BlackoutWindowFilterType.CUSTOM, environmentFilter, Collections.singletonList("app1"),
-                serviceFilter);
+    ApplicationFilter excludeApplicationFilter = new CustomAppFilter(
+        BlackoutWindowFilterType.CUSTOM, environmentFilter, Collections.singletonList("app1"), serviceFilter);
 
     TimeRange timeRange = new TimeRange(163400000L, 1635000000L, "time-zone", true, 3600000L,
         System.currentTimeMillis() + 3600000, TimeRangeOccurrence.ANNUAL, false);
@@ -269,13 +266,13 @@ public class CreateDeploymentFreezeWindowDataFetcherTest extends AbstractDataFet
                                         .servIds(null)
                                         .build();
     QLFreezeWindow qlExcludeFreezeWindow = QLFreezeWindow.builder()
-            .appFilter(BlackoutWindowFilterType.CUSTOM)
-            .envFilterType(EnvironmentFilterType.ALL)
-            .servFilterType(ServiceFilterType.ALL)
-            .appIds(Collections.singletonList("app1"))
-            .envIds(null)
-            .servIds(null)
-            .build();
+                                               .appFilter(BlackoutWindowFilterType.CUSTOM)
+                                               .envFilterType(EnvironmentFilterType.ALL)
+                                               .servFilterType(ServiceFilterType.ALL)
+                                               .appIds(Collections.singletonList("app1"))
+                                               .envIds(null)
+                                               .servIds(null)
+                                               .build();
 
     QLSetup qlSetup = QLSetup.builder().isDurationBased(false).from(163400000L).to(163500000L).build();
 

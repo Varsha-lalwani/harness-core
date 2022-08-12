@@ -10,6 +10,7 @@ package software.wings.service.impl.yaml.handler.governance;
 import static io.harness.rule.OwnerRule.ATHARVA;
 import static io.harness.rule.OwnerRule.HINGER;
 import static io.harness.rule.OwnerRule.VINICIUS;
+
 import static software.wings.beans.Application.Builder.anApplication;
 import static software.wings.beans.Environment.Builder.anEnvironment;
 import static software.wings.beans.yaml.YamlConstants.PATH_DELIMITER;
@@ -258,8 +259,8 @@ public class GovernanceConfigYamlHandlerTest extends YamlHandlerTestBase {
     testEnvs.add(qaEnv);
 
     Application testApp = Application.Builder.anApplication().name("test").uuid(APP_ID).environments(testEnvs).build();
-    CustomEnvFilter environmentFilter = new CustomEnvFilter(EnvironmentFilterType.CUSTOM,
-        Collections.singletonList("prod-id"));
+    CustomEnvFilter environmentFilter =
+        new CustomEnvFilter(EnvironmentFilterType.CUSTOM, Collections.singletonList("prod-id"));
     ServiceFilter serviceFilter = new ServiceFilter(ServiceFilterType.ALL, null);
     CustomAppFilter applicationFilter = new CustomAppFilter(BlackoutWindowFilterType.CUSTOM, environmentFilter,
         Collections.singletonList(testApp.getUuid()), serviceFilter);
@@ -272,10 +273,10 @@ public class GovernanceConfigYamlHandlerTest extends YamlHandlerTestBase {
     doReturn(testEnvs).when(environmentService).getEnvironmentsFromIds(eq(ACCOUNT_ID), any());
 
     GovernanceConfig oldGovernanceConfig = GovernanceConfig.builder()
-        .accountId(ACCOUNT_ID)
-        .deploymentFreeze(false)
-        .timeRangeBasedFreezeConfigs(null)
-        .build();
+                                               .accountId(ACCOUNT_ID)
+                                               .deploymentFreeze(false)
+                                               .timeRangeBasedFreezeConfigs(null)
+                                               .build();
 
     doReturn(oldGovernanceConfig).when(governanceConfigService).get(eq(ACCOUNT_ID));
 
@@ -295,15 +296,17 @@ public class GovernanceConfigYamlHandlerTest extends YamlHandlerTestBase {
     assertThat(applicationFilter)
         .isEqualTo(savedGovernanceConfig.getTimeRangeBasedFreezeConfigs().get(0).getExcludeAppSelections().get(0));
     assertThat(environmentFilter)
-        .isEqualTo(
-            savedGovernanceConfig.getTimeRangeBasedFreezeConfigs().get(0).getExcludeAppSelections().get(0)
-                .getEnvSelection());
+        .isEqualTo(savedGovernanceConfig.getTimeRangeBasedFreezeConfigs()
+                       .get(0)
+                       .getExcludeAppSelections()
+                       .get(0)
+                       .getEnvSelection());
     assertThat(serviceFilter)
         .isEqualTo(savedGovernanceConfig.getTimeRangeBasedFreezeConfigs()
-        .get(0)
-        .getExcludeAppSelections()
-        .get(0)
-        .getServiceSelection());
+                       .get(0)
+                       .getExcludeAppSelections()
+                       .get(0)
+                       .getServiceSelection());
 
     yaml = handler.toYaml(savedGovernanceConfig, APP_ID);
 
