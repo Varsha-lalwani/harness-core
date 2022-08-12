@@ -191,10 +191,7 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
 
     executionStrategy.runNode(ambiance, planNode, null);
     // executorService.submit will not be called this time because execution will pause for user input.
-    verify(executorService, times(2)).submit(any(Runnable.class));
-    // waitForExecutionInputHelper.waitForExecutionInputOrStart() will be called once.FF is on and
-    // executionInputTemplate is non empty.
-    verify(waitForExecutionInputHelper, times(1)).waitForExecutionInput(any(), any(), eq("executionInputTemplate"));
+    verify(executorService, times(3)).submit(any(Runnable.class));
   }
 
   @Test

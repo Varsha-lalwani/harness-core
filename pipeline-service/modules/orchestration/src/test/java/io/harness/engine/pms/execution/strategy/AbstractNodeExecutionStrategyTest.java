@@ -128,7 +128,7 @@ public class AbstractNodeExecutionStrategyTest {
   @Category(UnitTests.class)
   public void testCreateAndRunNodeExecution() {
     abstractNodeExecutionStrategy.createAndRunNodeExecution(ambiance, planNode, nodeExecutionMetadata, "", "", "");
-    verify(waitForExecutionInputHelper, times(1)).waitForExecutionInput(ambiance, accountId, "setup");
+    verify(waitForExecutionInputHelper, times(1)).waitForExecutionInput(ambiance, accountId, planNode);
   }
 
   @Test
