@@ -386,3 +386,4 @@ io.harness.cdng.execution.ExecutionInfoKeyOutput
 io.harness.cdng.azure.config.yaml.ApplicationSettingsConfiguration
 io.harness.cdng.azure.config.yaml.ConnectionStringsConfiguration
 io.harness.cdng.azure.config.yaml.StartupCommandConfiguration
+io.harness.yaml.core.failurestrategy.ProceedWithDefaultValuesFailureActionConfig

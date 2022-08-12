@@ -80,9 +80,6 @@ public class AbstractNodeExecutionStrategyTest {
         .thenReturn(NodeExecution.builder().uuid(accountId).build());
     FieldUtils.writeField(
         abstractNodeExecutionStrategy, "sdkResponseProcessorFactory", sdkResponseProcessorFactory, true);
-    FieldUtils.writeField(abstractNodeExecutionStrategy, "pmsFeatureFlagService", pmsFeatureFlagService, true);
-    FieldUtils.writeField(
-        abstractNodeExecutionStrategy, "waitForExecutionInputHelper", waitForExecutionInputHelper, true);
     FieldUtils.writeField(abstractNodeExecutionStrategy, "orchestrationEngine", orchestrationEngine, true);
     FieldUtils.writeField(abstractNodeExecutionStrategy, "executorService", executorService, true);
   }
@@ -128,7 +125,7 @@ public class AbstractNodeExecutionStrategyTest {
   @Category(UnitTests.class)
   public void testCreateAndRunNodeExecution() {
     abstractNodeExecutionStrategy.createAndRunNodeExecution(ambiance, planNode, nodeExecutionMetadata, "", "", "");
-    verify(waitForExecutionInputHelper, times(1)).waitForExecutionInput(ambiance, accountId, planNode);
+    verify(executorService, times(1)).submit(any(Runnable.class));
   }
 
   @Test
