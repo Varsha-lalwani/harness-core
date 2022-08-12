@@ -11,6 +11,7 @@ import io.harness.ModuleType;
 import io.harness.beans.FeatureName;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnsupportedOperationException;
+import io.harness.ff.FeatureFlagService;
 import io.harness.licensing.services.LicenseService;
 import io.harness.repositories.StripeCustomerRepository;
 import io.harness.repositories.SubscriptionDetailRepository;
@@ -40,6 +41,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stripe.model.Event;
 import com.stripe.net.ApiResource;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,399 +53,395 @@ import org.apache.commons.validator.routines.EmailValidator;
 
 @Singleton
 public class SubscriptionServiceImpl implements SubscriptionService {
-  private final StripeHelper stripeHelper;
-  private final StripeCustomerRepository stripeCustomerRepository;
-  private final SubscriptionDetailRepository subscriptionDetailRepository;
-  private final LicenseService licenseService;
-  private NGFeatureFlagHelperService nGFeatureFlagHelperService;
+    private final StripeHelper stripeHelper;
+    private final StripeCustomerRepository stripeCustomerRepository;
+    private final SubscriptionDetailRepository subscriptionDetailRepository;
+    private final LicenseService licenseService;
+    private final NGFeatureFlagHelperService nGFeatureFlagHelperService;
 
-  private final Map<String, StripeEventHandler> eventHandlers;
+    private final Map<String, StripeEventHandler> eventHandlers;
 
-  @Inject
-  public SubscriptionServiceImpl(StripeHelper stripeHelper, StripeCustomerRepository stripeCustomerRepository,
-                                 SubscriptionDetailRepository subscriptionDetailRepository, LicenseService licenseService,
-                                 NGFeatureFlagHelperService nGFeatureFlagHelperService, Map<String, StripeEventHandler> eventHandlers) {
-    this.stripeHelper = stripeHelper;
-    this.stripeCustomerRepository = stripeCustomerRepository;
-    this.subscriptionDetailRepository = subscriptionDetailRepository;
-    this.licenseService = licenseService;
-    this.nGFeatureFlagHelperService = nGFeatureFlagHelperService;
-    this.eventHandlers = eventHandlers;
-  }
-
-  @Override
-  public PriceCollectionDTO listPrices(String accountIdentifier, ModuleType module) {
-    isSelfServiceEnable(accountIdentifier);
-
-    return stripeHelper.getPrices(module);
-  }
-
-  @Override
-  public InvoiceDetailDTO previewInvoice(String accountIdentifier, SubscriptionDTO subscriptionDTO) {
-    isSelfServiceEnable(accountIdentifier);
-
-    StripeCustomer stripeCustomer = stripeCustomerRepository.findByAccountIdentifierAndCustomerId(
-            accountIdentifier, subscriptionDTO.getCustomerId());
-    if (stripeCustomer == null) {
-      throw new InvalidRequestException("Cannot preview. Please finish customer information firstly");
+    @Inject
+    public SubscriptionServiceImpl(StripeHelper stripeHelper, StripeCustomerRepository stripeCustomerRepository,
+                                   SubscriptionDetailRepository subscriptionDetailRepository, LicenseService licenseService, NGFeatureFlagHelperService nGFeatureFlagHelperService, Map<String, StripeEventHandler> eventHandlers) {
+        this.stripeHelper = stripeHelper;
+        this.stripeCustomerRepository = stripeCustomerRepository;
+        this.subscriptionDetailRepository = subscriptionDetailRepository;
+        this.licenseService = licenseService;
+        this.nGFeatureFlagHelperService = nGFeatureFlagHelperService;
+        this.eventHandlers = eventHandlers;
     }
 
-    SubscriptionParams params = SubscriptionParams.builder().build();
-    params.setItems(subscriptionDTO.getItems());
-    params.setCustomerId(stripeCustomer.getCustomerId());
+    @Override
+    public PriceCollectionDTO listPrices(String accountIdentifier, ModuleType module) {
+        isSelfServiceEnable(accountIdentifier);
 
-    SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findByAccountIdentifierAndModuleType(
-            accountIdentifier, subscriptionDTO.getModuleType());
-    // Only preview proration when there is an active subscription
-    if (subscriptionDetail != null && !subscriptionDetail.isIncomplete()) {
-      params.setSubscriptionId(subscriptionDetail.getSubscriptionId());
+        return stripeHelper.getPrices(module);
     }
 
-    return stripeHelper.previewInvoice(params);
-  }
+    @Override
+    public InvoiceDetailDTO previewInvoice(String accountIdentifier, SubscriptionDTO subscriptionDTO) {
+        isSelfServiceEnable(accountIdentifier);
 
-  @Override
-  public void payInvoice(String invoiceId) {
-    stripeHelper.payInvoice(invoiceId);
-  }
+        StripeCustomer stripeCustomer = stripeCustomerRepository.findByAccountIdentifierAndCustomerId(
+                accountIdentifier, subscriptionDTO.getCustomerId());
+        if (stripeCustomer == null) {
+            throw new InvalidRequestException("Cannot preview. Please finish customer information firstly");
+        }
 
-  @Override
-  public InvoiceDetailDTO createFfSubscription(String accountIdentifier, FfSubscriptionDTO subscriptionDTO) {
-    isSelfServiceEnable(accountIdentifier);
+        SubscriptionParams params = SubscriptionParams.builder().build();
+        params.setItems(subscriptionDTO.getItems());
+        params.setCustomerId(stripeCustomer.getCustomerId());
 
-    // TODO: transaction control in case any race condition
+        SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findByAccountIdentifierAndModuleType(
+                accountIdentifier, subscriptionDTO.getModuleType());
+        // Only preview proration when there is an active subscription
+        if (subscriptionDetail != null && !subscriptionDetail.isIncomplete()) {
+            params.setSubscriptionId(subscriptionDetail.getSubscriptionId());
+        }
 
-    // verify customer exists
-    StripeCustomer stripeCustomer = stripeCustomerRepository.findByAccountIdentifier(accountIdentifier);
-    if (stripeCustomer == null) {
-      createStripeCustomer(accountIdentifier, new CustomerDTO("admin@harness.io", "Harness"));
-      stripeCustomer = stripeCustomerRepository.findByAccountIdentifier(accountIdentifier);
+        return stripeHelper.previewInvoice(params);
     }
 
-    // Not allowed for creation if active subscriptionId exists
-    SubscriptionDetail subscriptionDetail =
-            subscriptionDetailRepository.findByAccountIdentifierAndModuleType(accountIdentifier, ModuleType.valueOf("CF"));
-    if (subscriptionDetail != null) {
-      if (!subscriptionDetail.isIncomplete()) {
-        throw new InvalidRequestException("Cannot create a new subscription, since there is an active one.");
-      }
-
-      // cancel incomplete subscription
-      cancelSubscription(subscriptionDetail.getAccountIdentifier(), subscriptionDetail.getSubscriptionId());
+    @Override
+    public void payInvoice(String invoiceId) {
+        stripeHelper.payInvoice(invoiceId);
     }
 
-    ArrayList<ItemParams> subscriptionItems = new ArrayList<>();
+    @Override
+    public SubscriptionDetailDTO createFfSubscription(String accountIdentifier, FfSubscriptionDTO subscriptionDTO) {
+        isSelfServiceEnable(accountIdentifier);
 
-    val developerPriceId = stripeHelper.getPrice(
-            ModuleType.CF, "DEVELOPERS", subscriptionDTO.getEdition(), subscriptionDTO.getPaymentFreq());
+        // TODO: transaction control in case any race condition
 
-    subscriptionItems.add(ItemParams.builder()
-            .priceId(developerPriceId.getId())
-            .quantity((long) subscriptionDTO.getNumberOfDevelopers())
-            .build());
+        // verify customer exists
+        StripeCustomer stripeCustomer = stripeCustomerRepository.findByAccountIdentifier(accountIdentifier);
+        if (stripeCustomer == null) {
+            createStripeCustomer(accountIdentifier, new CustomerDTO("admin@harness.io", "Harness"));
+            stripeCustomer = stripeCustomerRepository.findByAccountIdentifier(accountIdentifier);
+        }
 
-    val mauPriceId = stripeHelper.getPrice(ModuleType.CF, "MAU", subscriptionDTO.getEdition(),
-            subscriptionDTO.getPaymentFreq(), subscriptionDTO.getNumberOfMau());
+        // Not allowed for creation if active subscriptionId exists
+        SubscriptionDetail subscriptionDetail =
+                subscriptionDetailRepository.findByAccountIdentifierAndModuleType(accountIdentifier, ModuleType.valueOf("CF"));
+        if (subscriptionDetail != null) {
+            if (!subscriptionDetail.isIncomplete()) {
+                throw new InvalidRequestException("Cannot create a new subscription, since there is an active one.");
+            }
 
-    subscriptionItems.add(ItemParams.builder().priceId(mauPriceId.getId()).quantity(1L).build());
+            // cancel incomplete subscription
+            cancelSubscription(subscriptionDetail.getAccountIdentifier(), subscriptionDetail.getSubscriptionId());
+        }
 
-    if (subscriptionDTO.isPremiumSupport()) {
-      val mauSupportPriceId = stripeHelper.getPrice(ModuleType.CF, "MAU_SUPPORT", subscriptionDTO.getEdition(),
-              subscriptionDTO.getPaymentFreq(), subscriptionDTO.getNumberOfMau());
+        ArrayList<ItemParams> subscriptionItems = new ArrayList<>();
 
-      subscriptionItems.add(new ItemParams(mauSupportPriceId.getId(), 1L, Prices.PREMIUM_SUPPORT));
+        val developerPriceId = stripeHelper.getPrice(
+                ModuleType.CF, "DEVELOPERS", subscriptionDTO.getEdition(), subscriptionDTO.getPaymentFreq());
 
-      val developerSupportPriceId = stripeHelper.getPrice(
-              ModuleType.CF, "DEVELOPERS_SUPPORT", subscriptionDTO.getEdition(), subscriptionDTO.getPaymentFreq());
+        subscriptionItems.add(ItemParams.builder()
+                .priceId(developerPriceId.getId())
+                .quantity((long) subscriptionDTO.getNumberOfDevelopers())
+                .build());
 
-      subscriptionItems.add(new ItemParams(
-              developerSupportPriceId.getId(), (long) subscriptionDTO.getNumberOfDevelopers(), Prices.PREMIUM_SUPPORT));
+        val mauPriceId = stripeHelper.getPrice(ModuleType.CF, "MAU", subscriptionDTO.getEdition(),
+                subscriptionDTO.getPaymentFreq(), subscriptionDTO.getNumberOfMau());
+
+        subscriptionItems.add(ItemParams.builder().priceId(mauPriceId.getId()).quantity(1L).build());
+
+        if (subscriptionDTO.isPremiumSupport()) {
+            val mauSupportPriceId = stripeHelper.getPrice(ModuleType.CF, "MAU_SUPPORT", subscriptionDTO.getEdition(),
+                    subscriptionDTO.getPaymentFreq(), subscriptionDTO.getNumberOfMau());
+
+            subscriptionItems.add(new ItemParams(mauSupportPriceId.getId(), 1L, Prices.PREMIUM_SUPPORT));
+
+            val developerSupportPriceId = stripeHelper.getPrice(
+                    ModuleType.CF, "DEVELOPERS_SUPPORT", subscriptionDTO.getEdition(), subscriptionDTO.getPaymentFreq());
+
+            subscriptionItems.add(new ItemParams(
+                    developerSupportPriceId.getId(), (long) subscriptionDTO.getNumberOfDevelopers(), Prices.PREMIUM_SUPPORT));
+        }
+
+        // create Subscription
+        SubscriptionParams param = SubscriptionParams.builder()
+                .accountIdentifier(accountIdentifier)
+                .moduleType("CF")
+                .customerId(stripeCustomer.getCustomerId())
+                .items(subscriptionItems)
+                .paymentFrequency(subscriptionDTO.getPaymentFreq())
+                .build();
+
+        SubscriptionDetailDTO subscription = stripeHelper.createSubscription(param);
+
+        // Save locally with basic information after succeed
+        subscriptionDetailRepository.save(SubscriptionDetail.builder()
+                .accountIdentifier(accountIdentifier)
+                .customerId(stripeCustomer.getCustomerId())
+                .subscriptionId(subscription.getSubscriptionId())
+                .status(subscription.getStatus())
+                .latestInvoice(subscription.getLatestInvoice())
+                .moduleType(ModuleType.CF)
+                .build());
+
+        return subscription;
     }
 
-    // create Subscription
-    SubscriptionParams param = SubscriptionParams.builder()
-            .accountIdentifier(accountIdentifier)
-            .moduleType("CF")
-            .customerId(stripeCustomer.getCustomerId())
-            .items(subscriptionItems)
-            .paymentFrequency(subscriptionDTO.getPaymentFreq())
-            .build();
+    @Override
+    public SubscriptionDetailDTO createSubscription(String accountIdentifier, SubscriptionDTO subscriptionDTO) {
+        isSelfServiceEnable(accountIdentifier);
 
-    SubscriptionDetailDTO subscription = stripeHelper.createSubscription(param);
+        // TODO: transaction control in case any race condition
 
-    // Save locally with basic information after succeed
-    subscriptionDetailRepository.save(SubscriptionDetail.builder()
-            .accountIdentifier(accountIdentifier)
-            .customerId(stripeCustomer.getCustomerId())
-            .subscriptionId(subscription.getSubscriptionId())
-            .status(subscription.getStatus())
-            .latestInvoice(subscription.getLatestInvoice())
-            .moduleType(ModuleType.CF)
-            .build());
+        // verify customer exists
+        StripeCustomer stripeCustomer = stripeCustomerRepository.findByAccountIdentifierAndCustomerId(
+                accountIdentifier, subscriptionDTO.getCustomerId());
+        if (stripeCustomer == null) {
+            throw new InvalidRequestException("Cannot create subscription. Please finish customer information firstly");
+        }
 
-    val invoice = stripeHelper.getUpcomingInvoice(stripeCustomer.getCustomerId());
-    invoice.setClientSecret(subscription.getClientSecret());
+        // Not allowed for creation if active subscriptionId exists
+        SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findByAccountIdentifierAndModuleType(
+                accountIdentifier, subscriptionDTO.getModuleType());
+        if (subscriptionDetail != null) {
+            if (!subscriptionDetail.isIncomplete()) {
+                throw new InvalidRequestException("Cannot create a new subscription, since there is an active one.");
+            }
 
-    return invoice;
-  }
+            // cancel incomplete subscription
+            cancelSubscription(subscriptionDetail.getAccountIdentifier(), subscriptionDetail.getSubscriptionId());
+        }
 
-  @Override
-  public SubscriptionDetailDTO createSubscription(String accountIdentifier, SubscriptionDTO subscriptionDTO) {
-    isSelfServiceEnable(accountIdentifier);
+        // create Subscription
+        SubscriptionParams param = SubscriptionParams.builder()
+                .accountIdentifier(accountIdentifier)
+                .moduleType(subscriptionDTO.getModuleType().name())
+                .customerId(stripeCustomer.getCustomerId())
+                .paymentMethodId(subscriptionDTO.getPaymentMethodId())
+                .items(subscriptionDTO.getItems())
+                .build();
+        SubscriptionDetailDTO subscription = stripeHelper.createSubscription(param);
 
-    // TODO: transaction control in case any race condition
-
-    // verify customer exists
-    StripeCustomer stripeCustomer = stripeCustomerRepository.findByAccountIdentifierAndCustomerId(
-            accountIdentifier, subscriptionDTO.getCustomerId());
-    if (stripeCustomer == null) {
-      throw new InvalidRequestException("Cannot create subscription. Please finish customer information firstly");
+        // Save locally with basic information after succeed
+        subscriptionDetailRepository.save(SubscriptionDetail.builder()
+                .accountIdentifier(accountIdentifier)
+                .customerId(stripeCustomer.getCustomerId())
+                .subscriptionId(subscription.getSubscriptionId())
+                .status(subscription.getStatus())
+                .latestInvoice(subscription.getLatestInvoice())
+                .moduleType(subscriptionDTO.getModuleType())
+                .build());
+        return subscription;
     }
 
-    // Not allowed for creation if active subscriptionId exists
-    SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findByAccountIdentifierAndModuleType(
-            accountIdentifier, subscriptionDTO.getModuleType());
-    if (subscriptionDetail != null) {
-      if (!subscriptionDetail.isIncomplete()) {
-        throw new InvalidRequestException("Cannot create a new subscription, since there is an active one.");
-      }
+    @Override
+    public SubscriptionDetailDTO updateSubscription(
+            String accountIdentifier, String subscriptionId, SubscriptionDTO subscriptionDTO) {
+        isSelfServiceEnable(accountIdentifier);
 
-      // cancel incomplete subscription
-      cancelSubscription(subscriptionDetail.getAccountIdentifier(), subscriptionDetail.getSubscriptionId());
+        SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findBySubscriptionId(subscriptionId);
+        if (checkSubscriptionInValid(subscriptionDetail, accountIdentifier)) {
+            throw new InvalidRequestException("Invalid subscriptionId");
+        }
+        // TODO: verify priceId is acceptable to update, could utilize local price cache
+
+        SubscriptionParams param = SubscriptionParams.builder()
+                .accountIdentifier(accountIdentifier)
+                .subscriptionId(subscriptionDetail.getSubscriptionId())
+                .paymentMethodId(subscriptionDTO.getPaymentMethodId())
+                .items(subscriptionDTO.getItems())
+                .build();
+        return stripeHelper.updateSubscription(param);
     }
 
-    // create Subscription
-    SubscriptionParams param = SubscriptionParams.builder()
-            .accountIdentifier(accountIdentifier)
-            .moduleType(subscriptionDTO.getModuleType().name())
-            .customerId(stripeCustomer.getCustomerId())
-            .paymentMethodId(subscriptionDTO.getPaymentMethodId())
-            .items(subscriptionDTO.getItems())
-            .build();
-    SubscriptionDetailDTO subscription = stripeHelper.createSubscription(param);
+    @Override
+    public void cancelSubscription(String accountIdentifier, String subscriptionId) {
+        isSelfServiceEnable(accountIdentifier);
 
-    // Save locally with basic information after succeed
-    subscriptionDetailRepository.save(SubscriptionDetail.builder()
-            .accountIdentifier(accountIdentifier)
-            .customerId(stripeCustomer.getCustomerId())
-            .subscriptionId(subscription.getSubscriptionId())
-            .status(subscription.getStatus())
-            .latestInvoice(subscription.getLatestInvoice())
-            .moduleType(subscriptionDTO.getModuleType())
-            .build());
-    return subscription;
-  }
+        SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findBySubscriptionId(subscriptionId);
+        if (checkSubscriptionInValid(subscriptionDetail, accountIdentifier)) {
+            throw new InvalidRequestException("Invalid subscriptionId");
+        }
 
-  @Override
-  public SubscriptionDetailDTO updateSubscription(
-          String accountIdentifier, String subscriptionId, SubscriptionDTO subscriptionDTO) {
-    isSelfServiceEnable(accountIdentifier);
-
-    SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findBySubscriptionId(subscriptionId);
-    if (checkSubscriptionInValid(subscriptionDetail, accountIdentifier)) {
-      throw new InvalidRequestException("Invalid subscriptionId");
-    }
-    // TODO: verify priceId is acceptable to update, could utilize local price cache
-
-    SubscriptionParams param = SubscriptionParams.builder()
-            .accountIdentifier(accountIdentifier)
-            .subscriptionId(subscriptionDetail.getSubscriptionId())
-            .paymentMethodId(subscriptionDTO.getPaymentMethodId())
-            .items(subscriptionDTO.getItems())
-            .build();
-    return stripeHelper.updateSubscription(param);
-  }
-
-  @Override
-  public void cancelSubscription(String accountIdentifier, String subscriptionId) {
-    isSelfServiceEnable(accountIdentifier);
-
-    SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findBySubscriptionId(subscriptionId);
-    if (checkSubscriptionInValid(subscriptionDetail, accountIdentifier)) {
-      throw new InvalidRequestException("Invalid subscriptionId");
+        stripeHelper.cancelSubscription(
+                SubscriptionParams.builder().subscriptionId(subscriptionDetail.getSubscriptionId()).build());
+        subscriptionDetailRepository.deleteBySubscriptionId(subscriptionId);
     }
 
-    stripeHelper.cancelSubscription(
-            SubscriptionParams.builder().subscriptionId(subscriptionDetail.getSubscriptionId()).build());
-    subscriptionDetailRepository.deleteBySubscriptionId(subscriptionId);
-  }
+    @Override
+    public SubscriptionDetailDTO getSubscription(String accountIdentifier, String subscriptionId) {
+        isSelfServiceEnable(accountIdentifier);
 
-  @Override
-  public SubscriptionDetailDTO getSubscription(String accountIdentifier, String subscriptionId) {
-    isSelfServiceEnable(accountIdentifier);
+        SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findBySubscriptionId(subscriptionId);
+        if (checkSubscriptionInValid(subscriptionDetail, accountIdentifier)) {
+            throw new InvalidRequestException("Invalid subscriptionId");
+        }
 
-    SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findBySubscriptionId(subscriptionId);
-    if (checkSubscriptionInValid(subscriptionDetail, accountIdentifier)) {
-      throw new InvalidRequestException("Invalid subscriptionId");
+        return stripeHelper.retrieveSubscription(SubscriptionParams.builder().subscriptionId(subscriptionId).build());
     }
 
-    return stripeHelper.retrieveSubscription(SubscriptionParams.builder().subscriptionId(subscriptionId).build());
-  }
-
-  @Override
-  public boolean checkSubscriptionExists(String subscriptionId) {
-    SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findBySubscriptionId(subscriptionId);
-    return subscriptionDetail != null;
-  }
-
-  @Override
-  public List<SubscriptionDetailDTO> listSubscriptions(String accountIdentifier, ModuleType moduleType) {
-    isSelfServiceEnable(accountIdentifier);
-
-    List<SubscriptionDetail> subscriptions = new ArrayList<>();
-    if (moduleType == null) {
-      subscriptions = subscriptionDetailRepository.findByAccountIdentifier(accountIdentifier);
-    } else {
-      SubscriptionDetail subscriptionDetail =
-              subscriptionDetailRepository.findByAccountIdentifierAndModuleType(accountIdentifier, moduleType);
-      if (subscriptionDetail != null) {
-        subscriptions.add(subscriptionDetail);
-      }
+    @Override
+    public boolean checkSubscriptionExists(String subscriptionId) {
+        SubscriptionDetail subscriptionDetail = subscriptionDetailRepository.findBySubscriptionId(subscriptionId);
+        return subscriptionDetail != null;
     }
 
-    return subscriptions.stream()
-            .map(detail
-                    -> stripeHelper.retrieveSubscription(
-                    SubscriptionParams.builder().subscriptionId(detail.getSubscriptionId()).build()))
-            .collect(Collectors.toList());
-  }
+    @Override
+    public List<SubscriptionDetailDTO> listSubscriptions(String accountIdentifier, ModuleType moduleType) {
+        isSelfServiceEnable(accountIdentifier);
 
-  @Override
-  public CustomerDetailDTO createStripeCustomer(String accountIdentifier, CustomerDTO customerDTO) {
-    isSelfServiceEnable(accountIdentifier);
+        List<SubscriptionDetail> subscriptions = new ArrayList<>();
+        if (moduleType == null) {
+            subscriptions = subscriptionDetailRepository.findByAccountIdentifier(accountIdentifier);
+        } else {
+            SubscriptionDetail subscriptionDetail =
+                    subscriptionDetailRepository.findByAccountIdentifierAndModuleType(accountIdentifier, moduleType);
+            if (subscriptionDetail != null) {
+                subscriptions.add(subscriptionDetail);
+            }
+        }
 
-    if (!EmailValidator.getInstance().isValid(customerDTO.getBillingEmail())) {
-      throw new InvalidRequestException("Billing email is invalid");
-    }
-    if (Strings.isNullOrEmpty(customerDTO.getCompanyName())) {
-      throw new InvalidRequestException("Company name is invalid");
-    }
-    // TODO: double check if accountIdnetifer already bind to one customer
-
-    CustomerDetailDTO customerDetailDTO =
-            stripeHelper.createCustomer(CustomerParams.builder()
-                    .accountIdentifier(accountIdentifier)
-                    .billingContactEmail(customerDTO.getBillingEmail())
-                    .name(customerDTO.getCompanyName())
-                    .build());
-
-    // Save customer information at local After succeed
-    saveCustomerLocally(accountIdentifier, null, customerDetailDTO);
-    return customerDetailDTO;
-  }
-
-  @Override
-  public CustomerDetailDTO updateStripeCustomer(String accountIdentifier, String customerId, CustomerDTO customerDTO) {
-    isSelfServiceEnable(accountIdentifier);
-
-    StripeCustomer stripeCustomer =
-            stripeCustomerRepository.findByAccountIdentifierAndCustomerId(accountIdentifier, customerId);
-    if (stripeCustomer == null) {
-      throw new InvalidRequestException("Customer doesn't exists");
+        return subscriptions.stream()
+                .map(detail
+                        -> stripeHelper.retrieveSubscription(
+                        SubscriptionParams.builder().subscriptionId(detail.getSubscriptionId()).build()))
+                .collect(Collectors.toList());
     }
 
-    CustomerParamsBuilder builder = CustomerParams.builder();
-    builder.customerId(stripeCustomer.getCustomerId());
-    if (EmailValidator.getInstance().isValid(customerDTO.getBillingEmail())) {
-      builder.billingContactEmail(customerDTO.getBillingEmail());
+    @Override
+    public CustomerDetailDTO createStripeCustomer(String accountIdentifier, CustomerDTO customerDTO) {
+        isSelfServiceEnable(accountIdentifier);
+
+        if (!EmailValidator.getInstance().isValid(customerDTO.getBillingEmail())) {
+            throw new InvalidRequestException("Billing email is invalid");
+        }
+        if (Strings.isNullOrEmpty(customerDTO.getCompanyName())) {
+            throw new InvalidRequestException("Company name is invalid");
+        }
+        // TODO: double check if accountIdnetifer already bind to one customer
+
+        CustomerDetailDTO customerDetailDTO =
+                stripeHelper.createCustomer(CustomerParams.builder()
+                        .accountIdentifier(accountIdentifier)
+                        .billingContactEmail(customerDTO.getBillingEmail())
+                        .name(customerDTO.getCompanyName())
+                        .build());
+
+        // Save customer information at local After succeed
+        saveCustomerLocally(accountIdentifier, null, customerDetailDTO);
+        return customerDetailDTO;
     }
 
-    if (!Strings.isNullOrEmpty(customerDTO.getCompanyName())) {
-      builder.name(customerDTO.getCompanyName());
-    }
-    CustomerDetailDTO customerDetailDTO = stripeHelper.updateCustomer(builder.build());
+    @Override
+    public CustomerDetailDTO updateStripeCustomer(String accountIdentifier, String customerId, CustomerDTO customerDTO) {
+        isSelfServiceEnable(accountIdentifier);
 
-    // Update customer information at local After succeed
-    saveCustomerLocally(accountIdentifier, stripeCustomer.getId(), customerDetailDTO);
-    return customerDetailDTO;
-  }
+        StripeCustomer stripeCustomer =
+                stripeCustomerRepository.findByAccountIdentifierAndCustomerId(accountIdentifier, customerId);
+        if (stripeCustomer == null) {
+            throw new InvalidRequestException("Customer doesn't exists");
+        }
 
-  @Override
-  public CustomerDetailDTO getStripeCustomer(String accountIdentifier, String customerId) {
-    isSelfServiceEnable(accountIdentifier);
+        CustomerParamsBuilder builder = CustomerParams.builder();
+        builder.customerId(stripeCustomer.getCustomerId());
+        if (EmailValidator.getInstance().isValid(customerDTO.getBillingEmail())) {
+            builder.billingContactEmail(customerDTO.getBillingEmail());
+        }
 
-    StripeCustomer stripeCustomer =
-            stripeCustomerRepository.findByAccountIdentifierAndCustomerId(accountIdentifier, customerId);
-    if (stripeCustomer == null) {
-      throw new InvalidRequestException("Customer doesn't exists");
-    }
+        if (!Strings.isNullOrEmpty(customerDTO.getCompanyName())) {
+            builder.name(customerDTO.getCompanyName());
+        }
+        CustomerDetailDTO customerDetailDTO = stripeHelper.updateCustomer(builder.build());
 
-    return stripeHelper.getCustomer(stripeCustomer.getCustomerId());
-  }
-
-  @Override
-  public CustomerDetailDTO updateStripeBilling(String accountIdentifier, StripeBillingDTO stripeBillingDTO) {
-    isSelfServiceEnable(accountIdentifier);
-
-    StripeCustomer stripeCustomer = stripeCustomerRepository.findByAccountIdentifier(accountIdentifier);
-    if (stripeCustomer == null) {
-      throw new InvalidRequestException("Customer doesn't exists");
+        // Update customer information at local After succeed
+        saveCustomerLocally(accountIdentifier, stripeCustomer.getId(), customerDetailDTO);
+        return customerDetailDTO;
     }
 
-    BillingParams params = BillingParams.builder().build();
-    params.setLine1(stripeBillingDTO.getLine1());
-    params.setLine2(stripeBillingDTO.getLine2());
-    params.setCity(stripeBillingDTO.getCity());
-    params.setState(stripeBillingDTO.getState());
-    params.setCountry(stripeBillingDTO.getCountry());
-    params.setZipCode(stripeBillingDTO.getZipCode());
+    @Override
+    public CustomerDetailDTO getStripeCustomer(String accountIdentifier, String customerId) {
+        isSelfServiceEnable(accountIdentifier);
 
-    params.setCreditCardId(stripeBillingDTO.getCreditCardId());
+        StripeCustomer stripeCustomer =
+                stripeCustomerRepository.findByAccountIdentifierAndCustomerId(accountIdentifier, customerId);
+        if (stripeCustomer == null) {
+            throw new InvalidRequestException("Customer doesn't exists");
+        }
 
-    params.setCustomerId(stripeCustomer.getCustomerId());
-
-    return stripeHelper.updateBilling(params);
-  }
-
-  //  @Override
-  //  public List<CustomerDetailDTO> listStripeCustomers(String accountIdentifier) {
-  //    isSelfServiceEnable(accountIdentifier);
-  //
-  //    // TODO: Might not needed any more due to one customer to one account
-  //    List<StripeCustomer> stripeCustomers = stripeCustomerRepository.findByAccountIdentifier(accountIdentifier);
-  //    return stripeCustomers.stream().map(s -> toCustomerDetailDTO(s)).collect(Collectors.toList());
-  //  }
-
-  @Override
-  public PaymentMethodCollectionDTO listPaymentMethods(String accountIdentifier, String customerId) {
-    isSelfServiceEnable(accountIdentifier);
-
-    // TODO: Might not needed any more because we request every time user input a payment method
-    StripeCustomer stripeCustomer =
-            stripeCustomerRepository.findByAccountIdentifierAndCustomerId(accountIdentifier, customerId);
-    if (stripeCustomer == null) {
-      throw new InvalidRequestException("Customer doesn't exists");
+        return stripeHelper.getCustomer(stripeCustomer.getCustomerId());
     }
-    return stripeHelper.listPaymentMethods(customerId);
-  }
 
-  @Override
-  public void syncStripeEvent(String eventString) {
-    Event event = ApiResource.GSON.fromJson(eventString, Event.class);
-    StripeEventHandler stripeEventHandler = eventHandlers.get(event.getType());
-    if (stripeEventHandler == null) {
-      throw new InvalidRequestException("Event type is not supported");
+    @Override
+    public CustomerDetailDTO updateStripeBilling(String accountIdentifier, StripeBillingDTO stripeBillingDTO) {
+        isSelfServiceEnable(accountIdentifier);
+
+        StripeCustomer stripeCustomer = stripeCustomerRepository.findByAccountIdentifier(accountIdentifier);
+        if (stripeCustomer == null) {
+            throw new InvalidRequestException("Customer doesn't exists");
+        }
+
+        BillingParams params = BillingParams.builder().build();
+        params.setLine1(stripeBillingDTO.getLine1());
+        params.setLine2(stripeBillingDTO.getLine2());
+        params.setCity(stripeBillingDTO.getCity());
+        params.setState(stripeBillingDTO.getState());
+        params.setCountry(stripeBillingDTO.getCountry());
+        params.setZipCode(stripeBillingDTO.getZipCode());
+
+        params.setCreditCardId(stripeBillingDTO.getCreditCardId());
+
+        params.setCustomerId(stripeCustomer.getCustomerId());
+
+        return stripeHelper.updateBilling(params);
     }
-    stripeEventHandler.handleEvent(event);
-  }
 
-  private void saveCustomerLocally(String accountIdentifier, String id, CustomerDetailDTO customerDetailDTO) {
-    stripeCustomerRepository.save(StripeCustomer.builder()
-            .id(id)
-            .accountIdentifier(accountIdentifier)
-            .billingEmail(customerDetailDTO.getBillingEmail())
-            .companyName(customerDetailDTO.getCompanyName())
-            .customerId(customerDetailDTO.getCustomerId())
-            .build());
-  }
+    //  @Override
+    //  public List<CustomerDetailDTO> listStripeCustomers(String accountIdentifier) {
+    //    isSelfServiceEnable(accountIdentifier);
+    //
+    //    // TODO: Might not needed any more due to one customer to one account
+    //    List<StripeCustomer> stripeCustomers = stripeCustomerRepository.findByAccountIdentifier(accountIdentifier);
+    //    return stripeCustomers.stream().map(s -> toCustomerDetailDTO(s)).collect(Collectors.toList());
+    //  }
 
-  private boolean checkSubscriptionInValid(SubscriptionDetail subscriptionDetail, String accountIdentifier) {
-    return subscriptionDetail == null || !subscriptionDetail.getAccountIdentifier().equals(accountIdentifier);
-  }
+    @Override
+    public PaymentMethodCollectionDTO listPaymentMethods(String accountIdentifier, String customerId) {
+        isSelfServiceEnable(accountIdentifier);
 
-  private void isSelfServiceEnable(String accountIdentifier) {
-    if (!nGFeatureFlagHelperService.isEnabled(accountIdentifier,FeatureName.SELF_SERVICE_ENABLED)) {
-      throw new UnsupportedOperationException("Self Service is currently unavailable");
+        // TODO: Might not needed any more because we request every time user input a payment method
+        StripeCustomer stripeCustomer =
+                stripeCustomerRepository.findByAccountIdentifierAndCustomerId(accountIdentifier, customerId);
+        if (stripeCustomer == null) {
+            throw new InvalidRequestException("Customer doesn't exists");
+        }
+        return stripeHelper.listPaymentMethods(customerId);
     }
-  }
+
+    @Override
+    public void syncStripeEvent(String eventString) {
+        Event event = ApiResource.GSON.fromJson(eventString, Event.class);
+        StripeEventHandler stripeEventHandler = eventHandlers.get(event.getType());
+        if (stripeEventHandler == null) {
+            throw new InvalidRequestException("Event type is not supported");
+        }
+        stripeEventHandler.handleEvent(event);
+    }
+
+    private void saveCustomerLocally(String accountIdentifier, String id, CustomerDetailDTO customerDetailDTO) {
+        stripeCustomerRepository.save(StripeCustomer.builder()
+                .id(id)
+                .accountIdentifier(accountIdentifier)
+                .billingEmail(customerDetailDTO.getBillingEmail())
+                .companyName(customerDetailDTO.getCompanyName())
+                .customerId(customerDetailDTO.getCustomerId())
+                .build());
+    }
+
+    private boolean checkSubscriptionInValid(SubscriptionDetail subscriptionDetail, String accountIdentifier) {
+        return subscriptionDetail == null || !subscriptionDetail.getAccountIdentifier().equals(accountIdentifier);
+    }
+
+    private void isSelfServiceEnable(String accountIdentifier) {
+        if (!nGFeatureFlagHelperService.isEnabled(accountIdentifier, FeatureName.SELF_SERVICE_ENABLED)) {
+            throw new UnsupportedOperationException("Self Service is currently unavailable");
+        }
+    }
 }
