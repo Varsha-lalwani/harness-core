@@ -144,7 +144,6 @@ public class EnvironmentMapperTest extends CategoryTest {
     assertThatThrownBy(() -> EnvironmentMapper.toEnvironmentEntity("ACCOUNT_ID", requestDTO))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Found duplicate manifest identifiers [m1]");
-    ;
   }
 
   @Test
