@@ -8,6 +8,7 @@
 package io.harness.beans.steps.stepinfo;
 
 import static io.harness.annotations.dev.HarnessTeam.CI;
+import static io.harness.beans.SwaggerConstants.BOOLEAN_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.INTEGER_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
@@ -15,7 +16,6 @@ import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.SwaggerConstants;
 import io.harness.beans.plugin.compatible.PluginCompatibleStep;
 import io.harness.beans.steps.CIStepInfoType;
 import io.harness.beans.steps.TypeInfo;
@@ -54,52 +54,36 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(CI)
 @RecasterAlias("io.harness.beans.steps.stepinfo.GitCloneStepInfo")
 public class GitCloneStepInfo implements PluginCompatibleStep, WithConnectorRef {
-
-  @VariableExpression(skipVariableExpression = true)
-  public static final int DEFAULT_RETRY = 1;
+  @VariableExpression(skipVariableExpression = true) public static final int DEFAULT_RETRY = 1;
 
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
-  @Getter(onMethod_ = {@ApiModelProperty(hidden = true)})
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
   private String uuid;
 
-  @JsonIgnore
-  public static final TypeInfo typeInfo = TypeInfo.builder().stepInfoType(CIStepInfoType.GIT_CLONE).build();
+  @JsonIgnore public static final TypeInfo typeInfo = TypeInfo.builder().stepInfoType(CIStepInfoType.GIT_CLONE).build();
 
   @JsonIgnore
   public static final StepType STEP_TYPE = StepType.newBuilder()
-          .setType(CIStepInfoType.GIT_CLONE.getDisplayName())
-          .setStepCategory(StepCategory.STEP)
-          .build();
+                                               .setType(CIStepInfoType.GIT_CLONE.getDisplayName())
+                                               .setStepCategory(StepCategory.STEP)
+                                               .build();
 
-  @Getter(onMethod_ = {@ApiModelProperty(hidden = true)})
-  @ApiModelProperty(hidden = true)
-  private String identifier;
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) private String identifier;
 
-  @Getter(onMethod_ = {@ApiModelProperty(hidden = true)})
-  @ApiModelProperty(hidden = true)
-  private String name;
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) private String name;
 
-  @VariableExpression(skipVariableExpression = true)
-  @Min(MIN_RETRY)
-  @Max(MAX_RETRY)
-  private int retry;
+  @VariableExpression(skipVariableExpression = true) @Min(MIN_RETRY) @Max(MAX_RETRY) private int retry;
 
-  @NotNull
-  @ApiModelProperty(dataType = STRING_CLASSPATH)
-  ParameterField<String> connectorRef;
+  @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) ParameterField<String> connectorRef;
 
   ContainerResource resources;
 
-  @YamlSchemaTypes({string})
-  @ApiModelProperty(dataType = INTEGER_CLASSPATH)
-  private ParameterField<Integer> runAsUser;
+  @YamlSchemaTypes({string}) @ApiModelProperty(dataType = INTEGER_CLASSPATH) private ParameterField<Integer> runAsUser;
 
-  @ApiModelProperty(dataType = STRING_CLASSPATH)
-  ParameterField<String> repoName;
+  @ApiModelProperty(dataType = STRING_CLASSPATH) ParameterField<String> repoName;
 
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-  ParameterField<String> projectName;
+  @ApiModelProperty(dataType = STRING_CLASSPATH) ParameterField<String> projectName;
 
   @YamlSchemaTypes(value = {runtime})
   @ApiModelProperty(dataType = "io.harness.yaml.extended.ci.codebase.Build")
@@ -107,25 +91,19 @@ public class GitCloneStepInfo implements PluginCompatibleStep, WithConnectorRef 
   @VariableExpression(skipVariableExpression = true)
   ParameterField<Build> build;
 
-  @YamlSchemaTypes({runtime})
-  @ApiModelProperty(dataType = SwaggerConstants.INTEGER_CLASSPATH)
-  ParameterField<Integer> depth;
+  @YamlSchemaTypes({runtime}) @ApiModelProperty(dataType = INTEGER_CLASSPATH) ParameterField<Integer> depth;
 
-  @YamlSchemaTypes({runtime})
-  @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH)
-  ParameterField<Boolean> sslVerify;
+  @YamlSchemaTypes({runtime}) @ApiModelProperty(dataType = BOOLEAN_CLASSPATH) ParameterField<Boolean> sslVerify;
 
-  @ApiModelProperty(dataType = STRING_CLASSPATH)
-  ParameterField<String> cloneDirectory;
+  @ApiModelProperty(dataType = STRING_CLASSPATH) ParameterField<String> cloneDirectory;
 
   @Builder
-  @ConstructorProperties({"identifier", "name", "retry", "connectorRef", "resources", "runAsUser", "repoName",
-          "build", "projectName", "depth", "sslVerify", "cloneDirectory"})
+  @ConstructorProperties({"identifier", "name", "retry", "connectorRef", "resources", "runAsUser", "repoName", "build",
+      "projectName", "depth", "sslVerify", "cloneDirectory"})
   public GitCloneStepInfo(String identifier, String name, int retry, ParameterField<String> connectorRef,
-                          ContainerResource resources, ParameterField<Integer> runAsUser,
-                          ParameterField<String> repoName, ParameterField<Build> build,
-                          ParameterField<String> projectName, ParameterField<Integer> depth,
-                          ParameterField<Boolean> sslVerify, ParameterField<String> cloneDirectory ) {
+      ContainerResource resources, ParameterField<Integer> runAsUser, ParameterField<String> repoName,
+      ParameterField<Build> build, ParameterField<String> projectName, ParameterField<Integer> depth,
+      ParameterField<Boolean> sslVerify, ParameterField<String> cloneDirectory) {
     this.identifier = identifier;
     this.name = name;
     this.retry = retry;

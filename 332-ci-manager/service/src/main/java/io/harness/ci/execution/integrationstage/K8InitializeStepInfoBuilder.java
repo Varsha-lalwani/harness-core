@@ -403,8 +403,8 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     Map<String, String> envVarMap = new HashMap<>();
     envVarMap.putAll(getEnvVariables(integrationStage));
     envVarMap.putAll(PluginSettingUtils.getBuildEnvironmentVariables(stepInfo, ciExecutionArgs));
-    envVarMap.putAll(pluginSettingUtils.getPluginCompatibleEnvVariables(stepInfo, identifier, timeout, ambiance,
-            Type.K8));
+    envVarMap.putAll(
+        pluginSettingUtils.getPluginCompatibleEnvVariables(stepInfo, identifier, timeout, ambiance, Type.K8));
     Integer runAsUser = resolveIntegerParameter(stepInfo.getRunAsUser(), null);
 
     Boolean privileged = null;

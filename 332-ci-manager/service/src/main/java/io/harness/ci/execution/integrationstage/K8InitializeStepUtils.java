@@ -182,7 +182,7 @@ public class K8InitializeStepUtils {
       if (step.getStep() != null && !step.getStep().isNull()) {
         stepIndex++;
         ContainerDefinitionInfo containerDefinitionInfo = handleSingleStep(step, integrationStage, ciExecutionArgs,
-            portFinder, accountId, os, ambiance,  maxAllocatableMemoryRequest, maxAllocatableCpuRequest, stepIndex,
+            portFinder, accountId, os, ambiance, maxAllocatableMemoryRequest, maxAllocatableCpuRequest, stepIndex,
             stepGroupElementConfig.getIdentifier());
         if (containerDefinitionInfo != null) {
           containerDefinitionInfos.add(containerDefinitionInfo);
@@ -192,7 +192,7 @@ public class K8InitializeStepUtils {
         int extraCpu = calculateExtraCPU(step, accountId, maxAllocatableCpuRequest);
         List<ContainerDefinitionInfo> parallelStepDefinitionInfos =
             handleParallelStep(step, integrationStage, ciExecutionArgs, portFinder, accountId, os, ambiance,
-               extraMemory, extraCpu, stepIndex, stepGroupElementConfig.getIdentifier());
+                extraMemory, extraCpu, stepIndex, stepGroupElementConfig.getIdentifier());
         if (parallelStepDefinitionInfos != null) {
           stepIndex += parallelStepDefinitionInfos.size();
           if (parallelStepDefinitionInfos.size() > 0) {
@@ -318,9 +318,8 @@ public class K8InitializeStepUtils {
     Map<String, String> envVarMap = new HashMap<>();
     envVarMap.putAll(getEnvVariables(integrationStage));
     envVarMap.putAll(PluginSettingUtils.getBuildEnvironmentVariables(stepInfo, ciExecutionArgs));
-    envVarMap.putAll(
-        pluginSettingUtils.getPluginCompatibleEnvVariables(stepInfo, identifier, timeout, ambiance,
-                StageInfraDetails.Type.K8));
+    envVarMap.putAll(pluginSettingUtils.getPluginCompatibleEnvVariables(
+        stepInfo, identifier, timeout, ambiance, StageInfraDetails.Type.K8));
     setEnvVariablesForHostedBuids(integrationStage, stepInfo, envVarMap);
 
     Integer runAsUser = resolveIntegerParameter(stepInfo.getRunAsUser(), null);

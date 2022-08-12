@@ -315,13 +315,11 @@ public class IntegrationStageUtils {
     return gitUrl;
   }
 
-  public static String retrieveGenericGitConnectorURL(
-      String repoName, GitConnectionType connectionType, String url) {
+  public static String retrieveGenericGitConnectorURL(String repoName, GitConnectionType connectionType, String url) {
     String gitUrl = "";
     if (connectionType == GitConnectionType.REPO) {
       gitUrl = url;
     } else if (connectionType == GitConnectionType.PROJECT || connectionType == GitConnectionType.ACCOUNT) {
-
       if (isEmpty(repoName)) {
         throw new IllegalArgumentException("Repo name is not set in CI codebase spec");
       }

@@ -48,7 +48,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 public class CodebaseUtilsTest extends CIExecutionTestBase {
-
   @Inject public CodebaseUtils codebaseUtils;
   @Mock private ConnectorUtils connectorUtils;
 
@@ -244,17 +243,15 @@ public class CodebaseUtilsTest extends CIExecutionTestBase {
     String scmHostName = "github.com";
     String scmUrl = "git@" + scmHostName + ":org";
     ConnectorDetails connectorDetails =
-            ConnectorDetails.builder()
-                    .connectorType(ConnectorType.GITHUB)
-                    .connectorConfig(GithubConnectorDTO.builder()
-                            .connectionType(GitConnectionType.ACCOUNT)
-                            .url(scmUrl)
-                            .authentication(GithubAuthenticationDTO.builder().authType(GitAuthType.SSH).build())
-                            .build())
-                    .build();
-    CodeBase codeBase = CodeBase.builder()
-            .repoName(ParameterField.createValueField(repoName))
+        ConnectorDetails.builder()
+            .connectorType(ConnectorType.GITHUB)
+            .connectorConfig(GithubConnectorDTO.builder()
+                                 .connectionType(GitConnectionType.ACCOUNT)
+                                 .url(scmUrl)
+                                 .authentication(GithubAuthenticationDTO.builder().authType(GitAuthType.SSH).build())
+                                 .build())
             .build();
+    CodeBase codeBase = CodeBase.builder().repoName(ParameterField.createValueField(repoName)).build();
     final Map<String, String> gitEnvVariables = codebaseUtils.getGitEnvVariables(connectorDetails, codeBase, false);
     assertThat(gitEnvVariables.get(DRONE_NETRC_MACHINE)).isEqualTo(scmHostName);
     assertThat(gitEnvVariables.get(DRONE_REMOTE_URL)).isEqualTo(scmUrl + "/" + repoName + ".git");
@@ -268,17 +265,16 @@ public class CodebaseUtilsTest extends CIExecutionTestBase {
     String scmHostName = "gitlab.com";
     String scmUrl = "git@" + scmHostName + ":org";
     ConnectorDetails connectorDetails =
-            ConnectorDetails.builder()
-                    .connectorType(ConnectorType.GITLAB)
-                    .connectorConfig(GitlabConnectorDTO.builder()
-                            .connectionType(GitConnectionType.ACCOUNT)
-                            .url(scmUrl)
-                            .authentication(GitlabAuthenticationDTO.builder().authType(GitAuthType.SSH).build())
-                            .build())
-                    .build();
+        ConnectorDetails.builder()
+            .connectorType(ConnectorType.GITLAB)
+            .connectorConfig(GitlabConnectorDTO.builder()
+                                 .connectionType(GitConnectionType.ACCOUNT)
+                                 .url(scmUrl)
+                                 .authentication(GitlabAuthenticationDTO.builder().authType(GitAuthType.SSH).build())
+                                 .build())
+            .build();
     final Map<String, String> gitEnvVariables = codebaseUtils.getGitEnvVariables(connectorDetails, repoName);
     assertThat(gitEnvVariables.get(DRONE_NETRC_MACHINE)).isEqualTo(scmHostName);
     assertThat(gitEnvVariables.get(DRONE_REMOTE_URL)).isEqualTo(scmUrl + "/" + repoName + ".git");
   }
-
 }

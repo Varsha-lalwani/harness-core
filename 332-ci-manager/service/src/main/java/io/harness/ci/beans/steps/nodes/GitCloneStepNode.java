@@ -37,9 +37,7 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(CI)
 @RecasterAlias("io.harness.beans.steps.nodes.GitCloneStepNode")
 public class GitCloneStepNode extends CIAbstractStepNode {
-  @JsonProperty("type")
-  @NotNull
-  StepType type = StepType.GitClone;
+  @JsonProperty("type") @NotNull StepType type = StepType.GitClone;
 
   @NotNull
   @JsonProperty("spec")

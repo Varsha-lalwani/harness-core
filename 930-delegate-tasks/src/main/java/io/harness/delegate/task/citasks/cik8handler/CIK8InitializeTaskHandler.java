@@ -339,7 +339,7 @@ public class CIK8InitializeTaskHandler implements CIInitializeTaskHandler {
 
     log.info("Creating git secret env variables for pod: {}", podParams.getName());
     Map<String, String> gitSecretData =
-            getAndUpdateGitSecretData(gitConnectorDetails, containerParamsList, k8SecretName);
+        getAndUpdateGitSecretData(gitConnectorDetails, containerParamsList, k8SecretName);
     log.info("Determined environment secrets to create for stage for pod {}", podParams.getName());
 
     Map<String, String> secretData = new HashMap<>();

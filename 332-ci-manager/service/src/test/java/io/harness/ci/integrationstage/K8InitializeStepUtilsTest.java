@@ -199,8 +199,7 @@ public class K8InitializeStepUtilsTest extends CIExecutionTestBase {
             .build();
     Ambiance ambiance = Ambiance.newBuilder().build();
     List<ContainerDefinitionInfo> stepContainers = k8InitializeStepUtils.createStepContainerDefinitions(
-        initializeStepInfo, integrationStageConfig, ciExecutionArgs, portFinder, "test", OSType.Linux,
-            ambiance, 0);
+        initializeStepInfo, integrationStageConfig, ciExecutionArgs, portFinder, "test", OSType.Linux, ambiance, 0);
     assertThat(stepContainers.size()).isEqualTo(15);
     Pair<Integer, Integer> wrapperRequest = k8InitializeStepUtils.getStageRequest(initializeStepInfo, "test");
     assertThat(wrapperRequest.getLeft()).isEqualTo(1600);

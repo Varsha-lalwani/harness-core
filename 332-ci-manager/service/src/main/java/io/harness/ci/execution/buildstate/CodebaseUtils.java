@@ -164,8 +164,8 @@ public class CodebaseUtils {
     return codebaseRuntimeVars;
   }
 
-  public Map<String, String> getGitEnvVariables(ConnectorDetails gitConnector, CodeBase ciCodebase,
-                                                boolean skipGitClone) {
+  public Map<String, String> getGitEnvVariables(
+      ConnectorDetails gitConnector, CodeBase ciCodebase, boolean skipGitClone) {
     if (skipGitClone) {
       return new HashMap<>();
     }

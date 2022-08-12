@@ -697,18 +697,19 @@ public class PluginSettingUtils {
     return map;
   }
 
-  private Map<String, String> getGitCloneStepInfoEnvVariables(GitCloneStepInfo gitCloneStepInfo, Ambiance ambiance, String identifier) {
+  private Map<String, String> getGitCloneStepInfoEnvVariables(
+      GitCloneStepInfo gitCloneStepInfo, Ambiance ambiance, String identifier) {
     Map<String, String> map = new HashMap<>();
 
     boolean sslVerify = resolveBooleanParameter(gitCloneStepInfo.getSslVerify(), true);
     setOptionalEnvironmentVariable(map, GIT_SSL_NO_VERIFY, String.valueOf(!sslVerify));
 
-    //Get the Git Connector
+    // Get the Git Connector
     final String connectorRef = gitCloneStepInfo.getConnectorRef().getValue();
     final NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
     final ConnectorDetails gitConnector = codebaseUtils.getGitConnector(ngAccess, connectorRef);
 
-    //Set the Git Connector Reference environment variables
+    // Set the Git Connector Reference environment variables
     final String repoName = gitCloneStepInfo.getRepoName().getValue();
     final Map<String, String> gitEnvVars = codebaseUtils.getGitEnvVariables(gitConnector, repoName);
     map.putAll(gitEnvVars);
@@ -722,8 +723,8 @@ public class PluginSettingUtils {
       }
     }
 
-    String cloneDir = resolveStringParameter("cloneDirectory", "GitClone", identifier,
-            gitCloneStepInfo.getCloneDirectory(), false);
+    String cloneDir =
+        resolveStringParameter("cloneDirectory", "GitClone", identifier, gitCloneStepInfo.getCloneDirectory(), false);
     setOptionalEnvironmentVariable(map, DRONE_WORKSPACE, cloneDir);
 
     Integer depth = null;
@@ -759,9 +760,6 @@ public class PluginSettingUtils {
     if (buildTypeAndValue != null) {
       final String buildValue = buildTypeAndValue.getValue();
       switch (buildTypeAndValue.getKey()) {
-        case PR:
-          throw new CIStageExecutionException(format("%s is not a valid build type in step type %s with identifier %s",
-                  BuildType.PR, type, identifier));
         case BRANCH:
           if (isNotEmpty(buildValue)) {
             buildEnvVar = new ImmutablePair<>(DRONE_COMMIT_BRANCH, buildValue);
@@ -776,6 +774,9 @@ public class PluginSettingUtils {
             throw new CIStageExecutionException("Tag should not be empty for tag build type");
           }
           break;
+        default:
+          throw new CIStageExecutionException(format("%s is not a valid build type in step type %s with identifier %s",
+              buildTypeAndValue.getKey(), type, identifier));
       }
     }
     return buildEnvVar;
@@ -787,21 +788,21 @@ public class PluginSettingUtils {
       switch (build.getType()) {
         case PR:
           ParameterField<String> number = ((PRBuildSpec) build.getSpec()).getNumber();
-          String numberString =
-                  RunTimeInputHandler.resolveStringParameter("number", "Git Clone", "identifier", number, false);
+          String numberString = resolveStringParameter("number", "Git Clone", "identifier", number, false);
           buildTypeAndValue = new ImmutablePair<>(BuildType.PR, numberString);
           break;
         case BRANCH:
           ParameterField<String> branch = ((BranchBuildSpec) build.getSpec()).getBranch();
-          String branchString =
-                  RunTimeInputHandler.resolveStringParameter("branch", "Git Clone", "identifier", branch, false);
+          String branchString = resolveStringParameter("branch", "Git Clone", "identifier", branch, false);
           buildTypeAndValue = new ImmutablePair<>(BuildType.BRANCH, branchString);
           break;
         case TAG:
           ParameterField<String> tag = ((TagBuildSpec) build.getSpec()).getTag();
-          String tagString = RunTimeInputHandler.resolveStringParameter("tag", "Git Clone", "identifier", tag, false);
+          String tagString = resolveStringParameter("tag", "Git Clone", "identifier", tag, false);
           buildTypeAndValue = new ImmutablePair<>(BuildType.TAG, tagString);
           break;
+        default:
+          throw new CIStageExecutionException(format("%s is not a valid build type.", build.getType()));
       }
     }
     return buildTypeAndValue;
@@ -854,13 +855,12 @@ public class PluginSettingUtils {
    *
    * @return build environment variables
    */
-  public static Map<String, String> getBuildEnvironmentVariables(PluginCompatibleStep stepInfo,
-                                                                 CIExecutionArgs ciExecutionArgs) {
+  public static Map<String, String> getBuildEnvironmentVariables(
+      PluginCompatibleStep stepInfo, CIExecutionArgs ciExecutionArgs) {
     CIExecutionArgs ciExecutionArgsCopy = ciExecutionArgs;
     if (GIT_CLONE.equals(stepInfo.getNonYamlInfo().getStepInfoType())) {
       ciExecutionArgsCopy = CIExecutionArgs.builder().runSequence(ciExecutionArgs.getRunSequence()).build();
     }
     return BuildEnvironmentUtils.getBuildEnvironmentVariables(ciExecutionArgsCopy);
   }
-
 }

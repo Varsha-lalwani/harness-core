@@ -234,8 +234,8 @@ public class K8InitializeTaskParamsBuilder {
     Map<String, String> logEnvVars = k8InitializeTaskUtils.getLogServiceEnvVariables(k8PodDetails, accountId);
     Map<String, String> tiEnvVars = k8InitializeTaskUtils.getTIServiceEnvVariables(accountId);
     Map<String, String> stoEnvVars = k8InitializeTaskUtils.getSTOServiceEnvVariables(accountId);
-    Map<String, String> gitEnvVars = codebaseUtils.getGitEnvVariables(gitConnector, ciCodebase,
-            initializeStepInfo.isSkipGitClone());
+    Map<String, String> gitEnvVars =
+        codebaseUtils.getGitEnvVariables(gitConnector, ciCodebase, initializeStepInfo.isSkipGitClone());
     Map<String, String> runtimeCodebaseVars = codebaseUtils.getRuntimeCodebaseVars(ambiance);
     Map<String, String> commonEnvVars = k8InitializeTaskUtils.getCommonStepEnvVariables(
         k8PodDetails, gitEnvVars, runtimeCodebaseVars, k8InitializeTaskUtils.getWorkDir(), logPrefix, ambiance);
@@ -339,7 +339,7 @@ public class K8InitializeTaskParamsBuilder {
 
     Map<String, String> envVarsWithSecretRef = k8InitializeTaskUtils.removeEnvVarsWithSecretRef(envVars);
 
-    //remove any codebase env vars from commonEnvVars which will overwrite git clone step envVars
+    // remove any codebase env vars from commonEnvVars which will overwrite git clone step envVars
     String droneRemoteUrl = envVars.get(DRONE_REMOTE_URL);
     if (isNotEmpty(droneRemoteUrl)) {
       commonEnvVars.remove(DRONE_TAG);

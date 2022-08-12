@@ -168,10 +168,10 @@ public class CIPipelineServiceInfoProvider implements PipelineServiceInfoProvide
                                   .build();
 
     StepInfo gitCloneStepInfo = StepInfo.newBuilder()
-            .setName("Git Clone")
-            .setType(StepSpecTypeConstants.GIT_CLONE)
-            .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("Build").build())
-            .build();
+                                    .setName("Git Clone")
+                                    .setType(StepSpecTypeConstants.GIT_CLONE)
+                                    .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("Build").build())
+                                    .build();
 
     StepInfo restoreCacheFromGCS = StepInfo.newBuilder()
                                        .setName("Restore Cache From GCS")
