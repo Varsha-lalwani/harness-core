@@ -48,7 +48,7 @@ public class NGDelegateLogCallbackTest extends CategoryTest implements MockableT
     commandUnitsProgress.getCommandUnitProgressMap().put(
         "key1", CommandUnitProgress.builder().status(CommandExecutionStatus.SUCCESS).build());
     NGDelegateLogCallback ngDelegateLogCallback =
-        new NGDelegateLogCallback(logStreamingTaskClient, null, false, commandUnitsProgress);
+        new NGDelegateLogCallback(logStreamingTaskClient, null, false, commandUnitsProgress, taskId);
     doThrow(new RuntimeException("failed")).when(taskProgressClient).sendTaskProgressUpdate(any());
 
     ngDelegateLogCallback.sendTaskProgressUpdate(taskProgressClient);
@@ -60,7 +60,7 @@ public class NGDelegateLogCallbackTest extends CategoryTest implements MockableT
   @Category(UnitTests.class)
   public void testUpdateCommandUnitProgressMap() {
     NGDelegateLogCallback ngDelegateLogCallback =
-        new NGDelegateLogCallback(logStreamingTaskClient, "unit1", false, commandUnitsProgress);
+        new NGDelegateLogCallback(logStreamingTaskClient, "unit1", false, commandUnitsProgress, taskId);
     assertThat(commandUnitsProgress.getCommandUnitProgressMap()).isEmpty();
 
     Instant now = Instant.now();

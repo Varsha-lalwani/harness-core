@@ -14,15 +14,16 @@ import java.util.List;
 
 public interface HelmDeployServiceNG {
   void setLogStreamingClient(ILogStreamingTaskClient iLogStreamingTaskClient);
-  HelmCommandResponseNG deploy(HelmInstallCommandRequestNG commandRequest) throws IOException;
+  HelmCommandResponseNG deploy(HelmInstallCommandRequestNG commandRequest, String taskId) throws IOException;
 
   /**
    * Rollback helm command response.
    *
-   * @param commandRequest       the command request
+   * @param commandRequest the command request
+   * @param taskId
    * @return the helm command response
    */
-  HelmCommandResponseNG rollback(HelmRollbackCommandRequestNG commandRequest) throws Exception;
+  HelmCommandResponseNG rollback(HelmRollbackCommandRequestNG commandRequest, String taskId) throws Exception;
 
   /**
    * Ensure helm cli and tiller installed helm command response.

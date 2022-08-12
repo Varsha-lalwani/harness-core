@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class AbstractAzureAppServiceTaskHandler {
   public AzureTaskExecutionResponse executeTask(AzureAppServiceTaskParameters azureAppServiceTaskParameters,
       AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient,
-      ArtifactStreamAttributes artifactStreamAttributes) {
+      ArtifactStreamAttributes artifactStreamAttributes, String taskId) {
     try {
       AzureAppServiceTaskResponse azureAppServiceTaskResponse =
           (AzureAppServiceTaskParameters.AzureAppServiceTaskType.SLOT_SETUP
@@ -43,8 +43,8 @@ public abstract class AbstractAzureAppServiceTaskHandler {
               || AzureAppServiceTaskParameters.AzureAppServiceTaskType.SLOT_ROLLBACK
                   == azureAppServiceTaskParameters.getCommandType())
           ? executeTaskInternal(
-              azureAppServiceTaskParameters, azureConfig, logStreamingTaskClient, artifactStreamAttributes)
-          : executeTaskInternal(azureAppServiceTaskParameters, azureConfig, logStreamingTaskClient);
+              azureAppServiceTaskParameters, azureConfig, logStreamingTaskClient, artifactStreamAttributes, taskId)
+          : executeTaskInternal(azureAppServiceTaskParameters, azureConfig, logStreamingTaskClient, taskId);
       return handleAppServiceTaskResponse(azureAppServiceTaskResponse);
     } catch (Exception ex) {
       Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(ex);
@@ -112,9 +112,9 @@ public abstract class AbstractAzureAppServiceTaskHandler {
 
   protected abstract AzureAppServiceTaskResponse executeTaskInternal(
       AzureAppServiceTaskParameters azureAppServiceTaskParameters, AzureConfig azureConfig,
-      ILogStreamingTaskClient logStreamingTaskClient);
+      ILogStreamingTaskClient logStreamingTaskClient, String taskId);
 
   protected abstract AzureAppServiceTaskResponse executeTaskInternal(
       AzureAppServiceTaskParameters azureAppServiceTaskParameters, AzureConfig azureConfig,
-      ILogStreamingTaskClient logStreamingTaskClient, ArtifactStreamAttributes artifactStreamAttributes);
+      ILogStreamingTaskClient logStreamingTaskClient, ArtifactStreamAttributes artifactStreamAttributes, String taskId);
 }

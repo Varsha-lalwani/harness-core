@@ -145,7 +145,8 @@ public class NGGitOpsCommandTask extends AbstractDelegateRunnableTask {
     CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
     try {
       log.info("Running Merge PR Task for activityId {}", gitOpsTaskParams.getActivityId());
-      logCallback = new NGDelegateLogCallback(getLogStreamingTaskClient(), MergePR, true, commandUnitsProgress);
+      logCallback =
+          new NGDelegateLogCallback(getLogStreamingTaskClient(), MergePR, true, commandUnitsProgress, getTaskId());
       GitApiTaskParams taskParams = gitOpsTaskParams.getGitApiTaskParams();
       ConnectorType connectorType = gitOpsTaskParams.connectorInfoDTO.getConnectorType();
       GitApiTaskResponse responseData;
@@ -202,7 +203,8 @@ public class NGGitOpsCommandTask extends AbstractDelegateRunnableTask {
     try {
       log.info("Running Create PR Task for activityId {}", gitOpsTaskParams.getActivityId());
 
-      logCallback = new NGDelegateLogCallback(getLogStreamingTaskClient(), FetchFiles, true, commandUnitsProgress);
+      logCallback =
+          new NGDelegateLogCallback(getLogStreamingTaskClient(), FetchFiles, true, commandUnitsProgress, getTaskId());
 
       FetchFilesResult fetchFilesResult =
           getFetchFilesResult(gitOpsTaskParams.getGitFetchFilesConfig(), gitOpsTaskParams.getAccountId());
@@ -351,7 +353,8 @@ public class NGGitOpsCommandTask extends AbstractDelegateRunnableTask {
   private LogCallback markDoneAndStartNew(
       LogCallback logCallback, String newName, CommandUnitsProgress commandUnitsProgress) {
     logCallback.saveExecutionLog("\nDone", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
-    logCallback = new NGDelegateLogCallback(getLogStreamingTaskClient(), newName, true, commandUnitsProgress);
+    logCallback =
+        new NGDelegateLogCallback(getLogStreamingTaskClient(), newName, true, commandUnitsProgress, getTaskId());
     return logCallback;
   }
 

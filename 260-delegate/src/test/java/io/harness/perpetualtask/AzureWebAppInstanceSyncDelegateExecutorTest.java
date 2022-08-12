@@ -96,7 +96,7 @@ public class AzureWebAppInstanceSyncDelegateExecutorTest extends DelegateTestBas
                                                    .build()))
                  .build())
         .when(mockListDeploymentDataTaskHandler)
-        .executeTaskInternal(any(), any(), any());
+        .executeTaskInternal(any(), any(), any(), null);
     ArgumentCaptor<AzureTaskExecutionResponse> argumentCaptor =
         ArgumentCaptor.forClass(AzureTaskExecutionResponse.class);
 
@@ -144,7 +144,7 @@ public class AzureWebAppInstanceSyncDelegateExecutorTest extends DelegateTestBas
   public void testRunOnceWithException() {
     doThrow(new InvalidRequestException("Unable to fetch instance list"))
         .when(mockListDeploymentDataTaskHandler)
-        .executeTaskInternal(any(), any(), any());
+        .executeTaskInternal(any(), any(), any(), null);
     ArgumentCaptor<AzureTaskExecutionResponse> argumentCaptor =
         ArgumentCaptor.forClass(AzureTaskExecutionResponse.class);
 

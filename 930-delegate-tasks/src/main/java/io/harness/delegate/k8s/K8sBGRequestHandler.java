@@ -115,7 +115,7 @@ public class K8sBGRequestHandler extends K8sRequestHandler {
   @Override
   protected K8sDeployResponse executeTaskInternal(K8sDeployRequest k8sDeployRequest,
       K8sDelegateTaskParams k8sDelegateTaskParams, ILogStreamingTaskClient logStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     if (!(k8sDeployRequest instanceof K8sBGDeployRequest)) {
       throw new InvalidArgumentsException(Pair.of("k8sDeployRequest", "Must be instance of K8sBGDeployRequest"));
     }
@@ -126,8 +126,8 @@ public class K8sBGRequestHandler extends K8sRequestHandler {
     manifestFilesDirectory = Paths.get(k8sDelegateTaskParams.getWorkingDirectory(), MANIFEST_FILES_DIR).toString();
     final long timeoutInMillis = getTimeoutMillisFromMinutes(k8sBGDeployRequest.getTimeoutIntervalInMin());
 
-    LogCallback executionLogCallback = k8sTaskHelperBase.getLogCallback(
-        logStreamingTaskClient, FetchFiles, k8sBGDeployRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
+    LogCallback executionLogCallback = k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,
+        k8sBGDeployRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress, taskId);
     executionLogCallback.saveExecutionLog(
         color("\nStarting Kubernetes Blue-Greeen Deployment", LogColor.White, LogWeight.Bold));
 
@@ -135,17 +135,18 @@ public class K8sBGRequestHandler extends K8sRequestHandler {
         manifestFilesDirectory, executionLogCallback, timeoutInMillis, k8sBGDeployRequest.getAccountId());
 
     init(k8sBGDeployRequest, k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress));
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress, taskId));
 
     prepareForBlueGreen(k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prepare, true, commandUnitsProgress),
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prepare, true, commandUnitsProgress, taskId),
         k8sBGDeployRequest.isSkipResourceVersioning(), k8sBGDeployRequest.isPruningEnabled());
 
     currentRelease.setManagedWorkload(managedWorkload.getResourceId().cloneInternal());
 
     shouldSaveReleaseHistory = true;
     k8sTaskHelperBase.applyManifests(client, resources, k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Apply, true, commandUnitsProgress), true, true);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Apply, true, commandUnitsProgress, taskId), true,
+        true);
 
     k8sTaskHelperBase.saveReleaseHistoryInConfigMap(
         kubernetesConfig, k8sBGDeployRequest.getReleaseName(), releaseHistory.getAsYaml());
@@ -158,7 +159,7 @@ public class K8sBGRequestHandler extends K8sRequestHandler {
             .request(k8sDeployRequest)
             .resourceIds(Collections.singletonList(managedWorkload.getResourceId()))
             .executionLogCallback(k8sTaskHelperBase.getLogCallback(
-                logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress))
+                logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress, taskId))
             .k8sDelegateTaskParams(k8sDelegateTaskParams)
             .namespace(managedWorkload.getResourceId().getNamespace())
             .denoteOverallSuccess(true)
@@ -169,7 +170,7 @@ public class K8sBGRequestHandler extends K8sRequestHandler {
     k8sClient.performSteadyStateCheck(k8sSteadyStateDTO);
 
     LogCallback wrapUpLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress, taskId);
 
     k8sBGBaseHandler.wrapUp(k8sDelegateTaskParams, wrapUpLogCallback, client);
     final List<K8sPod> podList = k8sBGBaseHandler.getAllPods(
@@ -192,7 +193,7 @@ public class K8sBGRequestHandler extends K8sRequestHandler {
 
     if (k8sBGDeployRequest.isPruningEnabled()) {
       LogCallback pruneExecutionLogCallback =
-          k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prune, true, commandUnitsProgress);
+          k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prune, true, commandUnitsProgress, taskId);
       k8sBGBaseHandler.pruneForBg(k8sDelegateTaskParams, pruneExecutionLogCallback, primaryColor, stageColor,
           prePruningInfo, currentRelease, client);
     }

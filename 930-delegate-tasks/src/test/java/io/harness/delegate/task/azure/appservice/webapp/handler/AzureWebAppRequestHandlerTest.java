@@ -63,7 +63,7 @@ public class AzureWebAppRequestHandlerTest extends CategoryTest {
       new AzureWebAppRequestHandler<Test1AzureWebAppRequest>() {
         @Override
         protected AzureWebAppRequestResponse execute(Test1AzureWebAppRequest taskRequest, AzureConfig azureConfig,
-            AzureLogCallbackProvider logCallbackProvider) {
+            AzureLogCallbackProvider logCallbackProvider, String taskId) {
           // do nothing
           return requestResponse;
         }
@@ -78,7 +78,7 @@ public class AzureWebAppRequestHandlerTest extends CategoryTest {
   public void setup() {
     doReturn(requestResponse)
         .when(testRequestHandler)
-        .execute(any(Test1AzureWebAppRequest.class), eq(azureConfig), eq(logCallbackProvider));
+        .execute(any(Test1AzureWebAppRequest.class), eq(azureConfig), eq(logCallbackProvider), null);
     doReturn(azureConfig).when(azureConnectorMapper).toAzureConfig(any(AzureConnectorDTO.class));
   }
 
@@ -87,7 +87,7 @@ public class AzureWebAppRequestHandlerTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testHandleRequest() {
     AzureWebAppRequestResponse response =
-        testRequestHandler.handleRequest(new Test1AzureWebAppRequest(), logCallbackProvider);
+        testRequestHandler.handleRequest(new Test1AzureWebAppRequest(), logCallbackProvider, null);
     assertThat(response).isSameAs(requestResponse);
   }
 
@@ -95,7 +95,7 @@ public class AzureWebAppRequestHandlerTest extends CategoryTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testHandleRequestInvalidType() {
-    assertThatThrownBy(() -> testRequestHandler.handleRequest(new Test2AzureWebAppRequest(), logCallbackProvider))
+    assertThatThrownBy(() -> testRequestHandler.handleRequest(new Test2AzureWebAppRequest(), logCallbackProvider, null))
         .isInstanceOf(InvalidArgumentsException.class);
   }
 

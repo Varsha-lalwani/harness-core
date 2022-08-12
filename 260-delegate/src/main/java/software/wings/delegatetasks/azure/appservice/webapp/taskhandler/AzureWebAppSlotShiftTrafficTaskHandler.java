@@ -24,7 +24,7 @@ import software.wings.delegatetasks.azure.appservice.webapp.AbstractAzureWebAppT
 public class AzureWebAppSlotShiftTrafficTaskHandler extends AbstractAzureWebAppTaskHandler {
   @Override
   protected AzureAppServiceTaskResponse executeTaskInternal(AzureAppServiceTaskParameters azureAppServiceTaskParameters,
-      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient) {
+      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient, String taskId) {
     AzureWebAppSlotShiftTrafficParameters slotShiftTrafficParameters =
         (AzureWebAppSlotShiftTrafficParameters) azureAppServiceTaskParameters;
 
@@ -50,6 +50,6 @@ public class AzureWebAppSlotShiftTrafficTaskHandler extends AbstractAzureWebAppT
     slotShiftTrafficParameters.getPreDeploymentData().setDeploymentProgressMarker(
         AppServiceDeploymentProgress.UPDATE_TRAFFIC_PERCENT.name());
     azureAppServiceDeploymentService.rerouteProductionSlotTraffic(webClientContext, shiftTrafficSlotName,
-        trafficWeightInPercentage, logCallbackProviderFactory.createCg(logStreamingTaskClient));
+        trafficWeightInPercentage, logCallbackProviderFactory.createCg(logStreamingTaskClient), null);
   }
 }

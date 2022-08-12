@@ -59,15 +59,15 @@ public class AzureWebAppSlotSetupTaskHandler extends AbstractAzureWebAppTaskHand
   @Override
   protected AzureAppServiceTaskResponse executeTaskInternal(AzureAppServiceTaskParameters azureAppServiceTaskParameters,
       AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient,
-      ArtifactStreamAttributes artifactStreamAttributes) {
+      ArtifactStreamAttributes artifactStreamAttributes, String taskId) {
     return artifactStreamAttributes == null
-        ? executeDockerTask(azureAppServiceTaskParameters, azureConfig, logStreamingTaskClient)
+        ? executeDockerTask(azureAppServiceTaskParameters, azureConfig, logStreamingTaskClient, taskId)
         : executePackageTask(
-            azureAppServiceTaskParameters, azureConfig, logStreamingTaskClient, artifactStreamAttributes);
+            azureAppServiceTaskParameters, azureConfig, logStreamingTaskClient, artifactStreamAttributes, taskId);
   }
 
   private AzureAppServiceTaskResponse executeDockerTask(AzureAppServiceTaskParameters azureAppServiceTaskParameters,
-      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient) {
+      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient, String taskId) {
     AzureWebAppSlotSetupParameters azureWebAppSlotSetupParameters =
         (AzureWebAppSlotSetupParameters) azureAppServiceTaskParameters;
 
@@ -82,9 +82,10 @@ public class AzureWebAppSlotSetupTaskHandler extends AbstractAzureWebAppTaskHand
             .build();
     try {
       azureAppServicePreDeploymentData =
-          azureAppServiceService.getDockerDeploymentPreDeploymentData(dockerDeploymentContext);
+          azureAppServiceService.getDockerDeploymentPreDeploymentData(dockerDeploymentContext, taskId);
 
-      azureAppServiceDeploymentService.deployDockerImage(dockerDeploymentContext, azureAppServicePreDeploymentData);
+      azureAppServiceDeploymentService.deployDockerImage(
+          dockerDeploymentContext, azureAppServicePreDeploymentData, taskId);
 
       List<AzureAppDeploymentData> azureAppDeploymentData = azureAppServiceService.fetchDeploymentData(
           azureWebClientContext, azureWebAppSlotSetupParameters.getSlotName());
@@ -106,7 +107,7 @@ public class AzureWebAppSlotSetupTaskHandler extends AbstractAzureWebAppTaskHand
 
   public AzureAppServiceTaskResponse executePackageTask(AzureAppServiceTaskParameters azureAppServiceTaskParameters,
       AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient,
-      ArtifactStreamAttributes streamAttributes) {
+      ArtifactStreamAttributes streamAttributes, String taskId) {
     AzureWebAppSlotSetupParameters azureWebAppSlotSetupParameters =
         (AzureWebAppSlotSetupParameters) azureAppServiceTaskParameters;
     AzureAppServicePreDeploymentData azureAppServicePreDeploymentData =
@@ -126,9 +127,10 @@ public class AzureWebAppSlotSetupTaskHandler extends AbstractAzureWebAppTaskHand
           toAzureAppServicePackageDeploymentContext(azureWebAppSlotSetupParameters, azureWebClientContext, artifactFile,
               streamAttributes.getArtifactType(), logStreamingTaskClient);
       azureAppServicePreDeploymentData =
-          azureAppServiceService.getPackageDeploymentPreDeploymentData(packageDeploymentContext);
+          azureAppServiceService.getPackageDeploymentPreDeploymentData(packageDeploymentContext, taskId);
 
-      azureAppServiceDeploymentService.deployPackage(packageDeploymentContext, azureAppServicePreDeploymentData);
+      azureAppServiceDeploymentService.deployPackage(
+          packageDeploymentContext, azureAppServicePreDeploymentData, taskId);
       List<AzureAppDeploymentData> azureAppDeploymentData = azureAppServiceService.fetchDeploymentData(
           azureWebClientContext, azureWebAppSlotSetupParameters.getSlotName());
       markDeploymentStatusAsSuccess(azureAppServiceTaskParameters, logStreamingTaskClient);

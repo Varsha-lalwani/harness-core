@@ -163,7 +163,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
   }
 
   @Override
-  public HelmCommandResponseNG deploy(HelmInstallCommandRequestNG commandRequest) throws IOException {
+  public HelmCommandResponseNG deploy(HelmInstallCommandRequestNG commandRequest, String taskId) throws IOException {
     LogCallback logCallback = commandRequest.getLogCallback();
     HelmChartInfo helmChartInfo = null;
     int prevVersion = -1;
@@ -201,7 +201,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
 
       helmChartInfo = getHelmChartDetails(commandRequest);
 
-      logCallback = markDoneAndStartNew(commandRequest, logCallback, InstallUpgrade);
+      logCallback = markDoneAndStartNew(commandRequest, logCallback, InstallUpgrade, taskId);
 
       // call listReleases method
       HelmListReleaseResponseNG helmListReleaseResponseNG = listReleases(commandRequest);
@@ -247,7 +247,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
           ? steadyStateSaveResources(commandRequest, resources, CommandExecutionStatus.SUCCESS)
           : Collections.emptyList();
 
-      logCallback = markDoneAndStartNew(commandRequest, logCallback, WaitForSteadyState);
+      logCallback = markDoneAndStartNew(commandRequest, logCallback, WaitForSteadyState, taskId);
 
       List<ContainerInfo> containerInfos = getContainerInfos(
           commandRequest, workloads, useSteadyStateCheck, logCallback, commandRequest.getTimeoutInMillis());
@@ -257,7 +257,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
       commandResponse.setContainerInfoList(containerInfos);
       commandResponse.setHelmVersion(commandRequest.getHelmVersion());
 
-      logCallback = markDoneAndStartNew(commandRequest, logCallback, WrapUp);
+      logCallback = markDoneAndStartNew(commandRequest, logCallback, WrapUp, taskId);
 
       return commandResponse;
 
@@ -489,12 +489,12 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
   }
 
   @Override
-  public HelmCommandResponseNG rollback(HelmRollbackCommandRequestNG commandRequest) throws Exception {
+  public HelmCommandResponseNG rollback(HelmRollbackCommandRequestNG commandRequest, String taskId) throws Exception {
     LogCallback logCallback = commandRequest.getLogCallback();
     kubernetesConfig =
         containerDeploymentDelegateBaseHelper.createKubernetesConfig(commandRequest.getK8sInfraDelegateConfig());
     try {
-      logCallback = markDoneAndStartNew(commandRequest, logCallback, Rollback);
+      logCallback = markDoneAndStartNew(commandRequest, logCallback, Rollback, taskId);
       HelmInstallCmdResponseNG commandResponse = HelmCommandResponseMapper.getHelmInstCmdRespNG(
           helmClient.rollback(HelmCommandDataMapperNG.getHelmCmdDataNG(commandRequest), true));
       commandResponse.setPrevReleaseVersion(commandRequest.getPrevReleaseVersion());
@@ -511,7 +511,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
         ReleaseHistory releaseHistory = createNewRelease(commandRequest, rollbackWorkloads, null);
         saveReleaseHistory(commandRequest, releaseHistory, CommandExecutionStatus.FAILURE);
       }
-      logCallback = markDoneAndStartNew(commandRequest, logCallback, WaitForSteadyState);
+      logCallback = markDoneAndStartNew(commandRequest, logCallback, WaitForSteadyState, taskId);
 
       List<ContainerInfo> containerInfos = getContainerInfos(
           commandRequest, rollbackWorkloads, useSteadyStateCheck, logCallback, commandRequest.getTimeoutInMillis());
@@ -986,10 +986,10 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
   }
 
   private LogCallback markDoneAndStartNew(
-      HelmCommandRequestNG helmCommandRequestNG, LogCallback logCallback, String newName) {
+      HelmCommandRequestNG helmCommandRequestNG, LogCallback logCallback, String newName, String taskId) {
     logCallback.saveExecutionLog("\nDone", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
     logCallback = k8sTaskHelperBase.getLogCallback(
-        logStreamingTaskClient, newName, true, helmCommandRequestNG.getCommandUnitsProgress());
+        logStreamingTaskClient, newName, true, helmCommandRequestNG.getCommandUnitsProgress(), taskId);
     helmCommandRequestNG.setLogCallback(logCallback);
     return logCallback;
   }

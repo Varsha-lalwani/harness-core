@@ -92,7 +92,7 @@ public class CustomManifestFetchTaskNG extends AbstractDelegateRunnableTask {
     CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
     CustomManifestValuesFetchParams fetchParams = (CustomManifestValuesFetchParams) parameters;
     LogCallback logCallback = new NGDelegateLogCallback(
-        getLogStreamingTaskClient(), fetchParams.getCommandUnitName(), true, commandUnitsProgress);
+        getLogStreamingTaskClient(), fetchParams.getCommandUnitName(), true, commandUnitsProgress, taskId);
 
     String defaultSourceWorkingDirectory = null;
     DelegateFile delegateFile = null;

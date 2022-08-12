@@ -66,7 +66,7 @@ public class AzureArtifactDownloadServiceImplTest extends CategoryTest {
 
   @Before
   public void setup() {
-    doReturn(logCallback).when(logCallbackProvider).obtainLogCallback(anyString());
+    doReturn(logCallback).when(logCallbackProvider).obtainLogCallback(anyString(), null);
   }
 
   @Test
@@ -90,7 +90,7 @@ public class AzureArtifactDownloadServiceImplTest extends CategoryTest {
           .downloadArtifacts(configRequest, "repository", requestDetails.toMetadata(),
               ArtifactMetadataKeys.artifactPath, ArtifactMetadataKeys.artifactName);
 
-      AzureArtifactDownloadResponse downloadResponse = downloadService.download(downloadContext);
+      AzureArtifactDownloadResponse downloadResponse = downloadService.download(downloadContext, null);
       List<String> fileContent = Files.readAllLines(downloadResponse.getArtifactFile().toPath());
       assertThat(fileContent).containsOnly(ARTIFACT_FILE_CONTENT);
       assertThat(downloadResponse.getArtifactType()).isEqualTo(ArtifactType.ZIP);
@@ -108,7 +108,7 @@ public class AzureArtifactDownloadServiceImplTest extends CategoryTest {
         ArtifactoryAzureArtifactRequestDetails.builder().artifactPaths(singletonList("test")).build(), connector);
 
     try {
-      assertThatThrownBy(() -> downloadService.download(downloadContext)).isInstanceOf(HintException.class);
+      assertThatThrownBy(() -> downloadService.download(downloadContext, null)).isInstanceOf(HintException.class);
     } finally {
       FileIo.deleteDirectoryAndItsContentIfExists(downloadContext.getWorkingDirectory().getAbsolutePath());
     }
@@ -126,7 +126,7 @@ public class AzureArtifactDownloadServiceImplTest extends CategoryTest {
     doReturn("test").when(artifactRequestDetails).getArtifactName();
 
     try {
-      assertThatThrownBy(() -> downloadService.download(downloadContext)).isInstanceOf(HintException.class);
+      assertThatThrownBy(() -> downloadService.download(downloadContext, null)).isInstanceOf(HintException.class);
     } finally {
       FileIo.deleteDirectoryAndItsContentIfExists(downloadContext.getWorkingDirectory().getAbsolutePath());
     }

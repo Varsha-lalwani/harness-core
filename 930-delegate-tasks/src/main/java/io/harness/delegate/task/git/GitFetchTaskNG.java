@@ -81,8 +81,9 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
 
       log.info("Running GitFetchFilesTask for activityId {}", gitFetchRequest.getActivityId());
 
-      LogCallback executionLogCallback = new NGDelegateLogCallback(getLogStreamingTaskClient(),
-          K8sCommandUnitConstants.FetchFiles, gitFetchRequest.isShouldOpenLogStream(), commandUnitsProgress);
+      LogCallback executionLogCallback =
+          new NGDelegateLogCallback(getLogStreamingTaskClient(), K8sCommandUnitConstants.FetchFiles,
+              gitFetchRequest.isShouldOpenLogStream(), commandUnitsProgress, getTaskId());
 
       Map<String, FetchFilesResult> filesFromMultipleRepo = new HashMap<>();
       List<GitFetchFilesConfig> gitFetchFilesConfigs = gitFetchRequest.getGitFetchFilesConfigs();

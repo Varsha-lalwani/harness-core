@@ -86,7 +86,7 @@ public class K8sDeleteRequestHandler extends K8sRequestHandler {
   @Override
   protected K8sDeployResponse executeTaskInternal(K8sDeployRequest k8sDeployRequest,
       K8sDelegateTaskParams k8SDelegateTaskParams, ILogStreamingTaskClient logStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     if (!(k8sDeployRequest instanceof K8sDeleteRequest)) {
       throw new InvalidArgumentsException(Pair.of("k8sDeployRequest", "Must be instance of K8sDeleteRequest"));
     }
@@ -95,24 +95,25 @@ public class K8sDeleteRequestHandler extends K8sRequestHandler {
     releaseName = k8sDeleteRequest.getReleaseName();
     manifestFilesDirectory = Paths.get(k8SDelegateTaskParams.getWorkingDirectory(), MANIFEST_FILES_DIR).toString();
     LogCallback executionLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Delete, true, commandUnitsProgress);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Delete, true, commandUnitsProgress, taskId);
 
-    return executeDelete(
-        k8sDeleteRequest, k8SDelegateTaskParams, executionLogCallback, logStreamingTaskClient, commandUnitsProgress);
+    return executeDelete(k8sDeleteRequest, k8SDelegateTaskParams, executionLogCallback, logStreamingTaskClient,
+        commandUnitsProgress, taskId);
   }
 
   private K8sDeployResponse executeDelete(K8sDeleteRequest k8sDeleteRequest,
       K8sDelegateTaskParams k8sDelegateTaskParams, LogCallback executionLogCallback,
-      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) throws Exception {
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress, String taskId)
+      throws Exception {
     DeleteResourcesType deleteResourcesType = k8sDeleteRequest.getDeleteResourcesType();
     switch (deleteResourcesType) {
       case ResourceName:
       case ReleaseName:
         return executeDeleteUsingResources(k8sDeleteRequest, k8sDelegateTaskParams, executionLogCallback,
-            logStreamingTaskClient, commandUnitsProgress);
+            logStreamingTaskClient, commandUnitsProgress, taskId);
       case ManifestPath:
         return executeDeleteUsingFiles(k8sDeleteRequest, k8sDelegateTaskParams, executionLogCallback,
-            logStreamingTaskClient, commandUnitsProgress);
+            logStreamingTaskClient, commandUnitsProgress, taskId);
       default:
         throw new UnsupportedOperationException(
             String.format("Delete resource type: [%s]", deleteResourcesType.name()));
@@ -121,18 +122,19 @@ public class K8sDeleteRequestHandler extends K8sRequestHandler {
 
   private K8sDeployResponse executeDeleteUsingFiles(K8sDeleteRequest k8sDeleteRequest,
       K8sDelegateTaskParams k8sDelegateTaskParams, LogCallback executionLogCallback,
-      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) throws Exception {
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress, String taskId)
+      throws Exception {
     long steadyStateTimeoutInMillis = getTimeoutMillisFromMinutes(k8sDeleteRequest.getTimeoutIntervalInMin());
 
-    LogCallback logCallback = k8sTaskHelperBase.getLogCallback(
-        logStreamingTaskClient, FetchFiles, k8sDeleteRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
+    LogCallback logCallback = k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,
+        k8sDeleteRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress, taskId);
     logCallback.saveExecutionLog(color("\nStarting Kubernetes Delete", LogColor.White, LogWeight.Bold));
 
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sDeleteRequest.getManifestDelegateConfig(),
         manifestFilesDirectory, logCallback, steadyStateTimeoutInMillis, k8sDeleteRequest.getAccountId());
 
     initUsingFilePaths(k8sDeleteRequest, k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress));
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress, taskId));
 
     k8sTaskHelperBase.deleteManifests(client, resources, k8sDelegateTaskParams, executionLogCallback);
 
@@ -185,9 +187,10 @@ public class K8sDeleteRequestHandler extends K8sRequestHandler {
 
   private K8sDeployResponse executeDeleteUsingResources(K8sDeleteRequest k8sDeleteRequest,
       K8sDelegateTaskParams k8sDelegateTaskParams, LogCallback executionLogCallback,
-      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) throws Exception {
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress, String taskId)
+      throws Exception {
     init(k8sDeleteRequest, k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress));
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress, taskId));
 
     if (isEmpty(resourceIdsToDelete)) {
       return k8sDeleteBaseHandler.getSuccessResponse();

@@ -84,7 +84,7 @@ public class K8sRollingRollbackRequestHandlerTest extends CategoryTest {
     MockitoAnnotations.initMocks(this);
     doReturn(logCallback)
         .when(k8sTaskHelperBase)
-        .getLogCallback(eq(logStreamingTaskClient), anyString(), anyBoolean(), any());
+        .getLogCallback(eq(logStreamingTaskClient), anyString(), anyBoolean(), any(), null);
     doReturn(kubernetesConfig)
         .when(containerDeploymentDelegateBaseHelper)
         .createKubernetesConfig(k8sInfraDelegateConfig);
@@ -104,7 +104,7 @@ public class K8sRollingRollbackRequestHandlerTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testRollbackSuccess() throws Exception {
     K8sDeployResponse response = k8sRollingRollbackRequestHandler.executeTaskInternal(
-        k8sRollingRollbackDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null);
+        k8sRollingRollbackDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null, null);
 
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     assertThat(rollbackHandlerConfig.getKubernetesConfig()).isSameAs(kubernetesConfig);
@@ -125,8 +125,8 @@ public class K8sRollingRollbackRequestHandlerTest extends CategoryTest {
     doThrow(thrownException).when(k8sRollingRollbackBaseHandler).init(rollbackHandlerConfig, releaseName, logCallback);
 
     assertThatThrownBy(()
-                           -> k8sRollingRollbackRequestHandler.executeTaskInternal(
-                               k8sRollingRollbackDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null))
+                           -> k8sRollingRollbackRequestHandler.executeTaskInternal(k8sRollingRollbackDeployRequest,
+                               k8sDelegateTaskParams, logStreamingTaskClient, null, null))
         .isSameAs(thrownException);
 
     assertThat(rollbackHandlerConfig.getKubernetesConfig()).isSameAs(kubernetesConfig);
@@ -149,8 +149,8 @@ public class K8sRollingRollbackRequestHandlerTest extends CategoryTest {
         .rollback(rollbackHandlerConfig, k8sDelegateTaskParams, releaseNumber, logCallback, emptySet(), true);
 
     assertThatThrownBy(()
-                           -> k8sRollingRollbackRequestHandler.executeTaskInternal(
-                               k8sRollingRollbackDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null))
+                           -> k8sRollingRollbackRequestHandler.executeTaskInternal(k8sRollingRollbackDeployRequest,
+                               k8sDelegateTaskParams, logStreamingTaskClient, null, null))
         .isSameAs(thrownException);
 
     assertThat(rollbackHandlerConfig.getKubernetesConfig()).isSameAs(kubernetesConfig);
@@ -171,7 +171,7 @@ public class K8sRollingRollbackRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> k8sRollingRollbackRequestHandler.executeTaskInternal(
-                               k8sDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null))
+                               k8sDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null, null))
         .isInstanceOf(InvalidArgumentsException.class);
   }
 
@@ -194,7 +194,7 @@ public class K8sRollingRollbackRequestHandlerTest extends CategoryTest {
             anyListOf(KubernetesResourceId.class), any(LogCallback.class), any(K8sDelegateTaskParams.class));
 
     k8sRollingRollbackRequestHandler.executeTaskInternal(
-        deployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null);
+        deployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null, null);
     verify(k8sRollingRollbackBaseHandler)
         .getResourcesRecreated(anyListOf(KubernetesResourceId.class), eq(RESOURCE_CREATION_FAILED));
   }
@@ -223,7 +223,7 @@ public class K8sRollingRollbackRequestHandlerTest extends CategoryTest {
         .getResourcesRecreated(prunedResourceIds, RESOURCE_CREATION_SUCCESSFUL);
 
     k8sRollingRollbackRequestHandler.executeTaskInternal(
-        deployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null);
+        deployRequest, k8sDelegateTaskParams, logStreamingTaskClient, null, null);
     verify(k8sRollingRollbackBaseHandler)
         .rollback(any(K8sRollingRollbackHandlerConfig.class), any(K8sDelegateTaskParams.class), anyInt(),
             any(LogCallback.class), eq(new HashSet<>(prunedResourceIds)), anyBoolean());

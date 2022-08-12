@@ -82,7 +82,7 @@ public class K8sTaskNG extends AbstractDelegateRunnableTask {
     if (k8sDeployRequest.getTaskType() == K8sTaskType.INSTANCE_SYNC) {
       try {
         return k8sTaskTypeToRequestHandler.get(k8sDeployRequest.getTaskType().name())
-            .executeTask(k8sDeployRequest, null, getLogStreamingTaskClient(), commandUnitsProgress);
+            .executeTask(k8sDeployRequest, null, getLogStreamingTaskClient(), commandUnitsProgress, getTaskId());
       } catch (Exception ex) {
         Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(ex);
         log.error("Exception in processing k8s task [{}]",
@@ -125,7 +125,7 @@ public class K8sTaskNG extends AbstractDelegateRunnableTask {
         //        logK8sVersion(k8sDeployRequest, k8SDelegateTaskParams, commandUnitsProgress);
 
         K8sDeployResponse k8sDeployResponse = requestHandler.executeTask(
-            k8sDeployRequest, k8SDelegateTaskParams, getLogStreamingTaskClient(), commandUnitsProgress);
+            k8sDeployRequest, k8SDelegateTaskParams, getLogStreamingTaskClient(), commandUnitsProgress, getTaskId());
 
         k8sDeployResponse.setCommandUnitsProgress(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress));
         return k8sDeployResponse;
@@ -136,7 +136,7 @@ public class K8sTaskNG extends AbstractDelegateRunnableTask {
         if (requestHandler != null && requestHandler.isErrorFrameworkSupported()) {
           try {
             requestHandler.onTaskFailed(
-                k8sDeployRequest, sanitizedException, getLogStreamingTaskClient(), commandUnitsProgress);
+                k8sDeployRequest, sanitizedException, getLogStreamingTaskClient(), commandUnitsProgress, getTaskId());
           } catch (Exception e) {
             throw new TaskNGDataException(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress),
                 ExceptionMessageSanitizer.sanitizeException(e));
@@ -162,7 +162,8 @@ public class K8sTaskNG extends AbstractDelegateRunnableTask {
       CommandUnitsProgress commandUnitsProgress) {
     try {
       k8sTaskTypeToRequestHandler.get(K8sTaskType.VERSION.name())
-          .executeTask(k8sDeployRequest, k8sDelegateTaskParams, getLogStreamingTaskClient(), commandUnitsProgress);
+          .executeTask(
+              k8sDeployRequest, k8sDelegateTaskParams, getLogStreamingTaskClient(), commandUnitsProgress, getTaskId());
     } catch (Exception ex) {
       log.error("Error fetching K8s Server Version: ", ExceptionMessageSanitizer.sanitizeException(ex));
     }

@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AzureWebAppListWebAppInstancesTaskHandler extends AbstractAzureWebAppTaskHandler {
   @Override
   public AzureAppServiceTaskResponse executeTaskInternal(AzureAppServiceTaskParameters azureAppServiceTaskParameters,
-      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient) {
+      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient, String taskId) {
     String subscriptionId = azureAppServiceTaskParameters.getSubscriptionId();
     String resourceGroupName =
         ((AzureWebAppListWebAppInstancesParameters) azureAppServiceTaskParameters).getResourceGroupName();

@@ -45,13 +45,13 @@ public class AzureWebAppSlotDeploymentRequestHandler
 
   @Override
   protected AzureWebAppRequestResponse execute(AzureWebAppSlotDeploymentRequest taskRequest, AzureConfig azureConfig,
-      AzureLogCallbackProvider logCallbackProvider) {
+      AzureLogCallbackProvider logCallbackProvider, String taskId) {
     AzureArtifactConfig artifactConfig = taskRequest.getArtifact();
     switch (artifactConfig.getArtifactType()) {
       case CONTAINER:
         return executeContainer(taskRequest, azureConfig, logCallbackProvider);
       case PACKAGE:
-        return executePackage(taskRequest, azureConfig, logCallbackProvider);
+        return executePackage(taskRequest, azureConfig, logCallbackProvider, taskId);
       default:
         throw new UnsupportedOperationException(
             format("Artifact type [%s] is not supported yet", artifactConfig.getArtifactType()));
@@ -73,7 +73,7 @@ public class AzureWebAppSlotDeploymentRequestHandler
     AzureAppServicePreDeploymentData preDeploymentData = taskRequest.getPreDeploymentData();
 
     try {
-      azureAppServiceDeploymentService.deployDockerImage(dockerDeploymentContext, preDeploymentData);
+      azureAppServiceDeploymentService.deployDockerImage(dockerDeploymentContext, preDeploymentData, null);
       List<AzureAppDeploymentData> azureAppDeploymentData =
           azureAppServiceService.fetchDeploymentData(azureWebClientContext, infrastructure.getDeploymentSlot());
 
@@ -87,7 +87,7 @@ public class AzureWebAppSlotDeploymentRequestHandler
   }
 
   private AzureWebAppRequestResponse executePackage(AzureWebAppSlotDeploymentRequest taskRequest,
-      AzureConfig azureConfig, AzureLogCallbackProvider logCallbackProvider) {
+      AzureConfig azureConfig, AzureLogCallbackProvider logCallbackProvider, String taskId) {
     AzureAppServicePreDeploymentData preDeploymentData = taskRequest.getPreDeploymentData();
 
     try (AutoCloseableWorkingDirectory autoCloseableWorkingDirectory =
@@ -95,13 +95,13 @@ public class AzureWebAppSlotDeploymentRequestHandler
       AzurePackageArtifactConfig artifactConfig = (AzurePackageArtifactConfig) taskRequest.getArtifact();
       ArtifactDownloadContext downloadContext = azureResourceUtilities.toArtifactNgDownloadContext(
           artifactConfig, autoCloseableWorkingDirectory, logCallbackProvider);
-      AzureArtifactDownloadResponse artifactResponse = artifactDownloaderService.download(downloadContext);
+      AzureArtifactDownloadResponse artifactResponse = artifactDownloaderService.download(downloadContext, taskId);
       AzureWebClientContext azureWebClientContext =
           buildAzureWebClientContext(taskRequest.getInfrastructure(), azureConfig);
 
       AzureAppServicePackageDeploymentContext packageDeploymentContext = toAzureAppServicePackageDeploymentContext(
           taskRequest, azureWebClientContext, artifactResponse, logCallbackProvider);
-      azureAppServiceDeploymentService.deployPackage(packageDeploymentContext, preDeploymentData);
+      azureAppServiceDeploymentService.deployPackage(packageDeploymentContext, preDeploymentData, null);
       List<AzureAppDeploymentData> azureAppDeploymentData = azureAppServiceService.fetchDeploymentData(
           azureWebClientContext, taskRequest.getInfrastructure().getDeploymentSlot());
 

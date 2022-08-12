@@ -58,7 +58,7 @@ public class AzureWebAppTrafficShiftRequestHandlerTest extends CategoryTest {
     doNothing()
         .when(azureAppServiceDeploymentService)
         .rerouteProductionSlotTraffic(
-            any(AzureWebClientContext.class), anyString(), anyDouble(), any(AzureLogCallbackProvider.class));
+            any(AzureWebClientContext.class), anyString(), anyDouble(), any(AzureLogCallbackProvider.class), null);
 
     AzureWebAppTrafficShiftRequest trafficShiftRequest =
         AzureWebAppTrafficShiftRequest.builder()
@@ -67,7 +67,7 @@ public class AzureWebAppTrafficShiftRequestHandlerTest extends CategoryTest {
             .trafficPercentage(trafficPercent)
             .build();
     AzureWebAppRequestResponse response =
-        requestHandler.execute(trafficShiftRequest, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(trafficShiftRequest, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
     assertThat(response).isNotNull();
     assertThat(response).isInstanceOf(AzureWebAppTrafficShiftResponse.class);
 
@@ -82,7 +82,7 @@ public class AzureWebAppTrafficShiftRequestHandlerTest extends CategoryTest {
     doThrow(new RuntimeException("Failed to update traffic percent"))
         .when(azureAppServiceDeploymentService)
         .rerouteProductionSlotTraffic(any(AzureWebClientContext.class), eq(DEPLOYMENT_SLOT), eq(trafficPercent),
-            any(AzureLogCallbackProvider.class));
+            any(AzureLogCallbackProvider.class), null);
 
     AzureWebAppTrafficShiftRequest trafficShiftRequest =
         AzureWebAppTrafficShiftRequest.builder()
@@ -91,8 +91,9 @@ public class AzureWebAppTrafficShiftRequestHandlerTest extends CategoryTest {
             .trafficPercentage(trafficPercent)
             .build();
 
-    assertThatThrownBy(
-        () -> requestHandler.execute(trafficShiftRequest, AzureTestUtils.createTestAzureConfig(), logCallbackProvider))
+    assertThatThrownBy(()
+                           -> requestHandler.execute(
+                               trafficShiftRequest, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null))
         .isInstanceOf(RuntimeException.class);
   }
 }

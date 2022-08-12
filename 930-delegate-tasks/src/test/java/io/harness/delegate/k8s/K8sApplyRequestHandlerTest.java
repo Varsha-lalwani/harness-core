@@ -92,7 +92,7 @@ public class K8sApplyRequestHandlerTest extends CategoryTest {
         .createKubernetesConfig(k8sInfraDelegateConfig);
     doReturn(logCallback)
         .when(k8sTaskHelperBase)
-        .getLogCallback(eq(iLogStreamingTaskClient), anyString(), anyBoolean(), any());
+        .getLogCallback(eq(iLogStreamingTaskClient), anyString(), anyBoolean(), any(), null);
     doReturn(true)
         .when(k8sTaskHelperBase)
         .fetchManifestFilesAndWriteToDirectory(
@@ -143,7 +143,7 @@ public class K8sApplyRequestHandlerTest extends CategoryTest {
             k8sApplyHandlerConfig, true, true);
 
     K8sDeployResponse response = requestHandler.executeTaskInternal(
-        applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
 
@@ -206,7 +206,7 @@ public class K8sApplyRequestHandlerTest extends CategoryTest {
             k8sApplyHandlerConfig, true, true);
 
     K8sDeployResponse response = requestHandler.executeTaskInternal(
-        applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
 
@@ -266,7 +266,7 @@ public class K8sApplyRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> requestHandler.executeTaskInternal(
-                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress))
+                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(exception);
 
     verify(k8sTaskHelperBase, times(1))
@@ -321,7 +321,7 @@ public class K8sApplyRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> requestHandler.executeTaskInternal(
-                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress))
+                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(exception);
 
     verify(k8sTaskHelperBase, times(1))
@@ -364,7 +364,7 @@ public class K8sApplyRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> requestHandler.executeTaskInternal(
-                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress))
+                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null))
         .matches(throwable -> {
           HintException hint = ExceptionUtils.cause(HintException.class, throwable);
           ExplanationException explanation = ExceptionUtils.cause(ExplanationException.class, throwable);
@@ -423,7 +423,7 @@ public class K8sApplyRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> requestHandler.executeTaskInternal(
-                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress))
+                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(exception);
 
     verify(k8sTaskHelperBase, times(1))
@@ -479,7 +479,7 @@ public class K8sApplyRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> requestHandler.executeTaskInternal(
-                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress))
+                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(exception);
 
     verify(k8sTaskHelperBase, times(1))
@@ -539,7 +539,7 @@ public class K8sApplyRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> requestHandler.executeTaskInternal(
-                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress))
+                               applyRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(exception);
 
     verify(k8sTaskHelperBase, times(1))

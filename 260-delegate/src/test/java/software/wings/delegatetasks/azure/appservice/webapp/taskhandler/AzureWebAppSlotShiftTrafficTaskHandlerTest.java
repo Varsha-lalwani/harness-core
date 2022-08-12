@@ -83,9 +83,9 @@ public class AzureWebAppSlotShiftTrafficTaskHandlerTest extends WingsBaseTest {
     ArgumentCaptor<Double> trafficCaptor = ArgumentCaptor.forClass(Double.class);
 
     AzureTaskExecutionResponse azureTaskExecutionResponse = slotShiftTrafficTaskHandler.executeTask(
-        azureAppServiceTaskParameters, azureConfig, mockLogStreamingTaskClient, null);
+        azureAppServiceTaskParameters, azureConfig, mockLogStreamingTaskClient, null, null);
     verify(azureAppServiceDeploymentService)
-        .rerouteProductionSlotTraffic(any(), eq(SHIFT_TRAFFIC_SLOT_NAME), trafficCaptor.capture(), any());
+        .rerouteProductionSlotTraffic(any(), eq(SHIFT_TRAFFIC_SLOT_NAME), trafficCaptor.capture(), any(), null);
     assertThat(trafficCaptor.getValue()).isEqualTo(TRAFFIC_WEIGHT_IN_PERCENTAGE);
     assertThat(azureTaskExecutionResponse).isNotNull();
     assertThat(azureTaskExecutionResponse.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
@@ -103,7 +103,7 @@ public class AzureWebAppSlotShiftTrafficTaskHandlerTest extends WingsBaseTest {
     assertThatExceptionOfType(InvalidArgumentsException.class)
         .isThrownBy(()
                         -> slotShiftTrafficTaskHandler.executeTaskInternal(
-                            azureAppServiceTaskParameters, azureConfig, mockLogStreamingTaskClient))
+                            azureAppServiceTaskParameters, azureConfig, mockLogStreamingTaskClient, null))
         .withMessageContaining(WEB_APP_NAME_BLANK_ERROR_MSG);
   }
 
@@ -119,7 +119,7 @@ public class AzureWebAppSlotShiftTrafficTaskHandlerTest extends WingsBaseTest {
     assertThatExceptionOfType(InvalidArgumentsException.class)
         .isThrownBy(()
                         -> slotShiftTrafficTaskHandler.executeTaskInternal(
-                            azureAppServiceTaskParameters, azureConfig, mockLogStreamingTaskClient))
+                            azureAppServiceTaskParameters, azureConfig, mockLogStreamingTaskClient, null))
         .withMessageContaining(SHIFT_TRAFFIC_SLOT_NAME_BLANK_ERROR_MSG);
   }
 
@@ -135,14 +135,15 @@ public class AzureWebAppSlotShiftTrafficTaskHandlerTest extends WingsBaseTest {
     assertThatExceptionOfType(InvalidArgumentsException.class)
         .isThrownBy(()
                         -> slotShiftTrafficTaskHandler.executeTaskInternal(
-                            azureAppServiceTaskParameters, azureConfig, mockLogStreamingTaskClient))
+                            azureAppServiceTaskParameters, azureConfig, mockLogStreamingTaskClient, null))
         .withMessageContaining(TRAFFIC_WEIGHT_IN_PERCENTAGE_INVALID_ERROR_MSG);
   }
 
   private void mockRerouteProductionSlotTraffic() {
     doNothing()
         .when(azureAppServiceDeploymentService)
-        .rerouteProductionSlotTraffic(any(), eq(SHIFT_TRAFFIC_SLOT_NAME), eq(TRAFFIC_WEIGHT_IN_PERCENTAGE), any());
+        .rerouteProductionSlotTraffic(
+            any(), eq(SHIFT_TRAFFIC_SLOT_NAME), eq(TRAFFIC_WEIGHT_IN_PERCENTAGE), any(), null);
   }
 
   private AzureWebAppSlotShiftTrafficParameters buildAzureWebAppSlotShiftTrafficParameters() {

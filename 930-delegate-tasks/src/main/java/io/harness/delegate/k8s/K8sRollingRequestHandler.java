@@ -101,7 +101,7 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
   @Override
   protected K8sDeployResponse executeTaskInternal(K8sDeployRequest k8sDeployRequest,
       K8sDelegateTaskParams k8sDelegateTaskParams, ILogStreamingTaskClient logStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     if (!(k8sDeployRequest instanceof K8sRollingDeployRequest)) {
       throw new InvalidArgumentsException(Pair.of("k8sDeployRequest", "Must be instance of K8sRollingDeployRequest"));
     }
@@ -113,17 +113,17 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
     long steadyStateTimeoutInMillis = getTimeoutMillisFromMinutes(k8sDeployRequest.getTimeoutIntervalInMin());
 
     LogCallback logCallback = k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,
-        k8sRollingDeployRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
+        k8sRollingDeployRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress, taskId);
 
     logCallback.saveExecutionLog(color("\nStarting Kubernetes Rolling Deployment", LogColor.White, LogWeight.Bold));
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sRollingDeployRequest.getManifestDelegateConfig(),
         manifestFilesDirectory, logCallback, steadyStateTimeoutInMillis, k8sRollingDeployRequest.getAccountId());
 
     init(k8sRollingDeployRequest, k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress));
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress, taskId));
 
     LogCallback prepareLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prepare, true, commandUnitsProgress);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prepare, true, commandUnitsProgress, taskId);
     prepareForRolling(k8sDelegateTaskParams, prepareLogCallback, k8sRollingDeployRequest.isInCanaryWorkflow(),
         k8sRollingDeployRequest.isSkipResourceVersioning(),
         k8sRollingDeployRequest.isSkipAddingTrackSelectorToDeployment(), k8sRollingDeployRequest.isPruningEnabled());
@@ -133,11 +133,12 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
         steadyStateTimeoutInMillis, allWorkloads, kubernetesConfig, releaseName, prepareLogCallback);
 
     k8sTaskHelperBase.applyManifests(client, resources, k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Apply, true, commandUnitsProgress), true, true);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Apply, true, commandUnitsProgress, taskId), true,
+        true);
     shouldSaveReleaseHistory = true;
 
     if (isEmpty(managedWorkloads) && isEmpty(customWorkloads)) {
-      k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress)
+      k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress, taskId)
           .saveExecutionLog("Skipping Status Check since there is no Managed Workload.", INFO, SUCCESS);
     } else {
       k8sRollingBaseHandler.setManagedWorkloadsInRelease(k8sDelegateTaskParams, managedWorkloads, release, client);
@@ -148,8 +149,8 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
 
       List<KubernetesResourceId> managedWorkloadKubernetesResourceIds =
           managedWorkloads.stream().map(KubernetesResource::getResourceId).collect(Collectors.toList());
-      LogCallback waitForeSteadyStateLogCallback =
-          k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress);
+      LogCallback waitForeSteadyStateLogCallback = k8sTaskHelperBase.getLogCallback(
+          logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress, taskId);
 
       try {
         K8sSteadyStateDTO k8sSteadyStateDTO = K8sSteadyStateDTO.builder()
@@ -177,7 +178,7 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
     }
 
     LogCallback executionLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress, taskId);
     k8sRollingBaseHandler.wrapUp(k8sDelegateTaskParams, executionLogCallback, client);
 
     String loadBalancer = k8sTaskHelperBase.getLoadBalancerEndpoint(kubernetesConfig, resources);
@@ -196,7 +197,7 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
     if (k8sRollingDeployRequest.isPruningEnabled()) {
       Release previousSuccessfulRelease = releaseHistory.getPreviousRollbackEligibleRelease(release.getNumber());
       LogCallback pruneResourcesLogCallback =
-          k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prune, true, commandUnitsProgress);
+          k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prune, true, commandUnitsProgress, taskId);
       List<KubernetesResourceId> prunedResourceIds =
           prune(k8sDelegateTaskParams, previousSuccessfulRelease, pruneResourcesLogCallback);
       rollingSetupResponse.setPrunedResourceIds(prunedResourceIds);

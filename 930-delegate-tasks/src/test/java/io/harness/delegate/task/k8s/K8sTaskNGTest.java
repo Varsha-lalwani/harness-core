@@ -151,12 +151,12 @@ public class K8sTaskNGTest extends CategoryTest {
     doReturn(K8sTaskType.INSTANCE_SYNC).when(k8sDeployRequest).getTaskType();
     doReturn(syncResponse)
         .when(instanceSyncRequestHandler)
-        .executeTask(k8sDeployRequest, null, logStreamingTaskClient, emptyCommandUnitsProgress);
+        .executeTask(k8sDeployRequest, null, logStreamingTaskClient, emptyCommandUnitsProgress, getTaskId());
 
     K8sDeployResponse result = k8sTaskNG.run(k8sDeployRequest);
 
     verify(instanceSyncRequestHandler)
-        .executeTask(k8sDeployRequest, null, logStreamingTaskClient, emptyCommandUnitsProgress);
+        .executeTask(k8sDeployRequest, null, logStreamingTaskClient, emptyCommandUnitsProgress, getTaskId());
     assertThat(result).isEqualTo(syncResponse);
   }
 
@@ -168,12 +168,12 @@ public class K8sTaskNGTest extends CategoryTest {
     doReturn(K8sTaskType.INSTANCE_SYNC).when(k8sDeployRequest).getTaskType();
     doThrow(thrownException)
         .when(instanceSyncRequestHandler)
-        .executeTask(k8sDeployRequest, null, logStreamingTaskClient, emptyCommandUnitsProgress);
+        .executeTask(k8sDeployRequest, null, logStreamingTaskClient, emptyCommandUnitsProgress, getTaskId());
 
     K8sDeployResponse result = k8sTaskNG.run(k8sDeployRequest);
 
     verify(instanceSyncRequestHandler)
-        .executeTask(k8sDeployRequest, null, logStreamingTaskClient, emptyCommandUnitsProgress);
+        .executeTask(k8sDeployRequest, null, logStreamingTaskClient, emptyCommandUnitsProgress, getTaskId());
     assertThat(result.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
     assertThat(result.getErrorMessage()).isEqualTo(ExceptionUtils.getMessage(thrownException));
   }
@@ -188,7 +188,8 @@ public class K8sTaskNGTest extends CategoryTest {
     k8sTaskNG.logK8sVersion(k8sDeployRequest, delegateTaskParams, emptyCommandUnitsProgress);
 
     verify(rollingRequestHandler)
-        .executeTask(k8sDeployRequest, delegateTaskParams, logStreamingTaskClient, emptyCommandUnitsProgress);
+        .executeTask(
+            k8sDeployRequest, delegateTaskParams, logStreamingTaskClient, emptyCommandUnitsProgress, getTaskId());
   }
 
   @Test
@@ -199,13 +200,15 @@ public class K8sTaskNGTest extends CategoryTest {
     doReturn(rollingRequestHandler).when(k8sTaskTypeToRequestHandler).get(K8sTaskType.VERSION.name());
     doThrow(new InvalidRequestException("failed"))
         .when(rollingRequestHandler)
-        .executeTask(k8sDeployRequest, delegateTaskParams, logStreamingTaskClient, emptyCommandUnitsProgress);
+        .executeTask(
+            k8sDeployRequest, delegateTaskParams, logStreamingTaskClient, emptyCommandUnitsProgress, getTaskId());
 
     assertThatCode(() -> k8sTaskNG.logK8sVersion(k8sDeployRequest, delegateTaskParams, emptyCommandUnitsProgress))
         .doesNotThrowAnyException();
 
     verify(rollingRequestHandler)
-        .executeTask(k8sDeployRequest, delegateTaskParams, logStreamingTaskClient, emptyCommandUnitsProgress);
+        .executeTask(
+            k8sDeployRequest, delegateTaskParams, logStreamingTaskClient, emptyCommandUnitsProgress, getTaskId());
   }
 
   @Test
@@ -233,7 +236,7 @@ public class K8sTaskNGTest extends CategoryTest {
     doThrow(thrownException)
         .when(rollingRequestHandler)
         .executeTask(eq(k8sDeployRequest), any(K8sDelegateTaskParams.class), eq(logStreamingTaskClient),
-            eq(emptyCommandUnitsProgress));
+            eq(emptyCommandUnitsProgress), getTaskId());
     doReturn(null)
         .doReturn(K8sManifestDelegateConfig.builder().build())
         .when(k8sDeployRequest)
@@ -242,7 +245,7 @@ public class K8sTaskNGTest extends CategoryTest {
 
     verify(rollingRequestHandler)
         .executeTask(eq(k8sDeployRequest), any(K8sDelegateTaskParams.class), eq(logStreamingTaskClient),
-            eq(emptyCommandUnitsProgress));
+            eq(emptyCommandUnitsProgress), getTaskId());
     assertThat(result.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
     assertThat(result.getErrorMessage()).isEqualTo(ExceptionUtils.getMessage(thrownException));
   }
@@ -406,7 +409,7 @@ public class K8sTaskNGTest extends CategoryTest {
     doReturn(taskResponse)
         .when(rollingRequestHandler)
         .executeTask(eq(k8sDeployRequest), any(K8sDelegateTaskParams.class), eq(logStreamingTaskClient),
-            eq(emptyCommandUnitsProgress));
+            eq(emptyCommandUnitsProgress), getTaskId());
     doReturn(manifest)
         .doReturn(manifest == null ? K8sManifestDelegateConfig.builder().build() : manifest)
         .when(k8sDeployRequest)
@@ -419,7 +422,7 @@ public class K8sTaskNGTest extends CategoryTest {
 
     verify(rollingRequestHandler)
         .executeTask(eq(k8sDeployRequest), delegateTaskParamsCaptor.capture(), eq(logStreamingTaskClient),
-            eq(emptyCommandUnitsProgress));
+            eq(emptyCommandUnitsProgress), getTaskId());
     verify(containerDeploymentDelegateBaseHelper, times(1))
         .persistKubernetesConfig(any(KubernetesConfig.class), anyString());
 

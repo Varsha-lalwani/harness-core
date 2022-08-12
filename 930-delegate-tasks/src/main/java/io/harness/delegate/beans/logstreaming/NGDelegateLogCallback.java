@@ -29,14 +29,17 @@ public class NGDelegateLogCallback implements LogCallback {
   private String commandUnitName;
   private CommandUnitsProgress commandUnitsProgress;
 
+  private final String taskId;
+
   public NGDelegateLogCallback(ILogStreamingTaskClient iLogStreamingTaskClient, String commandUnitName,
-      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
+      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress, String taskId) {
     if (iLogStreamingTaskClient == null) {
       throw new InvalidRequestException("Log Streaming Client is not present.");
     }
     this.iLogStreamingTaskClient = iLogStreamingTaskClient;
     this.commandUnitName = commandUnitName;
     this.commandUnitsProgress = commandUnitsProgress;
+    this.taskId = taskId;
 
     if (shouldOpenStream) {
       iLogStreamingTaskClient.openStream(commandUnitName);

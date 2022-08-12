@@ -25,8 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AzureWebAppSlotSwapRequestHandler extends AzureWebAppRequestHandler<AzureWebAppSwapSlotsRequest> {
   @Override
-  protected AzureWebAppRequestResponse execute(
-      AzureWebAppSwapSlotsRequest taskRequest, AzureConfig azureConfig, AzureLogCallbackProvider logCallbackProvider) {
+  protected AzureWebAppRequestResponse execute(AzureWebAppSwapSlotsRequest taskRequest, AzureConfig azureConfig,
+      AzureLogCallbackProvider logCallbackProvider, String taskId) {
     AzureWebAppInfraDelegateConfig infrastructure = taskRequest.getInfrastructure();
     Integer timeoutIntervalInMin = taskRequest.getTimeoutIntervalInMin();
     String webAppName = infrastructure.getAppName();
@@ -35,8 +35,8 @@ public class AzureWebAppSlotSwapRequestHandler extends AzureWebAppRequestHandler
     azureAppServiceResourceUtilities.validateSlotSwapParameters(webAppName, sourceSlot, targetSlot);
 
     AzureWebClientContext webClientContext = buildAzureWebClientContext(infrastructure, azureConfig);
-    azureAppServiceResourceUtilities.swapSlots(
-        webClientContext, logCallbackProvider, infrastructure.getDeploymentSlot(), targetSlot, timeoutIntervalInMin);
+    azureAppServiceResourceUtilities.swapSlots(webClientContext, logCallbackProvider,
+        infrastructure.getDeploymentSlot(), targetSlot, timeoutIntervalInMin, null);
 
     return AzureWebAppSwapSlotsResponseNG.builder().deploymentProgressMarker(SLOT_SWAP).build();
   }

@@ -90,7 +90,7 @@ public class AzureWebAppRollbackTaskHandlerTest extends WingsBaseTest {
     mockRerouteProductionSlotTraffic();
 
     AzureAppServiceTaskResponse azureAppServiceTaskResponse = azureWebAppRollbackTaskHandler.executeTaskInternal(
-        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null);
+        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null, null);
 
     assertThat(azureAppServiceTaskResponse).isNotNull();
   }
@@ -106,11 +106,11 @@ public class AzureWebAppRollbackTaskHandlerTest extends WingsBaseTest {
     mockRerouteProductionSlotTraffic();
 
     AzureAppServiceTaskResponse azureAppServiceTaskResponse = azureWebAppRollbackTaskHandler.executeTaskInternal(
-        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null);
+        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null, null);
 
     assertThat(azureAppServiceTaskResponse).isNotNull();
     verify(azureAppServiceDeploymentService)
-        .rerouteProductionSlotTraffic(any(), eq(SLOT_NAME), eq(TRAFFIC_WEIGHT), any());
+        .rerouteProductionSlotTraffic(any(), eq(SLOT_NAME), eq(TRAFFIC_WEIGHT), any(), null);
   }
 
   @Test
@@ -125,11 +125,11 @@ public class AzureWebAppRollbackTaskHandlerTest extends WingsBaseTest {
     mockRerouteProductionSlotTraffic();
 
     AzureAppServiceTaskResponse azureAppServiceTaskResponse = azureWebAppRollbackTaskHandler.executeTaskInternal(
-        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null);
+        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null, null);
 
     assertThat(azureAppServiceTaskResponse).isNotNull();
     verify(azureAppServiceDeploymentService, times(0))
-        .rerouteProductionSlotTraffic(any(), eq(SLOT_NAME), eq(TRAFFIC_WEIGHT), any());
+        .rerouteProductionSlotTraffic(any(), eq(SLOT_NAME), eq(TRAFFIC_WEIGHT), any(), null);
   }
 
   @Test
@@ -143,26 +143,26 @@ public class AzureWebAppRollbackTaskHandlerTest extends WingsBaseTest {
     AzureWebAppRollbackParameters rollbackParameters =
         buildAzureWebAppRollbackParameters(AppServiceDeploymentProgress.SAVE_CONFIGURATION);
     AzureAppServiceTaskResponse azureAppServiceTaskResponse = azureWebAppRollbackTaskHandler.executeTaskInternal(
-        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null);
+        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null, null);
     assertThat(azureAppServiceTaskResponse).isNotNull();
     verify(azureAppServiceService, never()).fetchDeploymentData(any(), eq(SLOT_NAME));
-    verify(azureAppServiceDeploymentService, never()).deployDockerImage(any(), any());
+    verify(azureAppServiceDeploymentService, never()).deployDockerImage(any(), any(), null);
 
     rollbackParameters.getPreDeploymentData().setDeploymentProgressMarker(
         AppServiceDeploymentProgress.STOP_SLOT.name());
     azureAppServiceTaskResponse = azureWebAppRollbackTaskHandler.executeTaskInternal(
-        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null);
+        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null, null);
     assertThat(azureAppServiceTaskResponse).isNotNull();
     verify(azureAppServiceDeploymentService).startSlotAsyncWithSteadyCheck(any(), any(), any());
     verify(azureAppServiceService, never()).fetchDeploymentData(any(), eq(SLOT_NAME));
-    verify(azureAppServiceDeploymentService, never()).deployDockerImage(any(), any());
+    verify(azureAppServiceDeploymentService, never()).deployDockerImage(any(), any(), null);
 
     rollbackParameters.getPreDeploymentData().setDeploymentProgressMarker(
         AppServiceDeploymentProgress.DEPLOYMENT_COMPLETE.name());
     azureAppServiceTaskResponse = azureWebAppRollbackTaskHandler.executeTaskInternal(
-        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null);
+        rollbackParameters, azureConfig, mockLogStreamingTaskClient, null, null);
     assertThat(azureAppServiceTaskResponse).isNotNull();
-    verify(azureAppServiceDeploymentService, never()).deployDockerImage(any(), any());
+    verify(azureAppServiceDeploymentService, never()).deployDockerImage(any(), any(), null);
     verify(azureAppServiceDeploymentService, never()).stopSlotAsyncWithSteadyCheck(any(), any(), any());
   }
 
@@ -171,7 +171,7 @@ public class AzureWebAppRollbackTaskHandlerTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testRollbackArtifact() {
     AzureConfig azureConfig = buildAzureConfig();
-    doNothing().when(azureAppServiceDeploymentService).deployPackage(any(), any());
+    doNothing().when(azureAppServiceDeploymentService).deployPackage(any(), any(), null);
     mockRerouteProductionSlotTraffic();
     ArtifactStreamAttributes artifactStreamAttributes = buildArtifactStreamAttributes(false);
     File artifactWorkdir = new File(AZURE_APP_SVC_ARTIFACT_DOWNLOAD_DIR_PATH);
@@ -190,31 +190,31 @@ public class AzureWebAppRollbackTaskHandlerTest extends WingsBaseTest {
     AzureWebAppRollbackParameters rollbackParameters =
         buildAzureWebAppRollbackParameters(AppServiceDeploymentProgress.SAVE_CONFIGURATION);
     AzureAppServiceTaskResponse azureAppServiceTaskResponse = azureWebAppRollbackTaskHandler.executeTaskInternal(
-        rollbackParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes);
+        rollbackParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes, null);
     assertThat(azureAppServiceTaskResponse).isNotNull();
     verify(azureAppServiceService, never()).fetchDeploymentData(any(), eq(SLOT_NAME));
-    verify(azureAppServiceDeploymentService, never()).deployPackage(any(), any());
+    verify(azureAppServiceDeploymentService, never()).deployPackage(any(), any(), null);
 
     rollbackParameters.getPreDeploymentData().setDeploymentProgressMarker(
         AppServiceDeploymentProgress.STOP_SLOT.name());
     azureAppServiceTaskResponse = azureWebAppRollbackTaskHandler.executeTaskInternal(
-        rollbackParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes);
+        rollbackParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes, null);
     assertThat(azureAppServiceTaskResponse).isNotNull();
     verify(azureAppServiceDeploymentService).startSlotAsyncWithSteadyCheck(any(), any(), any());
     verify(azureAppServiceService, never()).fetchDeploymentData(any(), eq(SLOT_NAME));
-    verify(azureAppServiceDeploymentService, never()).deployPackage(any(), any());
+    verify(azureAppServiceDeploymentService, never()).deployPackage(any(), any(), null);
 
     rollbackParameters.getPreDeploymentData().setDeploymentProgressMarker(
         AppServiceDeploymentProgress.DEPLOYMENT_COMPLETE.name());
     azureAppServiceTaskResponse = azureWebAppRollbackTaskHandler.executeTaskInternal(
-        rollbackParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes);
+        rollbackParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes, null);
     assertThat(azureAppServiceTaskResponse).isNotNull();
-    verify(azureAppServiceDeploymentService, never()).deployPackage(any(), any());
+    verify(azureAppServiceDeploymentService, never()).deployPackage(any(), any(), null);
     verify(azureAppServiceDeploymentService, never()).stopSlotAsyncWithSteadyCheck(any(), any(), any());
   }
 
   private void mockDeployDockerImage() {
-    doNothing().when(azureAppServiceDeploymentService).deployDockerImage(any(), any());
+    doNothing().when(azureAppServiceDeploymentService).deployDockerImage(any(), any(), null);
   }
 
   private ArtifactStreamAttributes buildArtifactStreamAttributes(boolean isDockerArtifactType) {
@@ -224,7 +224,7 @@ public class AzureWebAppRollbackTaskHandlerTest extends WingsBaseTest {
   private void mockRerouteProductionSlotTraffic() {
     doNothing()
         .when(azureAppServiceDeploymentService)
-        .rerouteProductionSlotTraffic(any(), eq(SLOT_NAME), eq(TRAFFIC_WEIGHT), any());
+        .rerouteProductionSlotTraffic(any(), eq(SLOT_NAME), eq(TRAFFIC_WEIGHT), any(), null);
   }
 
   private AzureWebAppRollbackParameters buildAzureWebAppRollbackParameters(

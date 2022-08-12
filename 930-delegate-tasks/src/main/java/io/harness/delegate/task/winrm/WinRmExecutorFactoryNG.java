@@ -42,6 +42,6 @@ public class WinRmExecutorFactoryNG {
   private static LogCallback getExecutionLogCallback(WinRmSessionConfig sessionConfig,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
     return new NGDelegateLogCallback(
-        logStreamingTaskClient, sessionConfig.getCommandUnitName(), true, commandUnitsProgress);
+        logStreamingTaskClient, sessionConfig.getCommandUnitName(), true, commandUnitsProgress, taskId);
   }
 }

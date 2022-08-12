@@ -78,15 +78,15 @@ public class AzureWebAppTaskNG extends AbstractDelegateRunnableTask {
       requireNonNull(
           requestHandler, "No request handler implemented for type: " + azureWebAppTaskRequest.getRequestType());
       AzureWebAppRequestResponse requestResponse =
-          requestHandler.handleRequest(azureWebAppTaskRequest, logCallbackProvider);
+          requestHandler.handleRequest(azureWebAppTaskRequest, logCallbackProvider, getTaskId());
       return AzureWebAppTaskResponse.builder()
           .requestResponse(requestResponse)
           .commandUnitsProgress(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
           .build();
     } catch (Exception e) {
       Exception processedException = ExceptionMessageSanitizer.sanitizeException(e);
-      TaskExceptionUtils.handleExceptionCommandUnits(
-          commandUnitsProgress, logCallbackProvider::obtainLogCallback, processedException);
+      TaskExceptionUtils.handleExceptionCommandUnits(commandUnitsProgress,
+          commandUnitName -> logCallbackProvider.obtainLogCallback(commandUnitName, getTaskId()), processedException);
       log.error("Exception in processing azure webp app request type {}", azureWebAppTaskRequest.getRequestType(),
           processedException);
       throw new TaskNGDataException(

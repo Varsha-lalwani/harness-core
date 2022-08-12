@@ -90,7 +90,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
         .createKubernetesConfig(k8sInfraDelegateConfig);
     doReturn(logCallback)
         .when(k8sTaskHelperBase)
-        .getLogCallback(eq(iLogStreamingTaskClient), anyString(), anyBoolean(), any());
+        .getLogCallback(eq(iLogStreamingTaskClient), anyString(), anyBoolean(), any(), null);
     doReturn(true)
         .when(k8sTaskHelperBase)
         .fetchManifestFilesAndWriteToDirectory(
@@ -138,7 +138,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
         .delete(any(Kubectl.class), eq(delegateTaskParams), eq(kubernetesResources), eq(logCallback), eq(true));
 
     K8sDeployResponse response = k8sDeleteRequestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     verify(k8sDeleteBaseHandler, times(1))
@@ -171,7 +171,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
         .thenReturn(kubernetesResources);
 
     K8sDeployResponse response = k8sDeleteRequestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     verify(k8sDeleteBaseHandler, times(1))
@@ -205,7 +205,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
     K8sDeployResponse response = null;
     try {
       response = k8sDeleteRequestHandler.executeTaskInternal(
-          deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+          deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     } catch (Exception e) {
       assertThat(response).isNull();
       verify(k8sDeleteBaseHandler, times(1))
@@ -244,7 +244,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
         .delete(any(Kubectl.class), eq(delegateTaskParams), eq(kubernetesResources), eq(logCallback), eq(true));
 
     K8sDeployResponse response = k8sDeleteRequestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     verify(k8sDeleteBaseHandler, times(1))
@@ -283,7 +283,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
         .delete(any(Kubectl.class), eq(delegateTaskParams), eq(kubernetesResources), eq(logCallback), eq(true));
 
     K8sDeployResponse response = k8sDeleteRequestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     verify(k8sDeleteBaseHandler, times(1))
@@ -316,7 +316,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
         .thenReturn(kubernetesResources);
 
     K8sDeployResponse response = k8sDeleteRequestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     verify(k8sDeleteBaseHandler, times(1))
@@ -351,7 +351,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
 
     try {
       response = k8sDeleteRequestHandler.executeTaskInternal(
-          deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+          deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     } catch (Exception e) {
       assertThat(response).isNull();
       verify(k8sDeleteBaseHandler, times(1))
@@ -390,7 +390,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
         .delete(any(Kubectl.class), eq(delegateTaskParams), eq(kubernetesResources), eq(logCallback), eq(true));
 
     K8sDeployResponse response = k8sDeleteRequestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     verify(k8sDeleteBaseHandler, times(1))
@@ -443,7 +443,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
         .deleteManifests(any(Kubectl.class), eq(kubernetesResources), eq(delegateTaskParams), eq(logCallback));
 
     K8sDeployResponse response = k8sDeleteRequestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     verify(k8sTaskHelperBase, times(1))
@@ -486,7 +486,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
 
     try {
       response = k8sDeleteRequestHandler.executeTaskInternal(
-          deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+          deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     } catch (Exception e) {
       assertThat(response).isNull();
       verify(k8sTaskHelperBase, times(0))
@@ -522,7 +522,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
     CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
 
     K8sDeployResponse response = k8sDeleteRequestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     verify(k8sTaskHelperBase, times(0))
@@ -574,7 +574,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
         .deleteManifests(any(Kubectl.class), eq(kubernetesResources), eq(delegateTaskParams), eq(logCallback));
 
     K8sDeployResponse response = k8sDeleteRequestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     verify(k8sTaskHelperBase, times(1))
@@ -618,7 +618,7 @@ public class K8sDeleteRequestHandlerTest extends CategoryTest {
 
     try {
       response = k8sDeleteRequestHandler.executeTaskInternal(
-          deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+          deleteRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     } catch (Exception e) {
       assertThat(response).isNull();
       verify(k8sTaskHelperBase, times(1))

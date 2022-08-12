@@ -66,18 +66,18 @@ public class K8sCanaryDeleteRequestHandler extends K8sRequestHandler {
   @Override
   protected K8sDeployResponse executeTaskInternal(K8sDeployRequest k8sDeployRequest,
       K8sDelegateTaskParams k8SDelegateTaskParams, ILogStreamingTaskClient logStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     if (!(k8sDeployRequest instanceof K8sCanaryDeleteRequest)) {
       throw new InvalidArgumentsException(Pair.of("k8sDeployRequest", "Must be instance of K8sCanaryDeleteRequest"));
     }
 
     K8sCanaryDeleteRequest canaryDeleteRequest = (K8sCanaryDeleteRequest) k8sDeployRequest;
     LogCallback initLogCallBack =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress, taskId);
     init(canaryDeleteRequest, k8SDelegateTaskParams, initLogCallBack);
 
     LogCallback deleteLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Delete, true, commandUnitsProgress);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Delete, true, commandUnitsProgress, taskId);
     if (isEmpty(resourceIdsToDelete)) {
       deleteLogCallback.saveExecutionLog(color("No canary workloads to be deleted. Skipping.\n", White, Bold));
       deleteLogCallback.saveExecutionLog("\nDone.", INFO, SUCCESS);

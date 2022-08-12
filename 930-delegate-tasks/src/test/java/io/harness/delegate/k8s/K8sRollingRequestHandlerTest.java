@@ -92,7 +92,7 @@ public class K8sRollingRequestHandlerTest extends CategoryTest {
 
     doReturn(logCallback)
         .when(taskHelperBase)
-        .getLogCallback(eq(logStreamingTaskClient), anyString(), anyBoolean(), eq(commandUnitsProgress));
+        .getLogCallback(eq(logStreamingTaskClient), anyString(), anyBoolean(), eq(commandUnitsProgress), null);
 
     doReturn(KubernetesConfig.builder().namespace("default").build())
         .when(containerDeploymentDelegateBaseHelper)
@@ -120,7 +120,7 @@ public class K8sRollingRequestHandlerTest extends CategoryTest {
             any(Kubectl.class), anyList(), any(K8sDelegateTaskParams.class), eq(logCallback), eq(true), anyLong());
 
     K8sDeployResponse response = rollingRequestHandler.executeTask(
-        rollingDeployRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress);
+        rollingDeployRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, getTaskId());
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getK8sNGTaskResponse()).isNotNull();
   }
@@ -158,8 +158,8 @@ public class K8sRollingRequestHandlerTest extends CategoryTest {
         .getPods(anyLong(), anyListOf(KubernetesResource.class), any(KubernetesConfig.class), anyString());
 
     assertThatThrownBy(()
-                           -> rollingRequestHandler.executeTaskInternal(
-                               rollingDeployRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress))
+                           -> rollingRequestHandler.executeTaskInternal(rollingDeployRequest, delegateTaskParams,
+                               logStreamingTaskClient, commandUnitsProgress, null))
         .isEqualTo(thrownException);
 
     verify(kubernetesContainerService, times(1))
@@ -184,7 +184,7 @@ public class K8sRollingRequestHandlerTest extends CategoryTest {
     doReturn(prunedResourceIds).when(rollingRequestHandler).prune(any(), any(), any());
 
     K8sDeployResponse deployResponse = rollingRequestHandler.executeTaskInternal(
-        deployRequestWithPruningEnabled, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress);
+        deployRequestWithPruningEnabled, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null);
     assertThat(((K8sRollingDeployResponse) deployResponse.getK8sNGTaskResponse()).getPrunedResourceIds())
         .isEqualTo(prunedResourceIds);
   }

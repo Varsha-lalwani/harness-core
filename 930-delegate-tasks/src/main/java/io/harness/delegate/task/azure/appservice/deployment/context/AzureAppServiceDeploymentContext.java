@@ -35,8 +35,8 @@ public class AzureAppServiceDeploymentContext {
   private int steadyStateTimeoutInMin;
   private boolean isBasicDeployment;
 
-  public void deploy(
-      AzureAppServiceDeploymentService deploymentService, AzureAppServicePreDeploymentData preDeploymentData) {
+  public void deploy(AzureAppServiceDeploymentService deploymentService,
+      AzureAppServicePreDeploymentData preDeploymentData, String taskId) {
     throw new UnsupportedOperationException("Concrete subclass method implementation not available yet");
   }
 }

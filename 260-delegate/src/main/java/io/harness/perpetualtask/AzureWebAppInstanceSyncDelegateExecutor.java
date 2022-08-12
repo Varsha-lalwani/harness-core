@@ -78,7 +78,7 @@ public class AzureWebAppInstanceSyncDelegateExecutor implements PerpetualTaskExe
                                                    .build();
     try {
       AzureAppServiceTaskResponse azureAppServiceTaskResponse = listWebAppInstancesTaskHandler.executeTaskInternal(
-          parameters, createAzureConfigForDelegateTask(azureConfig), null);
+          parameters, createAzureConfigForDelegateTask(azureConfig), null, null);
       return AzureTaskExecutionResponse.builder()
           .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
           .azureTaskResponse(azureAppServiceTaskResponse)

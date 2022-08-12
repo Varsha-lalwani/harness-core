@@ -13,5 +13,5 @@ import io.harness.annotations.dev.OwnedBy;
 
 @OwnedBy(CDP)
 public interface AzureArtifactDownloadService {
-  AzureArtifactDownloadResponse download(ArtifactDownloadContext artifactDownloadContext);
+  AzureArtifactDownloadResponse download(ArtifactDownloadContext artifactDownloadContext, String taskId);
 }

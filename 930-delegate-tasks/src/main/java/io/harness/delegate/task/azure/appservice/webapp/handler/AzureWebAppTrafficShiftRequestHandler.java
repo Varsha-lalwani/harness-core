@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AzureWebAppTrafficShiftRequestHandler extends AzureWebAppRequestHandler<AzureWebAppTrafficShiftRequest> {
   @Override
   protected AzureWebAppRequestResponse execute(AzureWebAppTrafficShiftRequest taskRequest, AzureConfig azureConfig,
-      AzureLogCallbackProvider logCallbackProvider) {
+      AzureLogCallbackProvider logCallbackProvider, String taskId) {
     AzureWebAppInfraDelegateConfig infrastructure = taskRequest.getInfrastructure();
     String webAppName = infrastructure.getAppName();
     String deploymentSlot = infrastructure.getDeploymentSlot();
@@ -47,6 +47,6 @@ public class AzureWebAppTrafficShiftRequestHandler extends AzureWebAppRequestHan
   private void updateSlotTrafficWeight(String deploymentSlot, AzureWebClientContext webClientContext,
       double trafficPercent, AzureLogCallbackProvider logCallbackProvider) {
     azureAppServiceDeploymentService.rerouteProductionSlotTraffic(
-        webClientContext, deploymentSlot, trafficPercent, logCallbackProvider);
+        webClientContext, deploymentSlot, trafficPercent, logCallbackProvider, null);
   }
 }

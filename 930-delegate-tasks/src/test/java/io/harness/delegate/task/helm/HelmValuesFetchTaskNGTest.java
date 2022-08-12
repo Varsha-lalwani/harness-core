@@ -92,7 +92,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     MockitoAnnotations.initMocks(this);
     doReturn(mock(LogCallback.class))
         .when(helmValuesFetchTaskNG)
-        .getLogCallback(any(CommandUnitsProgress.class), anyBoolean());
+        .getLogCallback(any(CommandUnitsProgress.class), anyBoolean(), null);
   }
 
   @Test
@@ -269,7 +269,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     doThrow(new RuntimeException("Something went wrong"))
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
-    doReturn(logCallback).when(helmValuesFetchTaskNG).getLogCallback(any(), anyBoolean());
+    doReturn(logCallback).when(helmValuesFetchTaskNG).getLogCallback(any(), anyBoolean(), null);
     doNothing().when(logCallback).saveExecutionLog(anyString(), any(), any());
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()

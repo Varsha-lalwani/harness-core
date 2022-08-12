@@ -91,7 +91,7 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
 
       LogCallback executionLogCallback =
           new NGDelegateLogCallback(getLogStreamingTaskClient(), ServerlessCommandUnitConstants.fetchFiles.toString(),
-              serverlessGitFetchRequest.isShouldOpenLogStream(), commandUnitsProgress);
+              serverlessGitFetchRequest.isShouldOpenLogStream(), commandUnitsProgress, taskId);
       ServerlessGitFetchFileConfig serverlessGitFetchFileConfig =
           serverlessGitFetchRequest.getServerlessGitFetchFileConfig();
       executionLogCallback.saveExecutionLog(

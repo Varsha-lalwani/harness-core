@@ -68,14 +68,14 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
   @Inject private AzureArtifactDownloadService artifactDownloaderService;
 
   @Override
-  protected AzureWebAppRequestResponse execute(
-      AzureWebAppRollbackRequest taskRequest, AzureConfig azureConfig, AzureLogCallbackProvider logCallbackProvider) {
+  protected AzureWebAppRequestResponse execute(AzureWebAppRollbackRequest taskRequest, AzureConfig azureConfig,
+      AzureLogCallbackProvider logCallbackProvider, String taskId) {
     azureSecretHelper.decryptAzureWebAppRollbackParameters(taskRequest.getPreDeploymentData());
     switch (taskRequest.getAzureArtifactType()) {
       case CONTAINER:
-        return executeContainer(taskRequest, azureConfig, logCallbackProvider);
+        return executeContainer(taskRequest, azureConfig, logCallbackProvider, taskId);
       case PACKAGE:
-        return executePackage(taskRequest, azureConfig, logCallbackProvider);
+        return executePackage(taskRequest, azureConfig, logCallbackProvider, taskId);
       default:
         throw new UnsupportedOperationException(
             format("Artifact type [%s] is not supported yet", taskRequest.getAzureArtifactType()));
@@ -87,8 +87,8 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
     return AzureWebAppRollbackRequest.class;
   }
 
-  private AzureWebAppRequestResponse executeContainer(
-      AzureWebAppRollbackRequest taskRequest, AzureConfig azureConfig, AzureLogCallbackProvider logCallbackProvider) {
+  private AzureWebAppRequestResponse executeContainer(AzureWebAppRollbackRequest taskRequest, AzureConfig azureConfig,
+      AzureLogCallbackProvider logCallbackProvider, String taskId) {
     log.info("Rollback using container artifact");
     azureSecretHelper.decryptAzureWebAppRollbackParameters(taskRequest.getPreDeploymentData());
     AzureWebClientContext azureWebClientContext =
@@ -97,11 +97,12 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
         toAzureAppServiceDockerDeploymentContext(taskRequest, azureWebClientContext, logCallbackProvider);
 
     try {
-      performRollback(logCallbackProvider, taskRequest, azureWebClientContext, dockerDeploymentContext, azureConfig);
+      performRollback(
+          logCallbackProvider, taskRequest, azureWebClientContext, dockerDeploymentContext, azureConfig, taskId);
       List<AzureAppDeploymentData> azureAppDeploymentData =
           getAppServiceDeploymentData(taskRequest, azureWebClientContext);
 
-      markDeploymentStatusAsSuccess(taskRequest, logCallbackProvider);
+      markDeploymentStatusAsSuccess(taskRequest, logCallbackProvider, taskId);
 
       return AzureWebAppNGRollbackResponse.builder()
           .azureAppDeploymentData(azureAppDeploymentData)
@@ -113,20 +114,20 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
     }
   }
 
-  private AzureWebAppNGRollbackResponse executePackage(
-      AzureWebAppRollbackRequest taskRequest, AzureConfig azureConfig, AzureLogCallbackProvider logCallbackProvider) {
+  private AzureWebAppNGRollbackResponse executePackage(AzureWebAppRollbackRequest taskRequest, AzureConfig azureConfig,
+      AzureLogCallbackProvider logCallbackProvider, String taskId) {
     log.info("Rollback using package artifact");
     AzureWebClientContext azureWebClientContext =
         buildAzureWebClientContext(taskRequest.getInfrastructure(), azureConfig);
     AzureAppServicePackageDeploymentContext deploymentContext =
-        toAzureAppServicePackageDeploymentContext(taskRequest, azureWebClientContext, logCallbackProvider);
+        toAzureAppServicePackageDeploymentContext(taskRequest, azureWebClientContext, logCallbackProvider, taskId);
 
-    performRollback(logCallbackProvider, taskRequest, azureWebClientContext, deploymentContext, azureConfig);
+    performRollback(logCallbackProvider, taskRequest, azureWebClientContext, deploymentContext, azureConfig, taskId);
 
     List<AzureAppDeploymentData> azureAppDeploymentData =
         getAppServiceDeploymentData(taskRequest, azureWebClientContext);
 
-    markDeploymentStatusAsSuccess(taskRequest, logCallbackProvider);
+    markDeploymentStatusAsSuccess(taskRequest, logCallbackProvider, taskId);
     return AzureWebAppNGRollbackResponse.builder()
         .azureAppDeploymentData(azureAppDeploymentData)
         .preDeploymentData(taskRequest.getPreDeploymentData())
@@ -135,7 +136,7 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
 
   private AzureAppServicePackageDeploymentContext toAzureAppServicePackageDeploymentContext(
       AzureWebAppRollbackRequest taskRequest, AzureWebClientContext azureWebClientContext,
-      AzureLogCallbackProvider logCallbackProvider) {
+      AzureLogCallbackProvider logCallbackProvider, String taskId) {
     AutoCloseableWorkingDirectory autoCloseableWorkingDirectory =
         new AutoCloseableWorkingDirectory(REPOSITORY_DIR_PATH, AZURE_APP_SVC_ARTIFACT_DOWNLOAD_DIR_PATH);
     AzurePackageArtifactConfig artifactConfig = (AzurePackageArtifactConfig) taskRequest.getArtifact();
@@ -143,7 +144,7 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
     if (artifactConfig != null) {
       ArtifactDownloadContext downloadContext = azureAppServiceResourceUtilities.toArtifactNgDownloadContext(
           artifactConfig, autoCloseableWorkingDirectory, logCallbackProvider);
-      artifactResponse = artifactDownloaderService.download(downloadContext);
+      artifactResponse = artifactDownloaderService.download(downloadContext, taskId);
     }
 
     AzureAppServicePreDeploymentData preDeploymentData = taskRequest.getPreDeploymentData();
@@ -170,32 +171,32 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
 
   private void performRollback(AzureLogCallbackProvider logCallbackProvider, AzureWebAppRollbackRequest taskRequest,
       AzureWebClientContext azureWebClientContext, AzureAppServiceDeploymentContext deploymentContext,
-      AzureConfig azureConfig) {
+      AzureConfig azureConfig, String taskId) {
     AppServiceDeploymentProgress progressMarker = getProgressMarker(taskRequest);
     log.info(String.format("Starting rollback from previous marker - [%s]", progressMarker.getStepName()));
 
     switch (progressMarker) {
       case SAVE_CONFIGURATION:
-        rollbackFromSaveConfigurationState(logCallbackProvider);
+        rollbackFromSaveConfigurationState(logCallbackProvider, taskId);
         break;
       case STOP_SLOT:
-        rollbackFromStopSlotState(logCallbackProvider, taskRequest, deploymentContext);
+        rollbackFromStopSlotState(logCallbackProvider, taskRequest, deploymentContext, taskId);
         break;
       case UPDATE_SLOT_CONFIGURATIONS_SETTINGS:
-        rollbackFromUpdateConfigurationState(logCallbackProvider, taskRequest, deploymentContext);
+        rollbackFromUpdateConfigurationState(logCallbackProvider, taskRequest, deploymentContext, taskId);
         break;
       case UPDATE_SLOT_CONTAINER_SETTINGS:
       case DEPLOY_TO_SLOT:
-        rollbackSetupSlot(taskRequest, deploymentContext);
-        rollbackTrafficShift(logCallbackProvider, taskRequest, azureWebClientContext, deploymentContext);
+        rollbackSetupSlot(taskRequest, deploymentContext, taskId);
+        rollbackTrafficShift(logCallbackProvider, taskRequest, azureWebClientContext, deploymentContext, taskId);
         break;
       case SWAP_SLOT:
-        swapSlots(azureConfig, logCallbackProvider, taskRequest);
-        rollbackSetupSlot(taskRequest, deploymentContext);
-        rollbackTrafficShift(logCallbackProvider, taskRequest, azureWebClientContext, deploymentContext);
+        swapSlots(azureConfig, logCallbackProvider, taskRequest, taskId);
+        rollbackSetupSlot(taskRequest, deploymentContext, taskId);
+        rollbackTrafficShift(logCallbackProvider, taskRequest, azureWebClientContext, deploymentContext, taskId);
         break;
       case DEPLOYMENT_COMPLETE:
-        noRollback(logCallbackProvider);
+        noRollback(logCallbackProvider, taskId);
         break;
 
       default:
@@ -203,12 +204,12 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
     }
   }
 
-  private void swapSlots(
-      AzureConfig azureConfig, AzureLogCallbackProvider logCallbackProvider, AzureWebAppRollbackRequest taskRequest) {
+  private void swapSlots(AzureConfig azureConfig, AzureLogCallbackProvider logCallbackProvider,
+      AzureWebAppRollbackRequest taskRequest, String taskId) {
     AzureWebClientContext webClientContext = buildAzureWebClientContext(taskRequest.getInfrastructure(), azureConfig);
     azureAppServiceResourceUtilities.swapSlots(webClientContext, logCallbackProvider,
         taskRequest.getInfrastructure().getDeploymentSlot(), taskRequest.getTargetSlot(),
-        taskRequest.getTimeoutIntervalInMin());
+        taskRequest.getTimeoutIntervalInMin(), taskId);
   }
 
   private AzureAppServiceDockerDeploymentContext toAzureAppServiceDockerDeploymentContext(
@@ -244,85 +245,86 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
         .build();
   }
 
-  private void noRollback(AzureLogCallbackProvider logCallbackProvider) {
+  private void noRollback(AzureLogCallbackProvider logCallbackProvider, String taskId) {
     String message = "The previous deployment was complete. Hence nothing to revert during rollback";
-    markCommandUnitAsDone(logCallbackProvider, STOP_DEPLOYMENT_SLOT, message);
-    markCommandUnitAsDone(logCallbackProvider, UPDATE_SLOT_CONFIGURATION_SETTINGS, message);
-    markCommandUnitAsDone(logCallbackProvider, UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS, message);
-    markCommandUnitAsDone(logCallbackProvider, START_DEPLOYMENT_SLOT, message);
-    markCommandUnitAsDone(logCallbackProvider, SLOT_TRAFFIC_PERCENTAGE, message);
+    markCommandUnitAsDone(logCallbackProvider, STOP_DEPLOYMENT_SLOT, message, taskId);
+    markCommandUnitAsDone(logCallbackProvider, UPDATE_SLOT_CONFIGURATION_SETTINGS, message, taskId);
+    markCommandUnitAsDone(logCallbackProvider, UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS, message, taskId);
+    markCommandUnitAsDone(logCallbackProvider, START_DEPLOYMENT_SLOT, message, taskId);
+    markCommandUnitAsDone(logCallbackProvider, SLOT_TRAFFIC_PERCENTAGE, message, taskId);
   }
 
   private void rollbackTrafficShift(AzureLogCallbackProvider logCallbackProvider,
       AzureWebAppRollbackRequest taskRequest, AzureWebClientContext azureWebClientContext,
-      AzureAppServiceDeploymentContext deploymentContext) {
+      AzureAppServiceDeploymentContext deploymentContext, String taskId) {
     AzureAppServicePreDeploymentData preDeploymentData = taskRequest.getPreDeploymentData();
     double slotTrafficWeight =
         azureAppServiceService.getSlotTrafficWeight(azureWebClientContext, deploymentContext.getSlotName());
     if (slotTrafficWeight != preDeploymentData.getTrafficWeight() && !deploymentContext.isBasicDeployment()) {
-      rollbackUpdateSlotTrafficWeight(preDeploymentData, azureWebClientContext, logCallbackProvider);
+      rollbackUpdateSlotTrafficWeight(preDeploymentData, azureWebClientContext, logCallbackProvider, taskId);
     } else {
-      LogCallback rerouteTrafficLogCallback = logCallbackProvider.obtainLogCallback(SLOT_TRAFFIC_PERCENTAGE);
+      LogCallback rerouteTrafficLogCallback = logCallbackProvider.obtainLogCallback(SLOT_TRAFFIC_PERCENTAGE, taskId);
       rerouteTrafficLogCallback.saveExecutionLog(NO_TRAFFIC_SHIFT_REQUIRED, INFO, SUCCESS);
     }
   }
 
   private void rollbackUpdateSlotTrafficWeight(AzureAppServicePreDeploymentData preDeploymentData,
-      AzureWebClientContext azureWebClientContext, AzureLogCallbackProvider logCallbackProvider) {
+      AzureWebClientContext azureWebClientContext, AzureLogCallbackProvider logCallbackProvider, String taskId) {
     double trafficWeight = preDeploymentData.getTrafficWeight();
     String slotName = preDeploymentData.getSlotName();
     azureAppServiceDeploymentService.rerouteProductionSlotTraffic(
-        azureWebClientContext, slotName, trafficWeight, logCallbackProvider);
+        azureWebClientContext, slotName, trafficWeight, logCallbackProvider, taskId);
   }
 
   private void rollbackSetupSlot(
-      AzureWebAppRollbackRequest taskRequest, AzureAppServiceDeploymentContext deploymentContext) {
+      AzureWebAppRollbackRequest taskRequest, AzureAppServiceDeploymentContext deploymentContext, String taskId) {
     if ((deploymentContext instanceof AzureAppServicePackageDeploymentContext)
         && ((AzureAppServicePackageDeploymentContext) deploymentContext).getArtifactFile() == null) {
       LogCallback updateSlotLogCallback =
-          deploymentContext.getLogCallbackProvider().obtainLogCallback(UPDATE_SLOT_CONFIGURATION_SETTINGS);
+          deploymentContext.getLogCallbackProvider().obtainLogCallback(UPDATE_SLOT_CONFIGURATION_SETTINGS, taskId);
       updateSlotLogCallback.saveExecutionLog(
           "Skip Update Slot Configuration Settings as no previous successful deployment found", INFO, SUCCESS);
-      LogCallback deploySlotLogCallback = deploymentContext.getLogCallbackProvider().obtainLogCallback(DEPLOY_TO_SLOT);
+      LogCallback deploySlotLogCallback =
+          deploymentContext.getLogCallbackProvider().obtainLogCallback(DEPLOY_TO_SLOT, taskId);
       deploySlotLogCallback.saveExecutionLog(
           "Skip Deploying to Slot as no previous successful deployment found", INFO, SUCCESS);
       return;
     }
-    deploymentContext.deploy(azureAppServiceDeploymentService, taskRequest.getPreDeploymentData());
+    deploymentContext.deploy(azureAppServiceDeploymentService, taskRequest.getPreDeploymentData(), taskId);
   }
 
   private void rollbackFromUpdateConfigurationState(AzureLogCallbackProvider logCallbackProvider,
-      AzureWebAppRollbackRequest taskRequest, AzureAppServiceDeploymentContext deploymentContext) {
-    LogCallback logCallback = logCallbackProvider.obtainLogCallback(UPDATE_SLOT_CONFIGURATION_SETTINGS);
+      AzureWebAppRollbackRequest taskRequest, AzureAppServiceDeploymentContext deploymentContext, String taskId) {
+    LogCallback logCallback = logCallbackProvider.obtainLogCallback(UPDATE_SLOT_CONFIGURATION_SETTINGS, taskId);
     azureAppServiceDeploymentService.updateDeploymentSlotConfigurationSettings(
         deploymentContext, taskRequest.getPreDeploymentData(), logCallback);
 
     markCommandUnitAsDone(
-        logCallbackProvider, UPDATE_SLOT_CONFIGURATION_SETTINGS, "Reverted the slot configuration settings");
+        logCallbackProvider, UPDATE_SLOT_CONFIGURATION_SETTINGS, "Reverted the slot configuration settings", taskId);
 
     String message = "No artifact/image was deployed during deployment. Hence skipping this step";
-    markCommandUnitAsDone(logCallbackProvider, DEPLOY_TO_SLOT, message);
+    markCommandUnitAsDone(logCallbackProvider, DEPLOY_TO_SLOT, message, taskId);
 
     message = "Slot traffic was not changed. Hence skipping this step";
-    markCommandUnitAsDone(logCallbackProvider, SLOT_TRAFFIC_PERCENTAGE, message);
+    markCommandUnitAsDone(logCallbackProvider, SLOT_TRAFFIC_PERCENTAGE, message, taskId);
   }
 
   private void rollbackFromStopSlotState(AzureLogCallbackProvider logCallbackProvider,
-      AzureWebAppRollbackRequest taskRequest, AzureAppServiceDeploymentContext deploymentContext) {
+      AzureWebAppRollbackRequest taskRequest, AzureAppServiceDeploymentContext deploymentContext, String taskId) {
     String message = "Slot configuration was not changed. Hence skipping this step";
-    markCommandUnitAsDone(logCallbackProvider, UPDATE_SLOT_CONFIGURATION_SETTINGS, message);
+    markCommandUnitAsDone(logCallbackProvider, UPDATE_SLOT_CONFIGURATION_SETTINGS, message, taskId);
 
-    LogCallback deployLogCallback = logCallbackProvider.obtainLogCallback(DEPLOY_TO_SLOT);
+    LogCallback deployLogCallback = logCallbackProvider.obtainLogCallback(DEPLOY_TO_SLOT, taskId);
     azureAppServiceDeploymentService.startSlotAsyncWithSteadyCheck(
         deploymentContext, taskRequest.getPreDeploymentData(), deployLogCallback);
-    markCommandUnitAsDone(logCallbackProvider, DEPLOY_TO_SLOT, "Rollback completed");
+    markCommandUnitAsDone(logCallbackProvider, DEPLOY_TO_SLOT, "Rollback completed", taskId);
     message = "Slot traffic was not changed. Hence skipping this step";
-    markCommandUnitAsDone(logCallbackProvider, SLOT_TRAFFIC_PERCENTAGE, message);
+    markCommandUnitAsDone(logCallbackProvider, SLOT_TRAFFIC_PERCENTAGE, message, taskId);
   }
 
   protected void markDeploymentStatusAsSuccess(
-      AzureWebAppRollbackRequest taskRequest, AzureLogCallbackProvider logCallbackProvider) {
-    LogCallback logCallback = logCallbackProvider.obtainLogCallback(AzureConstants.DEPLOYMENT_STATUS);
+      AzureWebAppRollbackRequest taskRequest, AzureLogCallbackProvider logCallbackProvider, String taskId) {
+    LogCallback logCallback = logCallbackProvider.obtainLogCallback(AzureConstants.DEPLOYMENT_STATUS, taskId);
     logCallback.saveExecutionLog(
         String.format("The following task - [%s] completed successfully", taskRequest.getRequestType().name()),
         LogLevel.INFO, CommandExecutionStatus.SUCCESS);
@@ -350,15 +352,16 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
     return AppServiceDeploymentProgress.valueOf(deploymentProgressMarker);
   }
 
-  private void rollbackFromSaveConfigurationState(AzureLogCallbackProvider logCallbackProvider) {
+  private void rollbackFromSaveConfigurationState(AzureLogCallbackProvider logCallbackProvider, String taskId) {
     String message = "The previous deployment did not start. Hence nothing to revert during rollback";
-    markCommandUnitAsDone(logCallbackProvider, UPDATE_SLOT_CONFIGURATION_SETTINGS, message);
-    markCommandUnitAsDone(logCallbackProvider, DEPLOY_TO_SLOT, message);
-    markCommandUnitAsDone(logCallbackProvider, SLOT_TRAFFIC_PERCENTAGE, message);
+    markCommandUnitAsDone(logCallbackProvider, UPDATE_SLOT_CONFIGURATION_SETTINGS, message, taskId);
+    markCommandUnitAsDone(logCallbackProvider, DEPLOY_TO_SLOT, message, taskId);
+    markCommandUnitAsDone(logCallbackProvider, SLOT_TRAFFIC_PERCENTAGE, message, taskId);
   }
 
-  private void markCommandUnitAsDone(AzureLogCallbackProvider logCallbackProvider, String commandUnit, String message) {
-    LogCallback logCallback = logCallbackProvider.obtainLogCallback(commandUnit);
+  private void markCommandUnitAsDone(
+      AzureLogCallbackProvider logCallbackProvider, String commandUnit, String message, String taskId) {
+    LogCallback logCallback = logCallbackProvider.obtainLogCallback(commandUnit, taskId);
     logCallback.saveExecutionLog(
         String.format("Message - [%s]", message), LogLevel.INFO, CommandExecutionStatus.SUCCESS);
   }

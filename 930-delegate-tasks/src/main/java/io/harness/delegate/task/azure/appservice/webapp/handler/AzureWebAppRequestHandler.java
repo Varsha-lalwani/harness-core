@@ -37,7 +37,7 @@ public abstract class AzureWebAppRequestHandler<T extends AzureWebAppTaskRequest
   @Inject protected AzureSecretHelper azureSecretHelper;
 
   public final AzureWebAppRequestResponse handleRequest(
-      AzureWebAppTaskRequest azureWebAppTaskRequest, AzureLogCallbackProvider logCallbackProvider) {
+      AzureWebAppTaskRequest azureWebAppTaskRequest, AzureLogCallbackProvider logCallbackProvider, String taskId) {
     if (!getRequestType().isAssignableFrom(azureWebAppTaskRequest.getClass())) {
       throw new InvalidArgumentsException(Pair.of("azureWebAppTaskRequest",
           String.format("Unexpected type of task request [%s], expected: [%s]",
@@ -45,7 +45,8 @@ public abstract class AzureWebAppRequestHandler<T extends AzureWebAppTaskRequest
     }
 
     AzureConnectorDTO connectorDTO = azureWebAppTaskRequest.getInfrastructure().getAzureConnectorDTO();
-    return execute((T) azureWebAppTaskRequest, connectorMapper.toAzureConfig(connectorDTO), logCallbackProvider);
+    return execute(
+        (T) azureWebAppTaskRequest, connectorMapper.toAzureConfig(connectorDTO), logCallbackProvider, taskId);
   }
 
   protected AzureWebClientContext buildAzureWebClientContext(
@@ -59,7 +60,7 @@ public abstract class AzureWebAppRequestHandler<T extends AzureWebAppTaskRequest
   }
 
   protected abstract AzureWebAppRequestResponse execute(
-      T taskRequest, AzureConfig azureConfig, AzureLogCallbackProvider logCallbackProvider);
+      T taskRequest, AzureConfig azureConfig, AzureLogCallbackProvider logCallbackProvider, String taskId);
 
   protected abstract Class<T> getRequestType();
 }

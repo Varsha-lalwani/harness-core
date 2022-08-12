@@ -65,14 +65,14 @@ public class AzureWebAppSlotSwapRequestHandlerTest extends CategoryTest {
                                                        .targetSlot(TARGET_SLOT)
                                                        .build();
 
-    requestHandler.execute(swapSlotsRequest, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+    requestHandler.execute(swapSlotsRequest, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
 
     ArgumentCaptor<AzureWebClientContext> azureWebClientContextArgumentCaptor =
         ArgumentCaptor.forClass(AzureWebClientContext.class);
 
     verify(azureAppServiceResourceUtilities, times(1))
         .swapSlots(azureWebClientContextArgumentCaptor.capture(), eq(logCallbackProvider),
-            eq(azureWebAppInfraDelegateConfig.getDeploymentSlot()), eq(TARGET_SLOT), eq(timeout));
+            eq(azureWebAppInfraDelegateConfig.getDeploymentSlot()), eq(TARGET_SLOT), eq(timeout), null);
 
     AzureWebClientContext azureWebClientContext = azureWebClientContextArgumentCaptor.getValue();
     assertThat(azureWebClientContext.getSubscriptionId()).isEqualTo(SUBSCRIPTION_ID);
@@ -91,7 +91,7 @@ public class AzureWebAppSlotSwapRequestHandlerTest extends CategoryTest {
   public void testExecuteSwapSlotsFailure() {
     doThrow(new RuntimeException("Failed to swap slot"))
         .when(azureAppServiceResourceUtilities)
-        .swapSlots(any(), any(), any(), any(), any());
+        .swapSlots(any(), any(), any(), any(), any(), null);
 
     AzureWebAppSwapSlotsRequest swapSlotsRequest =
         AzureWebAppSwapSlotsRequest.builder()
@@ -100,8 +100,9 @@ public class AzureWebAppSlotSwapRequestHandlerTest extends CategoryTest {
             .timeoutIntervalInMin(timeout)
             .build();
 
-    assertThatThrownBy(
-        () -> requestHandler.execute(swapSlotsRequest, AzureTestUtils.createTestAzureConfig(), logCallbackProvider))
+    assertThatThrownBy(()
+                           -> requestHandler.execute(
+                               swapSlotsRequest, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null))
         .isInstanceOf(RuntimeException.class);
   }
 }

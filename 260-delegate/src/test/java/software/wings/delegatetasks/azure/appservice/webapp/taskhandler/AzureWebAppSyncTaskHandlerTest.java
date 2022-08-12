@@ -97,7 +97,7 @@ public class AzureWebAppSyncTaskHandlerTest extends CategoryTest {
 
     AzureWebAppListWebAppDeploymentSlotsResponse response =
         (AzureWebAppListWebAppDeploymentSlotsResponse) listWebAppDeploymentSlotNamesTaskHandler.executeTaskInternal(
-            parameters, getAzureConfig(), mockLogStreamingTaskClient);
+            parameters, getAzureConfig(), mockLogStreamingTaskClient, null);
 
     assertThat(response).isNotNull();
     List<DeploymentSlotData> deploymentSlots = response.getDeploymentSlots();
@@ -133,7 +133,7 @@ public class AzureWebAppSyncTaskHandlerTest extends CategoryTest {
 
     AzureWebAppListWebAppNamesResponse response =
         (AzureWebAppListWebAppNamesResponse) listWebAppNamesTaskHandler.executeTaskInternal(
-            parameters, getAzureConfig(), mockLogStreamingTaskClient);
+            parameters, getAzureConfig(), mockLogStreamingTaskClient, null);
 
     assertThat(response).isNotNull();
     assertThat(response.getWebAppNames().size()).isEqualTo(2);
@@ -153,7 +153,7 @@ public class AzureWebAppSyncTaskHandlerTest extends CategoryTest {
 
     doAnswer(invocationOnMock -> { throw new Exception(); }).when(azureWebClient).listWebAppsByResourceGroupName(any());
     listWebAppNamesTaskHandler.executeTask(
-        parameters, getAzureConfig(), mockLogStreamingTaskClient, artifactStreamAttributes);
+        parameters, getAzureConfig(), mockLogStreamingTaskClient, artifactStreamAttributes, null);
   }
 
   @Test
@@ -179,7 +179,7 @@ public class AzureWebAppSyncTaskHandlerTest extends CategoryTest {
 
     AzureWebAppListWebAppInstancesResponse response =
         (AzureWebAppListWebAppInstancesResponse) listWebAppInstancesTaskHandler.executeTaskInternal(
-            parameters, getAzureConfig(), mockLogStreamingTaskClient);
+            parameters, getAzureConfig(), mockLogStreamingTaskClient, null);
     assertThat(response).isNotNull();
     assertThat(response.getDeploymentData().size()).isEqualTo(2);
   }

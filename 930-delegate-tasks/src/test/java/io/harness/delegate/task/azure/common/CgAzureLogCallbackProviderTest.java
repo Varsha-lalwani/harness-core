@@ -39,7 +39,7 @@ public class CgAzureLogCallbackProviderTest extends CategoryTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testObtainLogCallback() {
-    logCallbackProvider.obtainLogCallback("test");
+    logCallbackProvider.obtainLogCallback("test", null);
     verify(logStreamingTaskClient).obtainLogCallback("test");
   }
 }

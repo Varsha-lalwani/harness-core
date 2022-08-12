@@ -47,13 +47,13 @@ public abstract class AbstractAzureWebAppTaskHandler extends AbstractAzureAppSer
   }
 
   protected AzureAppServiceTaskResponse executeTaskInternal(AzureAppServiceTaskParameters azureAppServiceTaskParameters,
-      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient) {
+      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient, String taskId) {
     throw new UnsupportedOperationException("Concrete subclass method implementation not available yet");
   }
 
   protected AzureAppServiceTaskResponse executeTaskInternal(AzureAppServiceTaskParameters azureAppServiceTaskParameters,
       AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient,
-      ArtifactStreamAttributes artifactStreamAttributes) {
+      ArtifactStreamAttributes artifactStreamAttributes, String taskId) {
     throw new UnsupportedOperationException("Concrete subclass method implementation not available yet");
   }
 

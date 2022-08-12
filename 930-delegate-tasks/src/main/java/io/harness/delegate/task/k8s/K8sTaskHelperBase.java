@@ -2333,8 +2333,9 @@ public class K8sTaskHelperBase {
   }
 
   public LogCallback getLogCallback(ILogStreamingTaskClient logStreamingTaskClient, String commandUnitName,
-      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
-    return new NGDelegateLogCallback(logStreamingTaskClient, commandUnitName, shouldOpenStream, commandUnitsProgress);
+      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress, String taskId) {
+    return new NGDelegateLogCallback(
+        logStreamingTaskClient, commandUnitName, shouldOpenStream, commandUnitsProgress, taskId);
   }
 
   public List<FileData> renderTemplate(K8sDelegateTaskParams k8sDelegateTaskParams,

@@ -44,13 +44,13 @@ public class AzureArtifactDownloadServiceImpl implements AzureArtifactDownloadSe
   @Inject private ArtifactoryRequestMapper artifactoryRequestMapper;
 
   @Override
-  public AzureArtifactDownloadResponse download(ArtifactDownloadContext artifactDownloadContext) {
+  public AzureArtifactDownloadResponse download(ArtifactDownloadContext artifactDownloadContext, String taskId) {
     AzureArtifactDownloadResponseBuilder artifactResponseBuilder =
         AzureArtifactDownloadResponse.builder().artifactType(ArtifactType.ZIP);
     InputStream artifactStream;
     AzurePackageArtifactConfig artifactConfig = artifactDownloadContext.getArtifactConfig();
     final LogCallback logCallback = artifactDownloadContext.getLogCallbackProvider().obtainLogCallback(
-        artifactDownloadContext.getCommandUnitName());
+        artifactDownloadContext.getCommandUnitName(), taskId);
 
     try {
       switch (artifactConfig.getSourceType()) {

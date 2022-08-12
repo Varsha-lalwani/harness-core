@@ -75,7 +75,7 @@ public class K8sCanaryRequestHandler extends K8sRequestHandler {
   @Override
   protected K8sDeployResponse executeTaskInternal(K8sDeployRequest k8sDeployRequest,
       K8sDelegateTaskParams k8sDelegateTaskParams, ILogStreamingTaskClient logStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     if (!(k8sDeployRequest instanceof K8sCanaryDeployRequest)) {
       throw new InvalidArgumentsException(
           Pair.of("k8sDeployRequest", "Must be instance of K8sCanaryDeployRequestK8sCanaryDeployRequest"));
@@ -88,7 +88,7 @@ public class K8sCanaryRequestHandler extends K8sRequestHandler {
     final long timeoutInMillis = getTimeoutMillisFromMinutes(k8sCanaryDeployRequest.getTimeoutIntervalInMin());
 
     LogCallback executionLogCallback = k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,
-        k8sCanaryDeployRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
+        k8sCanaryDeployRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress, taskId);
     executionLogCallback.saveExecutionLog(
         color("\nStarting Kubernetes Canary Deployment", LogColor.White, LogWeight.Bold));
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sCanaryDeployRequest.getManifestDelegateConfig(),
@@ -96,21 +96,22 @@ public class K8sCanaryRequestHandler extends K8sRequestHandler {
         k8sCanaryDeployRequest.getAccountId());
 
     init(k8sCanaryDeployRequest, k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress));
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress, taskId));
 
     prepareForCanary(k8sCanaryDeployRequest, k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prepare, true, commandUnitsProgress));
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prepare, true, commandUnitsProgress, taskId));
 
     k8sTaskHelperBase.applyManifests(k8sCanaryHandlerConfig.getClient(), k8sCanaryHandlerConfig.getResources(),
         k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Apply, true, commandUnitsProgress), true, true);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Apply, true, commandUnitsProgress, taskId), true,
+        true);
 
     // At this point we're sure that manifest has been applied successfully and canary workload is deployed
     this.canaryWorkloadDeployed = true;
     this.saveReleaseHistory = true;
 
-    LogCallback steadyStateLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress);
+    LogCallback steadyStateLogCallback = k8sTaskHelperBase.getLogCallback(
+        logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress, taskId);
     KubernetesResource canaryWorkload = k8sCanaryHandlerConfig.getCanaryWorkload();
 
     K8sSteadyStateDTO k8sSteadyStateDTO = K8sSteadyStateDTO.builder()
@@ -128,7 +129,7 @@ public class K8sCanaryRequestHandler extends K8sRequestHandler {
     k8sClient.performSteadyStateCheck(k8sSteadyStateDTO);
 
     LogCallback wrapUpLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress, taskId);
 
     List<K8sPod> allPods = k8sCanaryBaseHandler.getAllPods(
         k8sCanaryHandlerConfig, k8sCanaryDeployRequest.getReleaseName(), timeoutInMillis);

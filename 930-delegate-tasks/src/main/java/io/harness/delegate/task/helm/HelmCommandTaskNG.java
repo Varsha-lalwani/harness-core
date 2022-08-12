@@ -103,20 +103,23 @@ public class HelmCommandTaskNG extends AbstractDelegateRunnableTask {
       decryptRequestDTOs(helmCommandRequestNG);
 
       init(helmCommandRequestNG,
-          getLogCallback(getLogStreamingTaskClient(), Init, true, helmCommandRequestNG.getCommandUnitsProgress()));
+          getLogCallback(
+              getLogStreamingTaskClient(), Init, true, helmCommandRequestNG.getCommandUnitsProgress(), getTaskId()));
 
-      helmCommandRequestNG.setLogCallback(
-          getLogCallback(getLogStreamingTaskClient(), Prepare, true, helmCommandRequestNG.getCommandUnitsProgress()));
+      helmCommandRequestNG.setLogCallback(getLogCallback(
+          getLogStreamingTaskClient(), Prepare, true, helmCommandRequestNG.getCommandUnitsProgress(), getTaskId()));
 
       helmCommandRequestNG.getLogCallback().saveExecutionLog(
           getDeploymentMessage(helmCommandRequestNG), LogLevel.INFO, CommandExecutionStatus.RUNNING);
 
       switch (helmCommandRequestNG.getHelmCommandType()) {
         case INSTALL:
-          helmCommandResponseNG = helmDeployServiceNG.deploy((HelmInstallCommandRequestNG) helmCommandRequestNG);
+          helmCommandResponseNG =
+              helmDeployServiceNG.deploy((HelmInstallCommandRequestNG) helmCommandRequestNG, getTaskId());
           break;
         case ROLLBACK:
-          helmCommandResponseNG = helmDeployServiceNG.rollback((HelmRollbackCommandRequestNG) helmCommandRequestNG);
+          helmCommandResponseNG =
+              helmDeployServiceNG.rollback((HelmRollbackCommandRequestNG) helmCommandRequestNG, getTaskId());
           break;
         case RELEASE_HISTORY:
           helmCommandResponseNG =
@@ -187,8 +190,9 @@ public class HelmCommandTaskNG extends AbstractDelegateRunnableTask {
   }
 
   public LogCallback getLogCallback(ILogStreamingTaskClient logStreamingTaskClient, String commandUnitName,
-      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
-    return new NGDelegateLogCallback(logStreamingTaskClient, commandUnitName, shouldOpenStream, commandUnitsProgress);
+      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress, String taskId) {
+    return new NGDelegateLogCallback(
+        logStreamingTaskClient, commandUnitName, shouldOpenStream, commandUnitsProgress, taskId);
   }
 
   String getDeploymentMessage(HelmCommandRequestNG helmCommandRequest) {
@@ -214,8 +218,8 @@ public class HelmCommandTaskNG extends AbstractDelegateRunnableTask {
           String commandUnitName = entry.getKey();
           CommandUnitProgress progress = entry.getValue();
           if (CommandExecutionStatus.RUNNING == progress.getStatus()) {
-            LogCallback logCallback =
-                new NGDelegateLogCallback(logStreamingTaskClient, commandUnitName, false, commandUnitsProgress);
+            LogCallback logCallback = new NGDelegateLogCallback(
+                logStreamingTaskClient, commandUnitName, false, commandUnitsProgress, getTaskId());
             logCallback.saveExecutionLog(
                 String.format(
                     "Failed: [%s].", ExceptionUtils.getMessage(getFirstNonHintOrExplanationThrowable(throwable))),

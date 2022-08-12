@@ -57,7 +57,7 @@ public class AzureAppServiceResourceUtilities {
   }
 
   public void swapSlots(AzureWebClientContext webClientContext, AzureLogCallbackProvider logCallbackProvider,
-      String deploymentSlot, String targetSlot, Integer timeoutIntervalInMin) {
+      String deploymentSlot, String targetSlot, Integer timeoutIntervalInMin, String taskId) {
     if (DEPLOYMENT_SLOT_PRODUCTION_NAME.equalsIgnoreCase(deploymentSlot)) {
       String initialTargetSlot = targetSlot;
       targetSlot = deploymentSlot;
@@ -71,7 +71,7 @@ public class AzureAppServiceResourceUtilities {
     azureAppServiceDeploymentContext.setSteadyStateTimeoutInMin(timeoutIntervalInMin);
 
     azureAppServiceDeploymentService.swapSlotsUsingCallback(
-        azureAppServiceDeploymentContext, targetSlot, logCallbackProvider);
+        azureAppServiceDeploymentContext, targetSlot, logCallbackProvider, taskId);
   }
 
   public Map<String, AzureAppServiceApplicationSetting> getAppSettingsToAdd(

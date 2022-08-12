@@ -88,7 +88,7 @@ public class K8sScaleRequestHandlerTest extends CategoryTest {
         .createKubernetesConfig(k8sInfraDelegateConfig);
     doReturn(logCallback)
         .when(k8sTaskHelperBase)
-        .getLogCallback(eq(iLogStreamingTaskClient), anyString(), anyBoolean(), any());
+        .getLogCallback(eq(iLogStreamingTaskClient), anyString(), anyBoolean(), any(), null);
   }
 
   @Test
@@ -130,7 +130,7 @@ public class K8sScaleRequestHandlerTest extends CategoryTest {
     when(k8sTaskHelperBase.tagNewPods(anyListOf(K8sPod.class), anyListOf(K8sPod.class))).thenReturn(pods);
 
     K8sDeployResponse response = k8sScaleRequestHandler.executeTaskInternal(
-        scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getK8sNGTaskResponse()).isInstanceOf(K8sScaleResponse.class);
@@ -192,7 +192,7 @@ public class K8sScaleRequestHandlerTest extends CategoryTest {
         .thenReturn(true);
 
     K8sDeployResponse response = k8sScaleRequestHandler.executeTaskInternal(
-        scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getK8sNGTaskResponse()).isInstanceOf(K8sScaleResponse.class);
@@ -229,7 +229,7 @@ public class K8sScaleRequestHandlerTest extends CategoryTest {
                                                    .build();
 
     K8sDeployResponse response = k8sScaleRequestHandler.executeTaskInternal(
-        scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getK8sNGTaskResponse()).isInstanceOf(K8sScaleResponse.class);
@@ -277,7 +277,7 @@ public class K8sScaleRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> k8sScaleRequestHandler.executeTaskInternal(
-                               scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress))
+                               scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(thrownException);
 
     verify(k8sTaskHelperBase, times(1)).getCurrentReplicas(any(Kubectl.class), eq(deployment), eq(delegateTaskParams));
@@ -322,7 +322,7 @@ public class K8sScaleRequestHandlerTest extends CategoryTest {
         .thenThrow(thrownException);
     assertThatThrownBy(()
                            -> k8sScaleRequestHandler.executeTaskInternal(
-                               scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress))
+                               scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(thrownException);
 
     verify(k8sTaskHelperBase, times(1)).getCurrentReplicas(any(Kubectl.class), eq(deployment), eq(delegateTaskParams));
@@ -364,7 +364,7 @@ public class K8sScaleRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> k8sScaleRequestHandler.executeTaskInternal(
-                               scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress))
+                               scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null))
         .hasMessageContaining(
             format(KubernetesExceptionHints.INVALID_RESOURCE_KIND_NAME_FORMAT, "test-deployment", "test-deployment"));
 
@@ -409,7 +409,7 @@ public class K8sScaleRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> k8sScaleRequestHandler.executeTaskInternal(
-                               scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress))
+                               scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null))
         .hasMessageContaining(
             "Missing instance unit type. Select one of [COUNT, PERCENTAGE] to set the scale target replica count type");
 
@@ -463,7 +463,7 @@ public class K8sScaleRequestHandlerTest extends CategoryTest {
     when(k8sTaskHelperBase.tagNewPods(anyListOf(K8sPod.class), anyListOf(K8sPod.class))).thenReturn(pods);
 
     K8sDeployResponse response = k8sScaleRequestHandler.executeTaskInternal(
-        scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getK8sNGTaskResponse()).isInstanceOf(K8sScaleResponse.class);
@@ -525,7 +525,7 @@ public class K8sScaleRequestHandlerTest extends CategoryTest {
         .thenReturn(true);
 
     K8sDeployResponse response = k8sScaleRequestHandler.executeTaskInternal(
-        scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
+        scaleRequest, delegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getK8sNGTaskResponse()).isInstanceOf(K8sScaleResponse.class);

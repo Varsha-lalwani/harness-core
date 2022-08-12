@@ -80,7 +80,7 @@ public class K8sScaleRequestHandler extends K8sRequestHandler {
   @Override
   protected K8sDeployResponse executeTaskInternal(K8sDeployRequest k8sDeployRequest,
       K8sDelegateTaskParams k8SDelegateTaskParams, ILogStreamingTaskClient logStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     if (!(k8sDeployRequest instanceof K8sScaleRequest)) {
       throw new InvalidArgumentsException(Pair.of("k8sDeployRequest", "Must be instance of K8sScaleRequest"));
     }
@@ -91,7 +91,7 @@ public class K8sScaleRequestHandler extends K8sRequestHandler {
         containerDeploymentDelegateBaseHelper.createKubernetesConfig(k8sScaleRequest.getK8sInfraDelegateConfig());
 
     init(k8sScaleRequest, k8SDelegateTaskParams, kubernetesConfig.getNamespace(),
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress));
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress, taskId));
 
     if (resourceIdToScale == null) {
       return getSuccessResponse(K8sScaleResponse.builder().build());
@@ -99,7 +99,7 @@ public class K8sScaleRequestHandler extends K8sRequestHandler {
 
     long steadyStateTimeoutInMillis = getTimeoutMillisFromMinutes(k8sScaleRequest.getTimeoutIntervalInMin());
     LogCallback scaleLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Scale, true, commandUnitsProgress);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Scale, true, commandUnitsProgress, taskId);
     List<K8sPod> beforePodList;
     scaleLogCallback.saveExecutionLog("Fetching existing pods before scale.");
     beforePodList = k8sTaskHelperBase.getPodDetails(kubernetesConfig, resourceIdToScale.getNamespace(),
@@ -114,7 +114,7 @@ public class K8sScaleRequestHandler extends K8sRequestHandler {
               .request(k8sDeployRequest)
               .resourceIds(Collections.singletonList(resourceIdToScale))
               .executionLogCallback(k8sTaskHelperBase.getLogCallback(
-                  logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress))
+                  logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress, taskId))
               .k8sDelegateTaskParams(k8SDelegateTaskParams)
               .namespace(resourceIdToScale.getNamespace())
               .denoteOverallSuccess(true)
@@ -126,7 +126,7 @@ public class K8sScaleRequestHandler extends K8sRequestHandler {
     }
 
     LogCallback wrapUpLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress);
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress, taskId);
 
     wrapUpLogCallback.saveExecutionLog("Fetching existing pods after scale.");
     List<K8sPod> afterPodList = k8sTaskHelperBase.getPodDetails(kubernetesConfig, resourceIdToScale.getNamespace(),

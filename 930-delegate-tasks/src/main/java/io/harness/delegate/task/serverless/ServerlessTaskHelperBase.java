@@ -118,7 +118,8 @@ public class ServerlessTaskHelperBase {
 
   public LogCallback getLogCallback(ILogStreamingTaskClient logStreamingTaskClient, String commandUnitName,
       boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
-    return new NGDelegateLogCallback(logStreamingTaskClient, commandUnitName, shouldOpenStream, commandUnitsProgress);
+    return new NGDelegateLogCallback(
+        logStreamingTaskClient, commandUnitName, shouldOpenStream, commandUnitsProgress, taskId);
   }
   public void createHomeDirectory(String directoryPath) throws IOException {
     createDirectoryIfDoesNotExist(directoryPath);

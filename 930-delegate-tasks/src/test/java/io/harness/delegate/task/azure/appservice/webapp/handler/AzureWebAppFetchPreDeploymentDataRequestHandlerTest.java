@@ -74,9 +74,9 @@ public class AzureWebAppFetchPreDeploymentDataRequestHandlerTest extends Categor
 
     doReturn(preDeploymentData)
         .when(azureAppServiceService)
-        .getDockerDeploymentPreDeploymentData(any(AzureAppServiceDockerDeploymentContext.class));
+        .getDockerDeploymentPreDeploymentData(any(AzureAppServiceDockerDeploymentContext.class), null);
 
-    AzureWebAppRequestResponse response = requestHandler.execute(request, azureConfig, logCallbackProvider);
+    AzureWebAppRequestResponse response = requestHandler.execute(request, azureConfig, logCallbackProvider, null);
     verify(azureSecretHelper, times(1))
         .encryptAzureAppServicePreDeploymentData(any(AzureAppServicePreDeploymentData.class), eq("accountId"));
 
@@ -104,9 +104,9 @@ public class AzureWebAppFetchPreDeploymentDataRequestHandlerTest extends Categor
 
     doReturn(preDeploymentData)
         .when(azureAppServiceService)
-        .getPackageDeploymentPreDeploymentData(any(AzureAppServicePackageDeploymentContext.class));
+        .getPackageDeploymentPreDeploymentData(any(AzureAppServicePackageDeploymentContext.class), null);
 
-    AzureWebAppRequestResponse response = requestHandler.execute(request, azureConfig, logCallbackProvider);
+    AzureWebAppRequestResponse response = requestHandler.execute(request, azureConfig, logCallbackProvider, null);
     assertThat(response).isInstanceOf(AzureWebAppFetchPreDeploymentDataResponse.class);
     AzureWebAppFetchPreDeploymentDataResponse preDeploymentDataResponse =
         (AzureWebAppFetchPreDeploymentDataResponse) response;

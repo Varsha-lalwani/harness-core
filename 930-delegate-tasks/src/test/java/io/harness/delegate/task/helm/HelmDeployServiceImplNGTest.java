@@ -229,7 +229,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
     doNothing()
         .when(helmTaskHelperBase)
         .downloadChartFilesFromHttpRepo(eq(helmChartManifestDelegateConfig.build()), anyString(), anyLong());
-    doReturn(logCallback).when(k8sTaskHelperBase).getLogCallback(any(), any(), anyBoolean(), any());
+    doReturn(logCallback).when(k8sTaskHelperBase).getLogCallback(any(), any(), anyBoolean(), any(), null);
   }
 
   @Test
@@ -432,19 +432,19 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
     doReturn(Collections.emptyList()).when(spyHelmDeployService).printHelmChartKubernetesResources(any());
     // K8SteadyStateCheckEnabled false
     ArgumentCaptor<HelmCommandData> argumentCaptor = ArgumentCaptor.forClass(HelmCommandData.class);
-    HelmCommandResponseNG helmCommandResponseNG = spyHelmDeployService.deploy(helmInstallCommandRequestNG);
+    HelmCommandResponseNG helmCommandResponseNG = spyHelmDeployService.deploy(helmInstallCommandRequestNG, null);
     assertThat(helmCommandResponseNG.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     verify(helmClient).install(argumentCaptor.capture(), eq(true));
 
     // K8SteadyStateCheckEnabled true
     helmInstallCommandRequestNG.setK8SteadyStateCheckEnabled(true);
     doReturn("1.16").when(kubernetesContainerService).getVersionAsString(eq(kubernetesConfig));
-    assertThat(spyHelmDeployService.deploy(helmInstallCommandRequestNG)).isEqualTo(helmCommandResponseNG);
+    assertThat(spyHelmDeployService.deploy(helmInstallCommandRequestNG, null)).isEqualTo(helmCommandResponseNG);
 
     // Check if revokeReadPermission function called when Helm Version is V380
     helmInstallCommandRequestNG.setHelmVersion(HelmVersion.V380);
     doNothing().when(helmTaskHelperBase).revokeReadPermission(helmInstallCommandRequestNG.getKubeConfigLocation());
-    spyHelmDeployService.deploy(helmInstallCommandRequestNG);
+    spyHelmDeployService.deploy(helmInstallCommandRequestNG, null);
     verify(helmTaskHelperBase, times(1)).revokeReadPermission(helmInstallCommandRequestNG.getKubeConfigLocation());
   }
 
@@ -458,7 +458,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
     GeneralException exception = new GeneralException("Something went wrong");
     when(helmClient.install(any(), eq(true))).thenThrow(exception);
 
-    assertThatThrownBy(() -> spyHelmDeployService.deploy(helmInstallCommandRequestNG))
+    assertThatThrownBy(() -> spyHelmDeployService.deploy(helmInstallCommandRequestNG, null))
         .isInstanceOf(HelmNGException.class);
   }
 
@@ -471,7 +471,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
     InterruptedException e = new InterruptedException();
     when(helmClient.install(any(), eq(true))).thenThrow(e);
 
-    assertThatThrownBy(() -> spyHelmDeployService.deploy(helmInstallCommandRequestNG))
+    assertThatThrownBy(() -> spyHelmDeployService.deploy(helmInstallCommandRequestNG, null))
         .isInstanceOf(HelmNGException.class);
   }
 
@@ -489,7 +489,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
 
     HTimeLimiterMocker.mockCallInterruptible(mockTimeLimiter).thenThrow(new UncheckedTimeoutException("Timed out"));
 
-    assertThatThrownBy(() -> spyHelmDeployService.deploy(helmInstallCommandRequestNG))
+    assertThatThrownBy(() -> spyHelmDeployService.deploy(helmInstallCommandRequestNG, null))
         .isInstanceOf(HelmNGException.class);
   }
 
@@ -518,7 +518,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
                                       .build()));
 
     ArgumentCaptor<io.harness.helm.HelmCommandData> argumentCaptor = ArgumentCaptor.forClass(HelmCommandData.class);
-    assertThatCode(() -> spyHelmDeployService.deploy(helmInstallCommandRequestNG)).doesNotThrowAnyException();
+    assertThatCode(() -> spyHelmDeployService.deploy(helmInstallCommandRequestNG, null)).doesNotThrowAnyException();
     verify(helmClient).upgrade(argumentCaptor.capture(), eq(true));
   }
 
@@ -568,7 +568,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
         .when(k8sTaskHelperBase)
         .setNamespaceToKubernetesResourcesIfRequired(anyList(), eq(helmInstallCommandRequestNG.getNamespace()));
 
-    spyHelmDeployService.deploy(helmInstallCommandRequestNG);
+    spyHelmDeployService.deploy(helmInstallCommandRequestNG, null);
     ArgumentCaptor<String> savedLogsCaptor = ArgumentCaptor.forClass(String.class);
     verify(logCallback, atLeastOnce()).saveExecutionLog(savedLogsCaptor.capture());
     assertThat(savedLogsCaptor.getAllValues()).contains(expectedLoggedYaml);
@@ -632,7 +632,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
              any(), anyString(), any(), anyBoolean(), anyBoolean()))
         .thenReturn(true);
 
-    return helmDeployService.rollback(helmRollbackCommandRequestNG);
+    return helmDeployService.rollback(helmRollbackCommandRequestNG, null);
   }
 
   @Test
@@ -643,7 +643,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
     setFakeTimeLimiter();
     initForRollback();
     ArgumentCaptor<HelmCommandData> argumentCaptor = ArgumentCaptor.forClass(HelmCommandData.class);
-    HelmCommandResponseNG helmCommandResponseNG = helmDeployService.rollback(helmRollbackCommandRequestNG);
+    HelmCommandResponseNG helmCommandResponseNG = helmDeployService.rollback(helmRollbackCommandRequestNG, null);
     assertThat(helmCommandResponseNG.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     verify(helmClient).rollback(argumentCaptor.capture(), eq(true));
 
@@ -657,7 +657,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
         .when(k8sTaskHelperBase)
         .saveReleaseHistory(any(), eq(helmRollbackCommandRequestNG.getReleaseName()), anyString(), anyBoolean());
 
-    assertThatThrownBy(() -> helmDeployService.rollback(helmRollbackCommandRequestNG))
+    assertThatThrownBy(() -> helmDeployService.rollback(helmRollbackCommandRequestNG, null))
         .isInstanceOf(GeneralException.class);
 
     // K8SteadyStateCheckEnabled true -- valid releaseHistory
@@ -694,7 +694,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
         .when(helmClient)
         .rollback(any(HelmCommandData.class), eq(true));
 
-    assertThatThrownBy(() -> helmDeployService.rollback(helmRollbackCommandRequestNG))
+    assertThatThrownBy(() -> helmDeployService.rollback(helmRollbackCommandRequestNG, null))
         .isInstanceOf(UncheckedTimeoutException.class)
         .hasMessageContaining("Timed out");
   }
@@ -706,7 +706,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
     IOException ioException = new IOException("Some I/O issue");
     doThrow(ioException).when(helmClient).rollback(any(HelmCommandData.class), eq(true));
 
-    assertThatThrownBy(() -> helmDeployService.rollback(helmRollbackCommandRequestNG))
+    assertThatThrownBy(() -> helmDeployService.rollback(helmRollbackCommandRequestNG, null))
         .isInstanceOf(IOException.class)
         .hasMessage("Some I/O issue");
   }
@@ -721,7 +721,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
     doReturn(failureResponse).when(helmClient).rollback(any(HelmCommandData.class), eq(true));
 
     HelmInstallCmdResponseNG response =
-        (HelmInstallCmdResponseNG) helmDeployService.rollback(helmRollbackCommandRequestNG);
+        (HelmInstallCmdResponseNG) helmDeployService.rollback(helmRollbackCommandRequestNG, null);
 
     assertThat(response.getCommandExecutionStatus()).isEqualTo(FAILURE);
     assertThat(response.getOutput()).isEqualTo("Unable to rollback");

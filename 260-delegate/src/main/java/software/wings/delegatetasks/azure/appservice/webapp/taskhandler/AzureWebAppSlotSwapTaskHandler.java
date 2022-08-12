@@ -25,13 +25,13 @@ import software.wings.delegatetasks.azure.appservice.webapp.AbstractAzureWebAppT
 public class AzureWebAppSlotSwapTaskHandler extends AbstractAzureWebAppTaskHandler {
   @Override
   protected AzureAppServiceTaskResponse executeTaskInternal(AzureAppServiceTaskParameters azureAppServiceTaskParameters,
-      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient) {
+      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient, String taskId) {
     AzureWebAppSwapSlotsParameters slotSwapParameters = (AzureWebAppSwapSlotsParameters) azureAppServiceTaskParameters;
     validateSlotSwapParameters(slotSwapParameters);
 
     AzureWebClientContext webClientContext = buildAzureWebClientContext(slotSwapParameters, azureConfig);
 
-    swapSlots(slotSwapParameters, webClientContext, logStreamingTaskClient);
+    swapSlots(slotSwapParameters, webClientContext, logStreamingTaskClient, taskId);
 
     markDeploymentStatusAsSuccess(azureAppServiceTaskParameters, logStreamingTaskClient);
     return AzureWebAppSwapSlotsResponse.builder().preDeploymentData(slotSwapParameters.getPreDeploymentData()).build();
@@ -45,7 +45,7 @@ public class AzureWebAppSlotSwapTaskHandler extends AbstractAzureWebAppTaskHandl
   }
 
   private void swapSlots(AzureWebAppSwapSlotsParameters slotSwapParameters, AzureWebClientContext webClientContext,
-      ILogStreamingTaskClient logStreamingTaskClient) {
+      ILogStreamingTaskClient logStreamingTaskClient, String taskId) {
     String targetSlotName = slotSwapParameters.getTargetSlotName();
     Integer timeoutIntervalInMin = slotSwapParameters.getTimeoutIntervalInMin();
 
@@ -54,8 +54,8 @@ public class AzureWebAppSlotSwapTaskHandler extends AbstractAzureWebAppTaskHandl
 
     slotSwapParameters.getPreDeploymentData().setDeploymentProgressMarker(
         AppServiceDeploymentProgress.SWAP_SLOT.name());
-    azureAppServiceDeploymentService.swapSlotsUsingCallback(
-        azureAppServiceDeploymentContext, targetSlotName, logCallbackProviderFactory.createCg(logStreamingTaskClient));
+    azureAppServiceDeploymentService.swapSlotsUsingCallback(azureAppServiceDeploymentContext, targetSlotName,
+        logCallbackProviderFactory.createCg(logStreamingTaskClient), taskId);
     slotSwapParameters.getPreDeploymentData().setDeploymentProgressMarker(
         AppServiceDeploymentProgress.DEPLOYMENT_COMPLETE.name());
   }

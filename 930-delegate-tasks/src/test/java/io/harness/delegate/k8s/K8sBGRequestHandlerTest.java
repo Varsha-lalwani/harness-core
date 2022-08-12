@@ -122,7 +122,7 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
 
     doReturn(logCallback)
         .when(k8sTaskHelperBase)
-        .getLogCallback(eq(logStreamingTaskClient), anyString(), anyBoolean(), eq(commandUnitsProgress));
+        .getLogCallback(eq(logStreamingTaskClient), anyString(), anyBoolean(), eq(commandUnitsProgress), null);
     doReturn(true)
         .when(k8sTaskHelperBase)
         .fetchManifestFilesAndWriteToDirectory(
@@ -172,7 +172,7 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
             eq(HarnessLabelValues.colorGreen), eq("releaseName"));
 
     K8sDeployResponse response = k8sBGRequestHandler.executeTaskInternal(
-        k8sBGDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, commandUnitsProgress);
+        k8sBGDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null);
 
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getK8sNGTaskResponse()).isNotNull();
@@ -212,7 +212,7 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
             eq(HarnessLabelValues.colorGreen), eq("releaseName"));
 
     K8sDeployResponse response = k8sBGRequestHandler.executeTaskInternal(
-        k8sBGDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, commandUnitsProgress);
+        k8sBGDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null);
 
     verify(k8sBGBaseHandler, times(1)).pruneForBg(any(), any(), anyString(), anyString(), any(), any(), any());
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
@@ -233,7 +233,7 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> k8sBGRequestHandler.executeTaskInternal(rollingDeployRequest, k8sDelegateTaskParams,
-                               logStreamingTaskClient, commandUnitsProgress))
+                               logStreamingTaskClient, commandUnitsProgress, null))
         .isInstanceOf(InvalidArgumentsException.class);
   }
 
@@ -256,8 +256,8 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
             any(ManifestDelegateConfig.class), anyString(), eq(logCallback), anyLong(), anyString());
 
     assertThatThrownBy(()
-                           -> k8sBGRequestHandler.executeTaskInternal(
-                               k8sBGDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, commandUnitsProgress))
+                           -> k8sBGRequestHandler.executeTaskInternal(k8sBGDeployRequest, k8sDelegateTaskParams,
+                               logStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(thrownException);
 
     verify(k8sBGRequestHandler, never())
@@ -275,8 +275,8 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
     doThrow(runtimeException).when(k8sBGRequestHandler).init(k8sBGDeployRequest, k8sDelegateTaskParams, logCallback);
 
     assertThatThrownBy(()
-                           -> k8sBGRequestHandler.executeTaskInternal(
-                               k8sBGDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, commandUnitsProgress))
+                           -> k8sBGRequestHandler.executeTaskInternal(k8sBGDeployRequest, k8sDelegateTaskParams,
+                               logStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(runtimeException);
     verify(k8sBGRequestHandler, never())
         .prepareForBlueGreen(any(K8sDelegateTaskParams.class), any(LogCallback.class), anyBoolean(), anyBoolean());
@@ -298,8 +298,8 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
         .prepareForBlueGreen(k8sDelegateTaskParams, logCallback, true, false);
 
     assertThatThrownBy(()
-                           -> k8sBGRequestHandler.executeTaskInternal(
-                               k8sBGDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, commandUnitsProgress))
+                           -> k8sBGRequestHandler.executeTaskInternal(k8sBGDeployRequest, k8sDelegateTaskParams,
+                               logStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(thrownException);
 
     verify(k8sTaskHelperBase, never())
@@ -335,8 +335,8 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
             eq(logCallback), eq(true), eq(true));
 
     assertThatThrownBy(()
-                           -> k8sBGRequestHandler.executeTaskInternal(
-                               k8sBGDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, commandUnitsProgress))
+                           -> k8sBGRequestHandler.executeTaskInternal(k8sBGDeployRequest, k8sDelegateTaskParams,
+                               logStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(exception);
 
     assertThatCode(() -> k8sBGRequestHandler.handleTaskFailure(k8sBGDeployRequest, exception))
@@ -377,8 +377,8 @@ public class K8sBGRequestHandlerTest extends CategoryTest {
     doReturn(k8sClient).when(k8sTaskHelperBase).getKubernetesClient(anyBoolean());
     doThrow(thrownException).when(k8sClient).performSteadyStateCheck(any(K8sSteadyStateDTO.class));
     assertThatThrownBy(()
-                           -> k8sBGRequestHandler.executeTaskInternal(
-                               k8sBGDeployRequest, k8sDelegateTaskParams, logStreamingTaskClient, commandUnitsProgress))
+                           -> k8sBGRequestHandler.executeTaskInternal(k8sBGDeployRequest, k8sDelegateTaskParams,
+                               logStreamingTaskClient, commandUnitsProgress, null))
         .isSameAs(thrownException);
 
     assertThatCode(() -> k8sBGRequestHandler.handleTaskFailure(k8sBGDeployRequest, thrownException))

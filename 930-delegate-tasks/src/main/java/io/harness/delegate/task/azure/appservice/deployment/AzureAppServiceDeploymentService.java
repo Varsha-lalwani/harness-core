@@ -128,21 +128,21 @@ public class AzureAppServiceDeploymentService {
   @Inject private SlotSteadyStateChecker slotSteadyStateChecker;
   @Inject private AzureMonitorClient azureMonitorClient;
 
-  public void deployDockerImage(
-      AzureAppServiceDockerDeploymentContext deploymentContext, AzureAppServicePreDeploymentData preDeploymentData) {
+  public void deployDockerImage(AzureAppServiceDockerDeploymentContext deploymentContext,
+      AzureAppServicePreDeploymentData preDeploymentData, String taskId) {
     Validators.validateJsr380FailFast(deploymentContext, InvalidRequestException::new);
     Validators.validateJsr380FailFast(deploymentContext.getAzureWebClientContext(), InvalidRequestException::new);
     log.info("Start deploying docker image: {} on slot: {}", deploymentContext.getImagePathAndTag(),
         deploymentContext.getSlotName());
 
-    updateDockerDeploymentSlotConfigurations(deploymentContext, preDeploymentData);
-    deployDockerToSlot(deploymentContext, preDeploymentData);
+    updateDockerDeploymentSlotConfigurations(deploymentContext, preDeploymentData, taskId);
+    deployDockerToSlot(deploymentContext, preDeploymentData, taskId);
   }
 
-  private void updateDockerDeploymentSlotConfigurations(
-      AzureAppServiceDockerDeploymentContext deploymentContext, AzureAppServicePreDeploymentData preDeploymentData) {
+  private void updateDockerDeploymentSlotConfigurations(AzureAppServiceDockerDeploymentContext deploymentContext,
+      AzureAppServicePreDeploymentData preDeploymentData, String taskId) {
     AzureLogCallbackProvider logCallbackProvider = deploymentContext.getLogCallbackProvider();
-    LogCallback updateSlotLog = logCallbackProvider.obtainLogCallback(UPDATE_SLOT_CONFIGURATION_SETTINGS);
+    LogCallback updateSlotLog = logCallbackProvider.obtainLogCallback(UPDATE_SLOT_CONFIGURATION_SETTINGS, taskId);
     updateSlotLog.saveExecutionLog(format(UPDATING_SLOT_CONFIGURATIONS, deploymentContext.getSlotName()));
 
     stopSlotAsyncWithSteadyCheck(deploymentContext, preDeploymentData, updateSlotLog);
@@ -153,10 +153,10 @@ public class AzureAppServiceDeploymentService {
         format(UPDATE_SLOT_CONFIGURATIONS_SUCCESS, deploymentContext.getSlotName()), INFO, SUCCESS);
   }
 
-  private void deployDockerToSlot(
-      AzureAppServiceDockerDeploymentContext deploymentContext, AzureAppServicePreDeploymentData preDeploymentData) {
+  private void deployDockerToSlot(AzureAppServiceDockerDeploymentContext deploymentContext,
+      AzureAppServicePreDeploymentData preDeploymentData, String taskId) {
     AzureLogCallbackProvider logCallbackProvider = deploymentContext.getLogCallbackProvider();
-    LogCallback deployLogCallback = logCallbackProvider.obtainLogCallback(DEPLOY_TO_SLOT);
+    LogCallback deployLogCallback = logCallbackProvider.obtainLogCallback(DEPLOY_TO_SLOT, taskId);
     try {
       markDeploymentProgress(preDeploymentData, AppServiceDeploymentProgress.DEPLOY_TO_SLOT);
       deployLogCallback.saveExecutionLog(String.format(START_SLOT_DEPLOYMENT, deploymentContext.getSlotName()));
@@ -195,25 +195,25 @@ public class AzureAppServiceDeploymentService {
         timeOut, SLOT_STARTING_STATUS_CHECK_INTERVAL, deployLogCallback, DEPLOY_TO_SLOT, statusVerifier);
   }
 
-  public void deployPackage(
-      AzureAppServicePackageDeploymentContext deploymentContext, AzureAppServicePreDeploymentData preDeploymentData) {
+  public void deployPackage(AzureAppServicePackageDeploymentContext deploymentContext,
+      AzureAppServicePreDeploymentData preDeploymentData, String taskId) {
     Validators.validateJsr380FailFast(deploymentContext, InvalidRequestException::new);
     Validators.validateJsr380FailFast(deploymentContext.getAzureWebClientContext(), InvalidRequestException::new);
     log.info("Start deploying artifact file on slot, slotName: {}, artifactFileAbsolutePath: {}",
         deploymentContext.getSlotName(), deploymentContext.getArtifactFile().getAbsolutePath());
 
-    updatePackageDeploymentSlotConfigurations(deploymentContext, preDeploymentData);
-    deployPackageToSlot(deploymentContext, preDeploymentData);
+    updatePackageDeploymentSlotConfigurations(deploymentContext, preDeploymentData, taskId);
+    deployPackageToSlot(deploymentContext, preDeploymentData, taskId);
   }
 
-  private void deployPackageToSlot(
-      AzureAppServicePackageDeploymentContext deploymentContext, AzureAppServicePreDeploymentData preDeploymentData) {
+  private void deployPackageToSlot(AzureAppServicePackageDeploymentContext deploymentContext,
+      AzureAppServicePreDeploymentData preDeploymentData, String taskId) {
     Optional<StreamPackageDeploymentLogsTask> logStreamer = Optional.empty();
 
     try {
       markDeploymentProgress(preDeploymentData, AppServiceDeploymentProgress.DEPLOY_TO_SLOT);
       AzureLogCallbackProvider logCallbackProvider = deploymentContext.getLogCallbackProvider();
-      LogCallback deployLog = logCallbackProvider.obtainLogCallback(DEPLOY_TO_SLOT);
+      LogCallback deployLog = logCallbackProvider.obtainLogCallback(DEPLOY_TO_SLOT, taskId);
       deployLog.saveExecutionLog(String.format(START_SLOT_DEPLOYMENT, deploymentContext.getSlotName()));
 
       SlotContainerLogStreamer slotLogStreamer = new SlotContainerLogStreamer(
@@ -233,10 +233,10 @@ public class AzureAppServiceDeploymentService {
     }
   }
 
-  private void updatePackageDeploymentSlotConfigurations(
-      AzureAppServicePackageDeploymentContext deploymentContext, AzureAppServicePreDeploymentData preDeploymentData) {
+  private void updatePackageDeploymentSlotConfigurations(AzureAppServicePackageDeploymentContext deploymentContext,
+      AzureAppServicePreDeploymentData preDeploymentData, String taskId) {
     AzureLogCallbackProvider logCallbackProvider = deploymentContext.getLogCallbackProvider();
-    LogCallback updateSlotLog = logCallbackProvider.obtainLogCallback(UPDATE_SLOT_CONFIGURATION_SETTINGS);
+    LogCallback updateSlotLog = logCallbackProvider.obtainLogCallback(UPDATE_SLOT_CONFIGURATION_SETTINGS, taskId);
     updateSlotLog.saveExecutionLog(format(UPDATING_SLOT_CONFIGURATIONS, deploymentContext.getSlotName()));
 
     stopSlotAsyncWithSteadyCheck(deploymentContext, preDeploymentData, updateSlotLog);
@@ -437,8 +437,8 @@ public class AzureAppServiceDeploymentService {
   }
 
   public void rerouteProductionSlotTraffic(AzureWebClientContext webClientContext, String shiftTrafficSlotName,
-      double trafficWeightInPercentage, AzureLogCallbackProvider logCallbackProvider) {
-    LogCallback rerouteTrafficLogCallback = logCallbackProvider.obtainLogCallback(SLOT_TRAFFIC_PERCENTAGE);
+      double trafficWeightInPercentage, AzureLogCallbackProvider logCallbackProvider, String taskId) {
+    LogCallback rerouteTrafficLogCallback = logCallbackProvider.obtainLogCallback(SLOT_TRAFFIC_PERCENTAGE, taskId);
 
     rerouteTrafficLogCallback.saveExecutionLog(
         format(REQUEST_TRAFFIC_SHIFT, trafficWeightInPercentage, shiftTrafficSlotName));
@@ -447,11 +447,11 @@ public class AzureAppServiceDeploymentService {
   }
 
   public void swapSlotsUsingCallback(AzureAppServiceDeploymentContext azureAppServiceDeploymentContext,
-      String targetSlotName, AzureLogCallbackProvider logCallbackProvider) {
+      String targetSlotName, AzureLogCallbackProvider logCallbackProvider, String taskId) {
     String sourceSlotName = azureAppServiceDeploymentContext.getSlotName();
     int steadyStateTimeoutInMinutes = azureAppServiceDeploymentContext.getSteadyStateTimeoutInMin();
     AzureWebClientContext webClientContext = azureAppServiceDeploymentContext.getAzureWebClientContext();
-    LogCallback slotSwapLogCallback = logCallbackProvider.obtainLogCallback(SLOT_SWAP);
+    LogCallback slotSwapLogCallback = logCallbackProvider.obtainLogCallback(SLOT_SWAP, taskId);
     AzureServiceCallBack restCallBack = new AzureServiceCallBack(slotSwapLogCallback, SLOT_SWAP);
 
     SwapSlotStatusVerifierContext context =

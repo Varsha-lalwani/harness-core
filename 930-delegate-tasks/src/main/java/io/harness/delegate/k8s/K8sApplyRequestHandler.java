@@ -79,7 +79,7 @@ public class K8sApplyRequestHandler extends K8sRequestHandler {
   @Override
   protected K8sDeployResponse executeTaskInternal(K8sDeployRequest k8sDeployRequest,
       K8sDelegateTaskParams k8sDelegateTaskParams, ILogStreamingTaskClient logStreamingTaskClient,
-      CommandUnitsProgress commandUnitsProgress) throws Exception {
+      CommandUnitsProgress commandUnitsProgress, String taskId) throws Exception {
     if (!(k8sDeployRequest instanceof K8sApplyRequest)) {
       throw new InvalidArgumentsException(Pair.of("k8sDeployRequest", "Must be instance of K8sRollingDeployRequest"));
     }
@@ -90,8 +90,8 @@ public class K8sApplyRequestHandler extends K8sRequestHandler {
         Paths.get(k8sDelegateTaskParams.getWorkingDirectory(), MANIFEST_FILES_DIR).toString());
     long timeoutInMillis = getTimeoutMillisFromMinutes(k8sDeployRequest.getTimeoutIntervalInMin());
 
-    LogCallback executionLogCallback = k8sTaskHelperBase.getLogCallback(
-        logStreamingTaskClient, FetchFiles, k8sApplyRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
+    LogCallback executionLogCallback = k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,
+        k8sApplyRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress, taskId);
     executionLogCallback.saveExecutionLog(color("\nStarting Kubernetes Apply", LogColor.White, LogWeight.Bold));
 
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sApplyRequest.getManifestDelegateConfig(),
@@ -99,18 +99,18 @@ public class K8sApplyRequestHandler extends K8sRequestHandler {
         k8sApplyRequest.getAccountId());
 
     init(k8sApplyRequest, k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress));
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress, taskId));
 
     k8sApplyBaseHandler.prepare(
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prepare, true, commandUnitsProgress),
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prepare, true, commandUnitsProgress, taskId),
         k8sApplyRequest.isSkipSteadyStateCheck(), k8sApplyHandlerConfig, isErrorFrameworkSupported());
 
     k8sTaskHelperBase.applyManifests(k8sApplyHandlerConfig.getClient(), k8sApplyHandlerConfig.getResources(),
         k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Apply, true, commandUnitsProgress), true,
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Apply, true, commandUnitsProgress, taskId), true,
         isErrorFrameworkSupported());
-    final LogCallback waitForSteadyStateLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress);
+    final LogCallback waitForSteadyStateLogCallback = k8sTaskHelperBase.getLogCallback(
+        logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress, taskId);
 
     if (!k8sApplyRequest.isSkipSteadyStateCheck() && isNotEmpty(k8sApplyHandlerConfig.getWorkloads())) {
       List<KubernetesResourceId> kubernetesResourceIds = k8sApplyHandlerConfig.getWorkloads()
@@ -138,7 +138,7 @@ public class K8sApplyRequestHandler extends K8sRequestHandler {
         waitForSteadyStateLogCallback, k8sApplyHandlerConfig, isErrorFrameworkSupported(), true);
 
     k8sApplyBaseHandler.wrapUp(k8sDelegateTaskParams,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress),
+        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress, taskId),
         k8sApplyHandlerConfig.getClient());
 
     return K8sDeployResponse.builder().commandExecutionStatus(CommandExecutionStatus.SUCCESS).build();

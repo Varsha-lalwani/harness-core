@@ -96,19 +96,21 @@ public class AzureWebAppSlotSetupTaskHandlerTest extends WingsBaseTest {
     ArtifactStreamAttributes artifactStreamAttributes = buildArtifactStreamAttributes(true);
     AzureAppDeploymentData azureAppDeploymentData = buildAzureAppDeploymentData();
 
-    doNothing().when(azureAppServiceDeploymentService).deployDockerImage(any(), any());
+    doNothing().when(azureAppServiceDeploymentService).deployDockerImage(any(), any(), null);
     doReturn(AzureAppServicePreDeploymentData.builder())
         .when(azureAppServiceService)
         .getDefaultPreDeploymentDataBuilder(any(), any());
 
-    doReturn(appServicePreDeploymentData).when(azureAppServiceService).getDockerDeploymentPreDeploymentData(any());
+    doReturn(appServicePreDeploymentData)
+        .when(azureAppServiceService)
+        .getDockerDeploymentPreDeploymentData(any(), null);
 
     doReturn(Collections.singletonList(azureAppDeploymentData))
         .when(azureAppServiceService)
         .fetchDeploymentData(any(), anyString());
 
     AzureTaskExecutionResponse azureTaskExecutionResponse = azureWebAppSlotSetupTaskHandler.executeTask(
-        setupParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes);
+        setupParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes, null);
 
     assertThat(azureTaskExecutionResponse).isNotNull();
     assertThat(azureTaskExecutionResponse.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
@@ -138,16 +140,18 @@ public class AzureWebAppSlotSetupTaskHandlerTest extends WingsBaseTest {
     AzureAppServicePreDeploymentData appServicePreDeploymentData = buildAzureAppServicePreDeploymentData();
     ArtifactStreamAttributes artifactStreamAttributes = buildArtifactStreamAttributes(true);
 
-    doReturn(appServicePreDeploymentData).when(azureAppServiceService).getDockerDeploymentPreDeploymentData(any());
+    doReturn(appServicePreDeploymentData)
+        .when(azureAppServiceService)
+        .getDockerDeploymentPreDeploymentData(any(), null);
     doReturn(AzureAppServicePreDeploymentData.builder())
         .when(azureAppServiceService)
         .getDefaultPreDeploymentDataBuilder(any(), any());
     doAnswer(invocation -> { throw new Exception(); })
         .when(azureAppServiceDeploymentService)
-        .deployDockerImage(any(), any());
+        .deployDockerImage(any(), any(), null);
 
     AzureTaskExecutionResponse azureTaskExecutionResponse = azureWebAppSlotSetupTaskHandler.executeTask(
-        setupParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes);
+        setupParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes, null);
     assertThat(azureTaskExecutionResponse).isNotNull();
     assertThat(azureTaskExecutionResponse.getAzureTaskResponse()).isInstanceOf(AzureWebAppSlotSetupResponse.class);
     AzureTaskResponse failureResponse = azureTaskExecutionResponse.getAzureTaskResponse();
@@ -169,7 +173,7 @@ public class AzureWebAppSlotSetupTaskHandlerTest extends WingsBaseTest {
         .getDefaultPreDeploymentDataBuilder(any(), any());
 
     AzureTaskExecutionResponse azureTaskExecutionResponse = azureWebAppSlotSetupTaskHandler.executeTask(
-        setupParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes);
+        setupParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes, null);
     assertThat(azureTaskExecutionResponse).isNotNull();
     assertThat(azureTaskExecutionResponse.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
   }
@@ -196,16 +200,18 @@ public class AzureWebAppSlotSetupTaskHandlerTest extends WingsBaseTest {
     doReturn(AzureAppServicePreDeploymentData.builder())
         .when(azureAppServiceService)
         .getDefaultPreDeploymentDataBuilder(any(), any());
-    doNothing().when(azureAppServiceDeploymentService).deployDockerImage(any(), any());
+    doNothing().when(azureAppServiceDeploymentService).deployDockerImage(any(), any(), null);
 
-    doReturn(appServicePreDeploymentData).when(azureAppServiceService).getDockerDeploymentPreDeploymentData(any());
+    doReturn(appServicePreDeploymentData)
+        .when(azureAppServiceService)
+        .getDockerDeploymentPreDeploymentData(any(), null);
 
     doReturn(Collections.singletonList(azureAppDeploymentData))
         .when(azureAppServiceService)
         .fetchDeploymentData(any(), anyString());
 
     AzureAppServiceTaskResponse azureAppServiceTaskResponse = azureWebAppSlotSetupTaskHandler.executeTaskInternal(
-        setupParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes);
+        setupParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes, null);
 
     assertThat(azureAppServiceTaskResponse).isNotNull();
     assertThat(azureAppServiceTaskResponse).isInstanceOf(AzureWebAppSlotSetupResponse.class);

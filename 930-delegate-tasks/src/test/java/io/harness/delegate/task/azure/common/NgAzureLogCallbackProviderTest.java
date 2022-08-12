@@ -44,7 +44,7 @@ public class NgAzureLogCallbackProviderTest extends CategoryTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testObtainLogCallback() {
-    LogCallback result = logCallbackProvider.obtainLogCallback("test");
+    LogCallback result = logCallbackProvider.obtainLogCallback("test", null);
     assertThat(result).isInstanceOf(NGDelegateLogCallback.class);
   }
 }

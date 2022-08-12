@@ -43,8 +43,8 @@ public class AzureAppServiceDockerDeploymentContext extends AzureAppServiceDeplo
   }
 
   @Override
-  public void deploy(
-      AzureAppServiceDeploymentService deploymentService, AzureAppServicePreDeploymentData preDeploymentData) {
-    deploymentService.deployDockerImage(this, preDeploymentData);
+  public void deploy(AzureAppServiceDeploymentService deploymentService,
+      AzureAppServicePreDeploymentData preDeploymentData, String taskId) {
+    deploymentService.deployDockerImage(this, preDeploymentData, taskId);
   }
 }

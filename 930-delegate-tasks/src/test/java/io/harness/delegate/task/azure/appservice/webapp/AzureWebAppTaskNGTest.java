@@ -99,7 +99,7 @@ public class AzureWebAppTaskNGTest extends CategoryTest {
     doReturn(logCallbackProvider)
         .when(logCallbackProviderFactory)
         .createNg(eq(logStreamingTaskClient), any(CommandUnitsProgress.class));
-    doReturn(logCallback).when(logCallbackProvider).obtainLogCallback(anyString());
+    doReturn(logCallback).when(logCallbackProvider).obtainLogCallback(anyString(), null);
   }
 
   @Test
@@ -120,13 +120,13 @@ public class AzureWebAppTaskNGTest extends CategoryTest {
     doReturn(AzureWebAppRequestType.SLOT_DEPLOYMENT).when(abstractWebAppTaskRequest).getRequestType();
     doReturn(requestResponse)
         .when(azureWebAppRequestHandler)
-        .handleRequest(abstractWebAppTaskRequest, logCallbackProvider);
+        .handleRequest(abstractWebAppTaskRequest, logCallbackProvider, null);
 
     AzureWebAppTaskResponse taskResponse = azureWebAppTaskNG.run(abstractWebAppTaskRequest);
     assertThat(taskResponse.getRequestResponse()).isSameAs(requestResponse);
     assertThat(taskResponse.getCommandUnitsProgress()).isNotNull();
 
-    verify(azureWebAppRequestHandler).handleRequest(abstractWebAppTaskRequest, logCallbackProvider);
+    verify(azureWebAppRequestHandler).handleRequest(abstractWebAppTaskRequest, logCallbackProvider, null);
   }
 
   @Test
@@ -147,7 +147,7 @@ public class AzureWebAppTaskNGTest extends CategoryTest {
     doReturn(AzureWebAppRequestType.SLOT_DEPLOYMENT).when(abstractWebAppTaskRequest).getRequestType();
     doThrow(new RuntimeException("Azure deployment failed"))
         .when(azureWebAppRequestHandler)
-        .handleRequest(abstractWebAppTaskRequest, logCallbackProvider);
+        .handleRequest(abstractWebAppTaskRequest, logCallbackProvider, null);
 
     assertThatThrownBy(() -> azureWebAppTaskNG.run(abstractWebAppTaskRequest))
         .isInstanceOf(TaskNGDataException.class)
@@ -157,7 +157,7 @@ public class AzureWebAppTaskNGTest extends CategoryTest {
           return true;
         });
 
-    verify(logCallbackProvider).obtainLogCallback("Slot Setup");
+    verify(logCallbackProvider).obtainLogCallback("Slot Setup", null);
     verify(logCallback).saveExecutionLog("Failed: [RuntimeException: Azure deployment failed].", ERROR, FAILURE);
   }
 
@@ -200,7 +200,7 @@ public class AzureWebAppTaskNGTest extends CategoryTest {
             .build());
     infrastructure.setEncryptionDataDetails(encryptedDataDetails);
 
-    doReturn(requestResponse).when(azureWebAppRequestHandler).handleRequest(taskRequest, logCallbackProvider);
+    doReturn(requestResponse).when(azureWebAppRequestHandler).handleRequest(taskRequest, logCallbackProvider, null);
 
     azureWebAppTaskNG.run(taskRequest);
 
@@ -259,7 +259,7 @@ public class AzureWebAppTaskNGTest extends CategoryTest {
     ((AzureContainerArtifactConfig) artifactConfig).setConnectorConfig(azureArtifactConnector);
     infrastructure.setEncryptionDataDetails(encryptedDataDetails);
 
-    doReturn(requestResponse).when(azureWebAppRequestHandler).handleRequest(taskRequest, logCallbackProvider);
+    doReturn(requestResponse).when(azureWebAppRequestHandler).handleRequest(taskRequest, logCallbackProvider, null);
 
     azureWebAppTaskNG.run(taskRequest);
 

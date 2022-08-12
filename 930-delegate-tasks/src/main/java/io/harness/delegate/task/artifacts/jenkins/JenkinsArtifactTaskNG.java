@@ -53,7 +53,7 @@ public class JenkinsArtifactTaskNG extends AbstractDelegateRunnableTask {
     CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
     if (getLogStreamingTaskClient() != null) {
       LogCallback executionLogCallback =
-          new NGDelegateLogCallback(getLogStreamingTaskClient(), "Execute", false, commandUnitsProgress);
+          new NGDelegateLogCallback(getLogStreamingTaskClient(), "Execute", false, commandUnitsProgress, getTaskId());
       return jenkinsArtifactTaskHelper.getArtifactCollectResponse(taskParameters, executionLogCallback);
     } else {
       return jenkinsArtifactTaskHelper.getArtifactCollectResponse(taskParameters);

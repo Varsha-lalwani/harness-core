@@ -72,7 +72,7 @@ public class HelmCommandTaskNGTest extends CategoryTest {
     HelmCommandResponseNG ensureHelmInstalledResponse =
         new HelmCommandResponseNG(CommandExecutionStatus.SUCCESS, "Helm3 is installed at [mock]");
 
-    doReturn(logCallback).when(spyHelmCommandTask).getLogCallback(any(), anyString(), anyBoolean(), any());
+    doReturn(logCallback).when(spyHelmCommandTask).getLogCallback(any(), anyString(), anyBoolean(), any(), null);
     doReturn("some string").when(spyHelmCommandTask).getDeploymentMessage(any());
     doNothing().when(logCallback).saveExecutionLog(anyString(), any(), any());
     doReturn(ensureHelmInstalledResponse)
@@ -107,11 +107,11 @@ public class HelmCommandTaskNGTest extends CategoryTest {
     HelmInstallCmdResponseNG deployResponse =
         HelmInstallCmdResponseNG.builder().commandExecutionStatus(CommandExecutionStatus.SUCCESS).build();
 
-    doReturn(deployResponse).when(helmDeployServiceNG).deploy(request);
+    doReturn(deployResponse).when(helmDeployServiceNG).deploy(request, null);
 
     HelmCmdExecResponseNG response = spyHelmCommandTask.run(request);
 
-    verify(helmDeployServiceNG, times(1)).deploy(request);
+    verify(helmDeployServiceNG, times(1)).deploy(request, null);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     assertThat(response.getHelmCommandResponse()).isSameAs(deployResponse);
   }
@@ -124,10 +124,10 @@ public class HelmCommandTaskNGTest extends CategoryTest {
     HelmInstallCmdResponseNG rollbackResponse =
         HelmInstallCmdResponseNG.builder().commandExecutionStatus(CommandExecutionStatus.SUCCESS).build();
 
-    doReturn(rollbackResponse).when(helmDeployServiceNG).rollback(request);
+    doReturn(rollbackResponse).when(helmDeployServiceNG).rollback(request, null);
     HelmCmdExecResponseNG response = spyHelmCommandTask.run(request);
 
-    verify(helmDeployServiceNG, times(1)).rollback(request);
+    verify(helmDeployServiceNG, times(1)).rollback(request, null);
 
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     assertThat(response.getHelmCommandResponse()).isSameAs(rollbackResponse);
@@ -156,7 +156,7 @@ public class HelmCommandTaskNGTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testRunTaskWithException() throws IOException {
     HelmInstallCommandRequestNG request = HelmInstallCommandRequestNG.builder().accountId("accountId").build();
-    doThrow(new IOException("Unable to deploy")).when(helmDeployServiceNG).deploy(request);
+    doThrow(new IOException("Unable to deploy")).when(helmDeployServiceNG).deploy(request, null);
 
     assertThatThrownBy(() -> spyHelmCommandTask.run(request))
         .isInstanceOf(TaskNGDataException.class)
@@ -173,7 +173,7 @@ public class HelmCommandTaskNGTest extends CategoryTest {
                                                   .commandExecutionStatus(CommandExecutionStatus.FAILURE)
                                                   .output("Error while deploying")
                                                   .build();
-    doReturn(deployResponse).when(helmDeployServiceNG).deploy(request);
+    doReturn(deployResponse).when(helmDeployServiceNG).deploy(request, null);
 
     HelmCmdExecResponseNG response = spyHelmCommandTask.run(request);
 

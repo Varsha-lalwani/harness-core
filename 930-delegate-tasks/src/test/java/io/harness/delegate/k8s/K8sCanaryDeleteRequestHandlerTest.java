@@ -110,7 +110,7 @@ public class K8sCanaryDeleteRequestHandlerTest extends CategoryTest {
 
     doReturn(logCallback)
         .when(k8sTaskHelperBase)
-        .getLogCallback(eq(logStreamingTaskClient), anyString(), anyBoolean(), eq(commandUnitsProgress));
+        .getLogCallback(eq(logStreamingTaskClient), anyString(), anyBoolean(), eq(commandUnitsProgress), null);
     doReturn(
         singletonList(
             KubernetesResourceId.builder().namespace("default").kind("deployment").name("deployment-canary").build()))
@@ -129,7 +129,7 @@ public class K8sCanaryDeleteRequestHandlerTest extends CategoryTest {
                                                .build();
 
     K8sDeployResponse response = requestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
     verify(k8sTaskHelperBase)
@@ -149,7 +149,7 @@ public class K8sCanaryDeleteRequestHandlerTest extends CategoryTest {
                                                .build();
 
     K8sDeployResponse response = requestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
     verify(k8sTaskHelperBase)
@@ -169,7 +169,7 @@ public class K8sCanaryDeleteRequestHandlerTest extends CategoryTest {
                                                .build();
 
     K8sDeployResponse response = requestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
     verify(k8sTaskHelperBase)
@@ -189,7 +189,7 @@ public class K8sCanaryDeleteRequestHandlerTest extends CategoryTest {
                                                .build();
 
     K8sDeployResponse response = requestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     verify(k8sTaskHelperBase, never())
         .delete(any(Kubectl.class), eq(delegateTaskParams), anyListOf(KubernetesResourceId.class), eq(logCallback),
@@ -206,7 +206,7 @@ public class K8sCanaryDeleteRequestHandlerTest extends CategoryTest {
                                                .build();
 
     K8sDeployResponse response = requestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     verify(k8sTaskHelperBase, never())
         .delete(any(Kubectl.class), eq(delegateTaskParams), anyListOf(KubernetesResourceId.class), eq(logCallback),
@@ -223,7 +223,7 @@ public class K8sCanaryDeleteRequestHandlerTest extends CategoryTest {
                                                .build();
 
     K8sDeployResponse response = requestHandler.executeTaskInternal(
-        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress);
+        deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     verify(k8sTaskHelperBase, never())
         .delete(any(Kubectl.class), eq(delegateTaskParams), anyListOf(KubernetesResourceId.class), eq(logCallback),
@@ -241,7 +241,7 @@ public class K8sCanaryDeleteRequestHandlerTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> requestHandler.executeTaskInternal(
-                               deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress))
+                               deleteRequest, delegateTaskParams, logStreamingTaskClient, commandUnitsProgress, null))
         .matches(throwable -> {
           assertThat(throwable).isInstanceOf(InvalidRequestException.class);
           ApiException apiException = ExceptionUtils.cause(ApiException.class, throwable);

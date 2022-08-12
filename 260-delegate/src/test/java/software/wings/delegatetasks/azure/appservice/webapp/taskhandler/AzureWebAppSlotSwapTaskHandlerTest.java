@@ -85,12 +85,12 @@ public class AzureWebAppSlotSwapTaskHandlerTest extends WingsBaseTest {
     ArgumentCaptor<AzureAppServiceDeploymentContext> deploymentContextArgumentCaptor =
         ArgumentCaptor.forClass(AzureAppServiceDeploymentContext.class);
 
-    AzureAppServiceTaskResponse azureAppServiceTaskResponse =
-        slotSwapTaskHandler.executeTaskInternal(azureWebAppSlotSwapParameters, azureConfig, mockLogStreamingTaskClient);
+    AzureAppServiceTaskResponse azureAppServiceTaskResponse = slotSwapTaskHandler.executeTaskInternal(
+        azureWebAppSlotSwapParameters, azureConfig, mockLogStreamingTaskClient, null);
     assertThat(azureAppServiceTaskResponse).isNotNull();
 
     verify(azureAppServiceDeploymentService)
-        .swapSlotsUsingCallback(deploymentContextArgumentCaptor.capture(), targetSlotCaptor.capture(), any());
+        .swapSlotsUsingCallback(deploymentContextArgumentCaptor.capture(), targetSlotCaptor.capture(), any(), null);
     assertThat(targetSlotCaptor.getValue()).isEqualTo(TARGET_SLOT_NAME);
     assertThat(deploymentContextArgumentCaptor.getValue().getSlotName()).isEqualTo(SOURCE_SLOT_NAME);
   }
@@ -107,7 +107,7 @@ public class AzureWebAppSlotSwapTaskHandlerTest extends WingsBaseTest {
     assertThatExceptionOfType(InvalidArgumentsException.class)
         .isThrownBy(()
                         -> slotSwapTaskHandler.executeTaskInternal(
-                            azureWebAppSlotSwapParameters, azureConfig, mockLogStreamingTaskClient))
+                            azureWebAppSlotSwapParameters, azureConfig, mockLogStreamingTaskClient, null))
         .withMessageContaining(WEB_APP_NAME_BLANK_ERROR_MSG);
   }
 
@@ -123,7 +123,7 @@ public class AzureWebAppSlotSwapTaskHandlerTest extends WingsBaseTest {
     assertThatExceptionOfType(InvalidArgumentsException.class)
         .isThrownBy(()
                         -> slotSwapTaskHandler.executeTaskInternal(
-                            azureWebAppSlotSwapParameters, azureConfig, mockLogStreamingTaskClient))
+                            azureWebAppSlotSwapParameters, azureConfig, mockLogStreamingTaskClient, null))
         .withMessageContaining(SOURCE_SLOT_NAME_BLANK_ERROR_MSG);
   }
 
@@ -139,7 +139,7 @@ public class AzureWebAppSlotSwapTaskHandlerTest extends WingsBaseTest {
     assertThatExceptionOfType(InvalidArgumentsException.class)
         .isThrownBy(()
                         -> slotSwapTaskHandler.executeTaskInternal(
-                            azureWebAppSlotSwapParameters, azureConfig, mockLogStreamingTaskClient))
+                            azureWebAppSlotSwapParameters, azureConfig, mockLogStreamingTaskClient, null))
         .withMessageContaining(TARGET_SLOT_NAME_BLANK_ERROR_MSG);
   }
 

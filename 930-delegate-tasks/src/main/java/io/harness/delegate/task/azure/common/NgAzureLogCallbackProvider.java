@@ -28,9 +28,9 @@ public class NgAzureLogCallbackProvider implements AzureLogCallbackProvider {
   }
 
   @Override
-  public LogCallback obtainLogCallback(String commandUnitName) {
+  public LogCallback obtainLogCallback(String commandUnitName, String taskId) {
     return new NGDelegateLogCallback(
-        streamingTaskClient, commandUnitName, shouldOpenStream(commandUnitName), commandUnitsProgress);
+        streamingTaskClient, commandUnitName, shouldOpenStream(commandUnitName), commandUnitsProgress, taskId);
   }
 
   private boolean shouldOpenStream(String commandUnitName) {

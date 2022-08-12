@@ -70,7 +70,7 @@ public class AzureAppServiceTaskTest extends CategoryTest {
     azureAppServiceTaskTypeToTaskHandlerMap.put(SLOT_SETUP.name(), setupTaskHandler);
     doReturn(AzureTaskExecutionResponse.builder().build())
         .when(setupTaskHandler)
-        .executeTask(any(), any(), any(), any());
+        .executeTask(any(), any(), any(), any(), null);
 
     on(azureAppServiceTaskFactory)
         .set("azureAppServiceTaskTypeToTaskHandlerMap", azureAppServiceTaskTypeToTaskHandlerMap);

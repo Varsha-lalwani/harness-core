@@ -79,7 +79,7 @@ public class AzureAppServiceDeploymentServiceTest extends CategoryTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    doReturn(mockLogCallback).when(mockLogCallbackProvider).obtainLogCallback(anyString());
+    doReturn(mockLogCallback).when(mockLogCallbackProvider).obtainLogCallback(anyString(), null);
     doNothing().when(mockLogCallback).saveExecutionLog(anyString(), any(), any());
     doNothing().when(mockLogCallback).saveExecutionLog(anyString(), any());
     doNothing().when(mockLogCallback).saveExecutionLog(anyString());
@@ -128,7 +128,7 @@ public class AzureAppServiceDeploymentServiceTest extends CategoryTest {
         .when(deploymentSlot)
         .getContainerLogs();
     azureAppServiceDeploymentService.deployDockerImage(
-        azureAppServiceDockerDeploymentContext, AzureAppServicePreDeploymentData.builder().build());
+        azureAppServiceDockerDeploymentContext, AzureAppServicePreDeploymentData.builder().build(), null);
 
     verify(slotSteadyStateChecker, times(1))
         .waitUntilCompleteWithTimeout(
@@ -184,7 +184,7 @@ public class AzureAppServiceDeploymentServiceTest extends CategoryTest {
         .deleteDeploymentSlotAppSettings(any(), any(), any());
     assertThatThrownBy(()
                            -> azureAppServiceDeploymentService.deployDockerImage(azureAppServiceDockerDeploymentContext,
-                               AzureAppServicePreDeploymentData.builder().build()))
+                               AzureAppServicePreDeploymentData.builder().build(), null))
         .isInstanceOf(Exception.class);
 
     reset(mockAzureWebClient);
@@ -193,7 +193,7 @@ public class AzureAppServiceDeploymentServiceTest extends CategoryTest {
         .stopDeploymentSlotAsync(any(), any(), any());
     assertThatThrownBy(()
                            -> azureAppServiceDeploymentService.deployDockerImage(azureAppServiceDockerDeploymentContext,
-                               AzureAppServicePreDeploymentData.builder().build()))
+                               AzureAppServicePreDeploymentData.builder().build(), null))
         .isInstanceOf(Exception.class);
 
     reset(mockAzureWebClient);
@@ -202,7 +202,7 @@ public class AzureAppServiceDeploymentServiceTest extends CategoryTest {
         .startDeploymentSlotAsync(any(), any(), any());
     assertThatThrownBy(()
                            -> azureAppServiceDeploymentService.deployDockerImage(azureAppServiceDockerDeploymentContext,
-                               AzureAppServicePreDeploymentData.builder().build()))
+                               AzureAppServicePreDeploymentData.builder().build(), null))
         .isInstanceOf(Exception.class);
 
     reset(mockAzureWebClient);
@@ -211,7 +211,7 @@ public class AzureAppServiceDeploymentServiceTest extends CategoryTest {
         .deleteDeploymentSlotDockerSettings(any(), any());
     assertThatThrownBy(()
                            -> azureAppServiceDeploymentService.deployDockerImage(azureAppServiceDockerDeploymentContext,
-                               AzureAppServicePreDeploymentData.builder().build()))
+                               AzureAppServicePreDeploymentData.builder().build(), null))
         .isInstanceOf(Exception.class);
   }
 
@@ -244,7 +244,7 @@ public class AzureAppServiceDeploymentServiceTest extends CategoryTest {
         .getContainerLogs();
 
     azureAppServiceDeploymentService.deployDockerImage(
-        azureAppServiceDockerDeploymentContext, AzureAppServicePreDeploymentData.builder().build());
+        azureAppServiceDockerDeploymentContext, AzureAppServicePreDeploymentData.builder().build(), null);
 
     verify(slotSteadyStateChecker, times(1))
         .waitUntilCompleteWithTimeout(
@@ -260,7 +260,7 @@ public class AzureAppServiceDeploymentServiceTest extends CategoryTest {
   public void testRerouteProductionSlotTraffic() {
     AzureWebClientContext azureWebClientContext = getAzureWebClientContext();
     azureAppServiceDeploymentService.rerouteProductionSlotTraffic(
-        azureWebClientContext, SLOT_NAME, 50, mockLogCallbackProvider);
+        azureWebClientContext, SLOT_NAME, 50, mockLogCallbackProvider, null);
     verify(mockAzureWebClient, times(1)).rerouteProductionSlotTraffic(azureWebClientContext, SLOT_NAME, 50);
   }
 
@@ -280,7 +280,7 @@ public class AzureAppServiceDeploymentServiceTest extends CategoryTest {
             .build();
 
     azureAppServiceDeploymentService.swapSlotsUsingCallback(
-        azureAppServiceDockerDeploymentContext, TARGET_SLOT_NAME, mockLogCallbackProvider);
+        azureAppServiceDockerDeploymentContext, TARGET_SLOT_NAME, mockLogCallbackProvider, null);
 
     ArgumentCaptor<SlotStatusVerifier> statusVerifierArgument = ArgumentCaptor.forClass(SlotStatusVerifier.class);
 

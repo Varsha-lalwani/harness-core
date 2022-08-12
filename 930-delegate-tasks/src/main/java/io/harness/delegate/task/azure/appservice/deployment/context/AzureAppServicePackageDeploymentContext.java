@@ -55,8 +55,8 @@ public class AzureAppServicePackageDeploymentContext extends AzureAppServiceDepl
   }
 
   @Override
-  public void deploy(
-      AzureAppServiceDeploymentService deploymentService, AzureAppServicePreDeploymentData preDeploymentData) {
-    deploymentService.deployPackage(this, preDeploymentData);
+  public void deploy(AzureAppServiceDeploymentService deploymentService,
+      AzureAppServicePreDeploymentData preDeploymentData, String taskId) {
+    deploymentService.deployPackage(this, preDeploymentData, taskId);
   }
 }

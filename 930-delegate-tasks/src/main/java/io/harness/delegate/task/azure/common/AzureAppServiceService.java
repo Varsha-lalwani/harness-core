@@ -62,21 +62,21 @@ public class AzureAppServiceService {
   @Inject private AzureWebClient azureWebClient;
 
   public AzureAppServicePreDeploymentData getDockerDeploymentPreDeploymentData(
-      AzureAppServiceDockerDeploymentContext dockerDeploymentContext) {
+      AzureAppServiceDockerDeploymentContext dockerDeploymentContext, String taskId) {
     return getAzureAppServicePreDeploymentDataAndLog(dockerDeploymentContext.getAzureWebClientContext(),
         dockerDeploymentContext.getSlotName(), dockerDeploymentContext.getTargetSlotName(),
         dockerDeploymentContext.getAppSettingsToAdd(), dockerDeploymentContext.getConnSettingsToAdd(), true,
         dockerDeploymentContext.getLogCallbackProvider(), dockerDeploymentContext.isSkipTargetSlotValidation(),
-        dockerDeploymentContext.isBasicDeployment());
+        dockerDeploymentContext.isBasicDeployment(), taskId);
   }
 
   public AzureAppServicePreDeploymentData getPackageDeploymentPreDeploymentData(
-      AzureAppServicePackageDeploymentContext packageDeploymentContext) {
+      AzureAppServicePackageDeploymentContext packageDeploymentContext, String taskId) {
     return getAzureAppServicePreDeploymentDataAndLog(packageDeploymentContext.getAzureWebClientContext(),
         packageDeploymentContext.getSlotName(), packageDeploymentContext.getTargetSlotName(),
         packageDeploymentContext.getAppSettingsToAdd(), packageDeploymentContext.getConnSettingsToAdd(), false,
         packageDeploymentContext.getLogCallbackProvider(), packageDeploymentContext.isSkipTargetSlotValidation(),
-        packageDeploymentContext.isBasicDeployment());
+        packageDeploymentContext.isBasicDeployment(), taskId);
   }
 
   @VisibleForTesting
@@ -84,8 +84,9 @@ public class AzureAppServiceService {
       AzureWebClientContext azureWebClientContext, final String slotName, String targetSlotName,
       Map<String, AzureAppServiceApplicationSetting> userAddedAppSettings,
       Map<String, AzureAppServiceConnectionString> userAddedConnStrings, boolean includeDockerSettings,
-      AzureLogCallbackProvider logCallbackProvider, boolean skipTargetSlotValidation, boolean isBasicDeployment) {
-    LogCallback logCallback = logCallbackProvider.obtainLogCallback(SAVE_EXISTING_CONFIGURATIONS);
+      AzureLogCallbackProvider logCallbackProvider, boolean skipTargetSlotValidation, boolean isBasicDeployment,
+      String taskId) {
+    LogCallback logCallback = logCallbackProvider.obtainLogCallback(SAVE_EXISTING_CONFIGURATIONS, taskId);
     logCallback.saveExecutionLog(String.format("Saving existing configurations for slot - [%s] of App Service - [%s]",
         slotName, azureWebClientContext.getAppName()));
 

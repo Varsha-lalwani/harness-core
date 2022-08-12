@@ -14,5 +14,5 @@ import io.harness.logging.LogCallback;
 
 @OwnedBy(CDP)
 public interface AzureLogCallbackProvider {
-  LogCallback obtainLogCallback(String commandUnitName);
+  LogCallback obtainLogCallback(String commandUnitName, String taskId);
 }

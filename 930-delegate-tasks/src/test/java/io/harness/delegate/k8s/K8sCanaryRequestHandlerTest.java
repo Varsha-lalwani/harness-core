@@ -112,7 +112,7 @@ public class K8sCanaryRequestHandlerTest extends CategoryTest {
         .createKubernetesConfig(k8sInfraDelegateConfig);
     doReturn(logCallback)
         .when(k8sTaskHelperBase)
-        .getLogCallback(eq(iLogStreamingTaskClient), anyString(), anyBoolean(), any());
+        .getLogCallback(eq(iLogStreamingTaskClient), anyString(), anyBoolean(), any(), null);
     doReturn(true)
         .when(k8sTaskHelperBase)
         .fetchManifestFilesAndWriteToDirectory(
@@ -228,7 +228,7 @@ public class K8sCanaryRequestHandlerTest extends CategoryTest {
   @Category(UnitTests.class)
   public void invalidTypeOfTaskParams() {
     assertThatExceptionOfType(InvalidArgumentsException.class)
-        .isThrownBy(() -> k8sCanaryRequestHandler.executeTaskInternal(null, null, null, null))
+        .isThrownBy(() -> k8sCanaryRequestHandler.executeTaskInternal(null, null, null, null, null))
         .withMessageContaining("INVALID_ARGUMENT");
   }
 
@@ -267,8 +267,8 @@ public class K8sCanaryRequestHandlerTest extends CategoryTest {
         .when(k8sCanaryBaseHandler)
         .getAllPods(k8sCanaryHandlerConfig, releaseName, timeoutIntervalInMillis);
 
-    K8sDeployResponse k8sDeployResponse =
-        spyRequestHandler.executeTask(canaryDeployRequest, delegateTaskParams, iLogStreamingTaskClient, null);
+    K8sDeployResponse k8sDeployResponse = spyRequestHandler.executeTask(
+        canaryDeployRequest, delegateTaskParams, iLogStreamingTaskClient, null, getTaskId());
     verify(k8sCanaryBaseHandler, times(1)).wrapUp(nullable(Kubectl.class), eq(delegateTaskParams), eq(logCallback));
     verify(k8sTaskHelperBase, times(1))
         .saveReleaseHistoryInConfigMap(kubernetesConfig, releaseName, releaseHistory.getAsYaml());
@@ -438,7 +438,7 @@ public class K8sCanaryRequestHandlerTest extends CategoryTest {
     k8sCanaryHandlerConfig.setCurrentRelease(releaseHist.getLatestRelease());
     k8sCanaryHandlerConfig.setTargetInstances(3);
 
-    k8sCanaryRequestHandler.executeTask(request, delegateTaskParams, iLogStreamingTaskClient, null);
+    k8sCanaryRequestHandler.executeTask(request, delegateTaskParams, iLogStreamingTaskClient, null, getTaskId());
     verify(k8sTaskHelperBase, times(1))
         .saveReleaseHistoryInConfigMap(kubernetesConfig, "success", releaseHist.getAsYaml());
   }
@@ -533,8 +533,9 @@ public class K8sCanaryRequestHandlerTest extends CategoryTest {
 
     Exception thrown = applyThrowable != null ? applyThrowable : statusCheckThrowable;
 
-    assertThatThrownBy(
-        () -> k8sCanaryRequestHandler.executeTask(request, delegateTaskParams, iLogStreamingTaskClient, null))
+    assertThatThrownBy(()
+                           -> k8sCanaryRequestHandler.executeTask(
+                               request, delegateTaskParams, iLogStreamingTaskClient, null, getTaskId()))
         .isSameAs(thrown);
 
     k8sCanaryRequestHandler.handleTaskFailure(request, thrown);

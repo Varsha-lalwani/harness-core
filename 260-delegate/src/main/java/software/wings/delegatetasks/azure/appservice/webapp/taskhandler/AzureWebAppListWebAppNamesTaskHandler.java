@@ -38,7 +38,7 @@ public class AzureWebAppListWebAppNamesTaskHandler extends AbstractAzureWebAppTa
 
   @Override
   protected AzureAppServiceTaskResponse executeTaskInternal(AzureAppServiceTaskParameters azureAppServiceTaskParameters,
-      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient) {
+      AzureConfig azureConfig, ILogStreamingTaskClient logStreamingTaskClient, String taskId) {
     String subscriptionId = azureAppServiceTaskParameters.getSubscriptionId();
     String resourceGroupName =
         ((AzureWebAppListWebAppNamesParameters) azureAppServiceTaskParameters).getResourceGroupName();

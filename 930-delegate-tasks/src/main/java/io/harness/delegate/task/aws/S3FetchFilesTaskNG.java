@@ -85,7 +85,7 @@ public class S3FetchFilesTaskNG extends AbstractDelegateRunnableTask {
         ? params.getCommandUnitsProgress()
         : CommandUnitsProgress.builder().build();
     LogCallback executionLogCallback = new NGDelegateLogCallback(getLogStreamingTaskClient(),
-        K8sCommandUnitConstants.FetchFiles, params.isShouldOpenLogStream(), commandUnitsProgress);
+        K8sCommandUnitConstants.FetchFiles, params.isShouldOpenLogStream(), commandUnitsProgress, getTaskId());
 
     try {
       executionLogCallback.saveExecutionLog(color(format("%nStarting S3 Fetch Files"), LogColor.White, LogWeight.Bold));

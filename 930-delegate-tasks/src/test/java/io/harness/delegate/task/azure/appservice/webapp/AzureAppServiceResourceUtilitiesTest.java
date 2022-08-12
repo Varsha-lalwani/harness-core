@@ -76,14 +76,14 @@ public class AzureAppServiceResourceUtilitiesTest extends CategoryTest {
                                                       .build();
 
     azureWebAppTaskHelper.swapSlots(
-        azureWebClientContext, azureLogCallbackProvider, "deploymentSlot", "targetSlot", 10);
+        azureWebClientContext, azureLogCallbackProvider, "deploymentSlot", "targetSlot", 10, null);
 
     ArgumentCaptor<AzureAppServiceDeploymentContext> azureAppServiceDeploymentContextCaptor =
         ArgumentCaptor.forClass(AzureAppServiceDeploymentContext.class);
 
     verify(azureAppServiceDeploymentService)
         .swapSlotsUsingCallback(
-            azureAppServiceDeploymentContextCaptor.capture(), eq("targetSlot"), eq(azureLogCallbackProvider));
+            azureAppServiceDeploymentContextCaptor.capture(), eq("targetSlot"), eq(azureLogCallbackProvider), null);
     AzureAppServiceDeploymentContext azureAppServiceDeploymentContext =
         azureAppServiceDeploymentContextCaptor.getValue();
     assertThat(azureAppServiceDeploymentContext.getAzureWebClientContext()).isEqualTo(azureWebClientContext);
@@ -103,14 +103,14 @@ public class AzureAppServiceResourceUtilitiesTest extends CategoryTest {
                                                       .azureConfig(AzureConfig.builder().build())
                                                       .build();
 
-    azureWebAppTaskHelper.swapSlots(azureWebClientContext, azureLogCallbackProvider, "production", "testing", 10);
+    azureWebAppTaskHelper.swapSlots(azureWebClientContext, azureLogCallbackProvider, "production", "testing", 10, null);
 
     ArgumentCaptor<AzureAppServiceDeploymentContext> azureAppServiceDeploymentContextCaptor =
         ArgumentCaptor.forClass(AzureAppServiceDeploymentContext.class);
 
     verify(azureAppServiceDeploymentService)
         .swapSlotsUsingCallback(
-            azureAppServiceDeploymentContextCaptor.capture(), eq("production"), eq(azureLogCallbackProvider));
+            azureAppServiceDeploymentContextCaptor.capture(), eq("production"), eq(azureLogCallbackProvider), null);
     AzureAppServiceDeploymentContext azureAppServiceDeploymentContext =
         azureAppServiceDeploymentContextCaptor.getValue();
     assertThat(azureAppServiceDeploymentContext.getAzureWebClientContext()).isEqualTo(azureWebClientContext);

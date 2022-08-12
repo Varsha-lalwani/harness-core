@@ -83,12 +83,12 @@ public class AzureWebAppSlotDeploymentRequestHandlerTest extends CategoryTest {
         .getDefaultPreDeploymentDataBuilder(APP_NAME, DEPLOYMENT_SLOT);
     doReturn(AzureAppServicePreDeploymentData.builder().appName(APP_NAME).build())
         .when(azureAppServiceService)
-        .getDockerDeploymentPreDeploymentData(any(AzureAppServiceDockerDeploymentContext.class));
+        .getDockerDeploymentPreDeploymentData(any(AzureAppServiceDockerDeploymentContext.class), null);
 
     doNothing()
         .when(azureAppServiceDeploymentService)
         .deployDockerImage(
-            any(AzureAppServiceDockerDeploymentContext.class), any(AzureAppServicePreDeploymentData.class));
+            any(AzureAppServiceDockerDeploymentContext.class), any(AzureAppServicePreDeploymentData.class), null);
 
     doCallRealMethod().when(azureAppServiceResourceUtilities).getAppSettingsToAdd(anyList());
     doCallRealMethod().when(azureAppServiceResourceUtilities).getConnectionSettingsToAdd(anyList());
@@ -117,14 +117,14 @@ public class AzureWebAppSlotDeploymentRequestHandlerTest extends CategoryTest {
         .fetchDeploymentData(any(AzureWebClientContext.class), eq(DEPLOYMENT_SLOT));
 
     AzureWebAppRequestResponse requestResponse =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
     assertThat(requestResponse).isInstanceOf(AzureWebAppSlotDeploymentResponse.class);
     AzureWebAppSlotDeploymentResponse slotRequestResponse = (AzureWebAppSlotDeploymentResponse) requestResponse;
     assertThat(slotRequestResponse.getAzureAppDeploymentData()).isSameAs(deploymentDataList);
 
     verify(azureAppServiceDeploymentService)
         .deployDockerImage(
-            any(AzureAppServiceDockerDeploymentContext.class), any(AzureAppServicePreDeploymentData.class));
+            any(AzureAppServiceDockerDeploymentContext.class), any(AzureAppServicePreDeploymentData.class), null);
   }
 
   @Test
@@ -145,7 +145,7 @@ public class AzureWebAppSlotDeploymentRequestHandlerTest extends CategoryTest {
         .fetchDeploymentData(any(AzureWebClientContext.class), eq(DEPLOYMENT_SLOT));
 
     assertThatThrownBy(
-        () -> requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider))
+        () -> requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null))
         .isInstanceOf(AzureWebAppSlotDeploymentExceptionData.class)
         .matches(exception -> {
           AzureWebAppSlotDeploymentExceptionData dataException = (AzureWebAppSlotDeploymentExceptionData) exception;
@@ -180,16 +180,16 @@ public class AzureWebAppSlotDeploymentRequestHandlerTest extends CategoryTest {
 
     doReturn(AzureArtifactDownloadResponse.builder().artifactFile(artifactFile).artifactType(ArtifactType.JAR).build())
         .when(artifactDownloadService)
-        .download(any(ArtifactDownloadContext.class));
+        .download(any(ArtifactDownloadContext.class), null);
 
     AzureWebAppRequestResponse requestResponse =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
     assertThat(requestResponse).isInstanceOf(AzureWebAppSlotDeploymentResponse.class);
     AzureWebAppSlotDeploymentResponse slotRequestResponse = (AzureWebAppSlotDeploymentResponse) requestResponse;
     assertThat(slotRequestResponse.getAzureAppDeploymentData()).isSameAs(deploymentDataList);
 
     verify(azureAppServiceDeploymentService)
-        .deployPackage(any(AzureAppServicePackageDeploymentContext.class), eq(preDeploymentData));
-    verify(artifactDownloadService).download(any(ArtifactDownloadContext.class));
+        .deployPackage(any(AzureAppServicePackageDeploymentContext.class), eq(preDeploymentData), null);
+    verify(artifactDownloadService).download(any(ArtifactDownloadContext.class), null);
   }
 }

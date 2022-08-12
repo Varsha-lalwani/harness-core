@@ -81,9 +81,9 @@ public class AzureWebAppRollbackRequestHandlerTest {
     doNothing()
         .when(azureAppServiceDeploymentService)
         .deployDockerImage(
-            any(AzureAppServiceDockerDeploymentContext.class), any(AzureAppServicePreDeploymentData.class));
+            any(AzureAppServiceDockerDeploymentContext.class), any(AzureAppServicePreDeploymentData.class), null);
 
-    doReturn(mockLogCallback).when(logCallbackProvider).obtainLogCallback(anyString());
+    doReturn(mockLogCallback).when(logCallbackProvider).obtainLogCallback(anyString(), null);
     doNothing().when(mockLogCallback).saveExecutionLog(anyString(), any(), any());
     doNothing().when(mockLogCallback).saveExecutionLog(anyString(), any());
     doNothing().when(mockLogCallback).saveExecutionLog(anyString());
@@ -108,7 +108,7 @@ public class AzureWebAppRollbackRequestHandlerTest {
         .fetchDeploymentData(any(AzureWebClientContext.class), eq(DEPLOYMENT_SLOT));
 
     AzureWebAppRequestResponse requestResponse =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
 
     assertThat(requestResponse).isInstanceOf(AzureWebAppNGRollbackResponse.class);
     AzureWebAppNGRollbackResponse rollbackResponse = (AzureWebAppNGRollbackResponse) requestResponse;
@@ -116,7 +116,7 @@ public class AzureWebAppRollbackRequestHandlerTest {
 
     verify(azureAppServiceDeploymentService)
         .deployDockerImage(
-            any(AzureAppServiceDockerDeploymentContext.class), any(AzureAppServicePreDeploymentData.class));
+            any(AzureAppServiceDockerDeploymentContext.class), any(AzureAppServicePreDeploymentData.class), null);
   }
 
   @Test
@@ -139,18 +139,18 @@ public class AzureWebAppRollbackRequestHandlerTest {
         .fetchDeploymentData(any(AzureWebClientContext.class), eq(DEPLOYMENT_SLOT));
     doReturn(AzureArtifactDownloadResponse.builder().artifactFile(new File("")).build())
         .when(artifactDownloaderService)
-        .download(any());
+        .download(any(), null);
 
     AzureWebAppRequestResponse requestResponse =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
 
     assertThat(requestResponse).isInstanceOf(AzureWebAppNGRollbackResponse.class);
     AzureWebAppNGRollbackResponse rollbackResponse = (AzureWebAppNGRollbackResponse) requestResponse;
     assertThat(rollbackResponse.getAzureAppDeploymentData()).isSameAs(deploymentDataList);
 
     verify(azureAppServiceResourceUtilities).toArtifactNgDownloadContext(any(), any(), any());
-    verify(artifactDownloaderService).download(any());
-    verify(azureAppServiceDeploymentService).deployPackage(any(), any());
+    verify(artifactDownloaderService).download(any(), null);
+    verify(azureAppServiceDeploymentService).deployPackage(any(), any(), null);
   }
 
   @Test
@@ -172,19 +172,19 @@ public class AzureWebAppRollbackRequestHandlerTest {
         .fetchDeploymentData(any(AzureWebClientContext.class), eq(DEPLOYMENT_SLOT));
     doReturn(AzureArtifactDownloadResponse.builder().artifactFile(new File("")).build())
         .when(artifactDownloaderService)
-        .download(any());
+        .download(any(), null);
 
     AzureWebAppRequestResponse requestResponse =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
 
     assertThat(requestResponse).isInstanceOf(AzureWebAppNGRollbackResponse.class);
     AzureWebAppNGRollbackResponse rollbackResponse = (AzureWebAppNGRollbackResponse) requestResponse;
     assertThat(rollbackResponse.getAzureAppDeploymentData()).isSameAs(deploymentDataList);
 
     verify(azureAppServiceResourceUtilities, times(0)).toArtifactNgDownloadContext(any(), any(), any());
-    verify(artifactDownloaderService, times(0)).download(any());
-    verify(azureAppServiceDeploymentService, times(0)).deployPackage(any(), any());
-    verify(azureAppServiceResourceUtilities, times(0)).swapSlots(any(), any(), any(), any(), any());
+    verify(artifactDownloaderService, times(0)).download(any(), null);
+    verify(azureAppServiceDeploymentService, times(0)).deployPackage(any(), any(), null);
+    verify(azureAppServiceResourceUtilities, times(0)).swapSlots(any(), any(), any(), any(), any(), null);
   }
 
   @Test
@@ -206,19 +206,19 @@ public class AzureWebAppRollbackRequestHandlerTest {
         .fetchDeploymentData(any(AzureWebClientContext.class), eq(DEPLOYMENT_SLOT));
     doReturn(AzureArtifactDownloadResponse.builder().artifactFile(new File("")).build())
         .when(artifactDownloaderService)
-        .download(any());
+        .download(any(), null);
 
     AzureWebAppRequestResponse requestResponse =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
 
     assertThat(requestResponse).isInstanceOf(AzureWebAppNGRollbackResponse.class);
     AzureWebAppNGRollbackResponse rollbackResponse = (AzureWebAppNGRollbackResponse) requestResponse;
     assertThat(rollbackResponse.getAzureAppDeploymentData()).isSameAs(deploymentDataList);
 
     verify(azureAppServiceResourceUtilities, times(0)).toArtifactNgDownloadContext(any(), any(), any());
-    verify(artifactDownloaderService, times(0)).download(any());
-    verify(azureAppServiceDeploymentService, times(0)).deployPackage(any(), any());
-    verify(azureAppServiceResourceUtilities, times(1)).swapSlots(any(), any(), any(), any(), any());
+    verify(artifactDownloaderService, times(0)).download(any(), null);
+    verify(azureAppServiceDeploymentService, times(0)).deployPackage(any(), any(), null);
+    verify(azureAppServiceResourceUtilities, times(1)).swapSlots(any(), any(), any(), any(), any(), null);
   }
 
   @Test
@@ -237,11 +237,11 @@ public class AzureWebAppRollbackRequestHandlerTest {
             .build();
 
     AzureWebAppRequestResponse requestResponse =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
 
     assertThat(requestResponse).isNotNull();
     verify(azureAppServiceDeploymentService)
-        .rerouteProductionSlotTraffic(any(), eq(DEPLOYMENT_SLOT), eq(TRAFFIC_WEIGHT), any());
+        .rerouteProductionSlotTraffic(any(), eq(DEPLOYMENT_SLOT), eq(TRAFFIC_WEIGHT), any(), null);
   }
 
   @Test
@@ -259,12 +259,12 @@ public class AzureWebAppRollbackRequestHandlerTest {
             .build();
 
     AzureWebAppRequestResponse requestResponse =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
 
     assertThat(requestResponse).isNotNull();
     verify(azureAppServiceDeploymentService)
-        .rerouteProductionSlotTraffic(any(), eq(DEPLOYMENT_SLOT), eq(TRAFFIC_WEIGHT), any());
-    verify(azureAppServiceResourceUtilities).swapSlots(any(), any(), any(), any(), any());
+        .rerouteProductionSlotTraffic(any(), eq(DEPLOYMENT_SLOT), eq(TRAFFIC_WEIGHT), any(), null);
+    verify(azureAppServiceResourceUtilities).swapSlots(any(), any(), any(), any(), any(), null);
   }
 
   @Test
@@ -287,12 +287,12 @@ public class AzureWebAppRollbackRequestHandlerTest {
                                                    .build();
 
     AzureWebAppRequestResponse requestResponse =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
 
     assertThat(requestResponse).isNotNull();
     verify(azureAppServiceDeploymentService, times(0))
-        .rerouteProductionSlotTraffic(any(), eq(DEPLOYMENT_SLOT), eq(TRAFFIC_WEIGHT), any());
-    verify(azureAppServiceResourceUtilities).swapSlots(any(), any(), any(), any(), any());
+        .rerouteProductionSlotTraffic(any(), eq(DEPLOYMENT_SLOT), eq(TRAFFIC_WEIGHT), any(), null);
+    verify(azureAppServiceResourceUtilities).swapSlots(any(), any(), any(), any(), any(), null);
   }
 
   @Test
@@ -310,17 +310,17 @@ public class AzureWebAppRollbackRequestHandlerTest {
             .build();
 
     AzureWebAppRequestResponse requestResponse =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
     assertThat(requestResponse).isNotNull();
     verify(azureAppServiceDeploymentService).startSlotAsyncWithSteadyCheck(any(), any(), any());
     verify(azureAppServiceService, never()).fetchDeploymentData(any(), eq(DEPLOYMENT_SLOT));
-    verify(azureAppServiceDeploymentService, never()).deployDockerImage(any(), any());
+    verify(azureAppServiceDeploymentService, never()).deployDockerImage(any(), any(), null);
 
     request.getPreDeploymentData().setDeploymentProgressMarker(AppServiceDeploymentProgress.DEPLOYMENT_COMPLETE.name());
     AzureWebAppRequestResponse requestRespons2 =
-        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider);
+        requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null);
     assertThat(requestRespons2).isNotNull();
-    verify(azureAppServiceDeploymentService, never()).deployDockerImage(any(), any());
+    verify(azureAppServiceDeploymentService, never()).deployDockerImage(any(), any(), null);
     verify(azureAppServiceDeploymentService, never()).stopSlotAsyncWithSteadyCheck(any(), any(), any());
   }
 
@@ -342,7 +342,7 @@ public class AzureWebAppRollbackRequestHandlerTest {
         .fetchDeploymentData(any(AzureWebClientContext.class), eq(DEPLOYMENT_SLOT));
 
     assertThatThrownBy(
-        () -> requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider))
+        () -> requestHandler.execute(request, AzureTestUtils.createTestAzureConfig(), logCallbackProvider, null))
         .isInstanceOf(AzureWebAppRollbackExceptionData.class)
         .matches(exception -> {
           AzureWebAppRollbackExceptionData dataException = (AzureWebAppRollbackExceptionData) exception;
@@ -354,6 +354,6 @@ public class AzureWebAppRollbackRequestHandlerTest {
   private void mockRerouteProductionSlotTraffic() {
     doNothing()
         .when(azureAppServiceDeploymentService)
-        .rerouteProductionSlotTraffic(any(), eq(DEPLOYMENT_SLOT), eq(TRAFFIC_WEIGHT), any());
+        .rerouteProductionSlotTraffic(any(), eq(DEPLOYMENT_SLOT), eq(TRAFFIC_WEIGHT), any(), null);
   }
 }

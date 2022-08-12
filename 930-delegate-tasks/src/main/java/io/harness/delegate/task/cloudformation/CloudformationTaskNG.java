@@ -58,7 +58,7 @@ public class CloudformationTaskNG extends AbstractDelegateRunnableTask {
         ? taskParameters.getCommandUnitsProgress()
         : CommandUnitsProgress.builder().build();
     LogCallback logCallback = getLogCallback(
-        getLogStreamingTaskClient(), taskParameters.getCfCommandUnit().name(), true, commandUnitsProgress);
+        getLogStreamingTaskClient(), taskParameters.getCfCommandUnit().name(), true, commandUnitsProgress, getTaskId());
     if (!handlersMap.containsKey(taskParameters.getTaskType())) {
       throw new UnexpectedTypeException(
           String.format("No handler found for task type %s", taskParameters.getTaskType()));
@@ -80,7 +80,8 @@ public class CloudformationTaskNG extends AbstractDelegateRunnableTask {
   }
 
   public LogCallback getLogCallback(ILogStreamingTaskClient logStreamingTaskClient, String commandUnitName,
-      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
-    return new NGDelegateLogCallback(logStreamingTaskClient, commandUnitName, shouldOpenStream, commandUnitsProgress);
+      boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress, String taskId) {
+    return new NGDelegateLogCallback(
+        logStreamingTaskClient, commandUnitName, shouldOpenStream, commandUnitsProgress, taskId);
   }
 }

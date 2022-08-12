@@ -22,7 +22,7 @@ public class CgAzureLogCallbackProvider implements AzureLogCallbackProvider {
   }
 
   @Override
-  public LogCallback obtainLogCallback(String commandUnitName) {
+  public LogCallback obtainLogCallback(String commandUnitName, String taskId) {
     return logStreamingTaskClient.obtainLogCallback(commandUnitName);
   }
 }
