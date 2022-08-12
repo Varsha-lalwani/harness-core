@@ -15,6 +15,7 @@ import static software.wings.common.Constants.WINDOWS_HOME_DIR;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
+import io.harness.delegate.beans.logstreaming.CommandUnitProgress;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.logstreaming.UnitProgressDataMapper;
@@ -34,6 +35,7 @@ import io.harness.shell.ShellExecutorConfig;
 import software.wings.core.winrm.executors.WinRmExecutor;
 
 import com.google.inject.Inject;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -99,13 +101,14 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
                                            .workingDirectory("/tmp")
                                            .environment(taskParameters.getEnvironmentVariables())
                                            .scriptType(ScriptType.POWERSHELL)
-                                           .closeLogStream(true)
                                            .build();
 
     AbstractScriptExecutor executor =
         shellExecutorFactory.getExecutor(config, getLogStreamingTaskClient(), commandUnitsProgress);
 
     ExecuteCommandResponse executeCommandResponse = executor.executeCommandString("echo test", Collections.emptyList());
+
+    updateStatus(commandUnitsProgress, INIT_UNIT, executeCommandResponse.getStatus());
 
     return ShellScriptTaskResponseNG.builder()
         .executeCommandResponse(executeCommandResponse)
@@ -124,7 +127,6 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
                                            .workingDirectory(taskParameters.getWorkingDirectory())
                                            .environment(taskParameters.getEnvironmentVariables())
                                            .scriptType(ScriptType.POWERSHELL)
-                                           //        .closeLogStream(true)
                                            .build();
 
     AbstractScriptExecutor executor =
@@ -132,6 +134,8 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
 
     ExecuteCommandResponse executeCommandResponse =
         executor.executeCommandString(taskParameters.getScript(), taskParameters.getOutputVars());
+
+    updateStatus(commandUnitsProgress, COMMAND_UNIT, executeCommandResponse.getStatus());
 
     return ShellScriptTaskResponseNG.builder()
         .executeCommandResponse(executeCommandResponse)
@@ -211,6 +215,22 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
       case SUCCESS:
       default:
         return "";
+    }
+  }
+
+  private void updateStatus(
+      CommandUnitsProgress commandUnitsProgress, String commandUnit, CommandExecutionStatus status) {
+    CommandUnitProgress existingUnitProgress = commandUnitsProgress.getCommandUnitProgressMap().get(commandUnit);
+    if (existingUnitProgress != null) {
+      CommandUnitProgress updatedUnitProgress =
+          CommandUnitProgress.builder()
+              .status(status)
+              .startTime(existingUnitProgress.getStartTime())
+              .endTime(existingUnitProgress.getEndTime() != 0L ? existingUnitProgress.getEndTime()
+                                                               : Instant.now().toEpochMilli())
+              .build();
+
+      commandUnitsProgress.getCommandUnitProgressMap().put(commandUnit, updatedUnitProgress);
     }
   }
 
