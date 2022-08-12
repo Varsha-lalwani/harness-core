@@ -9,6 +9,8 @@ package io.harness.steps.approval.step.custom;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
+import static java.util.Collections.emptyList;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.task.shell.ShellScriptTaskNG;
@@ -117,6 +119,6 @@ public class CustomApprovalStep extends AsyncExecutableWithRollback {
 
   private void closeLogStream(Ambiance ambiance) {
     ILogStreamingStepClient logStreamingStepClient = logStreamingStepClientFactory.getLogStreamingStepClient(ambiance);
-    logStreamingStepClient.closeStream(ShellScriptTaskNG.COMMAND_UNIT);
+    logStreamingStepClient.closeAllOpenStreamsWithPrefix(StepUtils.generateLogKeys(ambiance, emptyList()).get(0));
   }
 }
