@@ -18,7 +18,7 @@ public class CustomSecretManagerEntitytoDTO
   public CustomSecretManagerConnectorDTO createConnectorDTO(CustomSecretManagerConnector connector) {
     return CustomSecretManagerConnectorDTO.builder()
         .template(connector.getTemplate())
-        .connectorToken(SecretRefHelper.createSecretRef(connector.getConnectorRef()))
+        .connectorRef(SecretRefHelper.createSecretRef(connector.getConnectorRef()))
         .isDefault(connector.isDefault())
         .host(connector.getHost())
         .onDelegate(connector.isOnDelegate())

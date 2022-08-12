@@ -10,6 +10,7 @@ package io.harness.ng;
 import io.harness.connector.ConnectorDTO;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.connector.customseceretmanager.CustomSecretManagerConnectorDTO;
+import io.harness.encryption.SecretRefHelper;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.secretmanagerclient.dto.CustomSecretManagerConfigDTO;
 import io.harness.secretmanagerclient.dto.CustomSecretManagerConfigDTO.CustomSecretManagerConfigDTOBuilder;
@@ -36,13 +37,13 @@ public class CustomSecretManagerConfigDTOMapper {
 
             .delegateSelectors(connectorDTO.getDelegateSelectors())
             .onDelegate(connectorDTO.isOnDelegate())
-            //.connectorToken(connectorDTO.getConnectorToken())
+            .connectorRef(SecretRefHelper.getSecretConfigString(connectorDTO.getConnectorRef()))
             .host(connectorDTO.getHost())
             .workingDirectory(connectorDTO.getWorkingDirectory())
             .template(connectorDTO.getTemplate());
 
-    if (null != connectorDTO.getConnectorToken() && null != connectorDTO.getConnectorToken().getDecryptedValue()) {
-      builder.connectorToken(String.valueOf(connectorDTO.getConnectorToken().getDecryptedValue()));
+    if (null != connectorDTO.getConnectorRef() && null != connectorDTO.getConnectorRef().getDecryptedValue()) {
+      builder.connectorRef(String.valueOf(connectorDTO.getConnectorRef().getDecryptedValue()));
     }
     return builder.build();
   }

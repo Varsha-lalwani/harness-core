@@ -27,14 +27,14 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = {"connectorToken", "unmergedConnectorRequest"})
+@ToString(exclude = {"connectorRef", "unmergedConnectorRequest"})
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 public class CustomSecretManagerConfigDTO extends SecretManagerConfigDTO implements DelegateSelectable {
   Set<String> delegateSelectors;
   private boolean onDelegate;
 
-  @Schema(description = SecretManagerDescriptionConstants.CUSTOM_AUTH_TOKEN) private String connectorToken;
+  @Schema(description = SecretManagerDescriptionConstants.CUSTOM_AUTH_TOKEN) private String connectorRef;
   private String host;
   private String workingDirectory;
   private TemplateLinkConfig template;

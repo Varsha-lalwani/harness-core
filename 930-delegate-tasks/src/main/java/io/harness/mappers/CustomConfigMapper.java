@@ -19,7 +19,7 @@ public class CustomConfigMapper {
         CustomSecretNGManagerConfig.builder()
             .delegateSelectors(customSecretManagerConfigDTO.getDelegateSelectors())
             .onDelegate(customSecretManagerConfigDTO.isOnDelegate())
-            .connectorToken(customSecretManagerConfigDTO.getConnectorToken())
+            .connectorRef(customSecretManagerConfigDTO.getConnectorRef())
             .host(customSecretManagerConfigDTO.getHost())
             .workingDirectory(customSecretManagerConfigDTO.getWorkingDirectory())
             .template(customSecretManagerConfigDTO.getTemplate())

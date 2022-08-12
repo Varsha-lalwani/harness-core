@@ -111,6 +111,7 @@ public class NGCustomSecretManagerEncryptor implements CustomEncryptor {
     }
   }
 
+  // On delegate ->
   private char[] fetchSecretValueInternal(String accountId, EncryptedRecord encryptedRecord,
       CustomSecretNGManagerConfig customSecretNGManagerConfig, String script) {
     ShellScriptTaskParametersNG shellScriptTaskParametersNG =

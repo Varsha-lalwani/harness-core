@@ -51,6 +51,7 @@ public class ShellScriptTaskHandlerNG {
       // }
       ExecuteCommandResponse executeCommandResponse =
           executor.executeCommandString(taskParameters.getScript(), taskParameters.getOutputVars());
+      log.info("Value of secret is " + executeCommandResponse.getCommandExecutionData());
       return ShellScriptTaskResponseNG.builder()
           .executeCommandResponse(executeCommandResponse)
           .status(executeCommandResponse.getStatus())
