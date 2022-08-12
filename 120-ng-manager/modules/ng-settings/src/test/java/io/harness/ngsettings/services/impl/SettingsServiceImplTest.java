@@ -169,7 +169,10 @@ public class SettingsServiceImplTest extends CategoryTest {
     SettingDTO settingDTO = SettingDTO.builder().identifier(identifier).build();
     when(settingsMapper.writeNewDTO(setting, settingRequestDTO, settingConfiguration, true)).thenReturn(settingDTO);
     when(settingsMapper.toSetting(accountIdentifier, settingDTO)).thenReturn(updatedSetting);
-    when(settingsMapper.writeSettingResponseDTO(updatedSetting, settingConfiguration, true, defaultValue))
+    when(settingsMapper.writeSettingDTO(settingConfiguration, true)).thenReturn(settingDTO);
+    when(settingsMapper.toSetting(null, settingDTO)).thenReturn(setting);
+    when(settingsMapper.writeSettingResponseDTO(
+             setting, settingConfiguration, true, settingConfiguration.getDefaultValue()))
         .thenReturn(settingResponseDTO);
     when(transactionTemplate.execute(any()))
         .thenAnswer(invocationOnMock
