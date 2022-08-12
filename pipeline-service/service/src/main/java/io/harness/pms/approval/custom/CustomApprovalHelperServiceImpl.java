@@ -8,7 +8,6 @@
 package io.harness.pms.approval.custom;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.delegate.task.shell.ShellScriptTaskNG.COMMAND_UNIT;
 
 import static software.wings.beans.TaskType.SHELL_SCRIPT_TASK_NG;
 import static software.wings.beans.TaskType.WIN_RM_SHELL_SCRIPT_TASK_NG;
@@ -23,6 +22,7 @@ import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.TaskSelector;
 import io.harness.delegate.TaskType;
 import io.harness.delegate.task.TaskParameters;
+import io.harness.delegate.task.shell.ShellScriptTaskNG;
 import io.harness.delegate.task.shell.WinRmShellScriptTaskNG;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.shell.ShellScriptTaskNG;
@@ -143,8 +143,8 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
   }
 
   private NGLogCallback getLogCallback(Ambiance ambiance, CustomApprovalInstance instance) {
-    final String unit =
-        ShellType.Bash.equals(instance.getShellType()) ? COMMAND_UNIT : WinRmShellScriptTaskNG.INIT_UNIT;
+    final String unit = ShellType.Bash.equals(instance.getShellType()) ? ShellScriptTaskNG.COMMAND_UNIT
+                                                                       : WinRmShellScriptTaskNG.INIT_UNIT;
     return new NGLogCallback(logStreamingStepClientFactory, ambiance, unit, false);
   }
 
