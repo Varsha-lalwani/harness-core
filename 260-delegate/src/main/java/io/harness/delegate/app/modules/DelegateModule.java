@@ -66,8 +66,8 @@ import io.harness.connector.service.git.NGGitService;
 import io.harness.connector.service.git.NGGitServiceImpl;
 import io.harness.connector.service.scm.ScmDelegateClient;
 import io.harness.connector.task.ConnectorValidationHandler;
-import io.harness.connector.task.artifactory.ArtifactoryValidationHandler;
 import io.harness.connector.task.NotSupportedValidationHandler;
+import io.harness.connector.task.artifactory.ArtifactoryValidationHandler;
 import io.harness.connector.task.aws.AwsValidationHandler;
 import io.harness.connector.task.azure.AzureValidationHandler;
 import io.harness.connector.task.docker.DockerValidationHandler;
@@ -298,6 +298,7 @@ import io.harness.delegatetasks.NGVaultRenewalAppRoleTask;
 import io.harness.delegatetasks.NGVaultRenewalTask;
 import io.harness.delegatetasks.UpsertSecretTask;
 import io.harness.delegatetasks.UpsertSecretTaskValidationHandler;
+import io.harness.delegatetasks.ValidateCustomSecretManagerSecretReferenceTask;
 import io.harness.delegatetasks.ValidateSecretManagerConfigurationTask;
 import io.harness.delegatetasks.ValidateSecretReferenceTask;
 import io.harness.encryptors.CustomEncryptor;
@@ -1581,6 +1582,8 @@ public class DelegateModule extends AbstractModule {
     // Secret Management (New Tasks)
     mapBinder.addBinding(TaskType.DELETE_SECRET).toInstance(DeleteSecretTask.class);
     mapBinder.addBinding(TaskType.VALIDATE_SECRET_REFERENCE).toInstance(ValidateSecretReferenceTask.class);
+    mapBinder.addBinding(TaskType.VALIDATE_CUSTOM_SECRET_MANAGER_SECRET_REFERENCE)
+        .toInstance(ValidateCustomSecretManagerSecretReferenceTask.class);
     mapBinder.addBinding(TaskType.UPSERT_SECRET).toInstance(UpsertSecretTask.class);
     mapBinder.addBinding(TaskType.FETCH_SECRET).toInstance(FetchSecretTask.class);
     mapBinder.addBinding(TaskType.ENCRYPT_SECRET).toInstance(EncryptSecretTask.class);

@@ -156,17 +156,17 @@ public class CustomSecretsManagerValidationUtils {
   // Use yaml ( create via yaml ) - in db
   // test connection ( via postman ) with connector identifier ( of yaml in db )
   // Test connection --> debug
-  public static ShellScriptTaskParametersNG buildShellScriptTaskParametersNG(
-      String accountId, EncryptedRecord encryptedRecord, CustomSecretNGManagerConfig customSecretNGManagerConfig) {
+  public static ShellScriptTaskParametersNG buildShellScriptTaskParametersNG(String accountId,
+      EncryptedRecord encryptedRecord, CustomSecretNGManagerConfig customSecretNGManagerConfig, String script) {
     ScriptType scriptType = ScriptType.BASH;
     ShellScriptTaskParametersNG.ShellScriptTaskParametersNGBuilder taskParametersNGBuilder =
         ShellScriptTaskParametersNG.builder();
-    String script = encryptedRecord.getParameters()
+    /*String script = encryptedRecord.getParameters()
                         .stream()
                         .filter(encryptedDataParams -> encryptedDataParams.getName().equals("Script"))
                         .findFirst()
                         .get()
-                        .getValue();
+                        .getValue();*/
     /*
     taskParametersNGBuilder.k8sInfraDelegateConfig(
             shellScriptHelperService.getK8sInfraDelegateConfig(ambiance, shellScript));

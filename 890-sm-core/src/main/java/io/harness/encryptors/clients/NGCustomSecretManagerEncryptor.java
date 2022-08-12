@@ -55,14 +55,21 @@ public class NGCustomSecretManagerEncryptor implements CustomEncryptor {
   }
 
   @Override
-  public char[] fetchSecretValue(String accountId, EncryptedRecord encryptedRecord, EncryptionConfig encryptionConfig) {
+  public boolean validateCustomSecretManagerSecretReference(
+      String accountId, String script, Set<EncryptedDataParams> params, EncryptionConfig encryptionConfig) {
+    return isNotEmpty(fetchSecretValueWithScript(
+        accountId, script, EncryptedRecordData.builder().parameters(params).build(), encryptionConfig));
+  }
+
+  public char[] fetchSecretValueWithScript(
+      String accountId, String script, EncryptedRecord encryptedRecord, EncryptionConfig encryptionConfig) {
     CustomSecretNGManagerConfig customSecretsManagerConfig = (CustomSecretNGManagerConfig) encryptionConfig;
     final int NUM_OF_RETRIES = 3;
     int failedAttempts = 0;
     while (true) {
       try {
         return HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(20),
-            () -> fetchSecretValueInternal(accountId, encryptedRecord, customSecretsManagerConfig));
+            () -> fetchSecretValueInternal(accountId, encryptedRecord, customSecretsManagerConfig, script));
       } catch (SecretManagementDelegateException e) {
         throw e;
       } catch (Exception e) {
@@ -76,10 +83,38 @@ public class NGCustomSecretManagerEncryptor implements CustomEncryptor {
     }
   }
 
-  private char[] fetchSecretValueInternal(
-      String accountId, EncryptedRecord encryptedRecord, CustomSecretNGManagerConfig customSecretNGManagerConfig) {
+  @Override
+  public char[] fetchSecretValue(String accountId, EncryptedRecord encryptedRecord, EncryptionConfig encryptionConfig) {
+    CustomSecretNGManagerConfig customSecretsManagerConfig = (CustomSecretNGManagerConfig) encryptionConfig;
+    String script = encryptedRecord.getParameters()
+                        .stream()
+                        .filter(encryptedDataParams -> encryptedDataParams.getName().equals("Script"))
+                        .findFirst()
+                        .get()
+                        .getValue();
+    final int NUM_OF_RETRIES = 3;
+    int failedAttempts = 0;
+    while (true) {
+      try {
+        return HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(20),
+            () -> fetchSecretValueInternal(accountId, encryptedRecord, customSecretsManagerConfig, script));
+      } catch (SecretManagementDelegateException e) {
+        throw e;
+      } catch (Exception e) {
+        failedAttempts++;
+        if (failedAttempts == NUM_OF_RETRIES) {
+          String message = "Failed to decrypt " + encryptedRecord.getName() + " after " + NUM_OF_RETRIES + " retries";
+          throw new SecretManagementDelegateException(SECRET_MANAGEMENT_ERROR, message, e, USER);
+        }
+        sleep(ofMillis(1000));
+      }
+    }
+  }
+
+  private char[] fetchSecretValueInternal(String accountId, EncryptedRecord encryptedRecord,
+      CustomSecretNGManagerConfig customSecretNGManagerConfig, String script) {
     ShellScriptTaskParametersNG shellScriptTaskParametersNG =
-        buildShellScriptTaskParametersNG(accountId, encryptedRecord, customSecretNGManagerConfig);
+        buildShellScriptTaskParametersNG(accountId, encryptedRecord, customSecretNGManagerConfig, script);
     ShellScriptTaskResponseNG shellScriptTaskResponseNG =
         (ShellScriptTaskResponseNG) shellScriptTaskHandlerNG.handle(shellScriptTaskParametersNG, null);
     if (shellScriptTaskResponseNG.getStatus() != SUCCESS) {

@@ -33,10 +33,12 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("io.harness.connector.entities.embedded.customsecretmanager.CustomSecretManagerConnector")
 public class CustomSecretManagerConnector extends Connector {
   private boolean onDelegate;
+  // Use annotations
   private boolean isDefault;
   private String connectorRef;
   private String host;
   private String workingDirectory;
   private TemplateLinkConfig template;
+  // TODO: Remove this
   private Set<EncryptedDataParams> testVariables;
 }

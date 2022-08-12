@@ -1851,6 +1851,8 @@
 150021:io.harness.delegatetasks.NGVaultRenewalAppRoleTaskResponse
 150022:io.harness.delegatetasks.NGAzureKeyVaultFetchEngineTaskParameters
 150023:io.harness.delegatetasks.NGAzureKeyVaultFetchEngineResponse
+150024:io.harness.delegatetasks.ValidateCustomSecretManagerSecretReferenceTaskResponse
+150025:io.harness.delegatetasks.ValidateCustomSecretManagerSecretReferenceTaskParameters
 193418:io.harness.delegate.beans.ci.pod.ConnectorDetails
 400101:software.wings.beans.ce.CEAwsConfig
 400102:software.wings.beans.ce.CEGcpConfig

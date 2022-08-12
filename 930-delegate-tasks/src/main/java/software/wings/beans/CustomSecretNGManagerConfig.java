@@ -39,6 +39,7 @@ import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 
+// DTO , Entity , Mapper
 @OwnedBy(PL)
 @Data
 @SuperBuilder

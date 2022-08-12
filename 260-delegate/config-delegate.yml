@@ -16,6 +16,18 @@ grpcServiceConnectorPort: 8080
 logStreamingServiceBaseUrl: http://localhost:8079
 clientToolsDownloadDisabled: false
 installClientToolsInBackground: true
+INIT_SCRIPT: |-
+  apt-get update;
+  echo
+  if which jq; then
+    echo found jq shreyas
+    echo
+  else
+    echo installing jq shreyas
+    echo
+    apt-get install -y jq
+  fi
+  echo
 
 # Required for local development as manger uses self-signed cert
 trustAllCertificates: true

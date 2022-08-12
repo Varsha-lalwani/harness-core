@@ -219,6 +219,7 @@ public enum TaskType {
   // Secret Management (New Tasks)
   DELETE_SECRET(TaskGroup.KMS),
   VALIDATE_SECRET_REFERENCE(TaskGroup.KMS),
+  VALIDATE_CUSTOM_SECRET_MANAGER_SECRET_REFERENCE(TaskGroup.COMMAND_TASK_NG),
   UPSERT_SECRET(TaskGroup.KMS),
   FETCH_SECRET(TaskGroup.KMS),
   ENCRYPT_SECRET(TaskGroup.KMS),

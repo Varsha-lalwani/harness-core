@@ -12,12 +12,13 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.expression.ExpressionFunctor;
 
+import lombok.Getter;
 import lombok.Value;
 
 @OwnedBy(CDC)
 @Value
 public class SecretFunctor implements ExpressionFunctor {
-  long expressionFunctorToken;
+  @Getter long expressionFunctorToken;
 
   public SecretFunctor(long expressionFunctorToken) {
     this.expressionFunctorToken = expressionFunctorToken;

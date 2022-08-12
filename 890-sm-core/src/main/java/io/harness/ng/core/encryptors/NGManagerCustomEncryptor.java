@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegatetasks.ValidateCustomSecretManagerSecretReferentTaskParameters;
 import io.harness.delegatetasks.ValidateSecretManagerConfigurationTaskParameters;
 import io.harness.delegatetasks.ValidateSecretReferenceTaskParameters;
 import io.harness.encryptors.CustomEncryptor;
@@ -49,6 +50,18 @@ public class NGManagerCustomEncryptor implements CustomEncryptor {
             .build();
 
     return ngManagerEncryptorHelper.validateReference(accountId, parameters);
+  }
+
+  @Override
+  public boolean validateCustomSecretManagerSecretReference(
+      String accountId, String script, Set<EncryptedDataParams> params, EncryptionConfig encryptionConfig) {
+    ValidateCustomSecretManagerSecretReferentTaskParameters parameters =
+        ValidateCustomSecretManagerSecretReferentTaskParameters.builder()
+            .encryptedRecord(EncryptedRecordData.builder().parameters(params).build())
+            .encryptionConfig(encryptionConfig)
+            .script(script)
+            .build();
+    return ngManagerEncryptorHelper.validateCustomSecretManagerSecretReference(accountId, parameters);
   }
 
   @Override

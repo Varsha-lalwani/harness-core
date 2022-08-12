@@ -21,6 +21,7 @@ import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.connector.services.NGConnectorSecretManagerService;
 import io.harness.connector.services.NGVaultService;
+import io.harness.data.algorithm.HashGenerator;
 import io.harness.encryptors.CustomEncryptor;
 import io.harness.encryptors.CustomEncryptorsRegistry;
 import io.harness.encryptors.KmsEncryptor;
@@ -131,6 +132,7 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
             validationResult = kmsEncryptor.validateKmsConfiguration(encryptionConfig.getAccountId(), encryptionConfig);
             break;
           case CUSTOM:
+            // TODO: call custom method
             log.info("Secret manager type is custom");
             CustomSecretManagerConfigDTO customNGSecretManagerConfigDTO =
                 (CustomSecretManagerConfigDTO) secretManagerConfigDTO;
@@ -141,6 +143,7 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
                     customNGSecretManagerConfigDTO.getProjectIdentifier(),
                     customNGSecretManagerConfigDTO.getTemplate().getVersionLabel(), null, null, null));
 */
+            // template service.
             String mergedYaml =
                 NGRestUtils
                     .getResponse(templateResourceClient.applyTemplatesOnGivenYaml(
@@ -154,8 +157,9 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
             // String yaml = template.getYaml();
             log.info("Yaml received from template service is \n" + mergedYaml);
             // resolve the yaml
+            int functorToken = HashGenerator.generateIntegerHash();
             ShellScriptYamlExpressionEvaluator shellScriptYamlExpressionEvaluator =
-                new ShellScriptYamlExpressionEvaluator(mergedYaml);
+                new ShellScriptYamlExpressionEvaluator(mergedYaml, functorToken);
             ShellScriptBaseDTO shellScriptBaseDTO =
                 YamlUtils.read(mergedYaml, ShellScriptYamlDTO.class).getShellScriptBaseDTO();
             shellScriptBaseDTO =
@@ -175,10 +179,14 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
             CustomEncryptor customEncryptor = customEncryptorsRegistry.getCustomEncryptor(CUSTOM_NG);
             Set<EncryptedDataParams> encryptedDataParamsSet = new HashSet<>();
             encryptedDataParamsSet.add(EncryptedDataParams.builder().name("Script").value(script).build());
+            encryptedDataParamsSet.add(EncryptedDataParams.builder()
+                                           .name("expressionFunctorToken")
+                                           .value(String.valueOf(functorToken))
+                                           .build());
             // maybe output var
             // Script , task parameters -> (script, )
-            validationResult =
-                customEncryptor.validateReference(accountIdentifier, encryptedDataParamsSet, encryptionConfig);
+            validationResult = customEncryptor.validateCustomSecretManagerSecretReference(
+                accountIdentifier, script, encryptedDataParamsSet, encryptionConfig);
             // encryptor will pass it to delegate.
             //              validationResult = customEncryptor.validateReference(encryptionConfig.getAccountId(),
             //              encryptionConfig);

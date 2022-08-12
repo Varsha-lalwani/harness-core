@@ -26,6 +26,11 @@ public interface CustomEncryptor {
   char[] fetchSecretValue(
       @NotEmpty String accountId, @NotNull EncryptedRecord encryptedRecord, @NotNull EncryptionConfig encryptionConfig);
 
+  default boolean validateCustomSecretManagerSecretReference(String accountId, String script,
+      @NotNull Set<EncryptedDataParams> params, @NotNull EncryptionConfig encryptionConfig) {
+    throw new UnsupportedOperationException("Can not validate the secret");
+  }
+
   default boolean validateCustomConfiguration(String accountId, EncryptionConfig encryptionConfig) {
     throw new UnsupportedOperationException(
         "Validating SecretManager Configuration on Delegate in not available yet for:" + encryptionConfig);

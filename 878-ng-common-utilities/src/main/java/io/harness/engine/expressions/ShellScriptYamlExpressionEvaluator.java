@@ -28,10 +28,12 @@ import lombok.Value;
 @Builder
 public class ShellScriptYamlExpressionEvaluator extends EngineExpressionEvaluator {
   protected final String yaml;
+  public int functorToken;
 
-  public ShellScriptYamlExpressionEvaluator(String yaml) {
+  public ShellScriptYamlExpressionEvaluator(String yaml, int functorToken) {
     super(null);
     this.yaml = yaml;
+    this.functorToken = functorToken;
   }
 
   @Override
@@ -41,7 +43,7 @@ public class ShellScriptYamlExpressionEvaluator extends EngineExpressionEvaluato
     addToContext("__yamlExpression",
         ShellScriptYamlExpressionFunctor.builder().rootYamlField(getShellScriptYamlField()).build());
     // Add secret functor
-    addToContext("secrets", new SecretFunctor(HashGenerator.generateIntegerHash()));
+    addToContext("secrets", new SecretFunctor(functorToken));
   }
 
   @Override

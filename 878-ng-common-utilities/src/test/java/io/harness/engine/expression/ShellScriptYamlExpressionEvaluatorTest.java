@@ -38,7 +38,7 @@ public class ShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
       + "    source:\n"
       + "      __uuid: neREpx2mmQ14G7y3pKAQzW\n"
       + "      spec:\n"
-      + "        script: echo 1 echo <+template.spec.timeout>_<+template.spec.source.spec.type> and <+template.spec.environmentVariables.e1>\n"
+      + "        script: echo 1 echo <+spec.timeout>_<+template.spec.source.spec.type> and <+template.spec.environmentVariables.e1>\n"
       + "        type: Inline\n"
       + "    environmentVariables:\n"
       + "    - name: e1\n"
@@ -62,7 +62,7 @@ public class ShellScriptYamlExpressionEvaluatorTest extends CategoryTest {
   @Owner(developers = SHREYAS)
   public void testResolve() throws Exception {
     ShellScriptYamlExpressionEvaluator shellScriptYamlExpressionEvaluator =
-        new ShellScriptYamlExpressionEvaluator(yaml);
+        new ShellScriptYamlExpressionEvaluator(yaml, 7);
     ShellScriptBaseDTO shellScriptBaseDTO = YamlUtils.read(yaml, ShellScriptYamlDTO.class).getShellScriptBaseDTO();
     shellScriptBaseDTO = (ShellScriptBaseDTO) shellScriptYamlExpressionEvaluator.resolve(shellScriptBaseDTO, false);
     // Tests for single value resolution

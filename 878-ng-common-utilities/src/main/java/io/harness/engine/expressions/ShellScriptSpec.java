@@ -42,7 +42,7 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("ShellScriptSpec")
 @OwnedBy(HarnessTeam.PL)
 public class ShellScriptSpec implements Visitable {
-  // TIMEOUT
+  // TODO: TIMEOUT - remove this
   @NotNull @ApiModelProperty(dataType = INTEGER_CLASSPATH) @YamlSchemaTypes({integer}) ParameterField<Integer> timeout;
 
   // UUID

@@ -46,11 +46,13 @@ public class CustomSecretManagerConnectorDTO extends ConnectorConfigDTO implemen
   @SecretReference
   @ApiModelProperty(dataType = "string")
   @Schema(description = SecretManagerDescriptionConstants.CUSTOM_AUTH_TOKEN)
+  // TODO: name change to connectorRef
   private SecretRefData connectorToken;
 
   private String host;
   private String workingDirectory;
   private TemplateLinkConfig template;
+  // TODO: remove this
   private Set<EncryptedDataParams> testVariables;
   @Override
   public List<DecryptableEntity> getDecryptableEntities() {
