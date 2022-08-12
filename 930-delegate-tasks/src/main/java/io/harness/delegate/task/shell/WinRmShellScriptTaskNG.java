@@ -128,6 +128,7 @@ public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
                                            .workingDirectory(taskParameters.getWorkingDirectory())
                                            .environment(taskParameters.getEnvironmentVariables())
                                            .scriptType(ScriptType.POWERSHELL)
+                                           .closeLogStream(true)
                                            .build();
 
     AbstractScriptExecutor executor =
