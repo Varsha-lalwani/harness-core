@@ -258,14 +258,19 @@ public class AzureWebAppRollbackRequestHandler extends AzureWebAppRequestHandler
       AzureWebAppRollbackRequest taskRequest, AzureWebClientContext azureWebClientContext,
       AzureAppServiceDeploymentContext deploymentContext, String taskId) {
     AzureAppServicePreDeploymentData preDeploymentData = taskRequest.getPreDeploymentData();
+    if (!deploymentContext.isBasicDeployment()
+        && isTrafficWeightDifferent(azureWebClientContext, deploymentContext, preDeploymentData)) {
+      rollbackUpdateSlotTrafficWeight(preDeploymentData, azureWebClientContext, logCallbackProvider, taskId);
+    }
+    LogCallback rerouteTrafficLogCallback = logCallbackProvider.obtainLogCallback(SLOT_TRAFFIC_PERCENTAGE, taskId);
+    rerouteTrafficLogCallback.saveExecutionLog(NO_TRAFFIC_SHIFT_REQUIRED, INFO, SUCCESS);
+  }
+
+  private boolean isTrafficWeightDifferent(AzureWebClientContext azureWebClientContext,
+      AzureAppServiceDeploymentContext deploymentContext, AzureAppServicePreDeploymentData preDeploymentData) {
     double slotTrafficWeight =
         azureAppServiceService.getSlotTrafficWeight(azureWebClientContext, deploymentContext.getSlotName());
-    if (slotTrafficWeight != preDeploymentData.getTrafficWeight() && !deploymentContext.isBasicDeployment()) {
-      rollbackUpdateSlotTrafficWeight(preDeploymentData, azureWebClientContext, logCallbackProvider, taskId);
-    } else {
-      LogCallback rerouteTrafficLogCallback = logCallbackProvider.obtainLogCallback(SLOT_TRAFFIC_PERCENTAGE, taskId);
-      rerouteTrafficLogCallback.saveExecutionLog(NO_TRAFFIC_SHIFT_REQUIRED, INFO, SUCCESS);
-    }
+    return slotTrafficWeight != preDeploymentData.getTrafficWeight();
   }
 
   private void rollbackUpdateSlotTrafficWeight(AzureAppServicePreDeploymentData preDeploymentData,
