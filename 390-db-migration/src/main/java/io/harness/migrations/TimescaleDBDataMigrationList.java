@@ -9,10 +9,6 @@ package io.harness.migrations;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-
-import com.google.common.collect.ImmutableList;
-import java.util.List;
-
 import io.harness.migrations.timescaledb.data.AddAccountNameInAccountTable;
 import io.harness.migrations.timescaledb.data.AddParentPipelineDataToDeployment;
 import io.harness.migrations.timescaledb.data.AddWorkflowExecutionFailureDetails;
@@ -21,8 +17,10 @@ import io.harness.migrations.timescaledb.data.OptimizeNodeRecommendationQuery;
 import io.harness.migrations.timescaledb.data.PodInfoPartialIndexForSyncQuery;
 import io.harness.migrations.timescaledb.data.SetInstancesDeployedInDeployment;
 import io.harness.migrations.timescaledb.data.SetRollbackDurationInDeployment;
-import io.harness.migrations.timescaledb.data.SyncWorkflowExecutionDataFromMongo;
 import io.harness.migrations.timescaledb.data.UpdateEnvSvcCPInDeployment;
+
+import com.google.common.collect.ImmutableList;
+import java.util.List;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -39,9 +37,8 @@ public class TimescaleDBDataMigrationList {
         .add(Pair.of(6, OptimizeNodeRecommendationQuery.class))
         .add(Pair.of(7, AddAccountNameInAccountTable.class))
         .add(Pair.of(8, PodInfoPartialIndexForSyncQuery.class))
-        .add(Pair.of(9, AddParentPipelineDataToDeployment.class))
-        .add(Pair.of(10, AddWorkflowExecutionFailureDetails.class))
-        .add(Pair.of(11, SyncWorkflowExecutionDataFromMongo.class))
+        .add(Pair.of(9, AddWorkflowExecutionFailureDetails.class))
+        .add(Pair.of(10, AddParentPipelineDataToDeployment.class))
         .build();
   }
 }

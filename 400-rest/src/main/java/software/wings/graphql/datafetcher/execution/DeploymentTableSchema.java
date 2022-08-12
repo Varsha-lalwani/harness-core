@@ -106,6 +106,6 @@ public class DeploymentTableSchema {
     instancesDeployed = deploymentTable.addColumn("INSTANCES_DEPLOYED", "int", null);
     tags = deploymentTable.addColumn("TAGS", "hstore", null);
     parentPipelineId = deploymentTable.addColumn("PARENT_PIPELINE_ID", "text", null);
-    cause = deploymentTable.addColumn("CAUSE", "text", null);
+    cause = deploymentTable.addColumn("CREATED_BY_TYPE", "text", null);
   }
 }

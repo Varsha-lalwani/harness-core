@@ -141,7 +141,7 @@ public class UsageMetricsEventPublisher {
       stringData.put(EventProcessor.PARENT_PIPELINE_ID, workflowExecution.getPipelineSummary().getPipelineId());
     }
 
-    stringData.put(EventProcessor.CAUSE, WorkflowExecutionServiceHelper.getCause(workflowExecution));
+    stringData.put(EventProcessor.CREATED_BY_TYPE, WorkflowExecutionServiceHelper.getCause(workflowExecution));
 
     if (!Lists.isNullOrEmpty(workflowExecution.getWorkflowIds())) {
       listData.put(EventProcessor.WORKFLOWS, workflowExecution.getWorkflowIds());

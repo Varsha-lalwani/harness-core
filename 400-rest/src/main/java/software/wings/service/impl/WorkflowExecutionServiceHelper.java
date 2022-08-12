@@ -7,9 +7,23 @@
 
 package software.wings.service.impl;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.OrchestrationWorkflowType.BUILD;
+import static io.harness.beans.WorkflowType.ORCHESTRATION;
+import static io.harness.beans.WorkflowType.PIPELINE;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.exception.WingsException.USER;
+import static io.harness.expression.ExpressionEvaluator.matchesVariablePattern;
+import static io.harness.validation.Validator.notNullCheck;
+
+import static software.wings.beans.VariableType.ENTITY;
+
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
@@ -21,10 +35,7 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.ff.FeatureFlagService;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.mongodb.morphia.query.Query;
-import org.mongodb.morphia.query.Sort;
+
 import software.wings.api.CanaryWorkflowStandardParams;
 import software.wings.api.DeploymentType;
 import software.wings.api.WorkflowElement;
@@ -50,25 +61,19 @@ import software.wings.sm.StateExecutionInstance.StateExecutionInstanceKeys;
 import software.wings.sm.StateMachine;
 import software.wings.sm.WorkflowStandardParams;
 
-import javax.validation.constraints.NotNull;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.Sort;
 
-import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.beans.OrchestrationWorkflowType.BUILD;
-import static io.harness.beans.WorkflowType.ORCHESTRATION;
-import static io.harness.beans.WorkflowType.PIPELINE;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.exception.WingsException.USER;
-import static io.harness.expression.ExpressionEvaluator.matchesVariablePattern;
-import static io.harness.validation.Validator.notNullCheck;
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static software.wings.beans.VariableType.ENTITY;
-
+@Slf4j
 @OwnedBy(CDC)
 @Singleton
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
@@ -644,27 +649,31 @@ public class WorkflowExecutionServiceHelper {
       StringJoiner failureMessage = new StringJoiner(", ");
       StringJoiner failedStepNames = new StringJoiner(", ");
       StringJoiner failedStepTypes = new StringJoiner(", ");
-      prepareFailedPhases(stateExecutionInstances, parentInstances, executionDetails);
-      prepareFailedSteps(appId, executionId, stateExecutionInstances, parentInstances, executionDetails);
+      try {
+        prepareFailedPhases(stateExecutionInstances, parentInstances, executionDetails);
+        prepareFailedSteps(appId, executionId, stateExecutionInstances, parentInstances, executionDetails);
 
-      if (isNotEmpty(executionDetails)) {
-        executionDetails.forEach((id, message) -> {
-          failureMessage.add(message.toString());
-          stateExecutionInstances.stream().filter(sei -> id.equals(sei.getUuid())).findFirst().ifPresent(sei -> {
-            failedStepNames.add(sei.getStateName());
-            failedStepTypes.add(sei.getStateType());
+        if (isNotEmpty(executionDetails)) {
+          executionDetails.forEach((id, message) -> {
+            failureMessage.add(message.toString());
+            stateExecutionInstances.stream().filter(sei -> id.equals(sei.getUuid())).findFirst().ifPresent(sei -> {
+              failedStepNames.add(sei.getStateName());
+              failedStepTypes.add(sei.getStateType());
+            });
           });
-        });
-      }
+        }
 
-      WorkflowExecution requiredWorkflowExecution =
-          workflowExecutions.stream().filter(we -> executionId.equals(we.getUuid())).findFirst().orElse(null);
-      if (requiredWorkflowExecution != null) {
-        requiredWorkflowExecution.setFailureDetails(failureMessage.toString());
-        requiredWorkflowExecution.setFailedStepNames(failedStepNames.toString());
-        requiredWorkflowExecution.setFailedStepTypes(failedStepTypes.toString());
+        WorkflowExecution requiredWorkflowExecution =
+            workflowExecutions.stream().filter(we -> executionId.equals(we.getUuid())).findFirst().orElse(null);
+        if (requiredWorkflowExecution != null) {
+          requiredWorkflowExecution.setFailureDetails(failureMessage.toString());
+          requiredWorkflowExecution.setFailedStepNames(failedStepNames.toString());
+          requiredWorkflowExecution.setFailedStepTypes(failedStepTypes.toString());
+        }
+        workflowExecutionsWithFailureDetails.add(requiredWorkflowExecution);
+      } catch (Exception e) {
+        log.error("Unable to fetch failure details for appId {}, executionId {}", executionId, appId, e);
       }
-      workflowExecutionsWithFailureDetails.add(requiredWorkflowExecution);
     });
     return workflowExecutionsWithFailureDetails;
   }
