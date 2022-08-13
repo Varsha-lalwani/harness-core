@@ -7,8 +7,8 @@
 
 package software.wings.beans.loginSettings.events;
 
-import static software.wings.beans.loginSettings.LoginSettingsConstants.HARNESS_USERNAME_PASSWORD_UPDATED;
 import static software.wings.beans.loginSettings.LoginSettingsConstants.RESOURCE_NAME;
+import static software.wings.beans.loginSettings.LoginSettingsConstants.WHITELISTED_DOMAINS_UPDATED;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -31,11 +31,10 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class LoginSettingsHarnessUsernamePasswordUpdateEvent implements Event {
+public class LoginSettingsWhitelistedDomainsUpdateEvent implements Event {
   private String accountIdentifier;
-  private String loginSettingsId;
-  private LoginSettingsYamlDTO oldLoginSettingsYamlDTO;
-  private LoginSettingsYamlDTO newLoginSettingsYamlDTO;
+  private WhitelistedDomainsYamlDTO oldWhitelistedDomainsYamlDTO;
+  private WhitelistedDomainsYamlDTO newWhitelistedDomainsYamlDTO;
 
   @Override
   public ResourceScope getResourceScope() {
@@ -47,7 +46,7 @@ public class LoginSettingsHarnessUsernamePasswordUpdateEvent implements Event {
     Map<String, String> labels = new HashMap<>();
     labels.put(ResourceConstants.LABEL_KEY_RESOURCE_NAME, RESOURCE_NAME);
     return Resource.builder()
-        .identifier(loginSettingsId)
+        .identifier(accountIdentifier)
         .labels(labels)
         .type(ResourceTypeConstants.NG_LOGIN_SETTINGS)
         .build();
@@ -55,6 +54,6 @@ public class LoginSettingsHarnessUsernamePasswordUpdateEvent implements Event {
 
   @Override
   public String getEventType() {
-    return HARNESS_USERNAME_PASSWORD_UPDATED;
+    return WHITELISTED_DOMAINS_UPDATED;
   }
 }

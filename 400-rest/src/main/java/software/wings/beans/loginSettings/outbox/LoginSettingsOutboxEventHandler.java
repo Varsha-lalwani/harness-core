@@ -9,6 +9,9 @@ package software.wings.beans.loginSettings.outbox;
 
 import static io.harness.ng.core.utils.NGYamlUtils.getYamlString;
 
+import static software.wings.beans.loginSettings.LoginSettingsConstants.HARNESS_USERNAME_PASSWORD_UPDATED;
+import static software.wings.beans.loginSettings.LoginSettingsConstants.WHITELISTED_DOMAINS_UPDATED;
+
 import io.harness.ModuleType;
 import io.harness.audit.Action;
 import io.harness.audit.beans.AuditEntry;
@@ -20,6 +23,7 @@ import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxEventHandler;
 
 import software.wings.beans.loginSettings.events.LoginSettingsHarnessUsernamePasswordUpdateEvent;
+import software.wings.beans.loginSettings.events.LoginSettingsWhitelistedDomainsUpdateEvent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
@@ -44,8 +48,10 @@ public class LoginSettingsOutboxEventHandler implements OutboxEventHandler {
     GlobalContext globalContext = outboxEvent.getGlobalContext();
     try {
       switch (outboxEvent.getEventType()) {
-        case "HarnessUsernameAndPasswordUpdated":
+        case HARNESS_USERNAME_PASSWORD_UPDATED:
           return handleHarnessUsernamePasswordUpdateEvent(outboxEvent, globalContext);
+        case WHITELISTED_DOMAINS_UPDATED:
+          return handleWhitelistedDomainsUpdateEvent(outboxEvent, globalContext);
         default:
           return false;
       }
@@ -64,6 +70,24 @@ public class LoginSettingsOutboxEventHandler implements OutboxEventHandler {
             .module(ModuleType.CORE)
             .oldYaml(getYamlString(loginSettingsHarnessUsernamePasswordUpdateEvent.getOldLoginSettingsYamlDTO()))
             .newYaml(getYamlString(loginSettingsHarnessUsernamePasswordUpdateEvent.getNewLoginSettingsYamlDTO()))
+            .timestamp(outboxEvent.getCreatedAt())
+            .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+            .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+            .insertId(outboxEvent.getId())
+            .build();
+    return auditClientService.publishAudit(auditEntry, globalContext);
+  }
+
+  private boolean handleWhitelistedDomainsUpdateEvent(OutboxEvent outboxEvent, GlobalContext globalContext)
+      throws IOException {
+    LoginSettingsWhitelistedDomainsUpdateEvent loginSettingsWhitelistedDomainsUpdateEvent =
+        objectMapper.readValue(outboxEvent.getEventData(), LoginSettingsWhitelistedDomainsUpdateEvent.class);
+    AuditEntry auditEntry =
+        AuditEntry.builder()
+            .action(Action.UPDATE)
+            .module(ModuleType.CORE)
+            .oldYaml(getYamlString(loginSettingsWhitelistedDomainsUpdateEvent.getOldWhitelistedDomainsYamlDTO()))
+            .newYaml(getYamlString(loginSettingsWhitelistedDomainsUpdateEvent.getNewWhitelistedDomainsYamlDTO()))
             .timestamp(outboxEvent.getCreatedAt())
             .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
             .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))

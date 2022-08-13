@@ -103,6 +103,7 @@ import io.harness.ng.core.account.DefaultExperience;
 import io.harness.ng.core.account.OauthProviderType;
 import io.harness.observer.RemoteObserverInformer;
 import io.harness.observer.Subject;
+import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
 import io.harness.reflection.ReflectionUtils;
@@ -133,6 +134,8 @@ import software.wings.beans.User;
 import software.wings.beans.User.UserKeys;
 import software.wings.beans.governance.GovernanceConfig;
 import software.wings.beans.loginSettings.LoginSettingsService;
+import software.wings.beans.loginSettings.events.LoginSettingsWhitelistedDomainsUpdateEvent;
+import software.wings.beans.loginSettings.events.WhitelistedDomainsYamlDTO;
 import software.wings.beans.sso.LdapSettings;
 import software.wings.beans.sso.LdapSettings.LdapSettingsKeys;
 import software.wings.beans.sso.OauthSettings;
@@ -303,6 +306,7 @@ public class AccountServiceImpl implements AccountService {
   @Inject private HPersistence persistence;
   @Inject private CgCdLicenseUsageService cgCdLicenseUsageService;
   @Inject private DelegateVersionService delegateVersionService;
+  @Inject private OutboxService outboxService;
 
   @Inject @Named("BackgroundJobScheduler") private PersistentScheduler jobScheduler;
   @Inject private GovernanceFeature governanceFeature;
@@ -1706,12 +1710,25 @@ public class AccountServiceImpl implements AccountService {
       throw new WingsException("Invalid domain name");
     }
 
+    Account account = getAccounts(Arrays.asList(accountId)).get(0);
     UpdateOperations<Account> whitelistedDomainsUpdateOperations =
         wingsPersistence.createUpdateOperations(Account.class);
     setUnset(whitelistedDomainsUpdateOperations, AccountKeys.whitelistedDomains, validDomains);
     wingsPersistence.update(wingsPersistence.createQuery(Account.class).filter(Mapper.ID_KEY, accountId),
         whitelistedDomainsUpdateOperations);
+    ngAuditLoginSettings(accountId, account.getWhitelistedDomains(), validDomains);
     return get(accountId);
+  }
+
+  private void ngAuditLoginSettings(
+      String accountId, Set<String> oldWhitelistedDomains, Set<String> newWhitelistedDomains) {
+    outboxService.save(LoginSettingsWhitelistedDomainsUpdateEvent.builder()
+                           .accountIdentifier(accountId)
+                           .oldWhitelistedDomainsYamlDTO(
+                               WhitelistedDomainsYamlDTO.builder().whitelistedDomains(oldWhitelistedDomains).build())
+                           .newWhitelistedDomainsYamlDTO(
+                               WhitelistedDomainsYamlDTO.builder().whitelistedDomains(newWhitelistedDomains).build())
+                           .build());
   }
 
   @Override
