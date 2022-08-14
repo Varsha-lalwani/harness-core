@@ -277,8 +277,8 @@ public enum EntityType {
   BUILD_AND_PUSH_ACR(ModuleType.CI, EntityTypeConstants.BUILD_AND_PUSH_ACR, IdentifierRef.class,
       EntityYamlRootNames.BUILD_AND_PUSH_ACR),
   @JsonProperty(EntityTypeConstants.BACKGROUND_STEP)
-  BACKGROUND_STEP(ModuleType.CI, EntityTypeConstants.BACKGROUND_STEP, IdentifierRef.class,
-      EntityYamlRootNames.BACKGROUND_STEP);
+  BACKGROUND_STEP(
+      ModuleType.CI, EntityTypeConstants.BACKGROUND_STEP, IdentifierRef.class, EntityYamlRootNames.BACKGROUND_STEP);
 
   private final ModuleType moduleType;
   String yamlName;
