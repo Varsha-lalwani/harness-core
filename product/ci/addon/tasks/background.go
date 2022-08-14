@@ -69,16 +69,16 @@ func NewBackgroundTask(step *pb.UnitStep, log *zap.SugaredLogger, w io.Writer, l
 // Executes customer provided background step command with retries and timeout handling
 func (b *backgroundTask) Run() (map[string]string, int32, error) {
 	ch := make(chan error, 1)
-	resp, retries, err := b.runAsync(ch)
+	resp, retries, _ := b.runAsync(ch)
 	
-	select {
-	case ret := <-ch:
-		err = ret
-	case <-time.After(5 * time.Second):
-		err = nil
+	for {
+		select {
+		case ret := <-ch:
+			return resp, retries, ret
+		case <-time.After(5 * time.Second):
+			return resp, retries, nil
+		}
 	}
-
-	return resp, retries, err
 }
 
 func (b* backgroundTask) runAsync(ch chan error) (map[string]string, int32, error) {
