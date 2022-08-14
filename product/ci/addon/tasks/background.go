@@ -31,15 +31,13 @@ type backgroundTask struct {
 	command           string
 	shellType         pb.ShellType
 	environment       map[string]string
-	timeoutSecs       int64
-	numRetries        int32
 	reports           []*pb.Report
 	logMetrics        bool
 	log               *zap.SugaredLogger
 	addonLogger       *zap.SugaredLogger
 	procWriter        io.Writer
 	fs                filesystem.FileSystem
-	cmdContextFactory exec.CmdContextFactory
+	cmdFactory        exec.CommandFactory
 	entrypoint        []string
 	image			  string
 }
@@ -49,16 +47,6 @@ func NewBackgroundTask(step *pb.UnitStep, log *zap.SugaredLogger, w io.Writer, l
 	addonLogger *zap.SugaredLogger) BackgroundTask {
 	r := step.GetRun()
 	fs := filesystem.NewOSFileSystem(log)
-
-	timeoutSecs := r.GetContext().GetExecutionTimeoutSecs()
-	if timeoutSecs == 0 {
-		timeoutSecs = defaultTimeoutSecs
-	}
-
-	numRetries := r.GetContext().GetNumRetries()
-	if numRetries == 0 {
-		numRetries = defaultNumRetries
-	}
 	
 	return &backgroundTask{
 		id:                step.GetId(),
@@ -67,9 +55,7 @@ func NewBackgroundTask(step *pb.UnitStep, log *zap.SugaredLogger, w io.Writer, l
 		shellType:         r.GetShellType(),
 		environment:       r.GetEnvironment(),
 		reports:           r.GetReports(),
-		timeoutSecs:       timeoutSecs,
-		numRetries:        numRetries,
-		cmdContextFactory: exec.OsCommandContextGracefulWithLog(log),
+		cmdFactory:        exec.OsCommand(),
 		logMetrics:        logMetrics,
 		log:               log,
 		fs:                fs,
@@ -102,21 +88,20 @@ func (b* backgroundTask) runAsync(ch chan error) (map[string]string, int32, erro
 		)
 	
 		ctx := context.Background()
-	
-		for i := int32(1); i <= b.numRetries; i++ {
-			if _, err = b.execute(ctx, i); err == nil {
-				st := time.Now()
-				err = collectTestReports(ctx, b.reports, b.id, b.log)
-				if err != nil {
-					// If there's an error in collecting reports, we won't retry but
-					// the step will be marked as an error
-					b.log.Errorw("unable to collect test reports", zap.Error(err))
-					ch <- err
-				} else if len(b.reports) > 0 {
-					b.log.Infow(fmt.Sprintf("collected test reports in %s time", time.Since(st)))
-				}
+		
+		if _, err = b.execute(ctx, defaultNumRetries); err == nil {
+			st := time.Now()
+			err = collectTestReports(ctx, b.reports, b.id, b.log)
+			if err != nil {
+				// If there's an error in collecting reports, we won't retry but
+				// the step will be marked as an error
+				b.log.Errorw("unable to collect test reports", zap.Error(err))
+				ch <- err
+			} else if len(b.reports) > 0 {
+				b.log.Infow(fmt.Sprintf("collected test reports in %s time", time.Since(st)))
 			}
 		}
+
 		if err != nil {
 			// Background step did not execute successfully
 			// Try and collect reports, ignore any errors during report collection itself
@@ -129,13 +114,11 @@ func (b* backgroundTask) runAsync(ch chan error) (map[string]string, int32, erro
 		ch <- err
 	}()
 
-	return make(map[string]string), b.numRetries, nil
+	return make(map[string]string), defaultNumRetries, nil
 }
 
 func (b *backgroundTask) execute(ctx context.Context, retryCount int32) (map[string]string, error) {
 	start := time.Now()
-	// ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(b.timeoutSecs))
-	// defer cancel()
 
 	cmdToExecute, err := b.getScript(ctx)
 	if err != nil {
@@ -152,7 +135,7 @@ func (b *backgroundTask) execute(ctx context.Context, retryCount int32) (map[str
 		return nil, err
 	}
 
-	cmd := b.cmdContextFactory.CmdContextWithSleep(ctx, cmdExitWaitTime, cmdArgs[0], cmdArgs[1:]...).
+	cmd := b.cmdFactory.Command(cmdArgs[0], cmdArgs[1:]...).
 		WithStdout(b.procWriter).WithStderr(b.procWriter).WithEnvVarsMap(envVars)
 	err = runCmd(ctx, cmd, b.id, cmdArgs, retryCount, start, b.logMetrics, b.addonLogger)
 	if err != nil {
