@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestRunTaskCreate(t *testing.T) {
+func TestBackgroundTaskCreate(t *testing.T) {
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	step := &pb.UnitStep{
 		Id: "test",
