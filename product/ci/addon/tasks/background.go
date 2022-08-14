@@ -31,22 +31,13 @@ type backgroundTask struct {
 	command           string
 	shellType         pb.ShellType
 	environment       map[string]string
-<<<<<<< HEAD
-=======
-	timeoutSecs       int64
-	numRetries        int32
->>>>>>> 67197f146f5 ([CI-5075]: LE and Addon changes for background step)
 	reports           []*pb.Report
 	logMetrics        bool
 	log               *zap.SugaredLogger
 	addonLogger       *zap.SugaredLogger
 	procWriter        io.Writer
 	fs                filesystem.FileSystem
-<<<<<<< HEAD
 	cmdFactory        exec.CommandFactory
-=======
-	cmdContextFactory exec.CmdContextFactory
->>>>>>> 67197f146f5 ([CI-5075]: LE and Addon changes for background step)
 	entrypoint        []string
 	image			  string
 }
@@ -56,19 +47,6 @@ func NewBackgroundTask(step *pb.UnitStep, log *zap.SugaredLogger, w io.Writer, l
 	addonLogger *zap.SugaredLogger) BackgroundTask {
 	r := step.GetRun()
 	fs := filesystem.NewOSFileSystem(log)
-<<<<<<< HEAD
-=======
-
-	timeoutSecs := r.GetContext().GetExecutionTimeoutSecs()
-	if timeoutSecs == 0 {
-		timeoutSecs = defaultTimeoutSecs
-	}
-
-	numRetries := r.GetContext().GetNumRetries()
-	if numRetries == 0 {
-		numRetries = defaultNumRetries
-	}
->>>>>>> 67197f146f5 ([CI-5075]: LE and Addon changes for background step)
 	
 	return &backgroundTask{
 		id:                step.GetId(),
@@ -77,13 +55,7 @@ func NewBackgroundTask(step *pb.UnitStep, log *zap.SugaredLogger, w io.Writer, l
 		shellType:         r.GetShellType(),
 		environment:       r.GetEnvironment(),
 		reports:           r.GetReports(),
-<<<<<<< HEAD
 		cmdFactory:        exec.OsCommand(),
-=======
-		timeoutSecs:       timeoutSecs,
-		numRetries:        numRetries,
-		cmdContextFactory: exec.OsCommandContextGracefulWithLog(log),
->>>>>>> 67197f146f5 ([CI-5075]: LE and Addon changes for background step)
 		logMetrics:        logMetrics,
 		log:               log,
 		fs:                fs,
@@ -116,7 +88,6 @@ func (b* backgroundTask) runAsync(ch chan error) (map[string]string, int32, erro
 		)
 	
 		ctx := context.Background()
-<<<<<<< HEAD
 		
 		if _, err = b.execute(ctx, defaultNumRetries); err == nil {
 			st := time.Now()
@@ -131,23 +102,6 @@ func (b* backgroundTask) runAsync(ch chan error) (map[string]string, int32, erro
 			}
 		}
 
-=======
-	
-		for i := int32(1); i <= b.numRetries; i++ {
-			if _, err = b.execute(ctx, i); err == nil {
-				st := time.Now()
-				err = collectTestReports(ctx, b.reports, b.id, b.log)
-				if err != nil {
-					// If there's an error in collecting reports, we won't retry but
-					// the step will be marked as an error
-					b.log.Errorw("unable to collect test reports", zap.Error(err))
-					ch <- err
-				} else if len(b.reports) > 0 {
-					b.log.Infow(fmt.Sprintf("collected test reports in %s time", time.Since(st)))
-				}
-			}
-		}
->>>>>>> 67197f146f5 ([CI-5075]: LE and Addon changes for background step)
 		if err != nil {
 			// Background step did not execute successfully
 			// Try and collect reports, ignore any errors during report collection itself
@@ -160,20 +114,11 @@ func (b* backgroundTask) runAsync(ch chan error) (map[string]string, int32, erro
 		ch <- err
 	}()
 
-<<<<<<< HEAD
 	return make(map[string]string), defaultNumRetries, nil
-=======
-	return make(map[string]string), b.numRetries, nil
->>>>>>> 67197f146f5 ([CI-5075]: LE and Addon changes for background step)
 }
 
 func (b *backgroundTask) execute(ctx context.Context, retryCount int32) (map[string]string, error) {
 	start := time.Now()
-<<<<<<< HEAD
-=======
-	// ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(b.timeoutSecs))
-	// defer cancel()
->>>>>>> 67197f146f5 ([CI-5075]: LE and Addon changes for background step)
 
 	cmdToExecute, err := b.getScript(ctx)
 	if err != nil {
@@ -190,11 +135,7 @@ func (b *backgroundTask) execute(ctx context.Context, retryCount int32) (map[str
 		return nil, err
 	}
 
-<<<<<<< HEAD
 	cmd := b.cmdFactory.Command(cmdArgs[0], cmdArgs[1:]...).
-=======
-	cmd := b.cmdContextFactory.CmdContextWithSleep(ctx, cmdExitWaitTime, cmdArgs[0], cmdArgs[1:]...).
->>>>>>> 67197f146f5 ([CI-5075]: LE and Addon changes for background step)
 		WithStdout(b.procWriter).WithStderr(b.procWriter).WithEnvVarsMap(envVars)
 	err = runCmd(ctx, cmd, b.id, cmdArgs, retryCount, start, b.logMetrics, b.addonLogger)
 	if err != nil {
