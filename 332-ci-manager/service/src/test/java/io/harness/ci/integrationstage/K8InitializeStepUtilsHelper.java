@@ -19,6 +19,7 @@ import static io.harness.ci.commonconstants.CIExecutionConstants.STEP_REQUEST_MI
 import static io.harness.ci.commonconstants.CIExecutionConstants.STEP_WORK_DIR;
 import static io.harness.ci.commonconstants.CIExecutionConstants.UNIX_STEP_COMMAND;
 import static io.harness.ci.commonconstants.CIExecutionConstants.WIN_STEP_COMMAND;
+import static io.harness.delegate.beans.ci.pod.CIContainerType.BACKGROUND;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.PLUGIN;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.RUN;
 
@@ -244,6 +245,30 @@ public class K8InitializeStepUtilsHelper {
     return stepElementConfig;
   }
 
+  public static JsonNode getBackgroundStepElementConfigAsJsonNode() {
+    ObjectMapper mapper = new ObjectMapper();
+    ObjectNode stepElementConfig = mapper.createObjectNode();
+    stepElementConfig.put("identifier", RUN_STEP_ID);
+
+    stepElementConfig.put("type", "Background");
+    stepElementConfig.put("name", RUN_STEP_NAME);
+
+    ObjectNode stepSpecType = mapper.createObjectNode();
+    stepSpecType.put("identifier", RUN_STEP_ID);
+    stepSpecType.put("name", RUN_STEP_NAME);
+    stepSpecType.put("command", BUILD_SCRIPT);
+    stepSpecType.put("image", RUN_STEP_IMAGE);
+    stepSpecType.put("connectorRef", RUN_STEP_CONNECTOR);
+    stepSpecType.put("connectorRef", RUN_STEP_CONNECTOR);
+
+    ArrayNode arrayNode = mapper.createArrayNode();
+    arrayNode.add("redis-server");
+
+    stepSpecType.set("entrypoint", arrayNode);
+    stepElementConfig.set("spec", stepSpecType);
+    return stepElementConfig;
+  }
+
   public static List<ContainerDefinitionInfo> getStepContainers() {
     Integer index = 1;
     return asList(getGitPluginStepContainer(index), getRunStepContainer(index + 1), getPluginStepContainer(index + 2));
@@ -282,6 +307,12 @@ public class K8InitializeStepUtilsHelper {
         .stepIdentifier(RUN_STEP_ID)
         .stepName(RUN_STEP_NAME)
         .build();
+  }
+
+  public static ContainerDefinitionInfo getBackgroundStepContainer(Integer index) {
+    ContainerDefinitionInfo containerDefinitionInfo = getRunStepContainer(index);
+    containerDefinitionInfo.setContainerType(BACKGROUND);
+    return containerDefinitionInfo;
   }
 
   private static ContainerDefinitionInfo getGitPluginStepContainer(Integer index) {
