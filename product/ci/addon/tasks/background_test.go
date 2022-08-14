@@ -117,7 +117,6 @@ func TestBackgroundExecuteNonZeroStatus(t *testing.T) {
 	cmd.EXPECT().WithStderr(&buf).Return(cmd)
 	cmd.EXPECT().WithEnvVarsMap(gomock.Any()).Return(cmd)
 	cmd.EXPECT().Start().Return(nil)
-	cmd.EXPECT().Pid().Return(int(1))
 	cmd.EXPECT().ProcessState().Return(pstate)
 	pstate.EXPECT().MaxRss().Return(int64(100), nil)
 	cmd.EXPECT().Wait().Return(&exec.ExitError{})
