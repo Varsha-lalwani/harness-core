@@ -32,6 +32,7 @@ var (
 	newRunTask          = tasks.NewRunTask
 	newRunTestsTask     = tasks.NewRunTestsTask
 	newPluginTask       = tasks.NewPluginTask
+	newBackgroundTask   = tasks.NewBackgroundTask
 )
 
 // NewAddonHandler returns a GRPC handler that implements pb.AddonServer
@@ -67,13 +68,25 @@ func (h *handler) ExecuteStep(ctx context.Context, in *pb.ExecuteStepRequest) (*
 
 	switch x := in.GetStep().GetStep().(type) {
 	case *enginepb.UnitStep_Run:
-		stepOutput, numRetries, err := newRunTask(in.GetStep(), in.GetPrevStepOutputs(), in.GetTmpFilePath(), rl.BaseLogger,
-			rl.Writer, false, h.log).Run(ctx)
+		detach := in.GetStep().GetRun().GetDetach()
+		var (
+			stepOutput map[string]string
+			numRetries int32
+		)
+
+		if detach {
+			stepOutput, numRetries, err = newBackgroundTask(in.GetStep(), rl.BaseLogger, rl.Writer, false, h.log).Run()
+		} else {
+			stepOutput, numRetries, err = newRunTask(in.GetStep(), in.GetPrevStepOutputs(), in.GetTmpFilePath(), rl.BaseLogger,
+				rl.Writer, false, h.log).Run(ctx)
+			// close log stream only if detach == false
+			err = close(rl.Writer, err)
+		}
+
 		response := &pb.ExecuteStepResponse{
 			Output:     stepOutput,
 			NumRetries: numRetries,
 		}
-		err = close(rl.Writer, err)
 		return response, err
 	case *enginepb.UnitStep_RunTests:
 		stepOutput, numRetries, err := newRunTestsTask(in.GetStep(), in.GetTmpFilePath(), rl.BaseLogger, rl.Writer, false, h.log).Run(ctx)
