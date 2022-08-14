@@ -81,7 +81,7 @@ func (b *backgroundTask) Run() (map[string]string, int32, error) {
 	}
 }
 
-func (b* backgroundTask) runAsync(ch chan error) (map[string]string, int32, error) {
+func (b* backgroundTask) runAsync(ch chan<- error) (map[string]string, int32, error) {
 	go func() {
 		var (
 			err error
@@ -105,12 +105,12 @@ func (b* backgroundTask) runAsync(ch chan error) (map[string]string, int32, erro
 		if err != nil {
 			// Background step did not execute successfully
 			// Try and collect reports, ignore any errors during report collection itself
-			err = collectTestReports(ctx, b.reports, b.id, b.log)
-			if err != nil {
-				b.log.Errorw("error while collecting test reports", zap.Error(err))
+			tierr := collectTestReports(ctx, b.reports, b.id, b.log)
+			if tierr != nil {
+				b.log.Errorw("error while collecting test reports", zap.Error(tierr))
 			}
 		}
-
+		
 		ch <- err
 	}()
 
