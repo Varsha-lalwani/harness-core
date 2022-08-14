@@ -235,15 +235,16 @@
             "connectorRef": {
               "type": "string"
             },
-            "detach": {
+            "entrypoint": {
               "oneOf": [
                 {
-                  "type": "boolean"
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 {
-                  "type": "string",
-                  "pattern": "^<\\+input>((\\.)((executionInput\\(\\))|(allowedValues|default|regex)\\(.+?\\)))*$",
-                  "minLength": 1
+                  "type": "string"
                 }
               ]
             },
@@ -3496,18 +3497,6 @@
             },
             "connectorRef": {
               "type": "string"
-            },
-            "detach": {
-              "oneOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>((\\.)((executionInput\\(\\))|(allowedValues|default|regex)\\(.+?\\)))*$",
-                  "minLength": 1
-                }
-              ]
             },
             "envVariables": {
               "oneOf": [

@@ -8,7 +8,11 @@
 package io.harness.beans.steps.stepinfo;
 
 import static io.harness.annotations.dev.HarnessTeam.CI;
-import static io.harness.beans.SwaggerConstants.*;
+import static io.harness.beans.SwaggerConstants.BOOLEAN_CLASSPATH;
+import static io.harness.beans.SwaggerConstants.INTEGER_CLASSPATH;
+import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
+import static io.harness.beans.SwaggerConstants.STRING_LIST_CLASSPATH;
+import static io.harness.beans.SwaggerConstants.STRING_MAP_CLASSPATH;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
@@ -38,6 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
 import java.beans.ConstructorProperties;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.validation.constraints.Max;
@@ -93,18 +98,18 @@ public class BackgroundStepInfo implements CIStepInfo, WithConnectorRef {
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.ImagePullPolicy")
   private ParameterField<ImagePullPolicy> imagePullPolicy;
-  @YamlSchemaTypes({runtime})
-  @ApiModelProperty(dataType = BOOLEAN_CLASSPATH)
-  private ParameterField<Boolean> detach;
+  @YamlSchemaTypes(value = {string})
+  @ApiModelProperty(dataType = STRING_LIST_CLASSPATH)
+  private ParameterField<List<String>> entrypoint;
 
   @Builder
   @ConstructorProperties({"identifier", "name", "retry", "command", "reports", "envVariables", "image", "connectorRef",
-      "resources", "privileged", "runAsUser", "shell", "imagePullPolicy", "detach"})
+      "resources", "privileged", "runAsUser", "shell", "imagePullPolicy", "entrypoint"})
   public BackgroundStepInfo(String identifier, String name, Integer retry, ParameterField<String> command,
       ParameterField<UnitTestReport> reports, ParameterField<Map<String, String>> envVariables,
       ParameterField<String> image, ParameterField<String> connectorRef, ContainerResource resources,
       ParameterField<Boolean> privileged, ParameterField<Integer> runAsUser, ParameterField<CIShellType> shell,
-      ParameterField<ImagePullPolicy> imagePullPolicy, ParameterField<Boolean> detach) {
+      ParameterField<ImagePullPolicy> imagePullPolicy, ParameterField<List<String>> entrypoint) {
     this.identifier = identifier;
     this.name = name;
     this.retry = Optional.ofNullable(retry).orElse(DEFAULT_RETRY);
@@ -118,7 +123,7 @@ public class BackgroundStepInfo implements CIStepInfo, WithConnectorRef {
     this.runAsUser = runAsUser;
     this.shell = shell;
     this.imagePullPolicy = imagePullPolicy;
-    this.detach = detach;
+    this.entrypoint = entrypoint;
   }
 
   @Override

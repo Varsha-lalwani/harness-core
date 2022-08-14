@@ -11,6 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.CI;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveMapParameter;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
+import static java.util.Collections.emptyList;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.steps.stepinfo.BackgroundStepInfo;
@@ -29,6 +31,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 @Singleton
@@ -48,8 +51,10 @@ public class BackgroundStepProtobufSerializer implements ProtobufStepSerializer<
     }
 
     RunStep.Builder runStepBuilder = RunStep.newBuilder();
-    runStepBuilder.setCommand(RunTimeInputHandler.resolveStringParameter(
-        "Command", "Background", identifier, backgroundStepInfo.getCommand(), true));
+    runStepBuilder.setCommand(Optional
+                                  .ofNullable(RunTimeInputHandler.resolveStringParameter(
+                                      "Command", "Background", identifier, backgroundStepInfo.getCommand(), false))
+                                  .orElse(""));
 
     runStepBuilder.setContainerPort(port);
     Map<String, String> envVars =
@@ -84,7 +89,13 @@ public class BackgroundStepProtobufSerializer implements ProtobufStepSerializer<
     }
 
     runStepBuilder.setShellType(protoShellType);
-    runStepBuilder.setDetach(RunTimeInputHandler.resolveBooleanParameter(backgroundStepInfo.getDetach(), false));
+    runStepBuilder.setDetach(true);
+    runStepBuilder.addAllEntrypoint(Optional
+                                        .ofNullable(RunTimeInputHandler.resolveListParameter("entrypoint", "background",
+                                            identifier, backgroundStepInfo.getEntrypoint(), false))
+                                        .orElse(emptyList()));
+    runStepBuilder.setImage(RunTimeInputHandler.resolveStringParameter(
+        "Image", "background", identifier, backgroundStepInfo.getImage(), true));
 
     return UnitStep.newBuilder()
         .setAccountId(accountId)

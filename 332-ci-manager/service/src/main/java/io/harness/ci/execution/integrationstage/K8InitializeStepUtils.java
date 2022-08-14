@@ -463,7 +463,7 @@ public class K8InitializeStepUtils {
         .containerResourceParams(getStepContainerResource(backgroundStepInfo.getResources(), "Background", identifier,
             accountId, extraMemoryPerStep, extraCPUPerStep))
         .ports(Arrays.asList(port))
-        .containerType(CIContainerType.RUN)
+        .containerType(CIContainerType.BACKGROUND)
         .stepName(name)
         .privileged(backgroundStepInfo.getPrivileged().getValue())
         .runAsUser(runAsUser)
