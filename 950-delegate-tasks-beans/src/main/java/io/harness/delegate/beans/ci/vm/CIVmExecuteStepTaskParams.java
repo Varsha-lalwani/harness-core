@@ -40,6 +40,7 @@ public class CIVmExecuteStepTaskParams implements CIExecuteStepTaskParams, Execu
   @NotNull private String logKey;
   @NotNull private String workingDir;
   private Map<String, String> volToMountPath;
+  @NotNull private String infraType;
 
   @Builder.Default private static final Type type = Type.VM;
 
@@ -50,6 +51,7 @@ public class CIVmExecuteStepTaskParams implements CIExecuteStepTaskParams, Execu
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return Collections.singletonList(CIVmConnectionCapability.builder().poolId(poolId).build());
+      return Collections.singletonList(
+              CIVmConnectionCapability.builder().stageRuntimeId(stageRuntimeId).infraType(infraType).build());
   }
 }

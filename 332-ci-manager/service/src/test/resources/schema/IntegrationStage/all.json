@@ -496,6 +496,41 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "DockerRuntime": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Runtime"
+        },
+        {
+          "type": "object",
+          "required": [
+            "spec",
+            "type"
+          ],
+          "properties": {
+            "spec": {
+              "$ref": "#/definitions/DockerRuntimeSpec"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "Cloud"
+              ]
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "DockerRuntimeSpec": {
+      "type": "object",
+      "properties": {
+        "size": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "CodeBase": {
       "type": "object",
       "required": [
@@ -1475,7 +1510,8 @@
                 "KubernetesDirect",
                 "UseFromStage",
                 "VM",
-                "KubernetesHosted"
+                "KubernetesHosted",
+                "DOCKER"
               ]
             }
           }
@@ -1545,7 +1581,8 @@
             "KubernetesDirect",
             "UseFromStage",
             "VM",
-            "KubernetesHosted"
+            "KubernetesHosted",
+            "DOCKER"
           ]
         }
       },
@@ -1704,7 +1741,8 @@
         "runtime": {
           "oneOf": [
             {
-              "$ref": "#/definitions/CloudRuntime"
+              "$ref": "#/definitions/CloudRuntime",
+              "$ref": "#/definitions/DockerRuntime"
             }
           ]
         },
@@ -1907,7 +1945,8 @@
                 "KubernetesDirect",
                 "UseFromStage",
                 "VM",
-                "KubernetesHosted"
+                "KubernetesHosted",
+                "DOCKER"
               ]
             }
           }
@@ -2087,7 +2126,8 @@
                 "KubernetesDirect",
                 "UseFromStage",
                 "VM",
-                "KubernetesHosted"
+                "KubernetesHosted",
+                "DOCKER"
               ]
             }
           }
@@ -3713,7 +3753,8 @@
         "type": {
           "type": "string",
           "enum": [
-            "Cloud"
+            "Cloud",
+            "Docker"
           ]
         }
       },
@@ -4945,7 +4986,8 @@
                 "KubernetesDirect",
                 "UseFromStage",
                 "VM",
-                "KubernetesHosted"
+                "KubernetesHosted",
+                "DOCKER"
               ]
             }
           }

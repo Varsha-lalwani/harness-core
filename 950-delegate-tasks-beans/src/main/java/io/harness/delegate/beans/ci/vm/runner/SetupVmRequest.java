@@ -24,6 +24,7 @@ public class SetupVmRequest {
   @JsonProperty("pool_id") String poolID;
   @JsonProperty("log_key") String logKey;
   @JsonProperty("setup_request") Config config;
+  @JsonProperty("infra_type") String infraType;
 
   @Data
   @Builder

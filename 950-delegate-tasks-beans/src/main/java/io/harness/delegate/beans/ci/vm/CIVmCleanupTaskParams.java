@@ -27,6 +27,7 @@ import lombok.experimental.SuperBuilder;
 public class CIVmCleanupTaskParams implements CICleanupTaskParams, ExecutionCapabilityDemander {
   @NotNull private String stageRuntimeId;
   @NotNull private String poolId;
+  @NotNull private String infraType;
 
   @Builder.Default private static final CICleanupTaskParams.Type type = CICleanupTaskParams.Type.VM;
 
@@ -37,7 +38,7 @@ public class CIVmCleanupTaskParams implements CICleanupTaskParams, ExecutionCapa
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return Collections.singletonList(
-        CIVmConnectionCapability.builder().poolId(poolId).stageRuntimeId(stageRuntimeId).build());
+      return Collections.singletonList(
+              CIVmConnectionCapability.builder().stageRuntimeId(stageRuntimeId).infraType(infraType).build());
   }
 }

@@ -15,11 +15,14 @@ import org.springframework.data.annotation.TypeAlias;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, defaultImpl = CloudRuntime.class)
 @JsonSubTypes({ @JsonSubTypes.Type(value = CloudRuntime.class, name = "Cloud")
-                , })
+        , })
+@JsonSubTypes({ @JsonSubTypes.Type(value = DockerRuntime.class, name = "Docker")
+        , })
 public interface Runtime {
   @TypeAlias("runtime_type")
   enum Type {
     @JsonProperty("Cloud") CLOUD("Cloud");
+    @JsonProperty("Docker") DOCKER("Docker");
 
     private final String yamlName;
 

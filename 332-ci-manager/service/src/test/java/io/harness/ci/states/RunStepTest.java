@@ -375,7 +375,7 @@ public class RunStepTest extends CIExecutionTestBase {
 
     when(executionSweepingOutputResolver.resolveOptional(
              ambiance, RefObjectUtils.getSweepingOutputRefObject(STAGE_INFRA_DETAILS)))
-        .thenReturn(OptionalSweepingOutput.builder().found(true).output(VmStageInfraDetails.builder().build()).build());
+        .thenReturn(OptionalSweepingOutput.builder().found(true).output(VmStageInfraDetails.builder().infraType("vm").build()).build());
     when(executionSweepingOutputResolver.resolveOptional(eq(ambiance), eq(refObject)))
         .thenReturn(OptionalSweepingOutput.builder().found(true).output(codeBaseConnectorRefSweepingOutput).build());
     when(executionSweepingOutputResolver.resolveOptional(
@@ -392,7 +392,7 @@ public class RunStepTest extends CIExecutionTestBase {
                         .build());
     when(executionSweepingOutputResolver.resolveOptional(
              ambiance, RefObjectUtils.getSweepingOutputRefObject(STAGE_INFRA_DETAILS)))
-        .thenReturn(OptionalSweepingOutput.builder().found(true).output(VmStageInfraDetails.builder().build()).build());
+        .thenReturn(OptionalSweepingOutput.builder().found(true).output(VmStageInfraDetails.builder().infraType("vm").build()).build());
 
     when(vmStepSerializer.serialize(any(), any(), any(), any(), any())).thenReturn(VmRunStep.builder().build());
     when(ciDelegateTaskExecutor.queueTask(any(), any(), any(), any())).thenReturn(callbackId);
@@ -416,7 +416,7 @@ public class RunStepTest extends CIExecutionTestBase {
 
     when(executionSweepingOutputResolver.resolveOptional(
              ambiance, RefObjectUtils.getSweepingOutputRefObject(STAGE_INFRA_DETAILS)))
-        .thenReturn(OptionalSweepingOutput.builder().found(true).output(VmStageInfraDetails.builder().build()).build());
+        .thenReturn(OptionalSweepingOutput.builder().found(true).output(VmStageInfraDetails.builder().infraType("vm").build()).build());
     when(executionSweepingOutputResolver.resolveOptional(eq(ambiance), eq(refObject)))
         .thenReturn(OptionalSweepingOutput.builder().found(true).output(codeBaseConnectorRefSweepingOutput).build());
     when(executionSweepingOutputResolver.resolveOptional(
@@ -433,7 +433,7 @@ public class RunStepTest extends CIExecutionTestBase {
                         .build());
     when(executionSweepingOutputResolver.resolveOptional(
              ambiance, RefObjectUtils.getSweepingOutputRefObject(STAGE_INFRA_DETAILS)))
-        .thenReturn(OptionalSweepingOutput.builder().found(true).output(VmStageInfraDetails.builder().build()).build());
+        .thenReturn(OptionalSweepingOutput.builder().found(true).output(VmStageInfraDetails.builder().infraType("vm").build()).build());
 
     when(vmStepSerializer.serialize(any(), any(), any(), any(), any())).thenReturn(VmRunStep.builder().build());
     when(ciDelegateTaskExecutor.queueTask(any(), any(), any(), any())).thenReturn(callbackId);
@@ -498,7 +498,7 @@ public class RunStepTest extends CIExecutionTestBase {
     when(serializedResponseDataHelper.deserialize(responseData)).thenReturn(responseData);
     when(executionSweepingOutputResolver.resolveOptional(
              ambiance, RefObjectUtils.getSweepingOutputRefObject(STAGE_INFRA_DETAILS)))
-        .thenReturn(OptionalSweepingOutput.builder().found(true).output(VmStageInfraDetails.builder().build()).build());
+        .thenReturn(OptionalSweepingOutput.builder().found(true).output(VmStageInfraDetails.builder().infraType("vm").build()).build());
     StepResponse stepResponse = runStep.handleAsyncResponse(ambiance, stepElementParameters, responseDataMap);
 
     assertThat(stepResponse).isEqualTo(StepResponse.builder().status(Status.SUCCEEDED).build());

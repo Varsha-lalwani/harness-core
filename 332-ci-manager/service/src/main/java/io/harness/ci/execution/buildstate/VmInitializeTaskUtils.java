@@ -84,26 +84,53 @@ public class VmInitializeTaskUtils {
 
   public CIVmInitializeTaskParams getInitializeTaskParams(
       InitializeStepInfo initializeStepInfo, Ambiance ambiance, String logPrefix) {
+    //TODO:xun figure out the logic for docker
     Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
-
-    if (infrastructure == null || ((VmInfraYaml) infrastructure).getSpec() == null) {
-      throw new CIStageExecutionException("Input infrastructure can not be empty");
+    if (infrastructure == null) {
+      throw new CIStageExecutionException("Input infrastructure can not be null");
     }
 
-    VmInfraYaml vmInfraYaml = (VmInfraYaml) infrastructure;
-    if (vmInfraYaml.getSpec().getType() != VmInfraSpec.Type.POOL) {
-      throw new CIStageExecutionException(
-          format("Invalid VM infrastructure spec type: %s", vmInfraYaml.getSpec().getType()));
+    String poolId;
+    String harnessImageConnectorRef;
+    String infraType;
+    Infrastructure.Type type = infrastructure.getType();
+    if (type == Infrastructure.Type.VM) {
+      if (((VmInfraYaml) infrastructure).getSpec() == null) {
+        throw new CIStageExecutionException("VM input infrastructure can not be empty");
+      }
+
+      VmInfraYaml vmInfraYaml = (VmInfraYaml) infrastructure;
+      if (vmInfraYaml.getSpec().getType() != VmInfraSpec.Type.POOL) {
+        throw new CIStageExecutionException(
+                format("Invalid VM infrastructure spec type: %s", vmInfraYaml.getSpec().getType()));
+      }
+      VmPoolYaml vmPoolYaml = (VmPoolYaml) vmInfraYaml.getSpec();
+      poolId = getPoolName(vmPoolYaml);
+      harnessImageConnectorRef = (vmPoolYaml.getSpec().getHarnessImageConnectorRef().getValue());
+      infraType = "vm";
+    } else {
+      if (((DockerInfraYaml) infrastructure).getSpec() == null) {
+        throw new CIStageExecutionException("Docker input infrastructure can not be empty");
+      }
+
+      DockerInfraYaml dockerInfraYaml = (DockerInfraYaml) infrastructure;
+      if (dockerInfraYaml.getSpec().getType() != DockerInfraSpec.Type.DOCKER) {
+        throw new CIStageExecutionException(
+                format("Invalid Docker infrastructure spec type: %s", dockerInfraYaml.getSpec().getType()));
+      }
+      poolId = "";
+      harnessImageConnectorRef = "";
+      infraType = "docker";
     }
+
     VmBuildJobInfo vmBuildJobInfo = (VmBuildJobInfo) initializeStepInfo.getBuildJobEnvInfo();
-    VmPoolYaml vmPoolYaml = (VmPoolYaml) vmInfraYaml.getSpec();
-    String poolId = getPoolName(vmPoolYaml);
     consumeSweepingOutput(ambiance,
         VmStageInfraDetails.builder()
             .poolId(poolId)
             .workDir(vmBuildJobInfo.getWorkDir())
             .volToMountPathMap(vmBuildJobInfo.getVolToMountPath())
             .harnessImageConnectorRef(vmPoolYaml.getSpec().getHarnessImageConnectorRef().getValue())
+            .infraType(infraType)
             .build(),
         STAGE_INFRA_DETAILS);
 

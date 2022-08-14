@@ -738,10 +738,11 @@ public class IntegrationStageUtils {
     String infraOSType = null;
     String infraHostType = null;
 
-    if (infrastructure.getType() == KUBERNETES_DIRECT) {
+    Infrastructure.Type type = infrastructure.getType();
+    if (type == KUBERNETES_DIRECT) {
       infraOSType = getK8OS(infrastructure).toString();
       infraHostType = SELF_HOSTED;
-    } else if (infrastructure.getType() == VM) {
+    } else if (type == VM || type == DOCKER) {
       infraOSType = VmInitializeStepUtils.getVmOS(infrastructure).toString();
       infraHostType = SELF_HOSTED;
     } else if (infrastructure.getType() == KUBERNETES_HOSTED) {

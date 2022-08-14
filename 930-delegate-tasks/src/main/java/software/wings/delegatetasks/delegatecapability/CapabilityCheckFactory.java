@@ -132,6 +132,7 @@ public class CapabilityCheckFactory {
       case LITE_ENGINE:
         return liteEngineConnectionCapabilityCheck;
       case CI_VM:
+      case CI_DOCKER:
         return ciVmConnectionCapabilityCheck;
       case SERVERLESS_INSTALL:
         return serverlessInstallationCapabilityCheck;

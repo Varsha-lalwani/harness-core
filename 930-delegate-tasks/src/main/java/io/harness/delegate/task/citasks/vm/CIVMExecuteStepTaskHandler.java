@@ -47,6 +47,8 @@ public class CIVMExecuteStepTaskHandler implements CIExecuteStepTaskHandler {
   }
 
   private ExecuteStepRequest convert(CIVmExecuteStepTaskParams params, String taskId) {
+    String infraType = params.getInfraType();
+
     ExecuteStepRequestBuilder builder = vmExecuteStepUtils.convertStep(params);
     builder.correlationID(taskId);
     return builder.build();

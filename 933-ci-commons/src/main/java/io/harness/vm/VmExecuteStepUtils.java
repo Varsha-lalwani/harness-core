@@ -78,11 +78,20 @@ public class VmExecuteStepUtils {
       secrets.addAll(params.getSecrets());
     }
     configBuilder.secrets(secrets);
+
+    String poolId;
+    String infraType = params.getInfraType();
+    if (infraType == "vm") {
+      poolId = params.getPoolId();
+    } else {
+      poolId = "";
+    }
     return ExecuteStepRequest.builder()
         .stageRuntimeID(params.getStageRuntimeId())
-        .poolId(params.getPoolId())
+        .poolId(poolId)
         .ipAddress(params.getIpAddress())
-        .config(configBuilder.build());
+        .config(configBuilder.build())
+        .infraType(infraType);
   }
 
   public ExecuteStepRequestBuilder convertService(

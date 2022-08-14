@@ -162,12 +162,21 @@ public class CIVmInitializeTaskHandler implements CIInitializeTaskHandler {
                                        .tiConfig(tiConfig)
                                        .volumes(getVolumes(params.getVolToMountPath()))
                                        .build();
+
+    String poolId;
+    String infraType = params.getInfraType();
+    if (infraType == "vm") {
+      poolId = params.getPoolID();
+    } else {
+      poolId = "";
+    }
     return SetupVmRequest.builder()
         .id(params.getStageRuntimeId())
         .correlationID(taskId)
-        .poolID(params.getPoolID())
+        .poolID(poolId)
         .config(config)
         .logKey(params.getLogKey())
+        .infraType(infraType)
         .build();
   }
 

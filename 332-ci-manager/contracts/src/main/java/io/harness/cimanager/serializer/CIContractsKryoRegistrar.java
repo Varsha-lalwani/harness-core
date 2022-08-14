@@ -46,6 +46,7 @@ import io.harness.beans.yaml.extended.infrastrucutre.VmInfraSpec;
 import io.harness.beans.yaml.extended.infrastrucutre.VmInfraYaml;
 import io.harness.beans.yaml.extended.infrastrucutre.VmPoolYaml;
 import io.harness.beans.yaml.extended.runtime.CloudRuntime;
+import io.harness.beans.yaml.extended.runtime.DockerRuntime;
 import io.harness.beans.yaml.extended.runtime.Runtime;
 import io.harness.beans.yaml.extended.volumes.CIVolume;
 import io.harness.beans.yaml.extended.volumes.EmptyDirYaml;
@@ -98,6 +99,7 @@ public class CIContractsKryoRegistrar implements KryoRegistrar {
     kryo.register(HostedVmInfraYaml.class, 110112);
     kryo.register(Runtime.Type.class, 110113);
     kryo.register(CloudRuntime.class, 110114);
+    kryo.register(DockerRuntime.class, 110115);
 
     kryo.register(CIVolume.class, 390005);
     kryo.register(EmptyDirYaml.class, 390006);

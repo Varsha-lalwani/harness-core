@@ -61,6 +61,7 @@ public class CIVmInitializeTaskParams
 
   private String stageRuntimeId;
   @Expression(ALLOW_SECRETS) private List<VmServiceDependency> serviceDependencies;
+  @NotNull private String infraType;
   @Builder.Default private static final Type type = Type.VM;
 
   @Override
@@ -70,6 +71,10 @@ public class CIVmInitializeTaskParams
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return Collections.singletonList(CIVmConnectionCapability.builder().poolId(poolID).build());
+    if (infraType == "vm") {
+      return Collections.singletonList(CIVmConnectionCapability.builder().poolId(poolID).infraType(infraType).build());
+    } else {
+        return Collections.singletonList(CIVmConnectionCapability.builder().infraType(infraType).build());
+    }
   }
 }

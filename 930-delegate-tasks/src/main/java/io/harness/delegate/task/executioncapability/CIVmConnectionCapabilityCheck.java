@@ -27,7 +27,12 @@ public class CIVmConnectionCapabilityCheck implements CapabilityCheck, ProtoCapa
   @Override
   public CapabilityResponse performCapabilityCheck(ExecutionCapability delegateCapability) {
     CIVmConnectionCapability connectionCapabiilty = (CIVmConnectionCapability) delegateCapability;
-    boolean isOwner = isPoolOwner(connectionCapabiilty.getPoolId(), connectionCapabiilty.getStageRuntimeId());
+    boolean isOwner;
+    if (connectionCapabiilty.getInfraType() == "vm") {
+      isOwner = isPoolOwner(connectionCapabiilty.getPoolId(), connectionCapabiilty.getStageRuntimeId());
+    } else {
+      isOwner = true;
+    }
     return CapabilityResponse.builder().delegateCapability(delegateCapability).validated(isOwner).build();
   }
 
@@ -45,6 +50,7 @@ public class CIVmConnectionCapabilityCheck implements CapabilityCheck, ProtoCapa
 
   @Override
   public CapabilitySubjectPermission performCapabilityCheckWithProto(CapabilityParameters parameters) {
+    //TODO:xun figure out logic for docker
     CapabilitySubjectPermissionBuilder builder = CapabilitySubjectPermission.builder();
 
     if (parameters.getCapabilityCase() != CapabilityParameters.CapabilityCase.CI_VM_PARAMETERS) {

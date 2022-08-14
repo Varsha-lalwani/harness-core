@@ -18,6 +18,7 @@ import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.UseFromStageInfraYaml;
 import io.harness.beans.yaml.extended.platform.Platform;
 import io.harness.beans.yaml.extended.runtime.CloudRuntime;
+import io.harness.beans.yaml.extended.runtime.DockerRuntime;
 import io.harness.beans.yaml.extended.runtime.Runtime;
 import io.harness.cimanager.stages.IntegrationStageConfig;
 import io.harness.plancreator.execution.ExecutionElementConfig;
@@ -67,6 +68,9 @@ public class SecurityStageConfigImpl implements IntegrationStageConfig {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, defaultImpl = CloudRuntime.class)
   Runtime runtime;
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, defaultImpl = DockerRuntime.class)
+  Runtime dockerRuntime;
 
   @YamlSchemaTypes(value = {SupportedPossibleFieldTypes.runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.platform.Platform")

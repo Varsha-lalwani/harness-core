@@ -50,7 +50,7 @@ public class CIVmCleanupTaskHandlerTest extends CategoryTest {
   @Owner(developers = SHUBHAM)
   @Category(UnitTests.class)
   public void executeTaskInternal() throws IOException {
-    CIVmCleanupTaskParams params = CIVmCleanupTaskParams.builder().stageRuntimeId("stage").build();
+    CIVmCleanupTaskParams params = CIVmCleanupTaskParams.builder().stageRuntimeId("stage").infraType("vm").build();
     Response<Void> cleanupResponse = Response.success(null);
     when(httpHelper.cleanupStageWithRetries(any())).thenReturn(cleanupResponse);
     VmTaskExecutionResponse response = ciVmCleanupTaskHandler.executeTaskInternal(params, "");
@@ -61,7 +61,7 @@ public class CIVmCleanupTaskHandlerTest extends CategoryTest {
   @Owner(developers = SHUBHAM)
   @Category(UnitTests.class)
   public void executeTaskInternalFailure() {
-    CIVmCleanupTaskParams params = CIVmCleanupTaskParams.builder().stageRuntimeId("stage").build();
+    CIVmCleanupTaskParams params = CIVmCleanupTaskParams.builder().stageRuntimeId("stage").infraType("vm").infraType("vm").build();
     ResponseBody body = mock(ResponseBody.class);
     Response<Void> cleanupResponse = Response.error(400, body);
     when(httpHelper.cleanupStageWithRetries(any())).thenReturn(cleanupResponse);

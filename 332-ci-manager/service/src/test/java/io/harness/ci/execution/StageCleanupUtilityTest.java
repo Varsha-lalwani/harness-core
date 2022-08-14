@@ -89,7 +89,7 @@ public class StageCleanupUtilityTest extends CIExecutionTestBase {
              ambiance, RefObjectUtils.getSweepingOutputRefObject(STAGE_INFRA_DETAILS)))
         .thenReturn(OptionalSweepingOutput.builder()
                         .found(true)
-                        .output(VmStageInfraDetails.builder().poolId(poolId).build())
+                        .output(VmStageInfraDetails.builder().poolId(poolId).infraType("vm").build())
                         .build());
     when(executionSweepingOutputResolver.resolveOptional(
              ambiance, RefObjectUtils.getSweepingOutputRefObject(ContextElement.stageDetails)))

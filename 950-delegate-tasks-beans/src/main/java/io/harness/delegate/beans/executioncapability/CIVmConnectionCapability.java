@@ -18,6 +18,7 @@ public class CIVmConnectionCapability implements ExecutionCapability {
 
   private String poolId;
   private String stageRuntimeId;
+  private String infraType;
 
   @Override
   public EvaluationMode evaluationMode() {
@@ -26,7 +27,11 @@ public class CIVmConnectionCapability implements ExecutionCapability {
 
   @Override
   public String fetchCapabilityBasis() {
-    return String.format("%s-%s", poolId, stageRuntimeId);
+    if (infraType == "vm") {
+      return String.format("%s-%s", poolId, stageRuntimeId);
+    } else {
+      return String.format("%s", stageRuntimeId);
+    }
   }
 
   @Override
