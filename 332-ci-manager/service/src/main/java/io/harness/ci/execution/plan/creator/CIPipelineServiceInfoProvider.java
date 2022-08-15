@@ -12,6 +12,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.beans.steps.StepSpecTypeConstants;
 import io.harness.ci.creator.variables.ArtifactoryUploadStepVariableCreator;
+import io.harness.ci.creator.variables.BackgroundStepVariableCreator;
 import io.harness.ci.creator.variables.BuildAndPushACRStepVariableCreator;
 import io.harness.ci.creator.variables.BuildAndPushECRStepVariableCreator;
 import io.harness.ci.creator.variables.BuildAndPushGCRStepVariableCreator;
@@ -124,7 +125,7 @@ public class CIPipelineServiceInfoProvider implements PipelineServiceInfoProvide
     variableCreators.add(new ExecutionVariableCreator());
     variableCreators.add(new CIStepVariableCreator());
     variableCreators.add(new RunStepVariableCreator());
-
+    variableCreators.add(new BackgroundStepVariableCreator());
     variableCreators.add(new RunTestStepVariableCreator());
     variableCreators.add(new S3UploadStepVariableCreator());
     variableCreators.add(new SaveCacheGCSStepVariableCreator());
