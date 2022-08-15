@@ -122,7 +122,7 @@ public class GraphRenderer {
       }
     }
     final Optional<ExecutionStatus> notNewActiveStatuses =
-        activeStatuses.stream().filter(status -> status != NEW).findFirst();
+        activeStatuses.stream().filter(status -> status != null && status != NEW).findFirst();
     if (notNewActiveStatuses.isPresent()) {
       return notNewActiveStatuses.get();
     }
