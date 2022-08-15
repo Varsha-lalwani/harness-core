@@ -86,7 +86,6 @@ import io.harness.cvng.events.monitoredservice.MonitoredServiceCreateEvent;
 import io.harness.cvng.events.monitoredservice.MonitoredServiceDeleteEvent;
 import io.harness.cvng.events.monitoredservice.MonitoredServiceToggleEvent;
 import io.harness.cvng.events.monitoredservice.MonitoredServiceUpdateEvent;
-import io.harness.cvng.migration.service.CVNGMigrationService;
 import io.harness.cvng.notification.beans.NotificationRuleConditionType;
 import io.harness.cvng.notification.beans.NotificationRuleRef;
 import io.harness.cvng.notification.beans.NotificationRuleRefDTO;
@@ -104,7 +103,6 @@ import io.harness.cvng.notification.services.api.NotificationRuleTemplateDataGen
 import io.harness.cvng.notification.services.api.NotificationRuleTemplateDataGenerator.NotificationData;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
-import io.harness.cvng.servicelevelobjective.services.api.SLODashboardService;
 import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
@@ -202,7 +200,6 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   @Inject private CVNGLogService cvngLogService;
   @Inject private NotificationRuleService notificationRuleService;
   @Inject private TemplateFacade templateFacade;
-  @Inject private SLODashboardService sloDashboardService;
   @Inject private ServiceLevelObjectiveService serviceLevelObjectiveService;
   @Inject private NotificationClient notificationClient;
   @Inject private ActivityService activityService;
@@ -213,8 +210,6 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   @Inject
   private Map<NotificationRuleConditionType, NotificationRuleTemplateDataGenerator>
       notificationRuleConditionTypeTemplateDataGeneratorMap;
-
-  @Inject private CVNGMigrationService cvngMigrationService;
 
   @Inject private EntityDisabledTimeService entityDisabledTimeService;
 
@@ -1250,7 +1245,9 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         projectParams, monitoredService.getIdentifier(), enable);
     serviceLevelIndicatorService.setMonitoredServiceSLIsEnableFlag(
         projectParams, monitoredService.getIdentifier(), enable);
-    if (enable && cvngMigrationService.getCVNGSchemaVersion() == 51) {
+    if (enable
+        && featureFlagService.isFeatureFlagEnabled(
+            projectParams.getAccountIdentifier(), FeatureFlagNames.CVNG_SLO_DISABLE_ENABLE)) {
       entityDisabledTimeService.save(EntityDisableTime.builder()
                                          .entityUUID(monitoredService.getUuid())
                                          .accountId(monitoredService.getAccountId())

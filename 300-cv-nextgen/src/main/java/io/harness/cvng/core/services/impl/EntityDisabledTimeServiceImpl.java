@@ -24,12 +24,7 @@ public class EntityDisabledTimeServiceImpl implements EntityDisabledTimeService 
 
   @Override
   public void save(EntityDisableTime entityDisableTime) {
-    hPersistence.save(EntityDisableTime.builder()
-                          .entityUUID(entityDisableTime.getEntityUUID())
-                          .accountId(entityDisableTime.getAccountId())
-                          .startTime(entityDisableTime.getStartTime())
-                          .endTime(entityDisableTime.getEndTime())
-                          .build());
+    hPersistence.save(entityDisableTime);
   }
 
   @Override
