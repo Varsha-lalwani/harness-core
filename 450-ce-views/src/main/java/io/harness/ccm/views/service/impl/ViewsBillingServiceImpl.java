@@ -936,29 +936,22 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
       ViewQueryParams queryParams) {
     List<ViewRule> viewRuleList = new ArrayList<>();
 
-    log.info("groupBy: {}", groupBy);
     // Removing group by none if present
     boolean skipDefaultGroupBy = false;
     if (viewsQueryHelper.isGroupByNonePresent(groupBy)) {
       skipDefaultGroupBy = true;
-      log.info("skipDeafultGroupBy: {}", skipDefaultGroupBy);
       groupBy = viewsQueryHelper.removeGroupByNone(groupBy);
-      log.info("groupBy: {}", groupBy);
     }
 
     List<QLCEViewGroupBy> modifiedGroupBy = groupBy != null ? new ArrayList<>(groupBy) : new ArrayList<>();
-    log.info("modifiedGroupBy: {}", modifiedGroupBy);
     Optional<QLCEViewFilterWrapper> viewMetadataFilter = getViewMetadataFilter(filters);
-    log.info("viewMetadataFilter: {}", viewMetadataFilter);
 
     List<QLCEViewRule> rules = AwsAccountFieldHelper.removeAccountNameFromAWSAccountRuleFilter(getRuleFilters(filters));
-    log.info("rules: {}", rules);
     if (!rules.isEmpty()) {
       for (QLCEViewRule rule : rules) {
         viewRuleList.add(convertQLCEViewRuleToViewRule(rule));
       }
     }
-    log.info("viewRuleList: {}", viewRuleList);
 
     if (viewMetadataFilter.isPresent()) {
       QLCEViewMetadataFilter metadataFilter = viewMetadataFilter.get().getViewMetadataFilter();
@@ -966,7 +959,6 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
       if (!metadataFilter.isPreview()) {
         CEView ceView = viewService.get(viewId);
         viewRuleList = ceView.getViewRules();
-        log.info("viewRuleList: {}", viewRuleList);
         if (ceView.getViewVisualization() != null) {
           ViewVisualization viewVisualization = ceView.getViewVisualization();
           ViewField defaultGroupByField = viewVisualization.getGroupBy();
@@ -976,34 +968,26 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
           }
           modifiedGroupBy = getModifiedGroupBy(groupBy, defaultGroupByField, defaultTimeGranularity,
               queryParams.isTimeTruncGroupByRequired(), skipDefaultGroupBy);
-          log.info("modifiedGroupBy: {}", modifiedGroupBy);
         }
       }
     }
     List<QLCEViewFilter> idFilters =
         AwsAccountFieldHelper.removeAccountNameFromAWSAccountIdFilter(getIdFilters(filters));
-    log.info("idFilters: {}", idFilters);
     List<QLCEViewTimeFilter> timeFilters = getTimeFilters(filters);
-    log.info("timeFilters: {}", timeFilters);
 
     // account id is not passed in current gen queries
     if (queryParams.getAccountId() != null) {
       boolean isPodQuery = false;
       if (isClusterPerspective(filters) || queryParams.isClusterQuery()) {
         isPodQuery = isPodQuery(modifiedGroupBy);
-        log.info("isPodQuery: {}", isPodQuery);
         if (isInstanceDetailsQuery(modifiedGroupBy)) {
           idFilters.add(getFilterForInstanceDetails(modifiedGroupBy));
         }
-        log.info("idFilters: {}", idFilters);
         modifiedGroupBy = addAdditionalRequiredGroupBy(modifiedGroupBy);
-        log.info("modifiedGroupBy: {}", modifiedGroupBy);
         // Changes column name for product to clustername in case of cluster perspective
         idFilters = getModifiedIdFilters(addNotNullFilters(idFilters, modifiedGroupBy), true);
-        log.info("idFilters: {}", idFilters);
         // Changes column name for cost to billingamount
         aggregateFunction = getModifiedAggregations(aggregateFunction);
-        log.info("aggregateFunction: {}", aggregateFunction);
         sort = getModifiedSort(sort);
       }
       cloudProviderTableName = getUpdatedCloudProviderTableName(filters, modifiedGroupBy, aggregateFunction,
