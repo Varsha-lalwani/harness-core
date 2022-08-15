@@ -303,11 +303,11 @@ public class GraphRendererTest extends WingsBaseTest {
     assertThat(GraphRenderer.aggregateStatus(asList(SUCCESS, null, SUCCESS))).isEqualTo(NEW);
 
     assertThat(GraphRenderer.aggregateStatus(asList(null, NEW, STARTING, RUNNING, SUCCESS, DISCONTINUING, ABORTED,
-            FAILED, QUEUED, SCHEDULED, ERROR, WAITING, PAUSING, PAUSED, RESUMED)))
-            .isEqualTo(WAITING);
+                   FAILED, QUEUED, SCHEDULED, ERROR, WAITING, PAUSING, PAUSED, RESUMED)))
+        .isEqualTo(WAITING);
     assertThat(GraphRenderer.aggregateStatus(asList(null, NEW, STARTING, RUNNING, SUCCESS, DISCONTINUING, ABORTED,
-            FAILED, QUEUED, SCHEDULED, ERROR, PAUSING, PAUSED, RESUMED)))
-            .isEqualTo(PAUSED);
+                   FAILED, QUEUED, SCHEDULED, ERROR, PAUSING, PAUSED, RESUMED)))
+        .isEqualTo(PAUSED);
     assertThat(GraphRenderer.aggregateStatus(asList(null, NEW, SUCCESS, ABORTED, FAILED, ERROR))).isEqualTo(NEW);
     assertThat(GraphRenderer.aggregateStatus(asList(null, SUCCESS, ABORTED, FAILED, ERROR))).isEqualTo(NEW);
     assertThat(GraphRenderer.aggregateStatus(asList(SUCCESS, null))).isEqualTo(NEW);
