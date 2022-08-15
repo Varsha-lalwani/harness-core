@@ -90,7 +90,8 @@ public class ShellScriptStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testObtainTask() {
     Ambiance ambiance = buildAmbiance();
-    ShellScriptStepParameters stepParameters = ShellScriptStepParameters.infoBuilder().build();
+    ShellScriptStepParameters stepParameters =
+        ShellScriptStepParameters.infoBuilder().shellType(ShellType.Bash).build();
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(stepParameters).build();
     ShellScriptTaskParametersNG taskParametersNG = ShellScriptTaskParametersNG.builder().build();
     doReturn(taskParametersNG)
