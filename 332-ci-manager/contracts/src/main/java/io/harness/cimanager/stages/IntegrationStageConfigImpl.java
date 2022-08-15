@@ -18,7 +18,7 @@ import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.UseFromStageInfraYaml;
 import io.harness.beans.yaml.extended.platform.Platform;
 import io.harness.beans.yaml.extended.runtime.CloudRuntime;
-import io.harness.beans.yaml.extended.runtime.DockerdRuntime;
+import io.harness.beans.yaml.extended.runtime.DockerRuntime;
 import io.harness.beans.yaml.extended.runtime.Runtime;
 import io.harness.plancreator.execution.ExecutionElementConfig;
 import io.harness.pms.yaml.ParameterField;

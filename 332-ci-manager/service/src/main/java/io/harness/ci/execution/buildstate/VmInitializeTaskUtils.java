@@ -25,6 +25,8 @@ import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.beans.sweepingoutputs.ContextElement;
 import io.harness.beans.sweepingoutputs.StageDetails;
 import io.harness.beans.sweepingoutputs.VmStageInfraDetails;
+import io.harness.beans.yaml.extended.infrastrucutre.DockerInfraSpec;
+import io.harness.beans.yaml.extended.infrastrucutre.DockerInfraYaml;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.VmInfraSpec;
 import io.harness.beans.yaml.extended.infrastrucutre.VmInfraYaml;
@@ -84,7 +86,7 @@ public class VmInitializeTaskUtils {
 
   public CIVmInitializeTaskParams getInitializeTaskParams(
       InitializeStepInfo initializeStepInfo, Ambiance ambiance, String logPrefix) {
-    //TODO:xun figure out the logic for docker
+    // TODO:xun figure out the logic for docker
     Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
     if (infrastructure == null) {
       throw new CIStageExecutionException("Input infrastructure can not be null");
@@ -102,7 +104,7 @@ public class VmInitializeTaskUtils {
       VmInfraYaml vmInfraYaml = (VmInfraYaml) infrastructure;
       if (vmInfraYaml.getSpec().getType() != VmInfraSpec.Type.POOL) {
         throw new CIStageExecutionException(
-                format("Invalid VM infrastructure spec type: %s", vmInfraYaml.getSpec().getType()));
+            format("Invalid VM infrastructure spec type: %s", vmInfraYaml.getSpec().getType()));
       }
       VmPoolYaml vmPoolYaml = (VmPoolYaml) vmInfraYaml.getSpec();
       poolId = getPoolName(vmPoolYaml);
@@ -116,7 +118,7 @@ public class VmInitializeTaskUtils {
       DockerInfraYaml dockerInfraYaml = (DockerInfraYaml) infrastructure;
       if (dockerInfraYaml.getSpec().getType() != DockerInfraSpec.Type.DOCKER) {
         throw new CIStageExecutionException(
-                format("Invalid Docker infrastructure spec type: %s", dockerInfraYaml.getSpec().getType()));
+            format("Invalid Docker infrastructure spec type: %s", dockerInfraYaml.getSpec().getType()));
       }
       poolId = "";
       harnessImageConnectorRef = "";
@@ -129,7 +131,7 @@ public class VmInitializeTaskUtils {
             .poolId(poolId)
             .workDir(vmBuildJobInfo.getWorkDir())
             .volToMountPathMap(vmBuildJobInfo.getVolToMountPath())
-            .harnessImageConnectorRef(vmPoolYaml.getSpec().getHarnessImageConnectorRef().getValue())
+            .harnessImageConnectorRef(harnessImageConnectorRef)
             .infraType(infraType)
             .build(),
         STAGE_INFRA_DETAILS);

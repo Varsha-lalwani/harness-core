@@ -30,13 +30,14 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(CI)
 @RecasterAlias("io.harness.beans.yaml.extended.runtime.DockerRuntime")
 public class DockerRuntime implements Runtime {
-    @Builder.Default @NotNull @ApiModelProperty(allowableValues = "Docker") private Type type = Type.DOCKER;
-    @NotNull private DockerRuntimeSpec spec;
+  @Builder.Default @NotNull @ApiModelProperty(allowableValues = "Docker") private Type type = Type.DOCKER;
+  @NotNull private DockerRuntimeSpec spec;
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class DockerRuntimeSpec {
-    }
+  @Data
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class DockerRuntimeSpec {
+    private String size;
+  }
 }

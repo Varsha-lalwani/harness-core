@@ -36,7 +36,7 @@ public class VmStageInfraDetails implements StageInfraDetails {
   @Id @NotNull(groups = {Update.class}) @SchemaIgnore private String uuid;
 
   @Builder.Default @NotNull private Type type = Type.VM;
-  @NotNull String infraType;
+  @NotNull private String infraType;
 
   @Override
   public StageInfraDetails.Type getType() {
