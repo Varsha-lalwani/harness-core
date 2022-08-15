@@ -28,7 +28,14 @@ import static io.harness.ccm.views.graphql.ViewMetaDataConstants.entityConstantM
 import static io.harness.ccm.views.graphql.ViewMetaDataConstants.entityConstantMinStartTime;
 import static io.harness.ccm.views.graphql.ViewMetaDataConstants.entityConstantSystemCost;
 import static io.harness.ccm.views.graphql.ViewMetaDataConstants.entityConstantUnallocatedCost;
-import static io.harness.ccm.views.graphql.ViewsQueryBuilder.*;
+import static io.harness.ccm.views.graphql.ViewsQueryBuilder.ECS_TASK_EC2;
+import static io.harness.ccm.views.graphql.ViewsQueryBuilder.ECS_TASK_FARGATE;
+import static io.harness.ccm.views.graphql.ViewsQueryBuilder.K8S_NODE;
+import static io.harness.ccm.views.graphql.ViewsQueryBuilder.K8S_POD;
+import static io.harness.ccm.views.graphql.ViewsQueryBuilder.K8S_POD_FARGATE;
+import static io.harness.ccm.views.graphql.ViewsQueryBuilder.K8S_PV;
+import static io.harness.ccm.views.graphql.ViewsQueryBuilder.LABEL_KEY_ALIAS;
+import static io.harness.ccm.views.graphql.ViewsQueryBuilder.LABEL_VALUE_ALIAS;
 import static io.harness.ccm.views.utils.ClusterTableKeys.ACTUAL_IDLE_COST;
 import static io.harness.ccm.views.utils.ClusterTableKeys.AVG_CPU_UTILIZATION_VALUE;
 import static io.harness.ccm.views.utils.ClusterTableKeys.AVG_MEMORY_UTILIZATION_VALUE;
