@@ -66,6 +66,9 @@ public class MergePRStepInfo extends MergePRBaseStepInfo implements CDStepInfo, 
 
   @Override
   public SpecParameters getSpecParameters() {
-    return MergePRStepParams.infoBuilder().build();
+    return MergePRStepParams.infoBuilder()
+            .delegateSelectors(getDelegateSelectors())
+            .deleteSourceBranch(getDeleteSourceBranch())
+            .build();
   }
 }
