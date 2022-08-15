@@ -12,7 +12,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static software.wings.beans.TaskType.SHELL_SCRIPT_TASK_NG;
 import static software.wings.beans.TaskType.WIN_RM_SHELL_SCRIPT_TASK_NG;
 
-import static com.google.protobuf.Duration.newBuilder;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -20,13 +19,10 @@ import io.harness.OrchestrationPublisherName;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.TaskSelector;
-import io.harness.delegate.TaskType;
+import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.shell.ShellScriptTaskNG;
 import io.harness.delegate.task.shell.WinRmShellScriptTaskNG;
-import io.harness.delegate.beans.TaskData;
-import io.harness.delegate.task.shell.ShellScriptTaskNG;
-import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
 import io.harness.engine.pms.tasks.NgDelegate2TaskExecutor;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
@@ -62,6 +58,7 @@ import software.wings.beans.LogWeight;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
@@ -179,7 +176,7 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
       Ambiance ambiance, CustomApprovalInstance instance, TaskParameters stepParameters) {
     TaskData taskData = TaskData.builder()
                             .async(true)
-                            .taskType(software.wings.beans.TaskType.SHELL_SCRIPT_TASK_NG.name())
+                            .taskType(SHELL_SCRIPT_TASK_NG.name())
                             .parameters(new Object[] {stepParameters})
                             .timeout(instance.getScriptTimeout().getValue().getTimeoutInMillis())
                             .build();
@@ -192,22 +189,18 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
 
   private TaskRequest preparePowerShellCustomApprovalTaskRequest(
       Ambiance ambiance, CustomApprovalInstance instance, TaskParameters stepParameters) {
-    TaskDetails taskDetails =
-        TaskDetails.newBuilder()
-            .setKryoParameters(ByteString.copyFrom(kryoSerializer.asDeflatedBytes(stepParameters) == null
-                    ? new byte[] {}
-                    : kryoSerializer.asDeflatedBytes(stepParameters)))
-            .setExecutionTimeout(
-                newBuilder().setSeconds(instance.getScriptTimeout().getValue().getTimeoutInMillis() / 1000).build())
-            .setMode(TaskMode.ASYNC)
-            .setParked(false)
-            .setType(TaskType.newBuilder().setType(WIN_RM_SHELL_SCRIPT_TASK_NG.name()).build())
-            .build();
+    TaskData taskData = TaskData.builder()
+                            .async(true)
+                            .taskType(WIN_RM_SHELL_SCRIPT_TASK_NG.name())
+                            .parameters(new Object[] {stepParameters})
+                            .timeout(instance.getScriptTimeout().getValue().getTimeoutInMillis())
+                            .build();
 
     List<TaskSelector> selectors = TaskSelectorYaml.toTaskSelector(instance.getDelegateSelectors());
-    return StepUtils.prepareTaskRequest(ambiance, taskDetails,
-        Lists.newArrayList(WinRmShellScriptTaskNG.INIT_UNIT, WinRmShellScriptTaskNG.COMMAND_UNIT), selectors, null,
-        true);
+
+    return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
+        Arrays.asList(WinRmShellScriptTaskNG.INIT_UNIT, WinRmShellScriptTaskNG.COMMAND_UNIT), null, selectors,
+        stepHelper.getEnvironmentType(ambiance));
   }
 
   private void validateField(String name, String value) {
