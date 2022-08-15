@@ -1376,6 +1376,7 @@ public class DelegateServiceTest extends WingsBaseTest {
     String accountId = generateUuid();
     Delegate delegate = createDelegateBuilder().build();
     delegate.setAccountId(accountId);
+    delegate.setMtls(true);
     DelegateProfile primaryDelegateProfile =
         createDelegateProfileBuilder().accountId(delegate.getAccountId()).primary(true).build();
 
@@ -1388,6 +1389,7 @@ public class DelegateServiceTest extends WingsBaseTest {
     delegateService.register(delegate);
     Delegate registeredDelegate = delegateCache.get(accountId, delegate.getUuid(), true);
     assertThat(registeredDelegate).isEqualToIgnoringGivenFields(delegate, DelegateKeys.validUntil);
+    assertThat(registeredDelegate.isMtls()).isTrue();
   }
 
   @Test
