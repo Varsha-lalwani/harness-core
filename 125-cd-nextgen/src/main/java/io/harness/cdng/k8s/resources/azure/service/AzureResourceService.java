@@ -43,4 +43,6 @@ public interface AzureResourceService {
 
   AzureLocationsDTO getLocationsBySubscription(
       IdentifierRef connectorRef, String orgIdentifier, String projectIdentifier, String subscriptionId);
+
+  AzureLocationsDTO getLocations(IdentifierRef connectorRef, String orgIdentifier, String projectIdentifier);
 }

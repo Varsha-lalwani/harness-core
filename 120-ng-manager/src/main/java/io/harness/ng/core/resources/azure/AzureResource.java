@@ -320,8 +320,8 @@ public class AzureResource {
   }
 
   @GET
-  @Path("locations")
-  @ApiOperation(value = "Gets azure locations", nickname = "getLocations")
+  @Path("locations-by-subscription")
+  @ApiOperation(value = "Gets azure locations defined for a subscription", nickname = "getLocationsBySubscription")
   public ResponseDTO<AzureLocationsDTO> getLocations(
       @NotNull @QueryParam("connectorRef") String azureConnectorIdentifier,
       @NotNull @QueryParam("subscriptionId") String subscriptionId,
@@ -332,5 +332,18 @@ public class AzureResource {
         IdentifierRefHelper.getIdentifierRef(azureConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
     return ResponseDTO.newResponse(azureResourceService.getLocationsBySubscription(
         connectorRef, orgIdentifier, projectIdentifier, subscriptionId));
+  }
+
+  @GET
+  @Path("locations")
+  @ApiOperation(value = "Gets azure locations", nickname = "getLocations")
+  public ResponseDTO<AzureLocationsDTO> getLocations(
+      @NotNull @QueryParam("connectorRef") String azureConnectorIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
+    IdentifierRef connectorRef =
+        IdentifierRefHelper.getIdentifierRef(azureConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
+    return ResponseDTO.newResponse(azureResourceService.getLocations(connectorRef, orgIdentifier, projectIdentifier));
   }
 }

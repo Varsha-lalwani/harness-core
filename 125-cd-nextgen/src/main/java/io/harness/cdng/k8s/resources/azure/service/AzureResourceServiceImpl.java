@@ -280,4 +280,21 @@ public class AzureResourceServiceImpl implements AzureResourceService {
         azureTaskParamsTaskParams, baseNGAccess, "Azure list locations task failure due to error");
     return AzureLocationsDTO.builder().locations(response.getLocations()).build();
   }
+
+  @Override
+  public AzureLocationsDTO getLocations(IdentifierRef connectorRef, String orgIdentifier, String projectIdentifier) {
+    AzureConnectorDTO connector = azureHelperService.getConnector(connectorRef);
+    BaseNGAccess baseNGAccess =
+        azureHelperService.getBaseNGAccess(connectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
+    List<EncryptedDataDetail> encryptionDetails = azureHelperService.getEncryptionDetails(connector, baseNGAccess);
+    AzureTaskParams azureTaskParamsTaskParams = AzureTaskParams.builder()
+                                                    .azureTaskType(AzureTaskType.LIST_SUBSCRIPTION_LOCATIONS)
+                                                    .azureConnector(connector)
+                                                    .encryptionDetails(encryptionDetails)
+                                                    .delegateSelectors(connector.getDelegateSelectors())
+                                                    .build();
+    AzureLocationsResponse response = (AzureLocationsResponse) azureHelperService.executeSyncTask(
+        azureTaskParamsTaskParams, baseNGAccess, "Azure list locations task failure due to error");
+    return AzureLocationsDTO.builder().locations(response.getLocations()).build();
+  }
 }
