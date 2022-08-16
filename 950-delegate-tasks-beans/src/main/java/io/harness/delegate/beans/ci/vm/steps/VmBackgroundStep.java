@@ -7,18 +7,18 @@
 
 package io.harness.delegate.beans.ci.vm.steps;
 
+import static io.harness.annotations.dev.HarnessTeam.CI;
+import static io.harness.expression.Expression.ALLOW_SECRETS;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.expression.Expression;
-import lombok.Builder;
-import lombok.Value;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
-
-import static io.harness.annotations.dev.HarnessTeam.CI;
-import static io.harness.expression.Expression.ALLOW_SECRETS;
+import javax.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.Value;
 
 @Value
 @Builder
