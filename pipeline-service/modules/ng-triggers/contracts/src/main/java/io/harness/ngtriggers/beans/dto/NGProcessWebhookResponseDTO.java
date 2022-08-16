@@ -11,6 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotations.dev.OwnedBy;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -19,6 +21,8 @@ import lombok.experimental.FieldDefaults;
 @Value
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@ApiModel("NGProcessWebhookResponse")
+@Schema(name = "NGProcessWebhookResponse", description = "This contains details about the triggered webhook")
 @OwnedBy(PIPELINE)
 public class NGProcessWebhookResponseDTO {
   String eventCorrelationId;

@@ -36,6 +36,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -264,11 +265,16 @@ public interface NGTriggerWebhookConfigResource {
   @ApiOperation(value = "accept custom webhook event V2", nickname = "customWebhookEndpointV2")
   @PublicApi
   ResponseDTO<NGProcessWebhookResponseDTO>
-  processWebhookEventV2(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
-      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-      @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) String pipelineIdentifier,
-      @QueryParam(TRIGGER_KEY) String triggerIdentifier, @NotNull String eventPayload, @Context HttpHeaders httpHeaders,
+  processWebhookEventV2(@Parameter(description = "Account ID") @NotNull @QueryParam(
+                            NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Parameter(description = "Organization ID") @NotNull @QueryParam(
+          NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @Parameter(description = "Project ID") @NotNull @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = "Pipeline ID") @QueryParam(
+          NGCommonEntityConstants.PIPELINE_KEY) String pipelineIdentifier,
+      @Parameter(description = "Trigger Key") @QueryParam(TRIGGER_KEY) String triggerIdentifier,
+      @Parameter(description = "Trigger Payload") @NotNull String eventPayload, @Context HttpHeaders httpHeaders,
       @Context UriInfo uriInfo);
 
   @GET
