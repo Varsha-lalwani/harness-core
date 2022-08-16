@@ -80,7 +80,7 @@ func (e *stepExecutor) Run(ctx context.Context, step *pb.UnitStep) error {
 	
 	detach := false
 	if _, ok := step.GetStep().(*pb.UnitStep_Run); ok {
-		detach = true
+		detach = step.GetRun().GetDetach()
 	}
 
 	if err == nil && !detach {
