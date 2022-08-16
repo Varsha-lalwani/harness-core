@@ -18,17 +18,12 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.data.PmsEngineExpressionService;
 import io.harness.engine.utils.OrchestrationUtils;
 import io.harness.execution.ExecutionInputInstance;
-import io.harness.execution.NodeExecution;
 import io.harness.expression.EngineExpressionEvaluator;
-import io.harness.plan.Node;
 import io.harness.plan.PlanNode;
 import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.execution.utils.AmbianceUtils;
-import io.harness.pms.sdk.core.execution.NodeExecutionUtils;
-import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
-import io.harness.pms.timeout.SdkTimeoutTrackerParameters;
 import io.harness.serializer.KryoSerializer;
 import io.harness.timeout.TimeoutParameters;
 import io.harness.timeout.contracts.TimeoutObtainment;
@@ -39,7 +34,6 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.time.Duration;
 import java.util.EnumSet;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(PIPELINE)
@@ -60,9 +54,8 @@ public class WaitForExecutionInputHelper {
         || EmptyPredicate.isEmpty(node.getExecutionInputTemplate())) {
       return false;
     }
-    ExecutionInputInstance instance = executionInputService.getExecutionInputInstance(nodeExecutionId);
     // If instance is already there then that means we have already processed the user input.
-    if (instance != null) {
+    if (executionInputService.isPresent(nodeExecutionId)) {
       return false;
     }
     Long currentTime = System.currentTimeMillis();

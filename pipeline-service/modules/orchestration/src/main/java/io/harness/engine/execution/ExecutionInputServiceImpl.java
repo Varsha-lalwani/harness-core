@@ -89,6 +89,12 @@ public class ExecutionInputServiceImpl implements ExecutionInputService {
   }
 
   @Override
+  public boolean isPresent(String nodeExecutionId) {
+    Optional<ExecutionInputInstance> optional = executionInputRepository.findByNodeExecutionId(nodeExecutionId);
+    return optional.isPresent();
+  }
+
+  @Override
   public ExecutionInputInstance save(ExecutionInputInstance executionInputInstance) {
     return executionInputRepository.save(executionInputInstance);
   }
