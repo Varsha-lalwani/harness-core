@@ -154,8 +154,8 @@ public class InfrastructureTaskExecutableStep implements TaskExecutableWithRbac<
         ambiance, RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.SERVICE));
     InfrastructureOutcome infrastructureOutcome =
         InfrastructureMapper.toOutcome(stepParameters, environmentOutcome, serviceOutcome);
-    ExecutionInfoKey executionInfoKey = ExecutionInfoKeyMapper.getExecutionInfoKey(
-        ambiance, stepParameters.getKind(), environmentOutcome, serviceOutcome, infrastructureOutcome);
+    ExecutionInfoKey executionInfoKey =
+        ExecutionInfoKeyMapper.getExecutionInfoKey(ambiance, environmentOutcome, serviceOutcome, infrastructureOutcome);
 
     NGLogCallback logCallback = infrastructureStepHelper.getInfrastructureLogCallback(ambiance, "Execute");
     DelegateResponseData responseData;
@@ -229,6 +229,9 @@ public class InfrastructureTaskExecutableStep implements TaskExecutableWithRbac<
         azureHostsResponse.getHosts().stream().map(AzureHostResponse::getHostName).collect(Collectors.toList());
     infrastructureStepHelper.saveExecutionLog(
         logCallback, color(format("Successfully fetched %s instance(s)", hostNames.size()), Green));
+
+    hostNames = stageExecutionHelper.saveAndExcludeHostsWithSameArtifactDeployedIfNeeded(
+        ambiance, executionInfoKey, infrastructureOutcome, hostNames, ServiceSpecType.SSH);
     executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.OUTPUT,
         HostsOutput.builder().hosts(hostNames).build(), StepCategory.STAGE.name());
 
@@ -244,6 +247,9 @@ public class InfrastructureTaskExecutableStep implements TaskExecutableWithRbac<
                                  .collect(Collectors.toList());
     infrastructureStepHelper.saveExecutionLog(
         logCallback, color(format("Successfully fetched %s instance(s)", hostNames.size()), Green));
+
+    hostNames = stageExecutionHelper.saveAndExcludeHostsWithSameArtifactDeployedIfNeeded(
+        ambiance, executionInfoKey, infrastructureOutcome, hostNames, ServiceSpecType.SSH);
     executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.OUTPUT,
         HostsOutput.builder().hosts(hostNames).build(), StepCategory.STAGE.name());
 

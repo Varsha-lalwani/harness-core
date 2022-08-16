@@ -157,13 +157,13 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
 
     saveExecutionLog(logCallback, color("Environment information fetched", Green));
 
-    publishInfraDelegateConfigOutput(serviceOutcome, infrastructureOutcome, ambiance);
+    publishInfraDelegateConfigOutput(serviceOutcome, environmentOutcome, infrastructureOutcome, ambiance);
 
     StepResponseBuilder stepResponseBuilder = StepResponse.builder();
     String infrastructureKind = infrastructure.getKind();
     if (stageExecutionHelper.shouldSaveStageExecutionInfo(infrastructureKind)) {
       ExecutionInfoKey executionInfoKey = ExecutionInfoKeyMapper.getExecutionInfoKey(
-          ambiance, infrastructureKind, environmentOutcome, serviceOutcome, infrastructureOutcome);
+          ambiance, environmentOutcome, serviceOutcome, infrastructureOutcome);
       stageExecutionHelper.saveStageExecutionInfoAndPublishExecutionInfoKey(
           ambiance, executionInfoKey, infrastructureKind);
       if (stageExecutionHelper.isRollbackArtifactRequiredPerInfrastructure(infrastructureKind)) {
@@ -192,15 +192,19 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         .build();
   }
 
-  private void publishInfraDelegateConfigOutput(
-      ServiceStepOutcome serviceOutcome, InfrastructureOutcome infrastructureOutcome, Ambiance ambiance) {
+  private void publishInfraDelegateConfigOutput(ServiceStepOutcome serviceOutcome,
+      EnvironmentOutcome environmentOutcome, InfrastructureOutcome infrastructureOutcome, Ambiance ambiance) {
     if (ServiceSpecType.SSH.equals(serviceOutcome.getType())) {
-      publishSshInfraDelegateConfigOutput(infrastructureOutcome, ambiance);
+      ExecutionInfoKey executionInfoKey = ExecutionInfoKeyMapper.getExecutionInfoKey(
+          ambiance, environmentOutcome, serviceOutcome, infrastructureOutcome);
+      publishSshInfraDelegateConfigOutput(infrastructureOutcome, ambiance, executionInfoKey);
       return;
     }
 
     if (ServiceSpecType.WINRM.equals(serviceOutcome.getType())) {
-      publishWinRmInfraDelegateConfigOutput(infrastructureOutcome, ambiance);
+      ExecutionInfoKey executionInfoKey = ExecutionInfoKeyMapper.getExecutionInfoKey(
+          ambiance, environmentOutcome, serviceOutcome, infrastructureOutcome);
+      publishWinRmInfraDelegateConfigOutput(infrastructureOutcome, ambiance, executionInfoKey);
       return;
     }
 
@@ -217,7 +221,8 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
     }
   }
 
-  private void publishSshInfraDelegateConfigOutput(InfrastructureOutcome infrastructureOutcome, Ambiance ambiance) {
+  private void publishSshInfraDelegateConfigOutput(
+      InfrastructureOutcome infrastructureOutcome, Ambiance ambiance, ExecutionInfoKey executionInfoKey) {
     SshInfraDelegateConfig sshInfraDelegateConfig =
         cdStepHelper.getSshInfraDelegateConfig(infrastructureOutcome, ambiance);
 
@@ -225,14 +230,20 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         SshInfraDelegateConfigOutput.builder().sshInfraDelegateConfig(sshInfraDelegateConfig).build();
     executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.SSH_INFRA_DELEGATE_CONFIG_OUTPUT_NAME,
         sshInfraDelegateConfigOutput, StepCategory.STAGE.name());
-    if (EmptyPredicate.isEmpty(sshInfraDelegateConfig.getHosts())) {
+
+    List<String> hosts = sshInfraDelegateConfig.getHosts();
+    if (EmptyPredicate.isEmpty(hosts)) {
       throw new InvalidRequestException("No hosts were provided for specified infrastructure");
     }
+
+    hosts = stageExecutionHelper.saveAndExcludeHostsWithSameArtifactDeployedIfNeeded(
+        ambiance, executionInfoKey, infrastructureOutcome, hosts, ServiceSpecType.SSH);
     executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.OUTPUT,
-        HostsOutput.builder().hosts(sshInfraDelegateConfig.getHosts()).build(), StepCategory.STAGE.name());
+        HostsOutput.builder().hosts(hosts).build(), StepCategory.STAGE.name());
   }
 
-  private void publishWinRmInfraDelegateConfigOutput(InfrastructureOutcome infrastructureOutcome, Ambiance ambiance) {
+  private void publishWinRmInfraDelegateConfigOutput(
+      InfrastructureOutcome infrastructureOutcome, Ambiance ambiance, ExecutionInfoKey executionInfoKey) {
     WinRmInfraDelegateConfig winRmInfraDelegateConfig =
         cdStepHelper.getWinRmInfraDelegateConfig(infrastructureOutcome, ambiance);
 
@@ -240,11 +251,16 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         WinRmInfraDelegateConfigOutput.builder().winRmInfraDelegateConfig(winRmInfraDelegateConfig).build();
     executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.WINRM_INFRA_DELEGATE_CONFIG_OUTPUT_NAME,
         winRmInfraDelegateConfigOutput, StepCategory.STAGE.name());
-    if (EmptyPredicate.isEmpty(winRmInfraDelegateConfig.getHosts())) {
+
+    List<String> hosts = winRmInfraDelegateConfig.getHosts();
+    if (EmptyPredicate.isEmpty(hosts)) {
       throw new InvalidRequestException("No hosts were provided for specified infrastructure");
     }
+
+    hosts = stageExecutionHelper.saveAndExcludeHostsWithSameArtifactDeployedIfNeeded(
+        ambiance, executionInfoKey, infrastructureOutcome, hosts, ServiceSpecType.WINRM);
     executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.OUTPUT,
-        HostsOutput.builder().hosts(winRmInfraDelegateConfig.getHosts()).build(), StepCategory.STAGE.name());
+        HostsOutput.builder().hosts(hosts).build(), StepCategory.STAGE.name());
   }
 
   @VisibleForTesting
