@@ -9,7 +9,6 @@ package io.harness.batch.processing.cloudevents.aws.ecs.service;
 
 import static io.harness.persistence.HQuery.excludeAuthority;
 
-import io.harness.ccm.commons.entities.billing.CECloudAccount;
 import io.harness.ccm.commons.entities.billing.CECluster;
 import io.harness.ccm.commons.entities.billing.CECluster.CEClusterKeys;
 import io.harness.persistence.HPersistence;
