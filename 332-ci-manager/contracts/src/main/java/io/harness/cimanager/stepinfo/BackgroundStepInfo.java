@@ -101,15 +101,19 @@ public class BackgroundStepInfo implements CIStepInfo, WithConnectorRef {
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = STRING_LIST_CLASSPATH)
   private ParameterField<List<String>> entrypoint;
+  @YamlSchemaTypes(value = {string})
+  @ApiModelProperty(dataType = STRING_MAP_CLASSPATH)
+  private ParameterField<Map<String, String>> portBindings;
 
   @Builder
   @ConstructorProperties({"identifier", "name", "retry", "command", "reports", "envVariables", "image", "connectorRef",
-      "resources", "privileged", "runAsUser", "shell", "imagePullPolicy", "entrypoint"})
+      "resources", "privileged", "runAsUser", "shell", "imagePullPolicy", "entrypoint", "portBindings"})
   public BackgroundStepInfo(String identifier, String name, Integer retry, ParameterField<String> command,
       ParameterField<UnitTestReport> reports, ParameterField<Map<String, String>> envVariables,
       ParameterField<String> image, ParameterField<String> connectorRef, ContainerResource resources,
       ParameterField<Boolean> privileged, ParameterField<Integer> runAsUser, ParameterField<CIShellType> shell,
-      ParameterField<ImagePullPolicy> imagePullPolicy, ParameterField<List<String>> entrypoint) {
+      ParameterField<ImagePullPolicy> imagePullPolicy, ParameterField<List<String>> entrypoint,
+      ParameterField<Map<String, String>> portBindings) {
     this.identifier = identifier;
     this.name = name;
     this.retry = Optional.ofNullable(retry).orElse(DEFAULT_RETRY);
@@ -124,6 +128,7 @@ public class BackgroundStepInfo implements CIStepInfo, WithConnectorRef {
     this.shell = shell;
     this.imagePullPolicy = imagePullPolicy;
     this.entrypoint = entrypoint;
+    this.portBindings = portBindings;
   }
 
   @Override
