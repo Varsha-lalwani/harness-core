@@ -84,6 +84,7 @@ public class AwsECSClusterServiceImpl implements AwsECSClusterService {
                                   .infraAccountId(ceAwsConfig.getAwsAccountId())
                                   .infraMasterAccountId(ceAwsConfig.getAwsMasterAccountId())
                                   .parentAccountSettingId(settingId)
+                                  .isDeactivated(false)
                                   .labels(clusterTags)
                                   .build();
         clusters.add(ceCluster);

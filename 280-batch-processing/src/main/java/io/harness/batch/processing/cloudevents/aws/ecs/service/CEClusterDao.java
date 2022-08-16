@@ -9,6 +9,7 @@ package io.harness.batch.processing.cloudevents.aws.ecs.service;
 
 import static io.harness.persistence.HQuery.excludeAuthority;
 
+import io.harness.ccm.commons.entities.billing.CECloudAccount;
 import io.harness.ccm.commons.entities.billing.CECluster;
 import io.harness.ccm.commons.entities.billing.CECluster.CEClusterKeys;
 import io.harness.persistence.HPersistence;
@@ -63,6 +64,14 @@ public class CEClusterDao {
     return hPersistence.delete(query);
   }
 
+  public boolean deactivateCluster(CECluster ceCluster) {
+    UpdateOperations<CECluster> updateOperations = hPersistence.createUpdateOperations(CECluster.class);
+
+    updateOperations.set(CEClusterKeys.isDeactivated, true);
+    UpdateResults updateResults = hPersistence.update(ceCluster, updateOperations);
+    return updateResults.getUpdatedCount() > 0;
+  }
+
   public boolean upsert(CECluster ceCluster) {
     return (hPersistence.upsert(hPersistence.createQuery(CECluster.class)
                                     .field(CEClusterKeys.accountId)
@@ -81,6 +90,7 @@ public class CEClusterDao {
                    .set(CEClusterKeys.infraAccountId, ceCluster.getInfraAccountId())
                    .set(CEClusterKeys.infraMasterAccountId, ceCluster.getInfraMasterAccountId())
                    .set(CEClusterKeys.parentAccountSettingId, ceCluster.getParentAccountSettingId())
+                   .set(CEClusterKeys.isDeactivated, false)
                    .set(CEClusterKeys.labels, ceCluster.getLabels())
                    .set(CEClusterKeys.hash, ceCluster.getHash()),
                HPersistence.upsertReturnNewOptions))
