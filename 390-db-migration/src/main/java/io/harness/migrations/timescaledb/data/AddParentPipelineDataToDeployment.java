@@ -7,16 +7,17 @@
 
 package io.harness.migrations.timescaledb.data;
 
-import com.google.inject.Inject;
 import io.harness.beans.FeatureName;
 import io.harness.ff.FeatureFlagService;
 import io.harness.migrations.TimeScaleDBDataMigration;
 import io.harness.timescaledb.TimeScaleDBService;
-import lombok.extern.slf4j.Slf4j;
+
 import software.wings.timescale.migrations.DeploymentsMigrationHelper;
 
+import com.google.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AddParentPipelineDataToDeployment implements TimeScaleDBDataMigration {
@@ -24,8 +25,7 @@ public class AddParentPipelineDataToDeployment implements TimeScaleDBDataMigrati
   @Inject TimeScaleDBService timeScaleDBService;
 
   @Inject FeatureFlagService featureFlagService;
-  @Inject
-  DeploymentsMigrationHelper deploymentsMigrationHelper;
+  @Inject DeploymentsMigrationHelper deploymentsMigrationHelper;
 
   private static final String update_statement =
       "UPDATE DEPLOYMENT SET PARENT_PIPELINE_ID=?, WORKFLOWS=?, CREATED_BY_TYPE=? WHERE EXECUTIONID=?";

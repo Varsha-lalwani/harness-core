@@ -7,17 +7,18 @@
 
 package io.harness.migrations.timescaledb.data;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import io.harness.beans.FeatureName;
 import io.harness.ff.FeatureFlagService;
 import io.harness.migrations.TimeScaleDBDataMigration;
 import io.harness.timescaledb.TimeScaleDBService;
-import lombok.extern.slf4j.Slf4j;
+
 import software.wings.timescale.migrations.DeploymentsMigrationHelper;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This will migrate the last 30 days of top level executions to TimeScaleDB
@@ -30,8 +31,7 @@ public class AddWorkflowExecutionFailureDetails implements TimeScaleDBDataMigrat
 
   @Inject FeatureFlagService featureFlagService;
 
-  @Inject
-  DeploymentsMigrationHelper deploymentsMigrationHelper;
+  @Inject DeploymentsMigrationHelper deploymentsMigrationHelper;
 
   private static final String update_statement =
       "UPDATE DEPLOYMENT SET FAILURE_DETAILS=?,FAILED_STEP_NAMES=?,FAILED_STEP_TYPES=? WHERE EXECUTIONID=?";
