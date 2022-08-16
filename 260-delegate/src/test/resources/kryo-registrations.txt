@@ -2261,3 +2261,4 @@
 980032:io.harness.exception.ngexception.AzureAppServiceTaskException
 9800001:io.harness.beans.RecasterMap
 9800002:io.harness.licensing.beans.modules.ChaosModuleLicenseDTO
+543450:io.harness.delegate.beans.ci.vm.steps.VmBackgroundStep
