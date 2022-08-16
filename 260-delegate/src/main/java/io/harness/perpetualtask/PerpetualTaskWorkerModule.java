@@ -23,23 +23,24 @@ import io.harness.perpetualtask.ecs.EcsPerpetualTaskParams;
 import io.harness.perpetualtask.example.SamplePerpetualTaskExecutor;
 import io.harness.perpetualtask.example.SamplePerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.AwsAmiInstanceSyncPerpetualTaskParams;
-import io.harness.perpetualtask.instancesync.AwsCodeDeployInstanceSyncPerpetualTaskParams;
-import io.harness.perpetualtask.instancesync.AwsLambdaInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.AwsSshInstanceSyncPerpetualTaskParams;
-import io.harness.perpetualtask.instancesync.AwsSshInstanceSyncPerpetualTaskParamsNg;
-import io.harness.perpetualtask.instancesync.AzureSshInstanceSyncPerpetualTaskParamsNg;
+import io.harness.perpetualtask.instancesync.AwsLambdaInstanceSyncPerpetualTaskParams;
+import io.harness.perpetualtask.instancesync.PdcInstanceSyncPerpetualTaskParams;
+import io.harness.perpetualtask.instancesync.SpotinstAmiInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.AzureVmssInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.AzureWebAppInstanceSyncPerpetualProtoTaskParams;
-import io.harness.perpetualtask.instancesync.AzureWebAppNGInstanceSyncPerpetualTaskParams;
+import io.harness.perpetualtask.instancesync.AwsCodeDeployInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.ContainerInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.CustomDeploymentInstanceSyncTaskParams;
-import io.harness.perpetualtask.instancesync.K8sInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.NativeHelmInstanceSyncPerpetualTaskParams;
-import io.harness.perpetualtask.instancesync.PcfInstanceSyncPerpetualTaskParams;
-import io.harness.perpetualtask.instancesync.PdcInstanceSyncPerpetualTaskParams;
-import io.harness.perpetualtask.instancesync.PdcPerpetualTaskParamsNg;
 import io.harness.perpetualtask.instancesync.ServerlessAwsLambdaInstanceSyncPerpetualTaskParams;
-import io.harness.perpetualtask.instancesync.SpotinstAmiInstanceSyncPerpetualTaskParams;
+import io.harness.perpetualtask.instancesync.K8sInstanceSyncPerpetualTaskParams;
+import io.harness.perpetualtask.instancesync.AzureWebAppNGInstanceSyncPerpetualTaskParams;
+import io.harness.perpetualtask.instancesync.DeploymentPackageInstanceSyncPerpetualTaskParams;
+import io.harness.perpetualtask.instancesync.PdcPerpetualTaskParamsNg;
+import io.harness.perpetualtask.instancesync.AwsSshInstanceSyncPerpetualTaskParamsNg;
+import io.harness.perpetualtask.instancesync.AzureSshInstanceSyncPerpetualTaskParamsNg;
+import io.harness.perpetualtask.instancesync.PcfInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.k8s.watch.K8SWatchTaskExecutor;
 import io.harness.perpetualtask.k8s.watch.K8sWatchTaskParams;
 import io.harness.perpetualtask.k8s.watch.NodeWatcher;
@@ -116,6 +117,8 @@ public class PerpetualTaskWorkerModule extends AbstractModule {
         .to(ServerlessAwsLambdaInstanceSyncPerpetualTaskExecutor.class);
     mapBinder.addBinding(AzureWebAppNGInstanceSyncPerpetualTaskParams.class.getSimpleName())
         .to(AzureWebAppInstanceSyncPerpetualTaskExecutor.class);
+    mapBinder.addBinding(DeploymentPackageInstanceSyncPerpetualTaskParams.class.getSimpleName())
+            .to(DeploymentPackageInstanceSyncPerpetualTaskExecuter.class);
     mapBinder.addBinding(PdcPerpetualTaskParamsNg.class.getSimpleName()).to(PdcPerpetualTaskExecutorNg.class);
     mapBinder.addBinding(AzureSshInstanceSyncPerpetualTaskParamsNg.class.getSimpleName())
         .to(AzureSshWinrmInstanceSyncPerpetualTaskExecutor.class);

@@ -42,6 +42,7 @@ public final class PerpetualTaskType {
   public static final String PDC_INSTANCE_SYNC_NG = "PDC_INSTANCE_SYNC_NG";
   public static final String AZURE_SSH_WINRM_INSTANCE_SYNC_NG = "AZURE_SSH_WINRM_INSTANCE_SYNC_NG";
   public static final String AWS_SSH_WINRM_INSTANCE_SYNC_NG = "AWS_SSH_WINRM_INSTANCE_SYNC_NG";
+  public static final String DEPLOYMENT_PACKAGE_INSTANCE_SYNC_NG = "DEPLOYMENT_PACKAGE_INSTANCE_SYNC_NG";
 
   private PerpetualTaskType() {}
 }

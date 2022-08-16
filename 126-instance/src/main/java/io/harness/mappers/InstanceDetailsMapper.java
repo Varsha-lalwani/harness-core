@@ -11,12 +11,13 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.dtos.InstanceDTO;
 import io.harness.dtos.instanceinfo.AzureSshWinrmInstanceInfoDTO;
-import io.harness.dtos.instanceinfo.AzureWebAppInstanceInfoDTO;
-import io.harness.dtos.instanceinfo.GitOpsInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.K8sInstanceInfoDTO;
-import io.harness.dtos.instanceinfo.NativeHelmInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.PdcInstanceInfoDTO;
+import io.harness.dtos.instanceinfo.DeploymentPackageInstanceInfoDTO;
+import io.harness.dtos.instanceinfo.AzureWebAppInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.ServerlessAwsLambdaInstanceInfoDTO;
+import io.harness.dtos.instanceinfo.NativeHelmInstanceInfoDTO;
+import io.harness.dtos.instanceinfo.GitOpsInstanceInfoDTO;
 import io.harness.models.InstanceDetailsDTO;
 import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.service.instancesynchandler.AbstractInstanceSyncHandler;
@@ -79,6 +80,8 @@ public class InstanceDetailsMapper {
       return ((PdcInstanceInfoDTO) instanceDTO.getInstanceInfoDTO()).getServiceType();
     } else if (instanceDTO.getInstanceInfoDTO() instanceof AzureSshWinrmInstanceInfoDTO) {
       return ((AzureSshWinrmInstanceInfoDTO) instanceDTO.getInstanceInfoDTO()).getServiceType();
+    } else if (instanceDTO.getInstanceInfoDTO() instanceof DeploymentPackageInstanceInfoDTO) {
+      return ServiceSpecType.DEPLOYMENT_PACKAGE;
     }
     return null;
   }

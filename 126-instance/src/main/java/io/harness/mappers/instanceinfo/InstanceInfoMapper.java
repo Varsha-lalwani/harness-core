@@ -19,6 +19,7 @@ import io.harness.dtos.instanceinfo.NativeHelmInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.PdcInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.ReferenceInstanceInfoDTO;
 import io.harness.dtos.instanceinfo.ServerlessAwsLambdaInstanceInfoDTO;
+import io.harness.dtos.instanceinfo.DeploymentPackageInstanceInfoDTO;
 import io.harness.entities.instanceinfo.AwsSshWinrmInstanceInfo;
 import io.harness.entities.instanceinfo.AzureSshWinrmInstanceInfo;
 import io.harness.entities.instanceinfo.AzureWebAppNGInstanceInfo;
@@ -29,6 +30,7 @@ import io.harness.entities.instanceinfo.NativeHelmInstanceInfo;
 import io.harness.entities.instanceinfo.PdcInstanceInfo;
 import io.harness.entities.instanceinfo.ReferenceInstanceInfo;
 import io.harness.entities.instanceinfo.ServerlessAwsLambdaInstanceInfo;
+import io.harness.entities.instanceinfo.DeploymentPackageInstanceInfo;
 import io.harness.exception.InvalidRequestException;
 
 import lombok.experimental.UtilityClass;
@@ -56,6 +58,9 @@ public class InstanceInfoMapper {
     } else if (instanceInfo instanceof AwsSshWinrmInstanceInfo) {
       return AwsSshWinrmInstanceInfoMapper.toDTO((AwsSshWinrmInstanceInfo) instanceInfo);
     }
+    else if (instanceInfo instanceof DeploymentPackageInstanceInfo) {
+      return DeploymentPackageInstanceInfoMapper.toDTO((DeploymentPackageInstanceInfo) instanceInfo);
+    }
     throw new InvalidRequestException("No InstanceInfoMapper toDTO found for instanceInfo : {}" + instanceInfo);
   }
 
@@ -78,6 +83,9 @@ public class InstanceInfoMapper {
       return AzureSshWinrmInstanceInfoMapper.toEntity((AzureSshWinrmInstanceInfoDTO) instanceInfoDTO);
     } else if (instanceInfoDTO instanceof AwsSshWinrmInstanceInfoDTO) {
       return AwsSshWinrmInstanceInfoMapper.toEntity((AwsSshWinrmInstanceInfoDTO) instanceInfoDTO);
+    }
+    else if (instanceInfoDTO instanceof DeploymentPackageInstanceInfoDTO) {
+      return DeploymentPackageInstanceInfoMapper.toEntity((DeploymentPackageInstanceInfoDTO) instanceInfoDTO);
     }
     throw new InvalidRequestException(
         "No InstanceInfoMapper toEntity found for instanceInfoDTO : {}" + instanceInfoDTO);

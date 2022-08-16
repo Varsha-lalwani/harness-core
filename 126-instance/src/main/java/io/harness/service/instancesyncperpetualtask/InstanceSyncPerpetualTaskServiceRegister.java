@@ -14,10 +14,11 @@ import static io.harness.perpetualtask.PerpetualTaskType.K8S_INSTANCE_SYNC;
 import static io.harness.perpetualtask.PerpetualTaskType.NATIVE_HELM_INSTANCE_SYNC;
 import static io.harness.perpetualtask.PerpetualTaskType.PDC_INSTANCE_SYNC_NG;
 import static io.harness.perpetualtask.PerpetualTaskType.SERVERLESS_AWS_LAMBDA_INSTANCE_SYNC;
-
+import static io.harness.perpetualtask.PerpetualTaskType.DEPLOYMENT_PACKAGE_INSTANCE_SYNC_NG;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.UnexpectedException;
+import io.harness.service.instancesyncperpetualtask.instancesyncperpetualtaskhandler.DeploymentPackage.DeploymentPackageInstanceSyncPerpetualTaskHandler;
 import io.harness.service.instancesyncperpetualtask.instancesyncperpetualtaskhandler.InstanceSyncPerpetualTaskHandler;
 import io.harness.service.instancesyncperpetualtask.instancesyncperpetualtaskhandler.aws.AwsSshWinrmInstanceSyncPerpetualTaskHandler;
 import io.harness.service.instancesyncperpetualtask.instancesyncperpetualtaskhandler.azure.AzureSshWinrmInstanceSyncPerpetualTaskHandler;
@@ -31,6 +32,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.AllArgsConstructor;
 
+import static io.harness.perpetualtask.PerpetualTaskType.*;
+
 @Singleton
 @OwnedBy(HarnessTeam.DX)
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
@@ -41,8 +44,8 @@ public final class InstanceSyncPerpetualTaskServiceRegister {
   private final AzureWebAppInstanceSyncPerpetualTaskHandler azureWebAppInstanceSyncPerpetualTaskHandler;
   private final PdcInstanceSyncPerpetualTaskHandler pdcInstanceSyncPerpetualTaskHandler;
   private final AzureSshWinrmInstanceSyncPerpetualTaskHandler azureSshWinrmInstanceSyncPerpetualTaskHandler;
-
   private final AwsSshWinrmInstanceSyncPerpetualTaskHandler awsSshWinrmInstanceSyncPerpetualTaskHandler;
+  private final DeploymentPackageInstanceSyncPerpetualTaskHandler deploymentPackageInstanceSyncPerpetualTaskHandler;
 
   public InstanceSyncPerpetualTaskHandler getInstanceSyncPerpetualService(String perpetualTaskType) {
     switch (perpetualTaskType) {
@@ -60,6 +63,8 @@ public final class InstanceSyncPerpetualTaskServiceRegister {
         return azureSshWinrmInstanceSyncPerpetualTaskHandler;
       case AWS_SSH_WINRM_INSTANCE_SYNC_NG:
         return awsSshWinrmInstanceSyncPerpetualTaskHandler;
+      case DEPLOYMENT_PACKAGE_INSTANCE_SYNC_NG:
+        return deploymentPackageInstanceSyncPerpetualTaskHandler;
       default:
         throw new UnexpectedException(
             "No instance sync service registered for perpetual task type: " + perpetualTaskType);
