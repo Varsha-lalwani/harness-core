@@ -208,7 +208,7 @@ func TestDetachStepRunSuccess(t *testing.T) {
 			Run: &pb.RunStep{
 				Command:       "ls",
 				ContainerPort: uint32(8000),
-				Detach:		   true,
+				Detach:        true,
 			},
 		},
 		CallbackToken: callbackToken,

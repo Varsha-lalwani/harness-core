@@ -26,43 +26,43 @@ type BackgroundTask interface {
 }
 
 type backgroundTask struct {
-	id                string
-	displayName       string
-	command           string
-	shellType         pb.ShellType
-	environment       map[string]string
-	reports           []*pb.Report
-	logMetrics        bool
-	log               *zap.SugaredLogger
-	addonLogger       *zap.SugaredLogger
-	procWriter        io.Writer
-	fs                filesystem.FileSystem
-	cmdFactory        exec.CommandFactory
-	entrypoint        []string
-	image			  string
+	id          string
+	displayName string
+	command     string
+	shellType   pb.ShellType
+	environment map[string]string
+	reports     []*pb.Report
+	logMetrics  bool
+	log         *zap.SugaredLogger
+	addonLogger *zap.SugaredLogger
+	procWriter  io.Writer
+	fs          filesystem.FileSystem
+	cmdFactory  exec.CommandFactory
+	entrypoint  []string
+	image       string
 }
 
 // NewBackgroundTask creates a background step executor
-func NewBackgroundTask(step *pb.UnitStep, log *zap.SugaredLogger, w io.Writer, logMetrics bool, 
+func NewBackgroundTask(step *pb.UnitStep, log *zap.SugaredLogger, w io.Writer, logMetrics bool,
 	addonLogger *zap.SugaredLogger) BackgroundTask {
 	r := step.GetRun()
 	fs := filesystem.NewOSFileSystem(log)
-	
+
 	return &backgroundTask{
-		id:                step.GetId(),
-		displayName:       step.GetDisplayName(),
-		command:           r.GetCommand(),
-		shellType:         r.GetShellType(),
-		environment:       r.GetEnvironment(),
-		reports:           r.GetReports(),
-		cmdFactory:        exec.OsCommand(),
-		logMetrics:        logMetrics,
-		log:               log,
-		fs:                fs,
-		procWriter:        w,
-		addonLogger:       addonLogger,
-		entrypoint:		   r.GetEntrypoint(),
-		image:			   r.GetImage(),
+		id:          step.GetId(),
+		displayName: step.GetDisplayName(),
+		command:     r.GetCommand(),
+		shellType:   r.GetShellType(),
+		environment: r.GetEnvironment(),
+		reports:     r.GetReports(),
+		cmdFactory:  exec.OsCommand(),
+		logMetrics:  logMetrics,
+		log:         log,
+		fs:          fs,
+		procWriter:  w,
+		addonLogger: addonLogger,
+		entrypoint:  r.GetEntrypoint(),
+		image:       r.GetImage(),
 	}
 }
 
@@ -70,7 +70,7 @@ func NewBackgroundTask(step *pb.UnitStep, log *zap.SugaredLogger, w io.Writer, l
 func (b *backgroundTask) Run() (map[string]string, int32, error) {
 	ch := make(chan error, 1)
 	resp, retries, _ := b.runAsync(ch)
-	
+
 	for {
 		select {
 		case ret := <-ch:
@@ -81,14 +81,14 @@ func (b *backgroundTask) Run() (map[string]string, int32, error) {
 	}
 }
 
-func (b* backgroundTask) runAsync(ch chan<- error) (map[string]string, int32, error) {
+func (b *backgroundTask) runAsync(ch chan<- error) (map[string]string, int32, error) {
 	go func() {
 		var (
 			err error
 		)
-	
+
 		ctx := context.Background()
-		
+
 		if _, err = b.execute(ctx, defaultNumRetries); err == nil {
 			st := time.Now()
 			err = collectTestReports(ctx, b.reports, b.id, b.log)
@@ -110,7 +110,7 @@ func (b* backgroundTask) runAsync(ch chan<- error) (map[string]string, int32, er
 				b.log.Errorw("error while collecting test reports", zap.Error(tierr))
 			}
 		}
-		
+
 		ch <- err
 	}()
 
