@@ -24,7 +24,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ValidateCustomSecretManagerSecretReferentTaskParameters
+public class ValidateCustomSecretManagerSecretRefereneTaskParameters
     implements TaskParameters, ExecutionCapabilityDemander {
   private final EncryptedRecord encryptedRecord;
   private final EncryptionConfig encryptionConfig;

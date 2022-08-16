@@ -28,12 +28,11 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.NotImplementedException;
 
 @OwnedBy(PL)
-public class ValidateCustomSecretManagerSecretReferenceTask extends AbstractDelegateRunnableTask {
+public class FetchCustomSecretTask extends AbstractDelegateRunnableTask {
   @Inject CustomEncryptorsRegistry customEncryptorsRegistry;
 
-  public ValidateCustomSecretManagerSecretReferenceTask(DelegateTaskPackage delegateTaskPackage,
-      ILogStreamingTaskClient logStreamingTaskClient, Consumer<DelegateTaskResponse> consumer,
-      BooleanSupplier preExecute) {
+  public FetchCustomSecretTask(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
+      Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {
     super(delegateTaskPackage, logStreamingTaskClient, consumer, preExecute);
   }
 
@@ -44,16 +43,15 @@ public class ValidateCustomSecretManagerSecretReferenceTask extends AbstractDele
 
   @Override
   public DelegateResponseData run(TaskParameters parameters) {
-    ValidateCustomSecretManagerSecretRefereneTaskParameters validateCustomSecretManagerSecretRefereneTaskParameters =
-        (ValidateCustomSecretManagerSecretRefereneTaskParameters) parameters;
-    EncryptedRecord encryptedRecord = validateCustomSecretManagerSecretRefereneTaskParameters.getEncryptedRecord();
-    EncryptionConfig encryptionConfig = validateCustomSecretManagerSecretRefereneTaskParameters.getEncryptionConfig();
-    String resolvedScript = validateCustomSecretManagerSecretRefereneTaskParameters.getScript();
+    FetchCustomSecretTaskParameters fetchSecretTaskParameters = (FetchCustomSecretTaskParameters) parameters;
+    EncryptionConfig encryptionConfig = fetchSecretTaskParameters.getEncryptionConfig();
+    EncryptedRecord encryptedRecord = fetchSecretTaskParameters.getEncryptedRecord();
+    String resolvedScript = fetchSecretTaskParameters.getScript();
     encryptedRecord.getParameters().add(
         EncryptedDataParams.builder().name("resolvedScript").value(resolvedScript).build());
     CustomEncryptor customEncryptor = customEncryptorsRegistry.getCustomEncryptor(encryptionConfig.getEncryptionType());
-    boolean isReferenceValid = customEncryptor.validateReference(
-        encryptionConfig.getAccountId(), encryptedRecord.getParameters(), encryptionConfig);
-    return ValidateCustomSecretManagerSecretReferenceTaskResponse.builder().isReferenceValid(isReferenceValid).build();
+    char[] result =
+        customEncryptor.fetchSecretValue(encryptionConfig.getAccountId(), encryptedRecord, encryptionConfig);
+    return FetchCustomSecretTaskResponse.builder().secretValue(result).build();
   }
 }

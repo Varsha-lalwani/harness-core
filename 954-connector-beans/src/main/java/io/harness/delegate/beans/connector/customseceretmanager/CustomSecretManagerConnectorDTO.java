@@ -46,7 +46,6 @@ public class CustomSecretManagerConnectorDTO extends ConnectorConfigDTO implemen
   @SecretReference
   @ApiModelProperty(dataType = "string")
   @Schema(description = SecretManagerDescriptionConstants.CUSTOM_AUTH_TOKEN)
-  // TODO: name change to connectorRef
   private SecretRefData connectorRef;
 
   private String host;

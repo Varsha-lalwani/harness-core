@@ -13,6 +13,7 @@ import static io.harness.eraro.ErrorCode.SECRET_MANAGEMENT_ERROR;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.reflection.ReflectionUtils.getFieldByName;
 import static io.harness.security.SimpleEncryption.CHARSET;
+import static io.harness.security.encryption.SecretManagerType.CUSTOM;
 import static io.harness.security.encryption.SecretManagerType.KMS;
 import static io.harness.security.encryption.SecretManagerType.VAULT;
 
@@ -111,15 +112,23 @@ public class NGEncryptorServiceImpl implements NGEncryptorService {
     char[] value;
     SecretManagerType secretManagerType = secretManagerConfig.getType();
 
-    if (secretManagerType == KMS) {
-      KmsEncryptor kmsEncryptor = kmsEncryptorsRegistry.getKmsEncryptor(secretManagerConfig);
-      value = kmsEncryptor.fetchSecretValue(accountIdentifier, encryptedData, secretManagerConfig);
-    } else if (secretManagerType == VAULT) {
-      VaultEncryptor vaultEncryptor =
-          vaultEncryptorsRegistry.getVaultEncryptor(secretManagerConfig.getEncryptionType());
-      value = vaultEncryptor.fetchSecretValue(accountIdentifier, encryptedData, secretManagerConfig);
-    } else {
-      throw new UnsupportedOperationException("Secret Manager type not supported: " + secretManagerType);
+    switch (secretManagerType) {
+      case KMS:
+        KmsEncryptor kmsEncryptor = kmsEncryptorsRegistry.getKmsEncryptor(secretManagerConfig);
+        value = kmsEncryptor.fetchSecretValue(accountIdentifier, encryptedData, secretManagerConfig);
+        break;
+      case VAULT:
+        VaultEncryptor vaultEncryptor =
+            vaultEncryptorsRegistry.getVaultEncryptor(secretManagerConfig.getEncryptionType());
+        value = vaultEncryptor.fetchSecretValue(accountIdentifier, encryptedData, secretManagerConfig);
+        break;
+      case CUSTOM:
+        CustomEncryptor customEncryptor =
+            customEncryptorsRegistry.getCustomEncryptor(secretManagerConfig.getEncryptionType());
+        value = customEncryptor.fetchSecretValue(accountIdentifier, encryptedData, secretManagerConfig);
+        break;
+      default:
+        throw new UnsupportedOperationException("Secret Manager type not supported: " + secretManagerType);
     }
     if (encryptedData.isBase64Encoded()) {
       byte[] decodedBytes = EncodingUtils.decodeBase64(value);

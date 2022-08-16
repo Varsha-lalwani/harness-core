@@ -53,15 +53,15 @@ public class NGCustomSecretManagerEncryptor implements CustomEncryptor {
     return isNotEmpty(
         fetchSecretValue(accountId, EncryptedRecordData.builder().parameters(params).build(), encryptionConfig));
   }
+  /*
+    @Override
+    public boolean validateReference(
+        String accountId, String script, Set<EncryptedDataParams> params, EncryptionConfig encryptionConfig) {
+      return isNotEmpty(fetchSecretValue(
+          accountId, script, EncryptedRecordData.builder().parameters(params).build(), encryptionConfig));
+    }*/
 
-  @Override
-  public boolean validateCustomSecretManagerSecretReference(
-      String accountId, String script, Set<EncryptedDataParams> params, EncryptionConfig encryptionConfig) {
-    return isNotEmpty(fetchSecretValueWithScript(
-        accountId, script, EncryptedRecordData.builder().parameters(params).build(), encryptionConfig));
-  }
-
-  public char[] fetchSecretValueWithScript(
+  /*public char[] fetchSecretValue(
       String accountId, String script, EncryptedRecord encryptedRecord, EncryptionConfig encryptionConfig) {
     CustomSecretNGManagerConfig customSecretsManagerConfig = (CustomSecretNGManagerConfig) encryptionConfig;
     final int NUM_OF_RETRIES = 3;
@@ -81,23 +81,17 @@ public class NGCustomSecretManagerEncryptor implements CustomEncryptor {
         sleep(ofMillis(1000));
       }
     }
-  }
+  }*/
 
   @Override
   public char[] fetchSecretValue(String accountId, EncryptedRecord encryptedRecord, EncryptionConfig encryptionConfig) {
     CustomSecretNGManagerConfig customSecretsManagerConfig = (CustomSecretNGManagerConfig) encryptionConfig;
-    String script = encryptedRecord.getParameters()
-                        .stream()
-                        .filter(encryptedDataParams -> encryptedDataParams.getName().equals("Script"))
-                        .findFirst()
-                        .get()
-                        .getValue();
     final int NUM_OF_RETRIES = 3;
     int failedAttempts = 0;
     while (true) {
       try {
         return HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(20),
-            () -> fetchSecretValueInternal(accountId, encryptedRecord, customSecretsManagerConfig, script));
+            () -> fetchSecretValueInternal(accountId, encryptedRecord, customSecretsManagerConfig));
       } catch (SecretManagementDelegateException e) {
         throw e;
       } catch (Exception e) {
@@ -112,8 +106,9 @@ public class NGCustomSecretManagerEncryptor implements CustomEncryptor {
   }
 
   // On delegate ->
-  private char[] fetchSecretValueInternal(String accountId, EncryptedRecord encryptedRecord,
-      CustomSecretNGManagerConfig customSecretNGManagerConfig, String script) {
+  private char[] fetchSecretValueInternal(
+      String accountId, EncryptedRecord encryptedRecord, CustomSecretNGManagerConfig customSecretNGManagerConfig) {
+    String script = getParameter("resolvedScript", encryptedRecord);
     ShellScriptTaskParametersNG shellScriptTaskParametersNG =
         buildShellScriptTaskParametersNG(accountId, encryptedRecord, customSecretNGManagerConfig, script);
     ShellScriptTaskResponseNG shellScriptTaskResponseNG =
@@ -131,5 +126,13 @@ public class NGCustomSecretManagerEncryptor implements CustomEncryptor {
       throw new SecretManagementDelegateException(SECRET_MANAGEMENT_ERROR, errorMessage, USER);
     }
     return result.toCharArray();
+  }
+
+  public String getParameter(String parameterName, Set<EncryptedDataParams> encryptedDataParamsSet) {
+    return encryptedDataParamsSet.stream().filter(x -> x.getName().equals(parameterName)).findFirst().get().getValue();
+  }
+
+  public String getParameter(String parameterName, EncryptedRecord encryptedRecord) {
+    return getParameter(parameterName, encryptedRecord.getParameters());
   }
 }

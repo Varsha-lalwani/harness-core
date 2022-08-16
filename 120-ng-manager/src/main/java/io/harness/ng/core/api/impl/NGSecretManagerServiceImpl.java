@@ -32,17 +32,15 @@ import io.harness.engine.expressions.ShellScriptYamlDTO;
 import io.harness.engine.expressions.ShellScriptYamlExpressionEvaluator;
 import io.harness.exception.WingsException;
 import io.harness.mappers.SecretManagerConfigMapper;
+import io.harness.ng.CustomSecretManagerHelper;
 import io.harness.ng.core.api.NGSecretManagerService;
 import io.harness.ng.core.template.TemplateApplyRequestDTO;
-import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.secretmanagerclient.dto.*;
 import io.harness.secretmanagerclient.remote.SecretManagerClient;
 import io.harness.security.encryption.EncryptedDataParams;
 import io.harness.security.encryption.EncryptionConfig;
-import io.harness.template.beans.TemplateResponseDTO;
-import io.harness.template.entity.TemplateEntity;
 import io.harness.template.remote.TemplateResourceClient;
 
 import software.wings.beans.VaultConfig;
@@ -53,8 +51,8 @@ import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
+import java.io.IOException;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import javax.validation.constraints.NotNull;
@@ -82,7 +80,7 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
   private final RetryRegistry registry = RetryRegistry.of(config);
   private final Retry retry = registry.retry("cgManagerSecretService", config);
 
-  private final TemplateResourceClient templateResourceClient;
+  private final CustomSecretManagerHelper customSecretManagerHelper;
 
   @Override
   public SecretManagerConfigDTO createSecretManager(@NotNull SecretManagerConfigDTO secretManagerConfig) {
@@ -141,52 +139,14 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
                     customNGSecretManagerConfigDTO.getAccountIdentifier(),
                     customNGSecretManagerConfigDTO.getOrgIdentifier(),
                     customNGSecretManagerConfigDTO.getProjectIdentifier(),
-                    customNGSecretManagerConfigDTO.getTemplate().getVersionLabel(), null, null, null));
-*/
-            // template service.
-            String mergedYaml =
-                NGRestUtils
-                    .getResponse(templateResourceClient.applyTemplatesOnGivenYaml(
-                        customNGSecretManagerConfigDTO.getAccountIdentifier(),
-                        customNGSecretManagerConfigDTO.getOrgIdentifier(),
-                        customNGSecretManagerConfigDTO.getProjectIdentifier(), null, null, null,
-                        TemplateApplyRequestDTO.builder()
-                            .originalEntityYaml(customNGSecretManagerConfigDTO.getUnmergedConnectorRequest())
-                            .build()))
-                    .getMergedPipelineYaml();
-            // String yaml = template.getYaml();
-            log.info("Yaml received from template service is \n" + mergedYaml);
-            // resolve the yaml
-            int functorToken = HashGenerator.generateIntegerHash();
-            ShellScriptYamlExpressionEvaluator shellScriptYamlExpressionEvaluator =
-                new ShellScriptYamlExpressionEvaluator(mergedYaml, functorToken);
-            ShellScriptBaseDTO shellScriptBaseDTO =
-                YamlUtils.read(mergedYaml, ShellScriptYamlDTO.class).getShellScriptBaseDTO();
-            shellScriptBaseDTO =
-                (ShellScriptBaseDTO) shellScriptYamlExpressionEvaluator.resolve(shellScriptBaseDTO, false);
-            // get the script out of resolved yaml
-            String script = shellScriptBaseDTO.getShellScriptSpec().getSource().getSpec().getScript().getValue();
-            log.info("Resolved script is " + script);
-            // pass the script to encryptor -> encryptor passes call to create delegate task which is then executed.
-            // delegate task is picked by encryptor to execute it.
+                    customNGSecretManagerConfigDTO.getTemplate().getVersionLabel(), null, null, null));*/
 
-            // delegate task creation ->
-            // Get template id , version , name all will be in secManagerConfigDTO-> template service (id, ver) ->
-            // template (yaml) yeml -> resolve -> yaml -> filter relevant fields ( script field ) -> encryptor( resolved
-            // yaml / script , config
+            Set<EncryptedDataParams> encryptedDataParamsSet =
+                customSecretManagerHelper.prepareEncryptedDataParamsSet(customNGSecretManagerConfigDTO);
             encryptionConfig.setEncryptionType(CUSTOM_NG);
-
             CustomEncryptor customEncryptor = customEncryptorsRegistry.getCustomEncryptor(CUSTOM_NG);
-            Set<EncryptedDataParams> encryptedDataParamsSet = new HashSet<>();
-            encryptedDataParamsSet.add(EncryptedDataParams.builder().name("Script").value(script).build());
-            encryptedDataParamsSet.add(EncryptedDataParams.builder()
-                                           .name("expressionFunctorToken")
-                                           .value(String.valueOf(functorToken))
-                                           .build());
-            // maybe output var
-            // Script , task parameters -> (script, )
-            validationResult = customEncryptor.validateCustomSecretManagerSecretReference(
-                accountIdentifier, script, encryptedDataParamsSet, encryptionConfig);
+            validationResult =
+                customEncryptor.validateReference(accountIdentifier, encryptedDataParamsSet, encryptionConfig);
             // encryptor will pass it to delegate.
             //              validationResult = customEncryptor.validateReference(encryptionConfig.getAccountId(),
             //              encryptionConfig);

@@ -11,9 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegatetasks.ValidateCustomSecretManagerSecretReferentTaskParameters;
+import io.harness.delegatetasks.ValidateCustomSecretManagerSecretRefereneTaskParameters;
 import io.harness.delegatetasks.ValidateSecretManagerConfigurationTaskParameters;
-import io.harness.delegatetasks.ValidateSecretReferenceTaskParameters;
 import io.harness.encryptors.CustomEncryptor;
 import io.harness.security.encryption.EncryptedDataParams;
 import io.harness.security.encryption.EncryptedRecord;
@@ -43,35 +42,52 @@ public class NGManagerCustomEncryptor implements CustomEncryptor {
   @Override
   public boolean validateReference(
       String accountId, Set<EncryptedDataParams> params, EncryptionConfig encryptionConfig) {
-    ValidateSecretReferenceTaskParameters parameters =
-        ValidateSecretReferenceTaskParameters.builder()
-            .encryptedRecord(EncryptedRecordData.builder().parameters(params).build())
-            .encryptionConfig(encryptionConfig)
-            .build();
-
-    return ngManagerEncryptorHelper.validateReference(accountId, parameters);
+    String script = getParameter("Script", params);
+    return validateReference(accountId, script, params, encryptionConfig);
   }
 
-  @Override
-  public boolean validateCustomSecretManagerSecretReference(
+  //@Override
+  public boolean validateReference(
       String accountId, String script, Set<EncryptedDataParams> params, EncryptionConfig encryptionConfig) {
-    ValidateCustomSecretManagerSecretReferentTaskParameters parameters =
-        ValidateCustomSecretManagerSecretReferentTaskParameters.builder()
+    ValidateCustomSecretManagerSecretRefereneTaskParameters parameters =
+        ValidateCustomSecretManagerSecretRefereneTaskParameters.builder()
             .encryptedRecord(EncryptedRecordData.builder().parameters(params).build())
             .encryptionConfig(encryptionConfig)
             .script(script)
             .build();
-    return ngManagerEncryptorHelper.validateCustomSecretManagerSecretReference(accountId, parameters);
+    int expressionFunctorToken = Integer.parseInt(getParameter("expressionFunctorToken", params));
+    return ngManagerEncryptorHelper.validateCustomSecretManagerSecretReference(
+        accountId, expressionFunctorToken, parameters);
   }
 
   @Override
   public char[] fetchSecretValue(String accountId, EncryptedRecord encryptedRecord, EncryptionConfig encryptionConfig) {
-    return ngManagerEncryptorHelper.fetchSecretValue(accountId, encryptedRecord, encryptionConfig);
+    // get script out of encrypted record. This has all resolved yaml expressions and secret is in form of CG Secret
+    // expression
+    String script = getParameter("Script", encryptedRecord);
+    int expressionFunctorToken = Integer.parseInt(getParameter("expressionFunctorToken", encryptedRecord));
+    return ngManagerEncryptorHelper.fetchSecretValue(
+        accountId, script, expressionFunctorToken, encryptedRecord, encryptionConfig);
   }
+
+  /*//@Override
+  public char[] fetchSecretValue(String accountId, String script, EncryptedRecord encryptedRecord, EncryptionConfig
+  encryptionConfig) { return ngManagerEncryptorHelper.fetchSecretValue(accountId, script, encryptedRecord,
+  encryptionConfig);
+  }*/
+
   @Override
   public boolean validateCustomConfiguration(String accountId, EncryptionConfig encryptionConfig) {
     ValidateSecretManagerConfigurationTaskParameters parameters =
         ValidateSecretManagerConfigurationTaskParameters.builder().encryptionConfig(encryptionConfig).build();
     return ngManagerEncryptorHelper.validateConfiguration(accountId, parameters);
+  }
+
+  public String getParameter(String parameterName, EncryptedRecord encryptedRecord) {
+    return getParameter(parameterName, encryptedRecord.getParameters());
+  }
+
+  public String getParameter(String parameterName, Set<EncryptedDataParams> encryptedDataParamsSet) {
+    return encryptedDataParamsSet.stream().filter(x -> x.getName().equals(parameterName)).findFirst().get().getValue();
   }
 }

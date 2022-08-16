@@ -20,19 +20,28 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 @OwnedBy(PL)
 public interface CustomEncryptor {
+  // Params should have resolved semi resolved Script and expressionFunctorToken.
   boolean validateReference(
       @NotEmpty String accountId, @NotNull Set<EncryptedDataParams> params, @NotNull EncryptionConfig encryptionConfig);
 
+  // EncrypedRecord parameter should have semi resolved Script and expression functor token.
   char[] fetchSecretValue(
       @NotEmpty String accountId, @NotNull EncryptedRecord encryptedRecord, @NotNull EncryptionConfig encryptionConfig);
 
-  default boolean validateCustomSecretManagerSecretReference(String accountId, String script,
-      @NotNull Set<EncryptedDataParams> params, @NotNull EncryptionConfig encryptionConfig) {
-    throw new UnsupportedOperationException("Can not validate the secret");
-  }
+  /*default boolean validateReference(String accountId, String script,
+                                    @NotNull Set<EncryptedDataParams> params, @NotNull EncryptionConfig
+  encryptionConfig) { throw new UnsupportedOperationException("Can not validate the secret");
+  }*/
 
   default boolean validateCustomConfiguration(String accountId, EncryptionConfig encryptionConfig) {
     throw new UnsupportedOperationException(
         "Validating SecretManager Configuration on Delegate in not available yet for:" + encryptionConfig);
   }
+
+  /*
+  default char[] fetchSecretValue(
+          @NotEmpty String accountId, String script, @NotNull EncryptedRecord encryptedRecord, @NotNull EncryptionConfig
+  encryptionConfig){ throw new UnsupportedOperationException( "Fetching secret in not available yet for:" +
+  encryptionConfig);
+  }*/
 }

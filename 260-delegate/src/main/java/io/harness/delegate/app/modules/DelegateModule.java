@@ -291,6 +291,7 @@ import io.harness.delegate.utils.DecryptionHelperDelegate;
 import io.harness.delegatetasks.DeleteSecretTask;
 import io.harness.delegatetasks.EncryptSecretTask;
 import io.harness.delegatetasks.EncryptSecretTaskValidationHandler;
+import io.harness.delegatetasks.FetchCustomSecretTask;
 import io.harness.delegatetasks.FetchSecretTask;
 import io.harness.delegatetasks.NGAzureKeyVaultFetchEngineTask;
 import io.harness.delegatetasks.NGVaultFetchEngineTask;
@@ -1584,6 +1585,7 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.VALIDATE_SECRET_REFERENCE).toInstance(ValidateSecretReferenceTask.class);
     mapBinder.addBinding(TaskType.VALIDATE_CUSTOM_SECRET_MANAGER_SECRET_REFERENCE)
         .toInstance(ValidateCustomSecretManagerSecretReferenceTask.class);
+    mapBinder.addBinding(TaskType.FETCH_CUSTOM_SECRET).toInstance(FetchCustomSecretTask.class);
     mapBinder.addBinding(TaskType.UPSERT_SECRET).toInstance(UpsertSecretTask.class);
     mapBinder.addBinding(TaskType.FETCH_SECRET).toInstance(FetchSecretTask.class);
     mapBinder.addBinding(TaskType.ENCRYPT_SECRET).toInstance(EncryptSecretTask.class);

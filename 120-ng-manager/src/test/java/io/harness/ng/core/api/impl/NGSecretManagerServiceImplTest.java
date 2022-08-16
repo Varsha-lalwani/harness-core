@@ -38,6 +38,7 @@ import io.harness.encryptors.VaultEncryptorsRegistry;
 import io.harness.exception.DelegateServiceDriverException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.ng.CustomSecretManagerHelper;
 import io.harness.ng.core.api.NGEncryptedDataService;
 import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
@@ -82,7 +83,7 @@ public class NGSecretManagerServiceImplTest extends CategoryTest {
 
   CustomEncryptorsRegistry customEncryptorsRegistry;
 
-  TemplateResourceClient templateResourceClient;
+  CustomSecretManagerHelper customSecretManagerHelper;
 
   private final String ACCOUNT_IDENTIFIER = "ACCOUNT_ID";
   private final String ORG_IDENTIFIER = "ACCOUNT_ID";
@@ -102,10 +103,10 @@ public class NGSecretManagerServiceImplTest extends CategoryTest {
     accountClient = mock(AccountClient.class);
     delegateService = mock(DelegateGrpcClientWrapper.class);
     customEncryptorsRegistry = mock(CustomEncryptorsRegistry.class);
-    templateResourceClient = mock(TemplateResourceClient.class);
+    customSecretManagerHelper = mock(CustomSecretManagerHelper.class);
     ngSecretManagerService =
         new NGSecretManagerServiceImpl(secretManagerClient, ngConnectorSecretManagerService, kmsEncryptorsRegistry,
-            vaultEncryptorsRegistry, customEncryptorsRegistry, ngVaultService, templateResourceClient);
+            vaultEncryptorsRegistry, customEncryptorsRegistry, ngVaultService, customSecretManagerHelper);
   }
 
   @Test

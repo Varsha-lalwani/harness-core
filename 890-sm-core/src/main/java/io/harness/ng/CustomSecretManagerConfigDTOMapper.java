@@ -33,7 +33,7 @@ public class CustomSecretManagerConfigDTOMapper {
             .identifier(connector.getIdentifier())
             .description(connector.getDescription())
             .harnessManaged(connectorDTO.isHarnessManaged())
-            .unmergedConnectorRequest(YamlUtils.write(connectorRequestDTO))
+            //.unmergedConnectorRequest(YamlUtils.write(connectorRequestDTO))
 
             .delegateSelectors(connectorDTO.getDelegateSelectors())
             .onDelegate(connectorDTO.isOnDelegate())

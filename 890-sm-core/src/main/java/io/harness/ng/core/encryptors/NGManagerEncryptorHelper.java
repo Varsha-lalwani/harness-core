@@ -14,6 +14,7 @@ import static io.harness.exception.WingsException.USER;
 import static io.harness.utils.DelegateOwner.NG_DELEGATE_ENABLED_CONSTANT;
 import static io.harness.utils.DelegateOwner.NG_DELEGATE_OWNER_CONSTANT;
 
+import static software.wings.beans.TaskType.FETCH_CUSTOM_SECRET;
 import static software.wings.beans.TaskType.FETCH_SECRET;
 import static software.wings.beans.TaskType.VALIDATE_CUSTOM_SECRET_MANAGER_SECRET_REFERENCE;
 import static software.wings.beans.TaskType.VALIDATE_SECRET_MANAGER_CONFIGURATION;
@@ -24,10 +25,12 @@ import io.harness.beans.DelegateTaskRequest;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.utils.TaskSetupAbstractionHelper;
+import io.harness.delegatetasks.FetchCustomSecretTaskParameters;
+import io.harness.delegatetasks.FetchCustomSecretTaskResponse;
 import io.harness.delegatetasks.FetchSecretTaskParameters;
 import io.harness.delegatetasks.FetchSecretTaskResponse;
 import io.harness.delegatetasks.ValidateCustomSecretManagerSecretReferenceTaskResponse;
-import io.harness.delegatetasks.ValidateCustomSecretManagerSecretReferentTaskParameters;
+import io.harness.delegatetasks.ValidateCustomSecretManagerSecretRefereneTaskParameters;
 import io.harness.delegatetasks.ValidateSecretManagerConfigurationTaskParameters;
 import io.harness.delegatetasks.ValidateSecretManagerConfigurationTaskResponse;
 import io.harness.delegatetasks.ValidateSecretReferenceTaskParameters;
@@ -43,7 +46,6 @@ import com.google.inject.Inject;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(PL)
@@ -115,15 +117,33 @@ public class NGManagerEncryptorHelper {
     return responseData.isReferenceValid();
   }
 
-  public boolean validateCustomSecretManagerSecretReference(
-      String accountId, ValidateCustomSecretManagerSecretReferentTaskParameters parameters) {
-    int expressionFunctorToken = Integer.parseInt(parameters.getEncryptedRecord()
-                                                      .getParameters()
-                                                      .stream()
-                                                      .filter(x -> x.getName().equals("expressionFunctorToken"))
-                                                      .collect(Collectors.toList())
-                                                      .get(0)
-                                                      .getValue());
+  public char[] fetchSecretValue(String accountId, String script, int expressionFunctorToken,
+      EncryptedRecord encryptedRecord, EncryptionConfig encryptionConfig) {
+    FetchCustomSecretTaskParameters parameters = FetchCustomSecretTaskParameters.builder()
+                                                     .encryptedRecord(encryptedRecord)
+                                                     .encryptionConfig(encryptionConfig)
+                                                     .script(script)
+                                                     .build();
+    DelegateTaskRequest delegateTaskRequest =
+        DelegateTaskRequest.builder()
+            .taskType(FETCH_CUSTOM_SECRET.name())
+            .taskParameters(parameters)
+            .executionTimeout(Duration.ofMillis(TaskData.DEFAULT_SYNC_CALL_TIMEOUT))
+            .accountId(accountId)
+            .taskSetupAbstractions(buildAbstractions(parameters.getEncryptionConfig()))
+            .expressionFunctorToken(expressionFunctorToken)
+            .build();
+    DelegateResponseData delegateResponseData = delegateService.executeSyncTask(delegateTaskRequest);
+    DelegateTaskUtils.validateDelegateTaskResponse(delegateResponseData);
+    if (!(delegateResponseData instanceof FetchCustomSecretTaskResponse)) {
+      throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, "Unknown Response from delegate", USER);
+    }
+    FetchCustomSecretTaskResponse fetchCustomSecretTaskResponse = (FetchCustomSecretTaskResponse) delegateResponseData;
+    return fetchCustomSecretTaskResponse.getSecretValue();
+  }
+
+  public boolean validateCustomSecretManagerSecretReference(String accountId, int expressionFunctorToken,
+      ValidateCustomSecretManagerSecretRefereneTaskParameters parameters) {
     DelegateTaskRequest delegateTaskRequest =
         DelegateTaskRequest.builder()
             .taskType(VALIDATE_CUSTOM_SECRET_MANAGER_SECRET_REFERENCE.name())
