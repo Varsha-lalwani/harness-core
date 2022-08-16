@@ -137,8 +137,8 @@ public class UsageMetricsEventPublisher {
     if (workflowExecution.getTriggeredBy() != null) {
       stringData.put(EventProcessor.TRIGGERED_BY, workflowExecution.getTriggeredBy().getUuid());
     }
-    if (workflowExecution.getPipelineSummary() != null
-        && workflowExecution.getPipelineSummary().getPipelineId() != null && WorkflowType.ORCHESTRATION.equals(workflowExecution.getWorkflowType())) {
+    if (workflowExecution.getPipelineSummary() != null && workflowExecution.getPipelineSummary().getPipelineId() != null
+        && WorkflowType.ORCHESTRATION.equals(workflowExecution.getWorkflowType())) {
       stringData.put(EventProcessor.PARENT_PIPELINE_ID, workflowExecution.getPipelineSummary().getPipelineId());
     }
 
