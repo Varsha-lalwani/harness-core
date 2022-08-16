@@ -154,9 +154,6 @@ public class ApprovalResourceServiceImpl implements ApprovalResourceService {
     ClassLoader classLoader = this.getClass().getClassLoader();
     String yamlFile = approvalType.getDisplayName();
 
-    if (ApprovalType.SERVICENOW_APPROVAL.equals(approvalType)) {
-      yamlFile = yamlFile.concat("WithCreateUpdate");
-    }
     return Resources.toString(
         Objects.requireNonNull(classLoader.getResource(String.format("approval_stage_yamls/%s.yaml", yamlFile))),
         StandardCharsets.UTF_8);
