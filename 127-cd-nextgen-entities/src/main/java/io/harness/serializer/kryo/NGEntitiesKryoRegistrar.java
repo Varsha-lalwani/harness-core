@@ -29,8 +29,12 @@ import io.harness.cdng.artifact.outcome.EcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.GcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.JenkinsArtifactOutcome;
 import io.harness.cdng.artifact.outcome.S3ArtifactOutcome;
+import io.harness.cdng.azure.config.yaml.ApplicationSettingsConfiguration;
+import io.harness.cdng.azure.config.yaml.ConnectionStringsConfiguration;
+import io.harness.cdng.azure.config.yaml.StartupCommandConfiguration;
 import io.harness.cdng.configfile.ConfigFile;
 import io.harness.cdng.configfile.ConfigFileAttributes;
+import io.harness.cdng.configfile.ConfigFileOutcome;
 import io.harness.cdng.configfile.ConfigFileWrapper;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
@@ -206,5 +210,9 @@ public class NGEntitiesKryoRegistrar implements KryoRegistrar {
     kryo.register(CustomRemoteStoreConfig.class, 12589);
     kryo.register(OverlayConfiguration.class, 12591);
     kryo.register(JenkinsArtifactConfig.class, 130012);
+    kryo.register(ConfigFileOutcome.class, 130013);
+    kryo.register(ApplicationSettingsConfiguration.class, 130014);
+    kryo.register(ConnectionStringsConfiguration.class, 130015);
+    kryo.register(StartupCommandConfiguration.class, 130016);
   }
 }

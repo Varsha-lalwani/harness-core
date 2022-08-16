@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.rule.OwnerRule.BRIJESH;
 import static io.harness.rule.OwnerRule.NAMAN;
 import static io.harness.rule.OwnerRule.SAMARTH;
+import static io.harness.rule.OwnerRule.VIVEK_DIXIT;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.joor.Reflect.on;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -32,6 +34,7 @@ import io.harness.eraro.ErrorCode;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.eventsframework.schemas.entity.InputSetReferenceProtoDTO;
 import io.harness.exception.DuplicateFieldException;
+import io.harness.exception.DuplicateFileImportException;
 import io.harness.exception.ExplanationException;
 import io.harness.exception.HintException;
 import io.harness.exception.InvalidRequestException;
@@ -39,6 +42,7 @@ import io.harness.exception.ScmException;
 import io.harness.exception.ngexception.beans.yamlschema.YamlSchemaErrorDTO;
 import io.harness.exception.ngexception.beans.yamlschema.YamlSchemaErrorWrapperDTO;
 import io.harness.git.model.ChangeType;
+import io.harness.gitaware.helper.GitAwareContextHelper;
 import io.harness.gitaware.helper.GitAwareEntityHelper;
 import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.interceptor.GitEntityInfo;
@@ -76,6 +80,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
@@ -87,11 +92,10 @@ import org.springframework.data.mongodb.core.query.Query;
 @OwnedBy(PIPELINE)
 public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
   @Inject PMSInputSetServiceImpl pmsInputSetService;
-  @InjectMocks PMSInputSetServiceImpl pmsInputSetServiceMock;
+  @Spy @InjectMocks PMSInputSetServiceImpl pmsInputSetServiceMock;
   @Mock private PMSInputSetRepository inputSetRepository;
   @Mock private GitSyncSdkService gitSyncSdkService;
   @Mock private GitAwareEntityHelper gitAwareEntityHelper;
-
   String ACCOUNT_ID = "account_id";
   String ORG_IDENTIFIER = "orgId";
   String PROJ_IDENTIFIER = "projId";
@@ -382,6 +386,7 @@ public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
   @Test
   @Owner(developers = NAMAN)
   @Category(UnitTests.class)
+  @Deprecated
   public void testImportInputSetFromRemote() {
     String identifier = "input1";
     String name = "this name";
@@ -392,8 +397,12 @@ public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
     InputSetImportRequestDTO inputSetImportRequest =
         InputSetImportRequestDTO.builder().inputSetName(name).inputSetDescription(description).build();
     doReturn(inputSetEntity).when(inputSetRepository).saveForImportedYAML(inBetweenEntity);
+    doNothing().when(gitAwareEntityHelper).checkRootFolder();
+    doReturn("repoUrl")
+        .when(pmsInputSetServiceMock)
+        .getRepoUrlAndCheckForFileUniqueness(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, false);
     InputSetEntity savedEntity = pmsInputSetServiceMock.importInputSetFromRemote(
-        ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, pipelineIdentifier, identifier, inputSetImportRequest);
+        ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, pipelineIdentifier, identifier, inputSetImportRequest, true);
     assertThat(savedEntity).isEqualTo(inputSetEntity);
   }
 
@@ -715,5 +724,27 @@ public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
       GlobalContextManager.set(new GlobalContext());
     }
     GlobalContextManager.upsertGlobalContextRecord(GitSyncBranchContext.builder().gitBranchInfo(branchInfo).build());
+  }
+
+  @Test
+  @Owner(developers = VIVEK_DIXIT)
+  @Category(UnitTests.class)
+  public void testGetRepoUrlAndCheckForFileUniqueness() {
+    String repoUrl = "repoUrl123";
+    GitEntityInfo gitEntityInfo = GitEntityInfo.builder().filePath("filePath").build();
+    MockedStatic<GitAwareContextHelper> utilities = Mockito.mockStatic(GitAwareContextHelper.class);
+    utilities.when(GitAwareContextHelper::getGitRequestParamsInfo).thenReturn(gitEntityInfo);
+
+    doReturn(repoUrl).when(gitAwareEntityHelper).getRepoUrl(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER);
+    doReturn(true)
+        .when(inputSetRepository)
+        .checkIfInputSetWithGivenFilePathExists(ACCOUNT_ID, repoUrl, gitEntityInfo.getFilePath());
+    assertThatThrownBy(()
+                           -> pmsInputSetServiceMock.getRepoUrlAndCheckForFileUniqueness(
+                               ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, false))
+        .isInstanceOf(DuplicateFileImportException.class);
+    assertThat(pmsInputSetServiceMock.getRepoUrlAndCheckForFileUniqueness(
+                   ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, true))
+        .isEqualTo(repoUrl);
   }
 }
