@@ -15,6 +15,7 @@ import static io.harness.beans.sweepingoutputs.PodCleanupDetails.CLEANUP_DETAILS
 import static io.harness.beans.sweepingoutputs.StageInfraDetails.STAGE_INFRA_DETAILS;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_BUILD_EVENT;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_COMMIT_BRANCH;
+import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_COMMIT_SHA;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_NETRC_MACHINE;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_REMOTE_URL;
 import static io.harness.ci.commonconstants.BuildEnvironmentConstants.DRONE_TAG;
@@ -339,17 +340,20 @@ public class K8InitializeTaskParamsBuilder {
 
     Map<String, String> envVarsWithSecretRef = k8InitializeTaskUtils.removeEnvVarsWithSecretRef(envVars);
 
-    // remove any codebase env vars from commonEnvVars which will overwrite git clone step envVars
+    // maintain codebase drone environment variables for all containers except git clone steps
     String droneRemoteUrl = envVars.get(DRONE_REMOTE_URL);
+    Map<String, String> commonEnvVarsCopy = new HashMap<>();
+    commonEnvVarsCopy.putAll(commonEnvVars);
     if (isNotEmpty(droneRemoteUrl)) {
-      commonEnvVars.remove(DRONE_TAG);
-      commonEnvVars.remove(DRONE_NETRC_MACHINE);
-      commonEnvVars.remove(DRONE_BUILD_EVENT);
-      commonEnvVars.remove(DRONE_COMMIT_BRANCH);
-      commonEnvVars.remove(DRONE_REMOTE_URL);
+      commonEnvVarsCopy.remove(DRONE_TAG);
+      commonEnvVarsCopy.remove(DRONE_NETRC_MACHINE);
+      commonEnvVarsCopy.remove(DRONE_BUILD_EVENT);
+      commonEnvVarsCopy.remove(DRONE_COMMIT_BRANCH);
+      commonEnvVarsCopy.remove(DRONE_REMOTE_URL);
+      commonEnvVarsCopy.remove(DRONE_COMMIT_SHA);
     }
 
-    envVars.putAll(commonEnvVars); //  commonEnvVars needs to be put in end because they overrides webhook parameters
+    envVars.putAll(commonEnvVarsCopy); // commonEnvVars needs to be put in end because they override webhook parameters
     if (containerDefinitionInfo.getContainerType() == CIContainerType.SERVICE) {
       envVars.put(HARNESS_SERVICE_LOG_KEY_VARIABLE,
           format("%s/serviceId:%s", logPrefix, containerDefinitionInfo.getStepIdentifier()));
