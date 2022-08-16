@@ -32,7 +32,6 @@ var (
 	newRunTask          = tasks.NewRunTask
 	newRunTestsTask     = tasks.NewRunTestsTask
 	newPluginTask       = tasks.NewPluginTask
-	newBackgroundTask   = tasks.NewBackgroundTask
 )
 
 // NewAddonHandler returns a GRPC handler that implements pb.AddonServer
