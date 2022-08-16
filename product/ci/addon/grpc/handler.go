@@ -68,21 +68,17 @@ func (h *handler) ExecuteStep(ctx context.Context, in *pb.ExecuteStepRequest) (*
 
 	switch x := in.GetStep().GetStep().(type) {
 	case *enginepb.UnitStep_Run:
-		detach := in.GetStep().GetRun().GetDetach()
 		var (
 			stepOutput map[string]string
 			numRetries int32
 		)
-
-		if detach {
-			stepOutput, numRetries, err = newBackgroundTask(in.GetStep(), rl.BaseLogger, rl.Writer, false, h.log).Run()
-		} else {
-			stepOutput, numRetries, err = newRunTask(in.GetStep(), in.GetPrevStepOutputs(), in.GetTmpFilePath(), rl.BaseLogger,
-				rl.Writer, false, h.log).Run(ctx)
-			// close log stream only if detach == false
+		detach := in.GetStep().GetRun().GetDetach()
+		stepOutput, numRetries, err = newRunTask(in.GetStep(), in.GetPrevStepOutputs(), in.GetTmpFilePath(), rl.BaseLogger,
+			rl.Writer, false, h.log).Run(ctx)
+		// close log stream only if detach == false
+		if !detach {
 			err = close(rl.Writer, err)
 		}
-
 		response := &pb.ExecuteStepResponse{
 			Output:     stepOutput,
 			NumRetries: numRetries,
