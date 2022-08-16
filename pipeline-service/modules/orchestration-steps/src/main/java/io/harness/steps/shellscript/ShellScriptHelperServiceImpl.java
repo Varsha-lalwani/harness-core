@@ -13,6 +13,7 @@ import static java.util.Collections.emptyList;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.data.encoding.EncodingUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
@@ -32,6 +33,7 @@ import io.harness.pms.yaml.ParameterField;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
 import io.harness.secrets.remote.SecretNGManagerClient;
+import io.harness.security.SimpleEncryption;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.shell.ScriptType;
 import io.harness.steps.OutputExpressionConstants;
@@ -39,11 +41,13 @@ import io.harness.utils.IdentifierRefHelper;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -98,6 +102,32 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
       } else {
         log.error(String.format(
             "Value other than String or ParameterField found for output variable [%s]. value: [%s]", key, val));
+      }
+    });
+    return outputVars;
+  }
+
+  @Override
+  public List<String> getOutputVars(Map<String, Object> outputVariables, Set<String> secretOutputVariables) {
+    if (EmptyPredicate.isEmpty(outputVariables)) {
+      return emptyList();
+    }
+    // secret variables are stored separately so ignoring them
+    List<String> outputVars = new ArrayList<>();
+    outputVariables.forEach((key, val) -> {
+      if (!secretOutputVariables.contains(key)) {
+        if (val instanceof ParameterField) {
+          ParameterField<?> parameterFieldValue = (ParameterField<?>) val;
+          if (parameterFieldValue.getValue() == null) {
+            throw new InvalidRequestException(String.format("Output variable [%s] value found to be null", key));
+          }
+          outputVars.add(((ParameterField<?>) val).getValue().toString());
+        } else if (val instanceof String) {
+          outputVars.add((String) val);
+        } else {
+          log.error(String.format(
+              "Value other than String or ParameterField found for output variable [%s]. value: [%s]", key, val));
+        }
       }
     });
     return outputVars;
@@ -206,7 +236,10 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
         .environmentVariables(
             shellScriptHelperService.getEnvironmentVariables(shellScriptStepParameters.getEnvironmentVariables()))
         .executionId(AmbianceUtils.obtainCurrentRuntimeId(ambiance))
-        .outputVars(shellScriptHelperService.getOutputVars(shellScriptStepParameters.getOutputVariables()))
+        .outputVars(shellScriptHelperService.getOutputVars(
+            shellScriptStepParameters.getOutputVariables(), shellScriptStepParameters.getSecretOutputVariables()))
+        .secretOutputVars(shellScriptHelperService.getSecretOutputVars(
+            shellScriptStepParameters.getOutputVariables(), shellScriptStepParameters.getSecretOutputVariables()))
         .script(shellScript)
         .scriptType(scriptType)
         .workingDirectory(shellScriptHelperService.getWorkingDirectory(
@@ -226,5 +259,54 @@ public class ShellScriptHelperServiceImpl implements ShellScriptHelperService {
       resolvedOutputVariables.put(name, sweepingOutputEnvVariables.get(value));
     });
     return ShellScriptOutcome.builder().outputVariables(resolvedOutputVariables).build();
+  }
+
+  @Override
+  public ShellScriptOutcome prepareShellScriptOutcome(Map<String, String> sweepingOutputEnvVariables,
+      Map<String, Object> outputVariables, Set<String> secretOutputVariables) {
+    SimpleEncryption encryption = new SimpleEncryption();
+
+    if (outputVariables == null || sweepingOutputEnvVariables == null) {
+      return null;
+    }
+    Map<String, String> resolvedOutputVariables = new HashMap<>();
+    outputVariables.keySet().forEach(name -> {
+      Object value = ((ParameterField<?>) outputVariables.get(name)).getValue();
+      if (EmptyPredicate.isNotEmpty(secretOutputVariables) && secretOutputVariables.contains(name)) {
+        String encodedValue = EncodingUtils.encodeBase64(
+            encryption.encrypt(sweepingOutputEnvVariables.get(value).getBytes(StandardCharsets.UTF_8)));
+        String finalValue = "${sweepingOutputSecrets.obtain(\"" + name + "\",\"" + encodedValue + "\")}";
+        resolvedOutputVariables.put(name, finalValue);
+      } else {
+        resolvedOutputVariables.put(name, sweepingOutputEnvVariables.get(value));
+      }
+    });
+    return ShellScriptOutcome.builder().outputVariables(resolvedOutputVariables).build();
+  }
+
+  @Override
+  public List<String> getSecretOutputVars(Map<String, Object> outputVariables, Set<String> secretOutputVariables) {
+    if (EmptyPredicate.isEmpty(outputVariables)) {
+      return emptyList();
+    }
+    // secret variables are stored separately so ignoring them
+    List<String> outputVars = new ArrayList<>();
+    outputVariables.forEach((key, val) -> {
+      if (secretOutputVariables.contains(key)) {
+        if (val instanceof ParameterField) {
+          ParameterField<?> parameterFieldValue = (ParameterField<?>) val;
+          if (parameterFieldValue.getValue() == null) {
+            throw new InvalidRequestException(String.format("Output variable [%s] value found to be null", key));
+          }
+          outputVars.add(((ParameterField<?>) val).getValue().toString());
+        } else if (val instanceof String) {
+          outputVars.add((String) val);
+        } else {
+          log.error(String.format(
+                  "Value other than String or ParameterField found for secret output variable [%s]. value: [%s]", key, val));
+        }
+      }
+    });
+    return outputVars;
   }
 }

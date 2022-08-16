@@ -19,6 +19,7 @@ import io.harness.shell.ScriptType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nonnull;
 
 @OwnedBy(CDC)
@@ -26,6 +27,8 @@ public interface ShellScriptHelperService {
   // Handles ParameterField and String type Objects, else throws Exception
   Map<String, String> getEnvironmentVariables(Map<String, Object> inputVariables);
   List<String> getOutputVars(Map<String, Object> outputVariables);
+  List<String> getOutputVars(Map<String, Object> outputVariables, Set<String> secretOutputVariables);
+  List<String> getSecretOutputVars(Map<String, Object> outputVariables, Set<String> secretOutputVariables);
 
   K8sInfraDelegateConfig getK8sInfraDelegateConfig(@Nonnull Ambiance ambiance, @Nonnull String shellScript);
 
@@ -43,4 +46,7 @@ public interface ShellScriptHelperService {
 
   ShellScriptOutcome prepareShellScriptOutcome(
       Map<String, String> sweepingOutputEnvVariables, Map<String, Object> outputVariables);
+
+  ShellScriptOutcome prepareShellScriptOutcome(
+          Map<String, String> sweepingOutputEnvVariables, Map<String, Object> outputVariables, Set<String> secretOutputVariables);
 }

@@ -22,15 +22,20 @@ import io.harness.steps.approval.step.custom.CustomApprovalOutcome;
 import io.harness.steps.approval.step.custom.CustomApprovalSpecParameters;
 import io.harness.steps.approval.step.custom.beans.CustomApprovalTicketNG;
 import io.harness.steps.approval.step.entities.ApprovalInstance;
+import io.harness.steps.shellscript.ShellScriptHelperService;
+import io.harness.steps.shellscript.ShellScriptOutcome;
 import io.harness.steps.shellscript.ShellScriptSourceWrapper;
 import io.harness.steps.shellscript.ShellScriptStepParameters;
 import io.harness.steps.shellscript.ShellType;
 import io.harness.yaml.core.timeout.Timeout;
 
+import com.google.inject.Inject;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.validation.constraints.NotNull;
@@ -55,12 +60,15 @@ public class CustomApprovalInstance extends ApprovalInstance implements Persiste
   @NotNull ShellScriptSourceWrapper source;
   ParameterField<Timeout> retryInterval;
   Map<String, Object> outputVariables;
+  Set<String> secretOutputVariables;
   Map<String, Object> environmentVariables;
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
   @NotNull CriteriaSpecWrapperDTO approvalCriteria;
   CriteriaSpecWrapperDTO rejectionCriteria;
   ParameterField<Timeout> scriptTimeout;
   List<Long> nextIterations;
+
+  @Inject ShellScriptHelperService shellScriptHelperService;
 
   public static CustomApprovalInstance fromStepParameters(Ambiance ambiance, StepElementParameters stepParameters) {
     if (stepParameters == null) {
@@ -76,6 +84,7 @@ public class CustomApprovalInstance extends ApprovalInstance implements Persiste
             .delegateSelectors(specParameters.getDelegateSelectors())
             .environmentVariables(specParameters.getEnvironmentVariables())
             .outputVariables(specParameters.getOutputVariables())
+            .secretOutputVariables(specParameters.getSecretOutputVariables())
             .approvalCriteria(
                 CriteriaSpecWrapperDTO.fromCriteriaSpecWrapper(specParameters.getApprovalCriteria(), false))
             .rejectionCriteria(
@@ -88,7 +97,11 @@ public class CustomApprovalInstance extends ApprovalInstance implements Persiste
   }
 
   public CustomApprovalOutcome toCustomApprovalOutcome(TicketNG ticketNG) {
-    return CustomApprovalOutcome.builder().outputVariables(((CustomApprovalTicketNG) ticketNG).getFields()).build();
+    ShellScriptOutcome shellScriptOutcome = shellScriptHelperService.prepareShellScriptOutcome(
+        ((CustomApprovalTicketNG) ticketNG).getFields(), outputVariables, secretOutputVariables);
+    return CustomApprovalOutcome.builder()
+        .outputVariables(shellScriptOutcome == null ? new HashMap<>() : shellScriptOutcome.getOutputVariables())
+        .build();
   }
 
   public ShellScriptStepParameters toShellScriptStepParameters() {
@@ -97,6 +110,7 @@ public class CustomApprovalInstance extends ApprovalInstance implements Persiste
         .shellType(getShellType())
         .delegateSelectors(getDelegateSelectors())
         .outputVariables(getOutputVariables())
+            .secretOutputVariables(secretOutputVariables)
         .onDelegate(ParameterField.createValueField(true))
         .source(getSource())
         .uuid(getUuid())

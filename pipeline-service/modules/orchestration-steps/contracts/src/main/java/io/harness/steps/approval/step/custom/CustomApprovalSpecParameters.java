@@ -21,6 +21,7 @@ import io.harness.yaml.core.timeout.Timeout;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -39,6 +40,7 @@ public class CustomApprovalSpecParameters implements SpecParameters {
   @NotNull ShellScriptSourceWrapper source;
   @NotNull ParameterField<Timeout> retryInterval;
   Map<String, Object> outputVariables;
+  Set<String> secretOutputVariables;
   Map<String, Object> environmentVariables;
   @NotNull CriteriaSpecWrapper approvalCriteria;
   CriteriaSpecWrapper rejectionCriteria;
