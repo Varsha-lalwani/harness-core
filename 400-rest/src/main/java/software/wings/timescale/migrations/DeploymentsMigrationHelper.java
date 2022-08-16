@@ -113,7 +113,6 @@ public class DeploymentsMigrationHelper {
                                .limit(batchLimit);
 
     int updated = 0;
-    int batched = 0;
     List<DBObject> workflowExecutionObjects = new ArrayList<>();
     try {
       while (dataRecords.hasNext()) {
@@ -121,11 +120,8 @@ public class DeploymentsMigrationHelper {
         workflowExecutionObjects.add(record);
         updated++;
 
-        updated++;
-        batched++;
-
         if (updated != 0 && updated % batchLimit == 0) {
-          executeTimeScaleParentPipelineQueries(update_statement, workflowExecutionObjects, batched);
+          executeTimeScaleParentPipelineQueries(update_statement, workflowExecutionObjects);
           sleep(Duration.ofMillis(100));
           dataRecords = collection.find(objectsToBeUpdated, projection)
                             .sort(new BasicDBObject().append(WorkflowExecutionKeys.createdAt, -1))
@@ -135,8 +131,8 @@ public class DeploymentsMigrationHelper {
         }
       }
 
-      if (batched != 0) {
-        executeTimeScaleParentPipelineQueries(update_statement, workflowExecutionObjects, batched);
+      if (updated % batchLimit != 0) {
+        executeTimeScaleParentPipelineQueries(update_statement, workflowExecutionObjects);
         log.info(debugLine + "Number of records updated for {} is: {}", collectionName, updated);
       }
     } catch (Exception e) {
@@ -149,7 +145,7 @@ public class DeploymentsMigrationHelper {
   }
 
   private void executeTimeScaleParentPipelineQueries(
-      String update_statement, List<DBObject> workflowExecutionObjects, int batched) throws SQLException {
+      String update_statement, List<DBObject> workflowExecutionObjects) throws SQLException {
     try (Connection connection = timeScaleDBService.getDBConnection();
          PreparedStatement updateStatement = connection.prepareStatement(update_statement)) {
       for (DBObject executionRecord : workflowExecutionObjects) {
@@ -172,10 +168,8 @@ public class DeploymentsMigrationHelper {
         updateStatement.setString(3, cause);
         updateStatement.setString(4, uuId);
         updateStatement.addBatch();
-        batched++;
       }
       int[] affectedRecords = updateStatement.executeBatch();
-      batched = 0;
     }
   }
 
