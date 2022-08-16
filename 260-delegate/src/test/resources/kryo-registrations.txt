@@ -1743,6 +1743,7 @@
 55501:io.harness.delegate.beans.instancesync.info.PdcServerInstanceInfo
 55502:io.harness.delegate.beans.instancesync.info.AzureSshWinrmServerInstanceInfo
 55503:io.harness.delegate.beans.instancesync.info.AwsSshWinrmServerInstanceInfo
+55504:io.harness.delegate.beans.ci.vm.steps.VmBackgroundStep
 56403:io.harness.delegate.beans.storeconfig.CustomRemoteStoreDelegateConfig
 70001:io.harness.accesscontrol.commons.exceptions.AccessDeniedErrorDTO
 70002:io.harness.accesscontrol.acl.api.PermissionCheckDTO
@@ -2261,4 +2262,3 @@
 980032:io.harness.exception.ngexception.AzureAppServiceTaskException
 9800001:io.harness.beans.RecasterMap
 9800002:io.harness.licensing.beans.modules.ChaosModuleLicenseDTO
-543450:io.harness.delegate.beans.ci.vm.steps.VmBackgroundStep
