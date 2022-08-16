@@ -11,6 +11,7 @@ import static io.harness.rule.OwnerRule.SHALINI;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -19,8 +20,11 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.eventsframework.api.Producer;
+import io.harness.eventsframework.producer.Message;
+import io.harness.pms.contracts.visualisation.log.OrchestrationLogEvent;
 import io.harness.rule.Owner;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
 import javax.cache.Cache;
@@ -28,6 +32,7 @@ import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.EventType;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.redisson.jcache.JCacheEntryEvent;
@@ -57,7 +62,14 @@ public class OrchestrationLogCacheListenerTest extends OrchestrationTestBase {
     orchestrationLogCacheListener.onExpired(iterable);
     verify(producer, times(0)).send(any());
     iterable.add(new JCacheEntryEvent<>(cache, EventType.CREATED, "key2", 10L));
+    ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
     orchestrationLogCacheListener.onExpired(iterable);
-    verify(producer, times(1)).send(any());
+    verify(producer, times(1)).send(argumentCaptor.capture());
+    OrchestrationLogEvent orchestrationLogEvent = OrchestrationLogEvent.newBuilder().setPlanExecutionId("key2").build();
+    Message message = Message.newBuilder()
+                          .putAllMetadata(ImmutableMap.of("planExecutionId", "key2"))
+                          .setData(orchestrationLogEvent.toByteString())
+                          .build();
+    assertThat(argumentCaptor.getValue()).isEqualTo(message);
   }
 }

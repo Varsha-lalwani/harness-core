@@ -24,6 +24,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.OrchestrationTestBase;
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.interrupts.statusupdate.NodeStatusUpdateHandlerFactory;
@@ -54,6 +56,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.springframework.data.mongodb.core.query.Update;
 
+@OwnedBy(HarnessTeam.PIPELINE)
 public class PlanExecutionServiceImplTest extends OrchestrationTestBase {
   @Mock NodeStatusUpdateHandlerFactory nodeStatusUpdateHandlerFactory;
   @Mock NodeExecutionService nodeExecutionService;
