@@ -8,8 +8,8 @@ package tasks
 import (
 	"bytes"
 	"context"
-	"testing"
 	"os/exec"
+	"testing"
 
 	"github.com/golang/mock/gomock"
 	mexec "github.com/harness/harness-core/commons/go/lib/exec"
@@ -26,10 +26,10 @@ func TestBackgroundTaskCreate(t *testing.T) {
 		Id: "test",
 		Step: &pb.UnitStep_Run{
 			Run: &pb.RunStep{
-				Command:     "redis-server",
-				Detach:      true,
-				Image:       "redis",
-				Entrypoint:  []string{"redis-server", "--loglevel", "debug"},
+				Command:    "redis-server",
+				Detach:     true,
+				Image:      "redis",
+				Entrypoint: []string{"redis-server", "--loglevel", "debug"},
 			},
 		},
 	}
@@ -52,15 +52,15 @@ func TestBackgroundExecuteSuccess(t *testing.T) {
 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 	entrypoint := []string{"git", "status"}
 	b := &backgroundTask{
-		id:                "step1",
-		logMetrics:        true,
-		log:               log.Sugar(),
-		addonLogger:       log.Sugar(),
-		fs:                fs,
-		cmdFactory:        cmdFactory,
-		procWriter:        &buf,
-		entrypoint:        entrypoint,
-		image:			   "plugin/drone-git",
+		id:          "step1",
+		logMetrics:  true,
+		log:         log.Sugar(),
+		addonLogger: log.Sugar(),
+		fs:          fs,
+		cmdFactory:  cmdFactory,
+		procWriter:  &buf,
+		entrypoint:  entrypoint,
+		image:       "plugin/drone-git",
 	}
 
 	oldMlog := mlog
@@ -99,7 +99,7 @@ func TestBackgroundExecuteNonZeroStatus(t *testing.T) {
 	pstate := mexec.NewMockProcessState(ctrl)
 	fs := filesystem.NewMockFileSystem(ctrl)
 	cmd := mexec.NewMockCommand(ctrl)
-	
+
 	b := &backgroundTask{
 		id:          svcID,
 		image:       image,
