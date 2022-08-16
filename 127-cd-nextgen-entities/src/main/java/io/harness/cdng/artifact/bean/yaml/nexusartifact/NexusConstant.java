@@ -17,4 +17,5 @@ public class NexusConstant {
   public static final String MAVEN = "maven";
   public static final String NPM = "npm";
   public static final String NUGET = "nuget";
+  public static final String DOCKER = "docker";
 }

@@ -14,8 +14,15 @@ import io.harness.cdng.artifact.resources.nexus.dtos.NexusBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusRequestDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusResponseDTO;
 
+import javax.ws.rs.QueryParam;
+
 @OwnedBy(HarnessTeam.CDP)
 public interface NexusResourceService {
+  NexusResponseDTO getBuildDetails(IdentifierRef nexusConnectorRef, String repositoryName, String repositoryPort,
+      String artifactPath, String repositoryFormat, String artifactRepositoryUrl, String orgIdentifier,
+      String projectIdentifier, String groupId, String artifactId, String extension, String classifier,
+      String packageName);
+
   NexusResponseDTO getBuildDetails(IdentifierRef nexusConnectorRef, String repositoryName, String repositoryPort,
       String artifactPath, String repositoryFormat, String artifactRepositoryUrl, String orgIdentifier,
       String projectIdentifier);

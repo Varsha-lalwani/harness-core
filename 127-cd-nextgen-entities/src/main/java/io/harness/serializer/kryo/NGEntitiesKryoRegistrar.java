@@ -22,6 +22,11 @@ import io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.PrimaryArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifactWrapper;
+import io.harness.cdng.artifact.bean.yaml.nexusartifact.Nexus2RegistryArtifactConfig;
+import io.harness.cdng.artifact.bean.yaml.nexusartifact.NexusRegistryDockerConfig;
+import io.harness.cdng.artifact.bean.yaml.nexusartifact.NexusRegistryMavenConfig;
+import io.harness.cdng.artifact.bean.yaml.nexusartifact.NexusRegistryNpmConfig;
+import io.harness.cdng.artifact.bean.yaml.nexusartifact.NexusRegistryNugetConfig;
 import io.harness.cdng.artifact.outcome.AcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactoryGenericArtifactOutcome;
 import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
@@ -208,5 +213,10 @@ public class NGEntitiesKryoRegistrar implements KryoRegistrar {
     kryo.register(OverlayConfiguration.class, 12591);
     kryo.register(JenkinsArtifactConfig.class, 130012);
     kryo.register(ConfigFileOutcome.class, 130013);
+    kryo.register(Nexus2RegistryArtifactConfig.class, 140012);
+    kryo.register(NexusRegistryNpmConfig.class, 140013);
+    kryo.register(NexusRegistryMavenConfig.class, 140014);
+    kryo.register(NexusRegistryNugetConfig.class, 140015);
+    kryo.register(NexusRegistryDockerConfig.class, 140016);
   }
 }

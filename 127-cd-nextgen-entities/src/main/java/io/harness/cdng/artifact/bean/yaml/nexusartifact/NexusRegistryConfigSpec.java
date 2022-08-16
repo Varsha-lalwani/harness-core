@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonSubTypes({
   @JsonSubTypes.Type(value = NexusRegistryMavenConfig.class, name = NexusConstant.MAVEN)
   , @JsonSubTypes.Type(value = NexusRegistryNpmConfig.class, name = NexusConstant.NPM),
-      @JsonSubTypes.Type(value = NexusRegistryNugetConfig.class, name = NexusConstant.NUGET)
+      @JsonSubTypes.Type(value = NexusRegistryNugetConfig.class, name = NexusConstant.NUGET),
+      @JsonSubTypes.Type(value = NexusRegistryDockerConfig.class, name = NexusConstant.DOCKER)
 })
 public interface NexusRegistryConfigSpec extends DecryptableEntity {}
