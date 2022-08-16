@@ -76,9 +76,8 @@ public class DeploymentsMigrationHelper {
     Map<String, Set<String>> accountIdToAppIdMap = new HashMap<>();
     for (String accountId : accountIds) {
       try {
-        List<Key<Application>> appIdKeyList = wingsPersistence.createQuery(Application.class)
-                                                  .filter(ApplicationKeys.accountId, accountId)
-                                                  .asKeyList();
+        List<Key<Application>> appIdKeyList =
+            wingsPersistence.createQuery(Application.class).filter(ApplicationKeys.accountId, accountId).asKeyList();
 
         if (isNotEmpty(appIdKeyList)) {
           Set<String> appIdSet =

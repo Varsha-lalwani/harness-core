@@ -69,7 +69,6 @@ import software.wings.sm.WorkflowStandardParams;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
