@@ -24,6 +24,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.beans.EncryptedData;
 import io.harness.beans.EncryptedDataParent;
+import io.harness.beans.FeatureName;
 import io.harness.beans.SecretManagerConfig;
 import io.harness.encryptors.managerproxy.ManagerEncryptorHelper;
 import io.harness.exception.SecretManagementException;
@@ -179,6 +180,10 @@ public class BaseVaultServiceImpl extends AbstractSecretServiceImpl {
   }
 
   public void renewAppRoleClientToken(BaseVaultConfig baseVaultConfig) {
+    if (accountService.isFeatureFlagEnabled(
+            FeatureName.DO_NOT_RENEW_APPROLE_TOKEN.name(), baseVaultConfig.getAccountId())) {
+      return;
+    }
     log.info("Renewing Vault AppRole client token for vault id {}", baseVaultConfig.getUuid());
     Preconditions.checkNotNull(baseVaultConfig.getAuthToken());
     BaseVaultConfig decryptedVaultConfig =

@@ -209,7 +209,7 @@ public class NGEncryptedDataServiceImpl implements NGEncryptedDataService {
       if (APP_ROLE.equals(baseVaultConfig.getAccessType())
           && (ngFeatureFlagHelperService.isEnabled(
               encryptedData.getAccountIdentifier(), FeatureName.DO_NOT_RENEW_APPROLE_TOKEN))) {
-        baseVaultConfig.setDoNotRenewAppRoleToken(true);
+        baseVaultConfig.setRenewAppRoleToken(false);
       }
       encryptedRecord =
           vaultEncryptorsRegistry.getVaultEncryptor(secretManagerConfig.getEncryptionType())
@@ -242,7 +242,7 @@ public class NGEncryptedDataServiceImpl implements NGEncryptedDataService {
       if (APP_ROLE.equals(baseVaultConfig.getAccessType())
           && (ngFeatureFlagHelperService.isEnabled(
               encryptedData.getAccountIdentifier(), FeatureName.DO_NOT_RENEW_APPROLE_TOKEN))) {
-        baseVaultConfig.setDoNotRenewAppRoleToken(true);
+        baseVaultConfig.setRenewAppRoleToken(false);
       }
       if (!Optional.ofNullable(existingEncryptedData.getPath()).isPresent()) {
         // Existing one is Inline Secret
@@ -459,7 +459,7 @@ public class NGEncryptedDataServiceImpl implements NGEncryptedDataService {
       if (APP_ROLE.equals(baseVaultConfig.getAccessType())
           && (ngFeatureFlagHelperService.isEnabled(
               encryptedData.getAccountIdentifier(), FeatureName.DO_NOT_RENEW_APPROLE_TOKEN))) {
-        baseVaultConfig.setDoNotRenewAppRoleToken(true);
+        baseVaultConfig.setRenewAppRoleToken(false);
       }
       vaultEncryptorsRegistry.getVaultEncryptor(secretManagerConfig.getEncryptionType())
           .deleteSecret(accountIdentifier, encryptedData, baseVaultConfig);

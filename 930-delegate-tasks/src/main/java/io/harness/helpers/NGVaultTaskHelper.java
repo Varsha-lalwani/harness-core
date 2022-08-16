@@ -239,7 +239,7 @@ public class NGVaultTaskHelper {
     } else if (vaultConfig.isUseK8sAuth()) {
       VaultK8sLoginResult vaultK8sLoginResult = getVaultK8sAuthLoginResult(vaultConfig);
       vaultConfig.setAuthToken(vaultK8sLoginResult.getClientToken());
-    } else if (vaultConfig.isDoNotRenewAppRoleToken()) {
+    } else if (!vaultConfig.getRenewAppRoleToken()) {
       VaultAppRoleLoginResult vaultAppRoleLoginResult = getVaultAppRoleLoginResult(vaultConfig);
       vaultConfig.setAuthToken(vaultAppRoleLoginResult.getClientToken());
     }

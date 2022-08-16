@@ -109,7 +109,7 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
                   && (ngFeatureFlagHelperService.isEnabled(
                       accountIdentifier, FeatureName.DO_NOT_RENEW_APPROLE_TOKEN))) {
                 BaseVaultConfig baseVaultConfig = (BaseVaultConfig) encryptionConfig;
-                baseVaultConfig.setDoNotRenewAppRoleToken(true);
+                baseVaultConfig.setRenewAppRoleToken(false);
                 vaultConfig = (VaultConfig) baseVaultConfig;
               }
               if (!vaultConfig.isReadOnly()) {
