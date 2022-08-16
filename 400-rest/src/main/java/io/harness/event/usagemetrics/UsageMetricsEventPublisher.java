@@ -11,6 +11,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import static java.util.stream.Collectors.groupingBy;
 
+import io.harness.beans.WorkflowType;
 import io.harness.event.timeseries.processor.EventProcessor;
 import io.harness.queue.QueuePublisher;
 
@@ -137,7 +138,7 @@ public class UsageMetricsEventPublisher {
       stringData.put(EventProcessor.TRIGGERED_BY, workflowExecution.getTriggeredBy().getUuid());
     }
     if (workflowExecution.getPipelineSummary() != null
-        && workflowExecution.getPipelineSummary().getPipelineId() != null) {
+        && workflowExecution.getPipelineSummary().getPipelineId() != null && WorkflowType.ORCHESTRATION.equals(workflowExecution.getWorkflowType())) {
       stringData.put(EventProcessor.PARENT_PIPELINE_ID, workflowExecution.getPipelineSummary().getPipelineId());
     }
 

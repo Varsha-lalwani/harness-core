@@ -144,8 +144,8 @@ public class DeploymentsMigrationHelper {
     }
   }
 
-  private void executeTimeScaleParentPipelineQueries(
-      String update_statement, List<DBObject> workflowExecutionObjects) throws SQLException {
+  private void executeTimeScaleParentPipelineQueries(String update_statement, List<DBObject> workflowExecutionObjects)
+      throws SQLException {
     try (Connection connection = timeScaleDBService.getDBConnection();
          PreparedStatement updateStatement = connection.prepareStatement(update_statement)) {
       for (DBObject executionRecord : workflowExecutionObjects) {
