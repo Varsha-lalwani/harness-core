@@ -92,8 +92,8 @@ func NewRunTask(step *pb.UnitStep, prevStepOutputs map[string]*pb.StepOutput, tm
 		fs:                fs,
 		procWriter:        w,
 		addonLogger:       addonLogger,
-		detach:			   r.GetDetach(),
-		image:			   r.GetImage(),
+		detach:            r.GetDetach(),
+		image:             r.GetImage(),
 		entrypoint:        r.GetEntrypoint(),
 	}
 }
@@ -150,7 +150,7 @@ func (r *runTask) execute(ctx context.Context, retryCount int32) (map[string]str
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if r.detach {
 		go func() {
 			ctx := context.Background()

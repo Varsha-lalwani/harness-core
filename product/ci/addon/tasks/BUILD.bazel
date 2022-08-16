@@ -3,7 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "tasks",
     srcs = [
-        "background.go",
         "common.go",
         "plugin.go",
         "run.go",
@@ -42,7 +41,6 @@ go_library(
 go_test(
     name = "tasks_test",
     srcs = [
-        "background_test.go",
         "plugin_test.go",
         "run_test.go",
         "runtests_test.go",
