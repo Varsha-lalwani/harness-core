@@ -35,6 +35,7 @@ import io.harness.ci.ff.CIFeatureFlagService;
 import io.harness.ci.logserviceclient.CILogServiceUtils;
 import io.harness.ci.tiserviceclient.TIServiceUtils;
 import io.harness.ci.utils.CIVmSecretEvaluator;
+import io.harness.delegate.beans.ci.CIInitializeTaskParams;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.vm.CIVmInitializeTaskParams;
 import io.harness.delegate.beans.ci.vm.steps.VmServiceDependency;
@@ -86,7 +87,6 @@ public class VmInitializeTaskUtils {
 
   public CIVmInitializeTaskParams getInitializeTaskParams(
       InitializeStepInfo initializeStepInfo, Ambiance ambiance, String logPrefix) {
-    // TODO:xun figure out the logic for docker
     Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
     if (infrastructure == null) {
       throw new CIStageExecutionException("Input infrastructure can not be null");
@@ -94,9 +94,9 @@ public class VmInitializeTaskUtils {
 
     String poolId;
     String harnessImageConnectorRef;
-    String infraType;
-    Infrastructure.Type type = infrastructure.getType();
-    if (type == Infrastructure.Type.VM) {
+    Infrastructure.Type infraType = infrastructure.getType();
+    CIVmInitializeTaskParams.Type taskType;
+    if (infraType == Infrastructure.Type.VM) {
       if (((VmInfraYaml) infrastructure).getSpec() == null) {
         throw new CIStageExecutionException("VM input infrastructure can not be empty");
       }
@@ -108,8 +108,8 @@ public class VmInitializeTaskUtils {
       }
       VmPoolYaml vmPoolYaml = (VmPoolYaml) vmInfraYaml.getSpec();
       poolId = getPoolName(vmPoolYaml);
+      taskType = CIInitializeTaskParams.Type.VM;
       harnessImageConnectorRef = (vmPoolYaml.getSpec().getHarnessImageConnectorRef().getValue());
-      infraType = "vm";
     } else {
       if (((DockerInfraYaml) infrastructure).getSpec() == null) {
         throw new CIStageExecutionException("Docker input infrastructure can not be empty");
@@ -121,8 +121,8 @@ public class VmInitializeTaskUtils {
             format("Invalid Docker infrastructure spec type: %s", dockerInfraYaml.getSpec().getType()));
       }
       poolId = "";
+      taskType = CIInitializeTaskParams.Type.VM;
       harnessImageConnectorRef = "";
-      infraType = "docker";
     }
 
     VmBuildJobInfo vmBuildJobInfo = (VmBuildJobInfo) initializeStepInfo.getBuildJobEnvInfo();
@@ -184,6 +184,7 @@ public class VmInitializeTaskUtils {
         .secrets(new ArrayList<>(secrets))
         .volToMountPath(vmBuildJobInfo.getVolToMountPath())
         .serviceDependencies(getServiceDependencies(ambiance, vmBuildJobInfo.getServiceDependencies()))
+        .infraType(taskType)
         .build();
   }
 

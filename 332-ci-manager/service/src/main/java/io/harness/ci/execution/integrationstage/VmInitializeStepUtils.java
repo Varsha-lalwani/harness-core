@@ -139,12 +139,12 @@ public class VmInitializeStepUtils {
   }
 
   public static OSType getVmOS(Infrastructure infrastructure) {
-    Infrastructure.Type type = infrastructure.getType();
-    if (type != Infrastructure.Type.VM || type != Infrastructure.Type.DOCKER) {
-      throw new CIStageExecutionException(format("Invalid infrastructure type: %s", type));
+    Infrastructure.Type infraType = infrastructure.getType();
+    if (infraType != Infrastructure.Type.VM && infraType != Infrastructure.Type.DOCKER) {
+      throw new CIStageExecutionException(format("Invalid infrastructure type: %s", infraType));
     }
 
-    if (type == Infrastructure.Type.VM) {
+    if (infraType == Infrastructure.Type.VM) {
       VmInfraYaml vmInfraYaml = (VmInfraYaml) infrastructure;
       if (vmInfraYaml.getSpec() == null) {
         throw new CIStageExecutionException("Vm infrastructure spec should not be empty");

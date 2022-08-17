@@ -8,6 +8,7 @@
 package io.harness.delegate.beans.executioncapability;
 
 import java.time.Duration;
+
 import lombok.Builder;
 import lombok.Value;
 
@@ -27,10 +28,10 @@ public class CIVmConnectionCapability implements ExecutionCapability {
 
   @Override
   public String fetchCapabilityBasis() {
-    if (infraType == "vm") {
-      return String.format("%s-%s", poolId, stageRuntimeId);
-    } else {
+    if (infraType == CapabilityType.CI_DOCKER.toString()) {
       return String.format("%s", stageRuntimeId);
+    } else {
+      return String.format("%s-%s", poolId, stageRuntimeId);
     }
   }
 

@@ -57,17 +57,17 @@ public class CIVmCleanupTaskHandler implements CICleanupTaskHandler {
 
   private DestroyVmRequest convert(CIVmCleanupTaskParams params, String taskId) {
     String poolId;
-    String infraType = params.getInfraType();
-    if (infraType == "vm") {
-      poolId = params.getPoolId();
-    } else {
+    CIVmCleanupTaskParams.Type infraType = params.getInfraType();
+    if (infraType == CIVmCleanupTaskParams.Type.DOCKER) {
       poolId = "";
+    } else {
+      poolId = params.getPoolId();
     }
     return DestroyVmRequest.builder()
         .poolID(poolId)
         .id(params.getStageRuntimeId())
         .correlationID(taskId)
-        .infraType(infraType)
+        .infraType(infraType.toString())
         .build();
   }
 }

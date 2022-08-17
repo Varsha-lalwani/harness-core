@@ -90,6 +90,8 @@ import io.harness.delegate.beans.azure.response.AzureWebAppNamesResponse;
 import io.harness.delegate.beans.ccm.K8sClusterInfo;
 import io.harness.delegate.beans.ci.CIClusterType;
 import io.harness.delegate.beans.ci.CIInitializeTaskParams;
+import io.harness.delegate.beans.ci.CIExecuteStepTaskParams;
+import io.harness.delegate.beans.ci.CICleanupTaskParams;
 import io.harness.delegate.beans.ci.CITaskExecutionResponse;
 import io.harness.delegate.beans.ci.ExecuteCommandTaskParams;
 import io.harness.delegate.beans.ci.ShellScriptType;
@@ -131,6 +133,9 @@ import io.harness.delegate.beans.ci.status.BuildStatusPushResponse;
 import io.harness.delegate.beans.ci.vm.CIVmCleanupTaskParams;
 import io.harness.delegate.beans.ci.vm.CIVmExecuteStepTaskParams;
 import io.harness.delegate.beans.ci.vm.CIVmInitializeTaskParams;
+import io.harness.delegate.beans.ci.vm.dlite.DliteVmInitializeTaskParams;
+import io.harness.delegate.beans.ci.vm.dlite.DliteVmExecuteStepTaskParams;
+import io.harness.delegate.beans.ci.vm.dlite.DliteVmCleanupTaskParams;
 import io.harness.delegate.beans.ci.vm.VmServiceStatus;
 import io.harness.delegate.beans.ci.vm.VmTaskExecutionResponse;
 import io.harness.delegate.beans.ci.vm.steps.VmJunitTestReport;
@@ -1058,7 +1063,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(CIInitializeTaskParams.class, 19394);
     kryo.register(CIK8InitializeTaskParams.class, 19395);
     kryo.register(CIK8PodParams.class, 19396);
-    kryo.register(CIInitializeTaskParams.Type.class, 19397);
     kryo.register(CIContainerType.class, 19398);
     kryo.register(CIK8ContainerParams.class, 19399);
     kryo.register(ContainerParams.class, 19400);
@@ -1106,6 +1110,15 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ArtifactoryArtifactDelegateResponse.class, 19473);
     kryo.register(ArtifactoryGenericArtifactDelegateRequest.class, 19483);
     kryo.register(ArtifactoryGenericArtifactDelegateResponse.class, 19484);
+
+    kryo.register(CIInitializeTaskParams.Type.class, 29000);
+    kryo.register(CIExecuteStepTaskParams.class, 29001);
+    kryo.register(CIExecuteStepTaskParams.Type.class, 29002);
+    kryo.register(CICleanupTaskParams.class, 29003);
+    kryo.register(CICleanupTaskParams.Type.class, 29004);
+    kryo.register(DliteVmInitializeTaskParams.class, 29005);
+    kryo.register(DliteVmExecuteStepTaskParams.class, 29006);
+    kryo.register(DliteVmCleanupTaskParams.class, 29007);
 
     kryo.register(DeploymentSlotData.class, 19457);
     kryo.register(ShellScriptTaskParametersNG.class, 19463);

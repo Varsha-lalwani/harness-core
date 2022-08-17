@@ -131,11 +131,13 @@ public class StageCleanupUtility {
 
     StageDetails stageDetails = (StageDetails) optionalSweepingOutput.getOutput();
     String poolId;
-    String infraType = vmStageInfraDetails.getInfraType();
-    if (infraType == "vm"){
-      poolId = vmStageInfraDetails.getPoolId();
-    } else {
+    CIVmCleanupTaskParams.Type infraType;
+    if (vmStageInfraDetails.getInfraType() == Infrastructure.Type.DOCKER){
       poolId = "";
+      infraType = CICleanupTaskParams.Type.DOCKER;
+    } else {
+      poolId = vmStageInfraDetails.getPoolId();
+      infraType = CICleanupTaskParams.Type.VM;
     }
 
     return CIVmCleanupTaskParams.builder()

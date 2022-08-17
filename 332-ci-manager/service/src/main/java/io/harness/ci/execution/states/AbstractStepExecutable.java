@@ -300,22 +300,29 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
       StageInfraDetails stageInfraDetails, StageDetails stageDetails, VmDetailsOutcome vmDetailsOutcome,
       String runtimeId, String stepIdentifier, String logKey) {
     StageInfraDetails.Type type = stageInfraDetails.getType();
-    if (type != StageInfraDetails.Type.VM && type != StageInfraDetails.Type.DLITE_VM
-        || type != StageInfraDetails.Type.DOCKER) {
+    if (type != StageInfraDetails.Type.VM && type != StageInfraDetails.Type.DLITE_VM && type != StageInfraDetails.Type.DOCKER) {
       throw new CIStageExecutionException("Invalid stage infra details type for vm or docker");
     }
 
     String poolId;
     String workingDir;
     Map<String, String> volToMountPath;
+    CIExecuteStepTaskParams.Type infraType;
     if (type == StageInfraDetails.Type.VM || type == StageInfraDetails.Type.DOCKER) {
       VmStageInfraDetails infraDetails = (VmStageInfraDetails) stageInfraDetails;
       poolId = infraDetails.getPoolId();
+      if (type == StageInfraDetails.Type.DOCKER) {
+        infraType = CIExecuteStepTaskParams.Type.DOCKER;
+      } else {
+        infraType = CIExecuteStepTaskParams.Type.VM;
+      }
+
       volToMountPath = infraDetails.getVolToMountPathMap();
       workingDir = infraDetails.getWorkDir();
     } else {
       DliteVmStageInfraDetails infraDetails = (DliteVmStageInfraDetails) stageInfraDetails;
       poolId = infraDetails.getPoolId();
+      infraType = CIExecuteStepTaskParams.Type.DLITE_VM;
       volToMountPath = infraDetails.getVolToMountPathMap();
       workingDir = infraDetails.getWorkDir();
     }
@@ -330,7 +337,7 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
                                                               .secrets(new ArrayList<>(secrets))
                                                               .logKey(logKey)
                                                               .workingDir(workingDir)
-                                                              .infraType(type.toString().toLowerCase())
+                                                              .infraType(infraType)
                                                               .build();
     if (type == StageInfraDetails.Type.VM || type == StageInfraDetails.Type.DOCKER) {
       return ciVmExecuteStepTaskParams;

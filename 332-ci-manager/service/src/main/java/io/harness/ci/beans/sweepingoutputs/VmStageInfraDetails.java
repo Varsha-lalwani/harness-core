@@ -11,12 +11,14 @@ import static io.harness.annotations.dev.HarnessTeam.CI;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.validation.Update;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.github.reinert.jjschema.SchemaIgnore;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
+
 import lombok.Builder;
 import lombok.Value;
 import org.mongodb.morphia.annotations.Id;
@@ -36,7 +38,7 @@ public class VmStageInfraDetails implements StageInfraDetails {
   @Id @NotNull(groups = {Update.class}) @SchemaIgnore private String uuid;
 
   @Builder.Default @NotNull private Type type = Type.VM;
-  @NotNull private String infraType;
+  @NotNull private Infrastructure.Type infraType;
 
   @Override
   public StageInfraDetails.Type getType() {

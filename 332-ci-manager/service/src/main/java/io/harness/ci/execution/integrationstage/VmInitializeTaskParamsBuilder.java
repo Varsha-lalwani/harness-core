@@ -36,6 +36,9 @@ import io.harness.beans.sweepingoutputs.ContextElement;
 import io.harness.beans.sweepingoutputs.DliteVmStageInfraDetails;
 import io.harness.beans.sweepingoutputs.StageDetails;
 import io.harness.beans.sweepingoutputs.VmStageInfraDetails;
+import io.harness.beans.yaml.extended.infrastrucutre.DockerInfraSpec;
+import io.harness.beans.yaml.extended.infrastrucutre.DockerInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.DockerOSYaml;
 import io.harness.beans.yaml.extended.infrastrucutre.HostedVmInfraYaml;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.OSType;
@@ -55,6 +58,7 @@ import io.harness.ci.utils.InfrastructureUtils;
 import io.harness.ci.utils.ValidationUtils;
 import io.harness.cimanager.stages.IntegrationStageConfig;
 import io.harness.connector.SecretSpecBuilder;
+import io.harness.delegate.beans.ci.CIInitializeTaskParams;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.pod.SecretParams;
 import io.harness.delegate.beans.ci.vm.CIVmInitializeTaskParams;
@@ -142,7 +146,7 @@ public class VmInitializeTaskParamsBuilder {
   public CIVmInitializeTaskParams getDirectVmInitializeTaskParams(
       InitializeStepInfo initializeStepInfo, Ambiance ambiance) {
     Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
-    validateInfrastructure(infrastructure);
+    validateInfrastructureAndGetInfraType(infrastructure);
 
     VmPoolYaml vmPoolYaml = (VmPoolYaml) ((VmInfraYaml) infrastructure).getSpec();
     String poolId = getPoolName(vmPoolYaml);
@@ -154,7 +158,7 @@ public class VmInitializeTaskParamsBuilder {
     Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
     String accountID = AmbianceUtils.getAccountId(ambiance);
 
-    validateInfrastructure(infrastructure);
+    CIVmInitializeTaskParams.Type infraType = validateInfrastructureAndGetInfraType(infrastructure);
 
     IntegrationStageConfig integrationStageConfig = initializeStepInfo.getStageElementConfig();
     vmInitializeUtils.validateStageConfig(integrationStageConfig, accountID);
@@ -219,26 +223,42 @@ public class VmInitializeTaskParamsBuilder {
         .secrets(new ArrayList<>(secrets))
         .volToMountPath(volToMountPath)
         .serviceDependencies(getServiceDependencies(ambiance, integrationStageConfig))
+        .infraType(infraType)
         .build();
   }
 
-  private void validateInfrastructure(Infrastructure infrastructure) {
+  private CIVmInitializeTaskParams.Type validateInfrastructureAndGetInfraType(Infrastructure infrastructure) {
     if (infrastructure == null) {
-      throw new CIStageExecutionException("Input infrastructure can not be empty");
+      throw new CIStageExecutionException("Input infrastructure can not be null");
     }
 
-    if (infrastructure.getType() == Infrastructure.Type.HOSTED_VM) {
-      return;
+    Infrastructure.Type type = infrastructure.getType();
+    if (type == Infrastructure.Type.HOSTED_VM) {
+      return CIVmInitializeTaskParams.Type.VM;
     }
 
-    if (((VmInfraYaml) infrastructure).getSpec() == null) {
-      throw new CIStageExecutionException("Input infrastructure can not be empty");
-    }
+    if (type == Infrastructure.Type.DOCKER) {
+      if (((DockerInfraYaml) infrastructure).getSpec() == null) {
+        throw new CIStageExecutionException("Docker input infrastructure can not be empty");
+      }
 
-    VmInfraYaml vmInfraYaml = (VmInfraYaml) infrastructure;
-    if (vmInfraYaml.getSpec().getType() != VmInfraSpec.Type.POOL) {
-      throw new CIStageExecutionException(
-          format("Invalid VM infrastructure spec type: %s", vmInfraYaml.getSpec().getType()));
+      DockerInfraYaml dockerInfraYaml = (DockerInfraYaml) infrastructure;
+      if (dockerInfraYaml.getSpec().getType() != DockerInfraSpec.Type.DOCKER) {
+        throw new CIStageExecutionException(
+                format("Invalid docker infrastructure spec type: %s", dockerInfraYaml.getSpec().getType()));
+      }
+      return CIVmInitializeTaskParams.Type.DOCKER;
+    } else {
+      if (((VmInfraYaml) infrastructure).getSpec() == null) {
+        throw new CIStageExecutionException("VM input infrastructure can not be empty");
+      }
+
+      VmInfraYaml vmInfraYaml = (VmInfraYaml) infrastructure;
+      if (vmInfraYaml.getSpec().getType() != VmInfraSpec.Type.POOL) {
+        throw new CIStageExecutionException(
+                format("Invalid VM infrastructure spec type: %s", vmInfraYaml.getSpec().getType()));
+      }
+      return CIVmInitializeTaskParams.Type.VM;
     }
   }
 
@@ -257,13 +277,14 @@ public class VmInitializeTaskParamsBuilder {
 
   private void saveStageInfraDetails(Ambiance ambiance, String poolId, String workDir, String harnessImageConnectorRef,
       Map<String, String> volToMountPath, Infrastructure.Type infraType) {
-    if (infraType == Infrastructure.Type.VM) {
+    if (infraType == Infrastructure.Type.VM || infraType == Infrastructure.Type.DOCKER) {
       consumeSweepingOutput(ambiance,
           VmStageInfraDetails.builder()
               .poolId(poolId)
               .workDir(workDir)
               .volToMountPathMap(volToMountPath)
               .harnessImageConnectorRef(harnessImageConnectorRef)
+              .infraType(infraType)
               .build(),
           STAGE_INFRA_DETAILS);
     } else if (infraType == Infrastructure.Type.HOSTED_VM) {
@@ -479,6 +500,7 @@ public class VmInitializeTaskParamsBuilder {
         .poolID(params.getPoolID())
         .config(config)
         .logKey(params.getLogKey())
+        .infraType(Infrastructure.Type.HOSTED_VM.toString())
         .build();
   }
 

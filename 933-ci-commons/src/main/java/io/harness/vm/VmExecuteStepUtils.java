@@ -19,6 +19,7 @@ import static org.apache.commons.lang3.CharUtils.isAsciiAlphanumeric;
 import io.harness.connector.ImageCredentials;
 import io.harness.connector.ImageSecretBuilder;
 import io.harness.connector.SecretSpecBuilder;
+import io.harness.delegate.beans.ci.CIExecuteStepTaskParams;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.pod.ImageDetailsWithConnector;
 import io.harness.delegate.beans.ci.pod.SecretParams;
@@ -80,18 +81,18 @@ public class VmExecuteStepUtils {
     configBuilder.secrets(secrets);
 
     String poolId;
-    String infraType = params.getInfraType();
-    if (infraType == "vm") {
-      poolId = params.getPoolId();
-    } else {
+    CIExecuteStepTaskParams.Type infraType = params.getInfraType();
+    if (infraType == CIExecuteStepTaskParams.Type.DOCKER) {
       poolId = "";
+    } else {
+      poolId = params.getPoolId();
     }
     return ExecuteStepRequest.builder()
         .stageRuntimeID(params.getStageRuntimeId())
         .poolId(poolId)
         .ipAddress(params.getIpAddress())
         .config(configBuilder.build())
-        .infraType(infraType);
+        .infraType(infraType.toString());
   }
 
   public ExecuteStepRequestBuilder convertService(
