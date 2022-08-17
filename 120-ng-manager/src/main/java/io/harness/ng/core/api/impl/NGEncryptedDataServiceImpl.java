@@ -205,15 +205,14 @@ public class NGEncryptedDataServiceImpl implements NGEncryptedDataService {
                             .encryptSecret(encryptedData.getAccountIdentifier(), value, secretManagerConfig);
       validateEncryptedRecord(encryptedRecord);
     } else if (VAULT.equals(secretManagerType)) {
-      BaseVaultConfig baseVaultConfig = (BaseVaultConfig) secretManagerConfig;
-      if (APP_ROLE.equals(baseVaultConfig.getAccessType())
+      if (APP_ROLE.equals(((BaseVaultConfig) secretManagerConfig).getAccessType())
           && (ngFeatureFlagHelperService.isEnabled(
               encryptedData.getAccountIdentifier(), FeatureName.DO_NOT_RENEW_APPROLE_TOKEN))) {
-        baseVaultConfig.setRenewAppRoleToken(false);
+        ((BaseVaultConfig) secretManagerConfig).setRenewAppRoleToken(false);
       }
       encryptedRecord =
           vaultEncryptorsRegistry.getVaultEncryptor(secretManagerConfig.getEncryptionType())
-              .createSecret(encryptedData.getAccountIdentifier(), encryptedData.getName(), value, baseVaultConfig);
+              .createSecret(encryptedData.getAccountIdentifier(), encryptedData.getName(), value, secretManagerConfig);
       validateEncryptedRecord(encryptedRecord);
     } else {
       throw new UnsupportedOperationException("Secret Manager type not supported: " + secretManagerType);
@@ -238,11 +237,10 @@ public class NGEncryptedDataServiceImpl implements NGEncryptedDataService {
       }
 
     } else if (VAULT.equals(secretManagerType)) {
-      BaseVaultConfig baseVaultConfig = (BaseVaultConfig) secretManagerConfig;
-      if (APP_ROLE.equals(baseVaultConfig.getAccessType())
+      if (APP_ROLE.equals(((BaseVaultConfig) secretManagerConfig).getAccessType())
           && (ngFeatureFlagHelperService.isEnabled(
               encryptedData.getAccountIdentifier(), FeatureName.DO_NOT_RENEW_APPROLE_TOKEN))) {
-        baseVaultConfig.setRenewAppRoleToken(false);
+        ((BaseVaultConfig) secretManagerConfig).setRenewAppRoleToken(false);
       }
       if (!Optional.ofNullable(existingEncryptedData.getPath()).isPresent()) {
         // Existing one is Inline Secret
@@ -252,21 +250,21 @@ public class NGEncryptedDataServiceImpl implements NGEncryptedDataService {
           } else {
             encryptedRecord = vaultEncryptorsRegistry.getVaultEncryptor(secretManagerConfig.getEncryptionType())
                                   .renameSecret(encryptedData.getAccountIdentifier(), encryptedData.getName(),
-                                      existingEncryptedData, baseVaultConfig);
+                                      existingEncryptedData, secretManagerConfig);
             validateEncryptedRecord(encryptedRecord);
           }
         } else {
           encryptedRecord = vaultEncryptorsRegistry.getVaultEncryptor(secretManagerConfig.getEncryptionType())
                                 .updateSecret(encryptedData.getAccountIdentifier(), encryptedData.getName(), value,
-                                    existingEncryptedData, baseVaultConfig);
+                                    existingEncryptedData, secretManagerConfig);
           validateEncryptedRecord(encryptedRecord);
         }
       } else {
         // Existing one is Reference Secret
         if (isNotEmpty(value)) {
-          encryptedRecord =
-              vaultEncryptorsRegistry.getVaultEncryptor(secretManagerConfig.getEncryptionType())
-                  .createSecret(encryptedData.getAccountIdentifier(), encryptedData.getName(), value, baseVaultConfig);
+          encryptedRecord = vaultEncryptorsRegistry.getVaultEncryptor(secretManagerConfig.getEncryptionType())
+                                .createSecret(encryptedData.getAccountIdentifier(), encryptedData.getName(), value,
+                                    secretManagerConfig);
           validateEncryptedRecord(encryptedRecord);
         } else {
           encryptedRecord = existingEncryptedData;

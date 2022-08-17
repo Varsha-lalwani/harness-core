@@ -5179,9 +5179,6 @@
                 "type": "string"
               }
             },
-            "doNotRenewAppRoleToken": {
-              "type": "boolean"
-            },
             "k8sAuthEndpoint": {
               "type": "string"
             },
@@ -5189,6 +5186,9 @@
               "type": "string"
             },
             "readOnly": {
+              "type": "boolean"
+            },
+            "renewAppRoleToken": {
               "type": "boolean"
             },
             "renewalIntervalMinutes": {
