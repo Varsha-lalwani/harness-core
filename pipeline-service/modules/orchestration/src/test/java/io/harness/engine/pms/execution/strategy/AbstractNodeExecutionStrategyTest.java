@@ -51,8 +51,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 @OwnedBy(HarnessTeam.PIPELINE)
 public class AbstractNodeExecutionStrategyTest {
   @Mock ExecutorService executorService;
-  @Mock WaitForExecutionInputHelper waitForExecutionInputHelper;
-  @Mock PmsFeatureFlagService pmsFeatureFlagService;
   HandleStepResponseRequestProcessor handleStepResponseRequestProcessor;
   @Mock SdkResponseProcessorFactory sdkResponseProcessorFactory;
   AbstractNodeExecutionStrategy abstractNodeExecutionStrategy;
@@ -70,7 +68,6 @@ public class AbstractNodeExecutionStrategyTest {
     node = Plan.builder().build();
     nodeExecutionMetadata = new NodeExecutionMetadata();
     handleStepResponseRequestProcessor = mock(HandleStepResponseRequestProcessor.class);
-    doReturn(true).when(pmsFeatureFlagService).isEnabled(accountId, FeatureName.NG_EXECUTION_INPUT);
     doReturn(handleStepResponseRequestProcessor)
         .when(sdkResponseProcessorFactory)
         .getHandler(SdkResponseEventType.HANDLE_STEP_RESPONSE);
@@ -132,7 +129,6 @@ public class AbstractNodeExecutionStrategyTest {
   @Owner(developers = SHALINI)
   @Category(UnitTests.class)
   public void testCreateAndRunNodeExecutionWithEmptyExecutionInputTemplate() {
-    planNode = PlanNode.builder().build();
     abstractNodeExecutionStrategy.createAndRunNodeExecution(ambiance, planNode, nodeExecutionMetadata, "", "", "");
     verify(executorService, times(1)).submit(any(Runnable.class));
   }

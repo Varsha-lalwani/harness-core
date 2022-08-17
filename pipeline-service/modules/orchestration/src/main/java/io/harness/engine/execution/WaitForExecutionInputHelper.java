@@ -26,7 +26,6 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.timeout.TimeoutParameters;
-import io.harness.timeout.contracts.TimeoutObtainment;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.common.collect.Lists;
