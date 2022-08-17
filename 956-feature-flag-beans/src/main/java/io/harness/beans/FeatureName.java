@@ -37,7 +37,6 @@ public enum FeatureName {
   AZURE_ARM,
   AUDIT_TRAIL_ENHANCEMENT,
   BIND_FETCH_FILES_TASK_TO_DELEGATE,
-  BUSINESS_MAPPING("Cost Category Feature in CCM Module", HarnessTeam.CE),
   CCM_SUSTAINABILITY("Sustainability Feature in CCM Module", HarnessTeam.CE),
   CDNG_ENABLED,
   CENG_ENABLED("Enable the CCM module on NG", HarnessTeam.CE),
@@ -124,7 +123,6 @@ public enum FeatureName {
   NEW_RELIC_CV_TASK,
   NEWRELIC_24_7_CV_TASK,
   NG_DASHBOARDS("", HarnessTeam.CE),
-  CI_TI_DASHBOARDS_ENABLED,
   NODE_RECOMMENDATION_AGGREGATE("K8S Node recommendation Feature in CCM", HarnessTeam.CE),
   ON_NEW_ARTIFACT_TRIGGER_WITH_LAST_COLLECTED_FILTER,
   OUTAGE_CV_DISABLE,
@@ -312,7 +310,6 @@ public enum FeatureName {
   APPLICATION_DROPDOWN_MULTISELECT,
   NG_AZURE,
   NG_GIT_EXPERIENCE,
-  CIE_HOSTED_BUILDS,
   LDAP_SECRET_AUTH,
   WORKFLOW_EXECUTION_REFRESH_STATUS,
   SERVERLESS_SUPPORT,
@@ -381,7 +378,6 @@ public enum FeatureName {
   USE_K8S_API_FOR_STEADY_STATE_CHECK,
   WINRM_ASG_ROLLBACK("Used for Collect remaining instances rollback step", HarnessTeam.CDP),
   NEW_LEFT_NAVBAR_SETTINGS("Used for new left navbar configuration", HarnessTeam.PL),
-
   SAVE_ARTIFACT_TO_DB("Saves artifact to db and proceed in artifact collection step if not found", HarnessTeam.CDC),
   NG_INLINE_MANIFEST,
   NG_CUSTOM_REMOTE_MANIFEST,
@@ -409,12 +405,16 @@ public enum FeatureName {
       "Enables PaginatedComponent & Formik for VariableOverrides in CG-UI", HarnessTeam.PL),
   ON_DEMAND_ROLLBACK_WITH_DIFFERENT_ARTIFACT(
       "Used to do on demand rollback to previously deployed different artifact on same inframapping", HarnessTeam.CDC),
+
   CG_GIT_POLLING("Poll git based on account config for git sync in CG.", HarnessTeam.SPG),
   GRAPHQL_WORKFLOW_EXECUTION_OPTIMIZATION(
       "Making multiple optimizations for workflow execution graphql in CG", HarnessTeam.SPG),
   NG_ENABLE_LDAP_CHECK("Enables NG Ldap in NG-UI", HarnessTeam.PL),
   CUSTOM_SECRET_MANAGER_NG("Enable Custom Secret Manager in NG", HarnessTeam.PL),
-  CV_AWS_PROMETHEUS("Enable AWS Prometheus for CV State", HarnessTeam.CV);
+  AZURE_ARM_BP_NG("Used to allow customers to access ARM/BP capabilities", HarnessTeam.CDP),
+  CV_AWS_PROMETHEUS("Enable AWS Prometheus for CV State", HarnessTeam.CV),
+  GIT_WEBHOOK_POLLING("Used to poll git webhook recent delivery events", HarnessTeam.CDP),
+  TRIGGERS_REFACTOR("Enable NG Triggers UI refactoring", HarnessTeam.CDP);
   @Deprecated
   FeatureName() {
     scope = Scope.PER_ACCOUNT;
