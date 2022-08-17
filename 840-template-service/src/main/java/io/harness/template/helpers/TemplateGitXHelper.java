@@ -20,7 +20,8 @@ public class TemplateGitXHelper {
     GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitRequestParamsInfo();
     String branchName = gitEntityInfo.getBranch();
     String parentEntityRepoUrl;
-    if (GitAwareContextHelper.isNullOrDefault(gitEntityInfo.getParentEntityRepoName()) && GitAwareContextHelper.isNullOrDefault(gitEntityInfo.getParentEntityConnectorRef())) {
+    if (GitAwareContextHelper.isNullOrDefault(gitEntityInfo.getParentEntityRepoName())
+        && GitAwareContextHelper.isNullOrDefault(gitEntityInfo.getParentEntityConnectorRef())) {
       parentEntityRepoUrl = "";
     } else {
       parentEntityRepoUrl = scmGitSyncHelper
