@@ -52,7 +52,7 @@ public class OnFailAdviser implements Adviser {
       return false;
     }
     boolean canAdvise = StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus())
-        || advisingEvent.getFromStatus() == Status.INPUT_WAITING;
+        || StatusUtils.isAdvisingStatus(advisingEvent.getFromStatus());
     List<FailureType> failureTypesList = getAllFailureTypes(advisingEvent);
     if (!isEmpty(failureTypesList)) {
       return canAdvise && !Collections.disjoint(parameters.getApplicableFailureTypes(), failureTypesList);

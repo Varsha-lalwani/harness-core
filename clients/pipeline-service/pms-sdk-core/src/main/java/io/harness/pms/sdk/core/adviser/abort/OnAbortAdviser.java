@@ -48,7 +48,7 @@ public class OnAbortAdviser implements Adviser {
   public boolean canAdvise(AdvisingEvent advisingEvent) {
     OnAbortAdviserParameters adviserParameters = extractParameters(advisingEvent);
     boolean canAdvise = StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus())
-        || ABORTED == advisingEvent.getToStatus() || advisingEvent.getFromStatus() == INPUT_WAITING;
+        || ABORTED == advisingEvent.getToStatus() || StatusUtils.isAdvisingStatus(advisingEvent.getFromStatus());
     List<FailureType> failureTypesList = getAllFailureTypes(advisingEvent);
     if (adviserParameters != null && !isEmpty(failureTypesList)) {
       return canAdvise && !Collections.disjoint(adviserParameters.getApplicableFailureTypes(), failureTypesList);

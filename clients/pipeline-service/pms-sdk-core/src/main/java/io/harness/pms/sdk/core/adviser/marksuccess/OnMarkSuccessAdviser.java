@@ -52,7 +52,7 @@ public class OnMarkSuccessAdviser implements Adviser {
   public boolean canAdvise(AdvisingEvent advisingEvent) {
     OnMarkSuccessAdviserParameters adviserParameters = extractParameters(advisingEvent);
     boolean canAdvise = StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus())
-        || advisingEvent.getFromStatus() == Status.INPUT_WAITING;
+        || StatusUtils.isAdvisingStatus(advisingEvent.getFromStatus());
     List<FailureType> failureTypesList = getAllFailureTypes(advisingEvent);
     if (adviserParameters != null && !isEmpty(failureTypesList)) {
       return canAdvise && !Collections.disjoint(adviserParameters.getApplicableFailureTypes(), failureTypesList);

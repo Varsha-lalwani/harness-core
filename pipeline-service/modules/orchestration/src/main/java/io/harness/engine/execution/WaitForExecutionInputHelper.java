@@ -61,11 +61,12 @@ public class WaitForExecutionInputHelper {
     Long currentTime = System.currentTimeMillis();
     String inputInstanceId = UUIDGenerator.generateUuid();
     EngineExpressionEvaluator evaluator = pmsEngineExpressionService.prepareExpressionEvaluator(ambiance);
+
     long timeout = 0;
-    // Here we check what is the timeout of the step and add the same timeout for callback.
-    for (TimeoutObtainment timeoutObtainment : node.getTimeoutObtainments()) {
-      TimeoutParameters timeoutParameters =
-          OrchestrationUtils.buildTimeoutParameters(kryoSerializer, evaluator, timeoutObtainment);
+    if (EmptyPredicate.isNotEmpty(node.getTimeoutObtainments())) {
+      // We take the last timeout added as timeout for the step.
+      TimeoutParameters timeoutParameters = OrchestrationUtils.buildTimeoutParameters(
+          kryoSerializer, evaluator, node.getTimeoutObtainments().get(node.getTimeoutObtainments().size() - 1));
       timeout = timeoutParameters.getTimeoutMillis();
     }
 

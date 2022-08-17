@@ -48,7 +48,7 @@ public class IgnoreAdviser implements Adviser {
   public boolean canAdvise(AdvisingEvent advisingEvent) {
     IgnoreAdviserParameters parameters = extractParameters(advisingEvent);
     boolean canAdvise = StatusUtils.brokeStatuses().contains(advisingEvent.getToStatus())
-        || advisingEvent.getFromStatus() == Status.INPUT_WAITING;
+        || StatusUtils.isAdvisingStatus(advisingEvent.getFromStatus());
     List<FailureType> failureTypesList = getAllFailureTypes(advisingEvent);
     if (parameters != null && !isEmpty(failureTypesList)) {
       return canAdvise && !Collections.disjoint(parameters.getApplicableFailureTypes(), failureTypesList);

@@ -44,6 +44,6 @@ public class OnSuccessAdviser implements Adviser {
   @Override
   public boolean canAdvise(AdvisingEvent advisingEvent) {
     return StatusUtils.positiveStatuses().contains(advisingEvent.getToStatus())
-        || advisingEvent.getFromStatus() == Status.INPUT_WAITING;
+        || StatusUtils.isAdvisingStatus(advisingEvent.getFromStatus());
   }
 }
