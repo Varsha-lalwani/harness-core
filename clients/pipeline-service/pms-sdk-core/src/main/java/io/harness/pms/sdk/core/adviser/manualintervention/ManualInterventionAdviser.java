@@ -17,7 +17,6 @@ import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.advisers.InterventionWaitAdvise;
 import io.harness.pms.contracts.commons.RepairActionCode;
-import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.sdk.core.adviser.Adviser;

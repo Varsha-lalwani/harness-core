@@ -9,7 +9,6 @@ package io.harness.pms.sdk.core.adviser.abort;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.pms.contracts.execution.Status.ABORTED;
-import static io.harness.pms.contracts.execution.Status.INPUT_WAITING;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
