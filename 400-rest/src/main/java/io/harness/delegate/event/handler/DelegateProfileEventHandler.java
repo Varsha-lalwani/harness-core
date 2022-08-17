@@ -19,7 +19,6 @@ import io.harness.delegate.beans.Delegate;
 import io.harness.delegate.beans.Delegate.DelegateKeys;
 import io.harness.delegate.beans.DelegateInstanceStatus;
 import io.harness.delegate.beans.DelegateProfile;
-import io.harness.delegate.beans.DelegateProfile.DelegateProfileKeys;
 import io.harness.delegate.task.DelegateLogContext;
 import io.harness.ff.FeatureFlagService;
 import io.harness.logging.AccountLogContext;
@@ -73,17 +72,7 @@ public class DelegateProfileEventHandler implements DelegateProfileObserver {
 
   @Override
   public void onProfileApplied(@NonNull String accountId, @NonNull String delegateId, @NonNull String profileId) {
-    if (featureFlagService.isEnabled(TRIGGER_PROFILE_SCRIPT_EXECUTION_WF, accountId)) {
-      // Trigger profile script workflow execution, for the given delegate
-      DelegateProfile appliedProfile = persistence.createQuery(DelegateProfile.class)
-                                           .filter(DelegateProfileKeys.accountId, accountId)
-                                           .filter(DelegateProfileKeys.uuid, profileId)
-                                           .get();
-
-      if (appliedProfile != null && isNotBlank(appliedProfile.getStartupScript())) {
-        triggerProfileScriptWorkflowExecution(accountId, delegateId, appliedProfile.getStartupScript());
-      }
-    }
+    // do nothing
   }
 
   @Override
