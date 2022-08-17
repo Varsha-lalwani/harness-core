@@ -1,5 +1,9 @@
 package io.harness.aws.v2.ecs;
 
+import io.harness.aws.beans.AwsInternalConfig;
+
+import java.util.List;
+import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.applicationautoscaling.model.DeleteScalingPolicyRequest;
 import software.amazon.awssdk.services.applicationautoscaling.model.DeleteScalingPolicyResponse;
 import software.amazon.awssdk.services.applicationautoscaling.model.DeregisterScalableTargetRequest;
@@ -11,8 +15,6 @@ import software.amazon.awssdk.services.applicationautoscaling.model.DescribeScal
 import software.amazon.awssdk.services.applicationautoscaling.model.PutScalingPolicyRequest;
 import software.amazon.awssdk.services.applicationautoscaling.model.PutScalingPolicyResponse;
 import software.amazon.awssdk.services.applicationautoscaling.model.RegisterScalableTargetRequest;
-import io.harness.aws.beans.AwsInternalConfig;
-import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.applicationautoscaling.model.RegisterScalableTargetResponse;
 import software.amazon.awssdk.services.ecs.model.CreateServiceRequest;
 import software.amazon.awssdk.services.ecs.model.CreateServiceResponse;
@@ -30,56 +32,49 @@ import software.amazon.awssdk.services.ecs.model.TaskDefinition;
 import software.amazon.awssdk.services.ecs.model.UpdateServiceRequest;
 import software.amazon.awssdk.services.ecs.model.UpdateServiceResponse;
 
-import java.util.List;
-import java.util.Optional;
-
 public interface EcsV2Client {
+  CreateServiceResponse createService(
+      AwsInternalConfig awsConfig, CreateServiceRequest createServiceRequest, String region);
 
-     CreateServiceResponse createService(AwsInternalConfig awsConfig, CreateServiceRequest createServiceRequest,
-                                         String region);
+  UpdateServiceResponse updateService(
+      AwsInternalConfig awsConfig, UpdateServiceRequest updateServiceRequest, String region);
 
-     UpdateServiceResponse updateService(AwsInternalConfig awsConfig, UpdateServiceRequest updateServiceRequest,
-                                         String region);
+  DeleteServiceResponse deleteService(
+      AwsInternalConfig awsConfig, DeleteServiceRequest deleteServiceRequest, String region);
 
-     DeleteServiceResponse deleteService(AwsInternalConfig awsConfig, DeleteServiceRequest deleteServiceRequest,
-                                         String region);
+  RegisterTaskDefinitionResponse createTask(
+      AwsInternalConfig awsConfig, RegisterTaskDefinitionRequest registerTaskDefinitionRequest, String region);
 
-     RegisterTaskDefinitionResponse createTask(AwsInternalConfig awsConfig,
-                                               RegisterTaskDefinitionRequest registerTaskDefinitionRequest, String region);
+  WaiterResponse<DescribeServicesResponse> ecsServiceSteadyStateCheck(AwsInternalConfig awsConfig,
+      DescribeServicesRequest describeServicesRequest, String region, int serviceSteadyStateTimeout);
 
-    WaiterResponse<DescribeServicesResponse> ecsServiceSteadyStateCheck(AwsInternalConfig awsConfig,
-                                    DescribeServicesRequest describeServicesRequest, String region, int serviceSteadyStateTimeout);
+  WaiterResponse<DescribeServicesResponse> ecsServiceInactiveStateCheck(AwsInternalConfig awsConfig,
+      DescribeServicesRequest describeServicesRequest, String region, int serviceInactiveStateTimeout);
 
-    WaiterResponse<DescribeServicesResponse> ecsServiceInactiveStateCheck(AwsInternalConfig awsConfig,
-                                                                          DescribeServicesRequest describeServicesRequest, String region,
-                                                                          int serviceInactiveStateTimeout);
+  RegisterScalableTargetResponse registerScalableTarget(
+      AwsInternalConfig awsConfig, RegisterScalableTargetRequest registerScalableTargetRequest, String region);
 
-    RegisterScalableTargetResponse registerScalableTarget(AwsInternalConfig awsConfig, RegisterScalableTargetRequest registerScalableTargetRequest,
-                                                          String region);
+  DeregisterScalableTargetResponse deregisterScalableTarget(
+      AwsInternalConfig awsConfig, DeregisterScalableTargetRequest deregisterScalableTargetRequest, String region);
 
-    DeregisterScalableTargetResponse deregisterScalableTarget(AwsInternalConfig awsConfig, DeregisterScalableTargetRequest
-                                                              deregisterScalableTargetRequest, String region);
+  PutScalingPolicyResponse attachScalingPolicy(
+      AwsInternalConfig awsConfig, PutScalingPolicyRequest putScalingPolicyRequest, String region);
 
-    PutScalingPolicyResponse attachScalingPolicy(AwsInternalConfig awsConfig, PutScalingPolicyRequest putScalingPolicyRequest,
-                                                 String region);
+  DeleteScalingPolicyResponse deleteScalingPolicy(
+      AwsInternalConfig awsConfig, DeleteScalingPolicyRequest deleteScalingPolicyRequest, String region);
 
-    DeleteScalingPolicyResponse deleteScalingPolicy(AwsInternalConfig awsConfig, DeleteScalingPolicyRequest deleteScalingPolicyRequest,
-                                                    String region);
+  DescribeScalableTargetsResponse listScalableTargets(
+      AwsInternalConfig awsConfig, DescribeScalableTargetsRequest describeScalableTargetsRequest, String region);
 
-    DescribeScalableTargetsResponse listScalableTargets(AwsInternalConfig awsConfig, DescribeScalableTargetsRequest describeScalableTargetsRequest,
-                                                        String region);
+  DescribeScalingPoliciesResponse listScalingPolicies(
+      AwsInternalConfig awsConfig, DescribeScalingPoliciesRequest describeScalingPoliciesRequest, String region);
 
-    DescribeScalingPoliciesResponse listScalingPolicies(AwsInternalConfig awsConfig, DescribeScalingPoliciesRequest describeScalingPoliciesRequest,
-                                                        String region);
+  DescribeServicesResponse describeService(
+      AwsInternalConfig awsConfig, String clusterName, String serviceName, String region);
 
-    DescribeServicesResponse describeService(AwsInternalConfig awsConfig, String clusterName, String serviceName, String region);
+  TaskDefinition getTaskDefinitionForService(AwsInternalConfig awsConfig, Service service, String region);
 
-    TaskDefinition getTaskDefinitionForService(AwsInternalConfig awsConfig, Service service, String region);
+  ListTasksResponse listTaskArns(AwsInternalConfig awsConfig, ListTasksRequest listTasksRequest, String region);
 
-    ListTasksResponse listTaskArns(AwsInternalConfig awsConfig, ListTasksRequest listTasksRequest,
-                                   String region);
-
-    DescribeTasksResponse getTasks(AwsInternalConfig awsConfig, String clusterName, List<String> taskArns, String region);
-
-
+  DescribeTasksResponse getTasks(AwsInternalConfig awsConfig, String clusterName, List<String> taskArns, String region);
 }

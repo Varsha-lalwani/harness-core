@@ -42,11 +42,11 @@ import io.harness.cdng.manifest.ManifestConfigType;
 import io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig;
 import io.harness.cdng.manifest.yaml.AzureRepoStore;
 import io.harness.cdng.manifest.yaml.BitbucketStore;
+import io.harness.cdng.manifest.yaml.CustomRemoteStoreConfig;
 import io.harness.cdng.manifest.yaml.EcsScalableTargetDefinitionManifestOutcome;
 import io.harness.cdng.manifest.yaml.EcsScalingPolicyDefinitionManifestOutcome;
 import io.harness.cdng.manifest.yaml.EcsServiceDefinitionManifestOutcome;
 import io.harness.cdng.manifest.yaml.EcsTaskDefinitionManifestOutcome;
-import io.harness.cdng.manifest.yaml.CustomRemoteStoreConfig;
 import io.harness.cdng.manifest.yaml.GcsStoreConfig;
 import io.harness.cdng.manifest.yaml.GitLabStore;
 import io.harness.cdng.manifest.yaml.GitStore;
@@ -221,19 +221,15 @@ public class NGEntitiesKryoRegistrar implements KryoRegistrar {
 
     kryo.register(ConfigFileOutcome.class, 130013);
 
-
-    kryo.register(EcsServiceDefinitionManifest.class,130014);
-    kryo.register(EcsTaskDefinitionManifest.class,130015);
-    kryo.register(EcsTaskDefinitionManifestOutcome.class,130016);
-    kryo.register(EcsServiceDefinitionManifestOutcome.class,130017);
-    kryo.register(EcsScalingPolicyDefinitionManifestOutcome.class,130018);
-    kryo.register(EcsScalableTargetDefinitionManifestOutcome.class,130019);
+    kryo.register(EcsServiceDefinitionManifest.class, 130014);
+    kryo.register(EcsTaskDefinitionManifest.class, 130015);
+    kryo.register(EcsTaskDefinitionManifestOutcome.class, 130016);
+    kryo.register(EcsServiceDefinitionManifestOutcome.class, 130017);
+    kryo.register(EcsScalingPolicyDefinitionManifestOutcome.class, 130018);
+    kryo.register(EcsScalableTargetDefinitionManifestOutcome.class, 130019);
     kryo.register(EcsInfrastructureOutcome.class, 130020);
     kryo.register(EcsServiceSpec.class, 130021);
-    kryo.register(EcsScalableTargetDefinitionManifest.class,130022);
-    kryo.register(EcsScalingPolicyDefinitionManifest.class,130023);
-
-
-
+    kryo.register(EcsScalableTargetDefinitionManifest.class, 130022);
+    kryo.register(EcsScalingPolicyDefinitionManifest.class, 130023);
   }
 }

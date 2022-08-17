@@ -17,8 +17,7 @@ import java.util.Collections;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDP)
-public class EcsRollingDeployStepVariableCreator
-    extends GenericStepVariableCreator<EcsRollingDeployStepNode> {
+public class EcsRollingDeployStepVariableCreator extends GenericStepVariableCreator<EcsRollingDeployStepNode> {
   @Override
   public Set<String> getSupportedStepTypes() {
     return Collections.singleton(StepSpecTypeConstants.ECS_ROLLING_DEPLOY);

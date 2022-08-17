@@ -11,9 +11,9 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.DelegateMetaInfo;
 import io.harness.delegate.beans.ecs.EcsCanaryDeployResult;
-import io.harness.delegate.beans.ecs.EcsRollingDeployResult;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.logging.CommandExecutionStatus;
+
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.NonFinal;

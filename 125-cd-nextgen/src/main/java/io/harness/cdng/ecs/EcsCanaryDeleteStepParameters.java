@@ -6,14 +6,14 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.ecs.EcsCommandUnitConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
+
+import java.util.Arrays;
+import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.TypeAlias;
-
-import java.util.Arrays;
-import java.util.List;
 
 @OwnedBy(HarnessTeam.CDP)
 @Data
@@ -21,12 +21,10 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @TypeAlias("ecsCanaryDeleteStepParameters")
 @RecasterAlias("io.harness.cdng.ecs.EcsCanaryDeleteStepParameters")
-public class EcsCanaryDeleteStepParameters
-        extends EcsCanaryDeleteBaseStepInfo implements EcsSpecParameters {
+public class EcsCanaryDeleteStepParameters extends EcsCanaryDeleteBaseStepInfo implements EcsSpecParameters {
   @Builder(builderMethodName = "infoBuilder")
   public EcsCanaryDeleteStepParameters(
-          ParameterField<List<TaskSelectorYaml>> delegateSelectors, String ecsCanaryDeployFnq,
-          String ecsCanaryDeleteFnq) {
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors, String ecsCanaryDeployFnq, String ecsCanaryDeleteFnq) {
     super(delegateSelectors, ecsCanaryDeployFnq, ecsCanaryDeleteFnq);
   }
 

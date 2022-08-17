@@ -7,25 +7,22 @@
 
 package io.harness.cdng.creator.plan.steps.ecs;
 
-import com.google.common.collect.Sets;
+import static io.harness.cdng.visitor.YamlTypes.ECS_CANARY_DELETE;
+import static io.harness.cdng.visitor.YamlTypes.ECS_CANARY_DEPLOY;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.steps.CDPMSStepPlanCreatorV2;
 import io.harness.cdng.ecs.EcsCanaryDeleteStepNode;
 import io.harness.cdng.ecs.EcsCanaryDeleteStepParameters;
-import io.harness.cdng.ecs.EcsRollingRollbackStepNode;
-import io.harness.cdng.ecs.EcsRollingRollbackStepParameters;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
 
+import com.google.common.collect.Sets;
 import java.util.Set;
-
-import static io.harness.cdng.visitor.YamlTypes.ECS_CANARY_DELETE;
-import static io.harness.cdng.visitor.YamlTypes.ECS_CANARY_DEPLOY;
-import static io.harness.cdng.visitor.YamlTypes.ECS_ROLLING_DEPLOY;
 
 @OwnedBy(HarnessTeam.CDP)
 public class EcsCanaryDeleteStepPlanCreator extends CDPMSStepPlanCreatorV2<EcsCanaryDeleteStepNode> {
@@ -51,9 +48,9 @@ public class EcsCanaryDeleteStepPlanCreator extends CDPMSStepPlanCreatorV2<EcsCa
     String ecsCanaryDeployFnq = getExecutionStepFqn(ctx.getCurrentField(), ECS_CANARY_DEPLOY);
     String ecsCanaryDeleteFnq = getExecutionStepFqn(ctx.getCurrentField(), ECS_CANARY_DELETE);
     EcsCanaryDeleteStepParameters ecsCanaryDeleteStepParameters =
-    ((EcsCanaryDeleteStepParameters) ((StepElementParameters) stepParameters).getSpec());
-            ecsCanaryDeleteStepParameters.setEcsCanaryDeployFnq(ecsCanaryDeployFnq);
-            ecsCanaryDeleteStepParameters.setEcsCanaryDeleteFnq(ecsCanaryDeleteFnq);
+        (EcsCanaryDeleteStepParameters) ((StepElementParameters) stepParameters).getSpec();
+    ecsCanaryDeleteStepParameters.setEcsCanaryDeployFnq(ecsCanaryDeployFnq);
+    ecsCanaryDeleteStepParameters.setEcsCanaryDeleteFnq(ecsCanaryDeleteFnq);
 
     return stepParameters;
   }

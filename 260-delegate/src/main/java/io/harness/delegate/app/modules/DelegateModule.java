@@ -1761,18 +1761,17 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.COMMAND_TASK_NG).toInstance(CommandTaskNG.class);
     // ECS NG
     MapBinder<String, EcsCommandTaskNGHandler> ecsTaskTypeToTaskHandlerMap =
-            MapBinder.newMapBinder(binder(), String.class, EcsCommandTaskNGHandler.class);
+        MapBinder.newMapBinder(binder(), String.class, EcsCommandTaskNGHandler.class);
     ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_ROLLING_DEPLOY.name())
-            .to(EcsRollingDeployCommandTaskHandler.class);
+        .to(EcsRollingDeployCommandTaskHandler.class);
     ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_PREPARE_ROLLBACK_DATA.name())
-            .to(EcsPrepareRollbackCommandTaskHandler.class);
+        .to(EcsPrepareRollbackCommandTaskHandler.class);
     ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_ROLLING_ROLLBACK.name())
-                    .to(EcsRollingRollbackCommandTaskHandler.class);
+        .to(EcsRollingRollbackCommandTaskHandler.class);
     ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_CANARY_DELETE.name())
-            .to(EcsCanaryDeleteCommandTaskHandler.class);
+        .to(EcsCanaryDeleteCommandTaskHandler.class);
     ecsTaskTypeToTaskHandlerMap.addBinding(EcsCommandTypeNG.ECS_CANARY_DEPLOY.name())
-            .to(EcsCanaryDeployCommandTaskHandler.class);
-
+        .to(EcsCanaryDeployCommandTaskHandler.class);
 
     mapBinder.addBinding(TaskType.ECS_GIT_FETCH_TASK_NG).toInstance(EcsGitFetchTask.class);
     mapBinder.addBinding(TaskType.ECS_COMMAND_TASK_NG).toInstance(EcsCommandTaskNG.class);

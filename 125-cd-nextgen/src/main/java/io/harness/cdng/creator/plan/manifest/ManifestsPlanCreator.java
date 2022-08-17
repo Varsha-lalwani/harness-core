@@ -7,7 +7,6 @@
 
 package io.harness.cdng.creator.plan.manifest;
 
-import static io.harness.cdng.manifest.ManifestType.ECS_SUPPORTED_MANIFEST_TYPES;
 import static io.harness.cdng.manifest.ManifestType.HELM_SUPPORTED_MANIFEST_TYPES;
 import static io.harness.cdng.manifest.ManifestType.K8S_SUPPORTED_MANIFEST_TYPES;
 

@@ -13,14 +13,14 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.ecs.EcsCommandUnitConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
+
+import java.util.Arrays;
+import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.TypeAlias;
-
-import java.util.Arrays;
-import java.util.List;
 
 @OwnedBy(HarnessTeam.CDP)
 @Data
@@ -28,16 +28,13 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @TypeAlias("ecsCanaryDeployStepParameters")
 @RecasterAlias("io.harness.cdng.ecs.EcsCanaryDeployStepParameters")
-public class EcsCanaryDeployStepParameters
-    extends EcsCanaryDeployBaseStepInfo implements EcsSpecParameters {
+public class EcsCanaryDeployStepParameters extends EcsCanaryDeployBaseStepInfo implements EcsSpecParameters {
   @Builder(builderMethodName = "infoBuilder")
-  public EcsCanaryDeployStepParameters(
-      ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
+  public EcsCanaryDeployStepParameters(ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
     super(delegateSelectors);
   }
 
   public List<String> getCommandUnits() {
-    return Arrays.asList(EcsCommandUnitConstants.fetchManifests.toString(),
-            EcsCommandUnitConstants.deploy.toString());
+    return Arrays.asList(EcsCommandUnitConstants.fetchManifests.toString(), EcsCommandUnitConstants.deploy.toString());
   }
 }

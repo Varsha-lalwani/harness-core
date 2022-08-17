@@ -206,13 +206,13 @@ import io.harness.delegate.beans.connector.servicenow.connection.ServiceNowTestC
 import io.harness.delegate.beans.connector.splunkconnector.SplunkConnectionTaskParams;
 import io.harness.delegate.beans.connector.splunkconnector.SplunkConnectionTaskResponse;
 import io.harness.delegate.beans.connector.vaultconnector.VaultValidationParams;
-import io.harness.delegate.beans.ecs.EcsContainer;
 import io.harness.delegate.beans.ecs.EcsCanaryDeleteResult;
 import io.harness.delegate.beans.ecs.EcsCanaryDeployResult;
+import io.harness.delegate.beans.ecs.EcsContainer;
 import io.harness.delegate.beans.ecs.EcsPrepareRollbackDataResult;
 import io.harness.delegate.beans.ecs.EcsRollingDeployResult;
-import io.harness.delegate.beans.ecs.EcsTask;
 import io.harness.delegate.beans.ecs.EcsRollingRollbackResult;
+import io.harness.delegate.beans.ecs.EcsTask;
 import io.harness.delegate.beans.executioncapability.AlwaysFalseValidationCapability;
 import io.harness.delegate.beans.executioncapability.AwsCliInstallationCapability;
 import io.harness.delegate.beans.executioncapability.AwsRegionCapability;
@@ -1682,7 +1682,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EcsCanaryDeleteRequest.class, 573523);
     kryo.register(EcsCanaryDeleteResponse.class, 573524);
     kryo.register(EcsCanaryDeleteResult.class, 573525);
-
 
     kryo.register(AzurePackageArtifactConfig.class, 55410);
     kryo.register(AzureArtifactRequestDetails.class, 55411);

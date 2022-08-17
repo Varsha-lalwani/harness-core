@@ -17,8 +17,7 @@ import java.util.Collections;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDP)
-public class EcsCanaryDeleteStepVariableCreator
-    extends GenericStepVariableCreator<EcsCanaryDeleteStepNode> {
+public class EcsCanaryDeleteStepVariableCreator extends GenericStepVariableCreator<EcsCanaryDeleteStepNode> {
   @Override
   public Set<String> getSupportedStepTypes() {
     return Collections.singleton(StepSpecTypeConstants.ECS_CANARY_DELETE);

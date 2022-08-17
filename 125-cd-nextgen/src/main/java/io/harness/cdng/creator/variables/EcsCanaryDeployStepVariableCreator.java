@@ -17,8 +17,7 @@ import java.util.Collections;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDP)
-public class EcsCanaryDeployStepVariableCreator
-    extends GenericStepVariableCreator<EcsCanaryDeployStepNode> {
+public class EcsCanaryDeployStepVariableCreator extends GenericStepVariableCreator<EcsCanaryDeployStepNode> {
   @Override
   public Set<String> getSupportedStepTypes() {
     return Collections.singleton(StepSpecTypeConstants.ECS_CANARY_DEPLOY);

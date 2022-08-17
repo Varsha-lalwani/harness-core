@@ -251,7 +251,6 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     variableCreators.add(new EcsCanaryDeployStepVariableCreator());
     variableCreators.add(new EcsCanaryDeleteStepVariableCreator());
 
-
     return variableCreators;
   }
 
@@ -429,40 +428,36 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .build();
 
     StepInfo ecsRollingDeploy =
-            StepInfo.newBuilder()
-                    .setName("Ecs Rolling Deploy")
-                    .setType(StepSpecTypeConstants.ECS_ROLLING_DEPLOY)
-                    .setStepMetaData(
-                            StepMetaData.newBuilder().addCategory("ECS").setFolderPath("ECS").build())
-                    .setFeatureFlag(FeatureName.ECS_NG.name())
-                    .build();
+        StepInfo.newBuilder()
+            .setName("Ecs Rolling Deploy")
+            .setType(StepSpecTypeConstants.ECS_ROLLING_DEPLOY)
+            .setStepMetaData(StepMetaData.newBuilder().addCategory("ECS").setFolderPath("ECS").build())
+            .setFeatureFlag(FeatureName.ECS_NG.name())
+            .build();
 
     StepInfo ecsRollingRollack =
-            StepInfo.newBuilder()
-                    .setName("Ecs Rolling Rollback")
-                    .setType(StepSpecTypeConstants.ECS_ROLLING_ROLLBACK)
-                    .setStepMetaData(
-                            StepMetaData.newBuilder().addCategory("ECS").setFolderPath("ECS").build())
-                    .setFeatureFlag(FeatureName.ECS_NG.name())
-                    .build();
+        StepInfo.newBuilder()
+            .setName("Ecs Rolling Rollback")
+            .setType(StepSpecTypeConstants.ECS_ROLLING_ROLLBACK)
+            .setStepMetaData(StepMetaData.newBuilder().addCategory("ECS").setFolderPath("ECS").build())
+            .setFeatureFlag(FeatureName.ECS_NG.name())
+            .build();
 
     StepInfo ecsCanaryDeploy =
-            StepInfo.newBuilder()
-                    .setName("Ecs Canary Deploy")
-                    .setType(StepSpecTypeConstants.ECS_CANARY_DEPLOY)
-                    .setStepMetaData(
-                            StepMetaData.newBuilder().addCategory("ECS").setFolderPath("ECS").build())
-                    .setFeatureFlag(FeatureName.ECS_NG.name())
-                    .build();
+        StepInfo.newBuilder()
+            .setName("Ecs Canary Deploy")
+            .setType(StepSpecTypeConstants.ECS_CANARY_DEPLOY)
+            .setStepMetaData(StepMetaData.newBuilder().addCategory("ECS").setFolderPath("ECS").build())
+            .setFeatureFlag(FeatureName.ECS_NG.name())
+            .build();
 
     StepInfo ecsCanaryDelete =
-            StepInfo.newBuilder()
-                    .setName("Ecs Canary Delete")
-                    .setType(StepSpecTypeConstants.ECS_CANARY_DELETE)
-                    .setStepMetaData(
-                            StepMetaData.newBuilder().addCategory("ECS").setFolderPath("ECS").build())
-                    .setFeatureFlag(FeatureName.ECS_NG.name())
-                    .build();
+        StepInfo.newBuilder()
+            .setName("Ecs Canary Delete")
+            .setType(StepSpecTypeConstants.ECS_CANARY_DELETE)
+            .setStepMetaData(StepMetaData.newBuilder().addCategory("ECS").setFolderPath("ECS").build())
+            .setFeatureFlag(FeatureName.ECS_NG.name())
+            .build();
 
     StepInfo createStack = StepInfo.newBuilder()
                                .setName("CloudFormation Create Stack")

@@ -274,17 +274,17 @@ public enum EntityType {
   JENKINS_BUILD(
       ModuleType.CD, EntityTypeConstants.JENKINS_BUILD, IdentifierRef.class, EntityYamlRootNames.JENKINS_BUILD),
   @JsonProperty(EntityTypeConstants.ECS_ROLLING_DEPLOY)
-  ECS_ROLLING_DEPLOY_STEP(ModuleType.CD, EntityTypeConstants.ECS_ROLLING_DEPLOY,
-          IdentifierRef.class, EntityYamlRootNames.ECS_ROLLING_DEPLOY),
+  ECS_ROLLING_DEPLOY_STEP(ModuleType.CD, EntityTypeConstants.ECS_ROLLING_DEPLOY, IdentifierRef.class,
+      EntityYamlRootNames.ECS_ROLLING_DEPLOY),
   @JsonProperty(EntityTypeConstants.ECS_ROLLING_ROLLBACK)
-  ECS_ROLLING_ROLLBACK_STEP(ModuleType.CD, EntityTypeConstants.ECS_ROLLING_ROLLBACK,
-          IdentifierRef.class, EntityYamlRootNames.ECS_ROLLING_ROLLBACK),
+  ECS_ROLLING_ROLLBACK_STEP(ModuleType.CD, EntityTypeConstants.ECS_ROLLING_ROLLBACK, IdentifierRef.class,
+      EntityYamlRootNames.ECS_ROLLING_ROLLBACK),
   @JsonProperty(EntityTypeConstants.ECS_CANARY_DEPLOY)
-  ECS_CANARY_DEPLOY_STEP(ModuleType.CD, EntityTypeConstants.ECS_CANARY_DEPLOY,
-          IdentifierRef.class, EntityYamlRootNames.ECS_CANARY_DEPLOY),
+  ECS_CANARY_DEPLOY_STEP(
+      ModuleType.CD, EntityTypeConstants.ECS_CANARY_DEPLOY, IdentifierRef.class, EntityYamlRootNames.ECS_CANARY_DEPLOY),
   @JsonProperty(EntityTypeConstants.ECS_CANARY_DELETE)
-  ECS_CANARY_DELETE_STEP(ModuleType.CD, EntityTypeConstants.ECS_CANARY_DELETE,
-          IdentifierRef.class, EntityYamlRootNames.ECS_CANARY_DELETE),
+  ECS_CANARY_DELETE_STEP(
+      ModuleType.CD, EntityTypeConstants.ECS_CANARY_DELETE, IdentifierRef.class, EntityYamlRootNames.ECS_CANARY_DELETE),
   @JsonProperty(EntityTypeConstants.BUILD_AND_PUSH_ACR)
   BUILD_AND_PUSH_ACR(ModuleType.CI, EntityTypeConstants.BUILD_AND_PUSH_ACR, IdentifierRef.class,
       EntityYamlRootNames.BUILD_AND_PUSH_ACR);

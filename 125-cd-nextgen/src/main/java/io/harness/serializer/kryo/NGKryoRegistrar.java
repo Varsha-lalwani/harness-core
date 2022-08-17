@@ -192,6 +192,5 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(ConfigFilesOutcome.class, 12608);
 
     kryo.register(EcsInfrastructure.class, 12609);
-
   }
 }

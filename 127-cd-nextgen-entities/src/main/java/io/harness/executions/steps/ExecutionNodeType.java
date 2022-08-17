@@ -79,7 +79,6 @@ public enum ExecutionNodeType {
   ECS_CANARY_DEPLOY("ECS_CANARY_DEPLOY", YamlTypes.ECS_CANARY_DEPLOY),
   ECS_CANARY_DELETE("ECS_CANARY_DELETE", YamlTypes.ECS_CANARY_DELETE);
 
-
   private final String name;
   private final String yamlType;
 

@@ -131,5 +131,4 @@ public interface YamlTypes {
   String STARTUP_COMMAND = "startupCommand";
   String APPLICATION_SETTINGS = "applicationSettings";
   String CONNECTION_STRINGS = "connectionStrings";
-
 }
