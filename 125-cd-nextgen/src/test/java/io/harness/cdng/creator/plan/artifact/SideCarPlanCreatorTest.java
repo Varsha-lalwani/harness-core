@@ -10,6 +10,7 @@ package io.harness.cdng.creator.plan.artifact;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.MLUKIC;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
+import static io.harness.rule.OwnerRule.SHIVAM;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -147,7 +148,7 @@ public class SideCarPlanCreatorTest extends CDNGTestBase {
   }
 
   @Test
-  @Owner(developers = ABOSII)
+  @Owner(developers = SHIVAM)
   @Category(UnitTests.class)
   public void testGetParentNodeCustomArtifactWithScript() {
     HashMap<String, ByteString> metadataDependency = new HashMap<>();

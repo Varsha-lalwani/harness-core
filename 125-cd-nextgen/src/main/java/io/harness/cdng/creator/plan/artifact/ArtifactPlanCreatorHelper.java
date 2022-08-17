@@ -26,7 +26,7 @@ import lombok.experimental.UtilityClass;
 public class ArtifactPlanCreatorHelper {
   public StepType getStepType(ArtifactStepParameters artifactStepParameters) {
     if (ArtifactSourceType.CUSTOM_ARTIFACT == artifactStepParameters.getType()
-        && !isCustomArtifactIsDelegateTask(artifactStepParameters)) {
+        && !shouldCreateDelegateTask(artifactStepParameters)) {
       return ArtifactSyncStep.STEP_TYPE;
     }
 
@@ -35,14 +35,14 @@ public class ArtifactPlanCreatorHelper {
 
   public FacilitatorType getFacilitatorType(ArtifactStepParameters artifactStepParameters) {
     if (ArtifactSourceType.CUSTOM_ARTIFACT == artifactStepParameters.getType()
-        && !isCustomArtifactIsDelegateTask(artifactStepParameters)) {
+        && !shouldCreateDelegateTask(artifactStepParameters)) {
       return FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build();
     }
 
     return FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.TASK).build();
   }
 
-  public boolean isCustomArtifactIsDelegateTask(ArtifactStepParameters artifactStepParameters) {
+  public boolean shouldCreateDelegateTask(ArtifactStepParameters artifactStepParameters) {
     if (((CustomArtifactConfig) artifactStepParameters.getSpec()).getScripts() != null
         && EmptyPredicate.isNotEmpty(
             ((CustomArtifactConfig) artifactStepParameters.getSpec()).getScripts().toString())) {

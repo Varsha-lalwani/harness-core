@@ -23,7 +23,7 @@ import lombok.Value;
 @Builder
 public class CustomArtifactInfo implements ArtifactInfo {
   String version;
-  Map<String, String> attributes;
+  Map<String, String> metadata;
 
   @Override
   public ArtifactSourceType getType() {
