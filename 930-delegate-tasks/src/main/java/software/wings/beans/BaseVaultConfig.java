@@ -80,9 +80,9 @@ public abstract class BaseVaultConfig extends SecretManagerConfig {
   @Attributes(title = "serviceAccountTokenPath") private String serviceAccountTokenPath;
   @Attributes(title = "k8sAuthEndpoint") private String k8sAuthEndpoint;
 
-  @Attributes(title = "renewAppRole")
+  @Attributes(title = "renewAppRoleToken")
   @Builder.Default
-  @FieldSerializer.Optional("true")
+  @FieldSerializer.Optional("renewAppRoleToken")
   private Boolean renewAppRoleToken = Boolean.TRUE;
 
   public boolean isCertValidationRequired() {
