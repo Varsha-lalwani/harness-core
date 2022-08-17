@@ -12,10 +12,13 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.UUIDGenerator;
 import io.harness.engine.OrchestrationEngine;
+import io.harness.engine.execution.ExecutionInputService;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.utils.PmsLevelUtils;
+import io.harness.execution.ExecutionInputInstance;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.interrupts.InterruptEffect;
@@ -47,7 +50,7 @@ public class RetryHelper {
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private OrchestrationEngine engine;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
-
+  @Inject private ExecutionInputService executionInputService;
   public void retryNodeExecution(String nodeExecutionId, String interruptId, InterruptConfig interruptConfig) {
     NodeExecution nodeExecution = Preconditions.checkNotNull(nodeExecutionService.get(nodeExecutionId));
     Node node = planService.fetchNode(nodeExecution.getPlanId(), nodeExecution.getNodeId());
@@ -64,6 +67,7 @@ public class RetryHelper {
     NodeExecution newNodeExecution =
         cloneForRetry(updatedRetriedNode, newUuid, finalAmbiance, interruptConfig, interruptId);
     NodeExecution savedNodeExecution = nodeExecutionService.save(newNodeExecution);
+    cloneAndSaveInputInstanceForRetry(nodeExecutionId, savedNodeExecution.getUuid());
 
     nodeExecutionService.updateRelationShipsForRetryNode(updatedRetriedNode.getUuid(), savedNodeExecution.getUuid());
     nodeExecutionService.markRetried(updatedRetriedNode.getUuid());
@@ -152,5 +156,13 @@ public class RetryHelper {
         .stageFqn(nodeExecution.getStageFqn())
         .group(nodeExecution.getGroup())
         .build();
+  }
+
+  @VisibleForTesting
+  ExecutionInputInstance cloneAndSaveInputInstanceForRetry(String originalNodeExecutionId, String newNodeExecutionId) {
+    ExecutionInputInstance inputInstance = executionInputService.getExecutionInputInstance(originalNodeExecutionId);
+    inputInstance.setInputInstanceId(UUIDGenerator.generateUuid());
+    inputInstance.setNodeExecutionId(newNodeExecutionId);
+    return executionInputService.save(inputInstance);
   }
 }
