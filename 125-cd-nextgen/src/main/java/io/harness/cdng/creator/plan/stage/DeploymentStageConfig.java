@@ -19,6 +19,7 @@ import io.harness.cdng.visitor.helpers.deploymentstage.DeploymentStageVisitorHel
 import io.harness.plancreator.execution.ExecutionElementConfig;
 import io.harness.plancreator.stages.stage.StageInfoConfig;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.validation.OneOfField;
 import io.harness.walktree.beans.VisitableChild;
 import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
@@ -60,12 +61,18 @@ public class DeploymentStageConfig implements StageInfoConfig, Visitable {
   // For new service yaml
   // skipping variable creation from framework since these are supported through outcomes
   @VariableExpression(skipVariableExpression = true) ServiceYamlV2 service;
+  // For multiple services support
+  @VariableExpression(skipVariableExpression = true) List<ServiceYamlV2> services;
+
   ServiceDefinitionType deploymentType;
   Boolean gitOpsEnabled;
 
   // New Environment Yaml
   // skipping variable creation from framework since these are supported through outcomes
   @VariableExpression(skipVariableExpression = true) EnvironmentYamlV2 environment;
+  // New Multi Environment Yaml
+  // skipping variable creation from framework since these are supported through outcomes
+  @VariableExpression(skipVariableExpression = true) List<EnvironmentYamlV2> environments;
 
   // Environment Group yaml
   // todo: add expressions from env group outcomes
