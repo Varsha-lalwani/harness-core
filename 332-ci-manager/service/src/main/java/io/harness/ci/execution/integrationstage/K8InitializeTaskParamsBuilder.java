@@ -24,6 +24,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 
+import io.harness.ModuleType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
@@ -57,9 +58,15 @@ import io.harness.delegate.beans.ci.pod.ContainerSecurityContext;
 import io.harness.delegate.beans.ci.pod.ImageDetailsWithConnector;
 import io.harness.delegate.beans.ci.pod.PodVolume;
 import io.harness.delegate.beans.ci.pod.SecretVariableDetails;
+import io.harness.delegate.task.citasks.cik8handler.params.CIConstants;
 import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.k8s.model.ImageDetails;
+import io.harness.licensing.Edition;
+import io.harness.licensing.beans.summary.LicensesWithSummaryDTO;
+import io.harness.licensing.remote.NgLicenseHttpClient;
+import io.harness.licensing.services.LicenseService;
 import io.harness.ng.core.NGAccess;
+import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.plancreator.stages.stage.StageElementConfig;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
@@ -70,6 +77,7 @@ import io.harness.yaml.extended.ci.codebase.CodeBase;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,6 +87,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import retrofit2.Call;
+import retrofit2.Response;
 
 @Singleton
 @Slf4j
@@ -92,7 +102,7 @@ public class K8InitializeTaskParamsBuilder {
   @Inject private HarnessImageUtils harnessImageUtils;
   @Inject private InternalContainerParamsProvider internalContainerParamsProvider;
   @Inject private SecretUtils secretUtils;
-
+  @Inject private NgLicenseHttpClient ngLicenseHttpClient;
   @Inject CodebaseUtils codebaseUtils;
 
   private static String RUNTIME_CLASS_NAME = "gvisor";
@@ -145,6 +155,26 @@ public class K8InitializeTaskParamsBuilder {
         .build();
   }
 
+  private Long getLimitTtl(NGAccess ngAccess) {
+    Response<ResponseDTO<LicensesWithSummaryDTO>> license = null;
+
+    try {
+      license =
+          ngLicenseHttpClient.getLicenseSummary(ngAccess.getAccountIdentifier(), ModuleType.CI.toString()).execute();
+
+      if (license.isSuccessful()) {
+        ResponseDTO<LicensesWithSummaryDTO> responseDTO = license.body();
+        if (responseDTO.getData().getEdition() == Edition.FREE) {
+          return CIConstants.POD_MAX_TTL_SECS_HOSTED_FREE;
+        }
+      }
+    } catch (Exception e) {
+      return CIConstants.POD_MAX_TTL_SECS;
+    }
+
+    return CIConstants.POD_MAX_TTL_SECS;
+  }
+
   private CIK8PodParams<CIK8ContainerParams> getK8HostedPodParams(InitializeStepInfo initializeStepInfo,
       K8PodDetails k8PodDetails, K8sHostedInfraYaml k8sHostedInfraYaml, Ambiance ambiance, String logPrefix) {
     String podName = k8InitializeTaskUtils.generatePodName(initializeStepInfo.getStageIdentifier());
@@ -168,6 +198,7 @@ public class K8InitializeTaskParamsBuilder {
         .initContainerParamsList(singletonList(podContainers.getLeft()))
         .volumes(volumes)
         .runtime(RUNTIME_CLASS_NAME)
+        .activeDeadLineSeconds(getLimitTtl(ngAccess))
         .build();
   }
 
