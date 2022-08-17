@@ -189,6 +189,9 @@ public class RetryHelperTest extends OrchestrationTestBase {
                              .setManualIssuer(ManualIssuer.newBuilder().setIdentifier("admin@admin").build())
                              .build())
             .build();
+    doReturn(ExecutionInputInstance.builder().build())
+        .when(executionInputService)
+        .getExecutionInputInstance(nodeExecutionId);
     NodeExecution clonedNodeExecution = retryHelper.cloneForRetry(
         nodeExecution, newNodeUuid, nodeExecution.getAmbiance(), interruptConfig, generateUuid());
 
@@ -220,8 +223,7 @@ public class RetryHelperTest extends OrchestrationTestBase {
     doReturn(executionInputInstance).when(executionInputService).getExecutionInputInstance(originalNodeExecutionId);
 
     doReturn(ExecutionInputInstance.builder()
-                 .userInput(executionInputInstance.getUserInput())
-                 .template(executionInputInstance.getTemplate())
+                 .userInput(executionInputInstance.getUserInput()) o.template(executionInputInstance.getTemplate())
                  .mergedInputTemplate(executionInputInstance.getMergedInputTemplate())
                  .nodeExecutionId(newNodeExecutionId)
                  .inputInstanceId("RandomUUID")
