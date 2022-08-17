@@ -67,7 +67,6 @@ public class RetryHelper {
     NodeExecution newNodeExecution =
         cloneForRetry(updatedRetriedNode, newUuid, finalAmbiance, interruptConfig, interruptId);
     NodeExecution savedNodeExecution = nodeExecutionService.save(newNodeExecution);
-    cloneAndSaveInputInstanceForRetry(nodeExecutionId, savedNodeExecution.getUuid());
 
     nodeExecutionService.updateRelationShipsForRetryNode(updatedRetriedNode.getUuid(), savedNodeExecution.getUuid());
     nodeExecutionService.markRetried(updatedRetriedNode.getUuid());
@@ -121,6 +120,8 @@ public class RetryHelper {
     List<InterruptEffect> interruptHistories =
         isEmpty(nodeExecution.getInterruptHistories()) ? new LinkedList<>() : nodeExecution.getInterruptHistories();
     interruptHistories.add(interruptEffect);
+    cloneAndSaveInputInstanceForRetry(nodeExecution.getUuid(), newUuid);
+
     return NodeExecution.builder()
         .uuid(newUuid)
         .ambiance(ambiance)
