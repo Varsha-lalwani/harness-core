@@ -10,27 +10,22 @@ package io.harness.gitaware.helper;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.Scope;
 import io.harness.context.GlobalContext;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
-import io.harness.gitsync.scm.SCMGitSyncHelper;
 import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmGitMetaDataContext;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.manage.GlobalContextManager;
 import io.harness.persistence.gitaware.GitAware;
 
-import com.google.inject.Inject;
-import java.util.Collections;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 @OwnedBy(DX)
 public class GitAwareContextHelper {
-  @Inject SCMGitSyncHelper scmGitSyncHelper;
   public static final String DEFAULT = "__default__";
 
   public GitEntityInfo getGitRequestParamsInfo() {
@@ -103,14 +98,4 @@ public class GitAwareContextHelper {
   public boolean isNullOrDefault(String val) {
     return EmptyPredicate.isEmpty(val) || val.equals(DEFAULT);
   }
-
-  //  public String getWorkingBranch(Scope scope, String entityRepoURL) {
-  //    GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitRequestParamsInfo();
-  //    String branchName = gitEntityInfo.getBranch();
-  //    String parentEntityRepoUrl = getParentEntityRepoUrl(scope, gitEntityInfo);
-  //    if (!GitAwareContextHelper.isNullOrDefault(parentEntityRepoUrl) && !parentEntityRepoUrl.equals(entityRepoURL)) {
-  //      branchName = "";
-  //    }
-  //    return branchName;
-  //  }
 }
