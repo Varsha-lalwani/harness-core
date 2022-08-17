@@ -733,7 +733,7 @@ func Repos(ctx context.Context, client *scm.Client, log *zap.SugaredLogger, isGi
 // Finds out if provider is github app
 func isGithubApp(p *pb.Provider) (out bool) {
 	gitProvider := gitclient.GetProvider(*p)
-	if gitProvider == "github" && *p.GetGithub().GetIsGithubApp() {
+	if gitProvider == "github" && p.GetGithub().GetIsGithubApp() {
 		return true
 	} else {
 		return false
