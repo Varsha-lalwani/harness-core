@@ -44,7 +44,7 @@ import org.apache.commons.lang3.NotImplementedException;
 
 @Slf4j
 public class WinRmShellScriptTaskNG extends AbstractDelegateRunnableTask {
-  public static final String COMMAND_UNIT = "Execute";
+  public static final String COMMAND_UNIT = ShellScriptTaskNG.COMMAND_UNIT;
   public static final String INIT_UNIT = "Initialize";
 
   @Inject private WinRmExecutorFactoryNG winRmExecutorFactoryNG;
