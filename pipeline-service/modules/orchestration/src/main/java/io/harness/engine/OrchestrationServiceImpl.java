@@ -34,21 +34,21 @@ public class OrchestrationServiceImpl implements OrchestrationService {
 
   @Override
   public PlanExecution startExecution(@Valid Plan plan, Map<String, String> setupAbstractions,
-      ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata) {
+      ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata, boolean notifyOnlyMe) {
     long start = System.currentTimeMillis();
     Plan savedPlan = planService.save(plan);
     log.info("[PMS_EXECUTE] PlanService plan save time {}ms", System.currentTimeMillis() - start);
-    return executePlan(savedPlan, setupAbstractions, metadata, planExecutionMetadata);
+    return executePlan(savedPlan, setupAbstractions, metadata, planExecutionMetadata, notifyOnlyMe);
   }
 
   public PlanExecution startExecutionV2(String planId, Map<String, String> setupAbstractions,
-      ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata) {
-    return executePlan(planService.fetchPlan(planId), setupAbstractions, metadata, planExecutionMetadata);
+      ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata, boolean notifyOnlyMe) {
+    return executePlan(planService.fetchPlan(planId), setupAbstractions, metadata, planExecutionMetadata, notifyOnlyMe);
   }
 
   @Override
   public PlanExecution executePlan(@Valid Plan plan, Map<String, String> setupAbstractions, ExecutionMetadata metadata,
-      PlanExecutionMetadata planExecutionMetadata) {
+      PlanExecutionMetadata planExecutionMetadata, boolean notifyOnlyMe) {
     Ambiance ambiance = Ambiance.newBuilder()
                             .putAllSetupAbstractions(setupAbstractions)
                             .setPlanExecutionId(metadata.getExecutionUuid())
@@ -56,6 +56,7 @@ public class OrchestrationServiceImpl implements OrchestrationService {
                             .setMetadata(metadata)
                             .setExpressionFunctorToken(HashGenerator.generateIntegerHash())
                             .setStartTs(System.currentTimeMillis())
+                            .setNotifyOnlyMe(notifyOnlyMe)
                             .build();
 
     return orchestrationEngine.runNode(ambiance, plan, planExecutionMetadata);

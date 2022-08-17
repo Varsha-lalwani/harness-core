@@ -24,13 +24,13 @@ import lombok.NonNull;
 @OwnedBy(CDC)
 public interface OrchestrationService {
   PlanExecution startExecution(@Valid Plan plan, @NonNull Map<String, String> setupAbstractions,
-      ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata);
+      ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata, boolean notifyOnlyMe);
 
   Interrupt registerInterrupt(@Valid InterruptPackage interruptPackage);
 
   PlanExecution startExecutionV2(String planId, Map<String, String> setupAbstractions, ExecutionMetadata metadata,
-      PlanExecutionMetadata planExecutionMetadata);
+      PlanExecutionMetadata planExecutionMetadata, boolean notifyOnlyMe);
 
-  PlanExecution executePlan(@Valid Plan plan, @NonNull Map<String, String> setupAbstractions,
-      ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata);
+  PlanExecution executePlan(@Valid Plan plan, Map<String, String> setupAbstractions, ExecutionMetadata metadata,
+      PlanExecutionMetadata planExecutionMetadata, boolean notifyOnlyMe);
 }

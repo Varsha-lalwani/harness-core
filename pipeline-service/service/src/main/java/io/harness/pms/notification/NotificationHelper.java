@@ -24,6 +24,9 @@ import io.harness.notification.PipelineEventTypeConstants;
 import io.harness.notification.bean.NotificationChannelWrapper;
 import io.harness.notification.bean.NotificationRules;
 import io.harness.notification.bean.PipelineEvent;
+import io.harness.notification.channelDetails.NotificationChannelType;
+import io.harness.notification.channelDetails.PmsEmailChannel;
+import io.harness.notification.channelDetails.PmsNotificationChannel;
 import io.harness.notification.channeldetails.NotificationChannel;
 import io.harness.notification.notificationclient.NotificationClient;
 import io.harness.pms.approval.notification.ApprovalNotificationHandlerImpl;
@@ -35,10 +38,12 @@ import io.harness.pms.helpers.PipelineExpressionHelper;
 import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.pipeline.yaml.BasicPipeline;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlUtils;
 
 import com.google.inject.Inject;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -72,6 +77,14 @@ public class NotificationHelper {
 
   public void sendNotification(
       Ambiance ambiance, PipelineEventType pipelineEventType, NodeExecution nodeExecution, Long updatedAt) {
+    if (ambiance.getNotifyOnlyMe()) {
+      if (!(pipelineEventType.getDisplayName().equals(PipelineEventTypeConstants.PIPELINE_START)
+              || pipelineEventType.getDisplayName().equals(PipelineEventTypeConstants.PIPELINE_END))) {
+        return;
+      }
+      sendNotificationOnlyToUserWhoTriggeredPipeline(ambiance, pipelineEventType, nodeExecution, updatedAt);
+      return;
+    }
     if (!ambiance.getMetadata().getIsNotificationConfigured()) {
       return;
     }
@@ -113,7 +126,8 @@ public class NotificationHelper {
         continue;
       }
       List<PipelineEvent> pipelineEvents = notificationRules.getPipelineEvents();
-      boolean shouldSendNotification = shouldSendNotification(pipelineEvents, pipelineEventType, identifier);
+      boolean shouldSendNotification =
+          (ambiance.getNotifyOnlyMe() || shouldSendNotification(pipelineEvents, pipelineEventType, identifier));
       if (shouldSendNotification) {
         NotificationChannelWrapper wrapper = notificationRules.getNotificationChannelWrapper().getValue();
         if (wrapper.getType() != null) {
@@ -140,8 +154,8 @@ public class NotificationHelper {
     return String.format("pms_%s_%s_plain", level.toLowerCase(), channelType.toLowerCase());
   }
 
-  private boolean shouldSendNotification(List<PipelineEvent> pipelineEvents,
-      io.harness.notification.PipelineEventType pipelineEventType, String identifier) {
+  private boolean shouldSendNotification(
+      List<PipelineEvent> pipelineEvents, PipelineEventType pipelineEventType, String identifier) {
     String pipelineEventTypeLevel = pipelineEventType.getLevel();
     for (PipelineEvent pipelineEvent : pipelineEvents) {
       io.harness.notification.PipelineEventType thisEventType = pipelineEvent.getType();
@@ -178,6 +192,49 @@ public class NotificationHelper {
   String obtainYaml(String planExecutionId) {
     Optional<PlanExecutionMetadata> optional = planExecutionMetadataService.findByPlanExecutionId(planExecutionId);
     return optional.map(PlanExecutionMetadata::getYaml).orElse(null);
+  }
+
+  private void sendNotificationOnlyToUserWhoTriggeredPipeline(
+      Ambiance ambiance, PipelineEventType pipelineEventType, NodeExecution nodeExecution, Long updatedAt) {
+    String identifier = nodeExecution != null ? AmbianceUtils.obtainStepIdentifier(nodeExecution.getAmbiance()) : "";
+    String accountId = AmbianceUtils.getAccountId(ambiance);
+    String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
+    String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
+
+    NotificationRules notificationRules = createNotificationRules(ambiance, pipelineEventType);
+
+    try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
+      sendNotificationInternal(Collections.singletonList(notificationRules), pipelineEventType, identifier, accountId,
+          constructTemplateData(
+              ambiance, pipelineEventType, nodeExecution, updatedAt, orgIdentifier, projectIdentifier),
+          orgIdentifier, projectIdentifier, ambiance);
+    } catch (Exception ex) {
+      log.error("Exception occurred in sendNotificationInternal", ex);
+    }
+  }
+
+  private NotificationRules createNotificationRules(Ambiance ambiance, PipelineEventType pipelineEventType) {
+    List<PipelineEvent> pipelineEvents =
+        Collections.singletonList(PipelineEvent.builder().type(pipelineEventType).build());
+
+    // Currently Email is HardCoded, other channel types would be supported in future
+    String email = AmbianceUtils.getEmail(ambiance);
+    List<String> recipientList = Collections.singletonList(email);
+    PmsNotificationChannel pmsNotificationChannel =
+        PmsEmailChannel.builder().recipients(recipientList).userGroups(Collections.EMPTY_LIST).build();
+
+    NotificationChannelWrapper notificationChannelWrapper = NotificationChannelWrapper.builder()
+                                                                .type(NotificationChannelType.EMAIL)
+                                                                .notificationChannel(pmsNotificationChannel)
+                                                                .build();
+    ParameterField<NotificationChannelWrapper> notificationChannelWrapperField =
+        ParameterField.createValueField(notificationChannelWrapper);
+
+    return NotificationRules.builder()
+        .enabled(true)
+        .pipelineEvents(pipelineEvents)
+        .notificationChannelWrapper(notificationChannelWrapperField)
+        .build();
   }
 
   private Map<String, String> constructTemplateData(Ambiance ambiance, PipelineEventType pipelineEventType,

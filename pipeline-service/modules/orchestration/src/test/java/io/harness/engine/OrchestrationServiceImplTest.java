@@ -78,8 +78,8 @@ public class OrchestrationServiceImplTest extends OrchestrationTestBase {
     Map<String, String> setupAbstractions = ImmutableMap.of("accountId", ACCOUNT_ID, "appId", APP_ID);
     ExecutionMetadata metadata = ExecutionMetadata.newBuilder().setExecutionUuid(PLAN_EXECUTION_ID).build();
 
-    PlanExecution planExecution =
-        orchestrationService.startExecution(plan, setupAbstractions, metadata, PlanExecutionMetadata.builder().build());
+    PlanExecution planExecution = orchestrationService.startExecution(
+        plan, setupAbstractions, metadata, PlanExecutionMetadata.builder().build(), false);
 
     assertThat(planExecution.getUuid()).isEqualTo(PLAN_EXECUTION_ID);
     assertThat(planExecution.getStatus()).isEqualTo(Status.RUNNING);

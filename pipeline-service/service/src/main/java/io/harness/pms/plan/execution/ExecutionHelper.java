@@ -360,7 +360,8 @@ public class ExecutionHelper {
 
   public PlanExecution startExecution(String accountId, String orgIdentifier, String projectIdentifier,
       ExecutionMetadata executionMetadata, PlanExecutionMetadata planExecutionMetadata, boolean isRetry,
-      List<String> identifierOfSkipStages, String previousExecutionId, List<String> retryStagesIdentifier) {
+      List<String> identifierOfSkipStages, String previousExecutionId, List<String> retryStagesIdentifier,
+      boolean notifyOnlyMe) {
     long startTs = System.currentTimeMillis();
     try (AutoLogContext ignore =
              PlanCreatorUtils.autoLogContext(executionMetadata, accountId, orgIdentifier, projectIdentifier)) {
@@ -383,15 +384,18 @@ public class ExecutionHelper {
       if (isRetry) {
         Plan newPlan = retryExecutionHelper.transformPlan(
             plan, identifierOfSkipStages, previousExecutionId, retryStagesIdentifier);
-        return orchestrationService.startExecution(newPlan, abstractions, executionMetadata, planExecutionMetadata);
+        return orchestrationService.startExecution(
+            newPlan, abstractions, executionMetadata, planExecutionMetadata, notifyOnlyMe);
       }
-      return orchestrationService.startExecution(plan, abstractions, executionMetadata, planExecutionMetadata);
+      return orchestrationService.startExecution(
+          plan, abstractions, executionMetadata, planExecutionMetadata, notifyOnlyMe);
     }
   }
 
   public PlanExecution startExecutionV2(String accountId, String orgIdentifier, String projectIdentifier,
       ExecutionMetadata executionMetadata, PlanExecutionMetadata planExecutionMetadata, boolean isRetry,
-      List<String> identifierOfSkipStages, String previousExecutionId, List<String> retryStagesIdentifier) {
+      List<String> identifierOfSkipStages, String previousExecutionId, List<String> retryStagesIdentifier,
+      boolean notifyOnlyMe) {
     long startTs = System.currentTimeMillis();
     String planCreationId = generateUuid();
     try {
@@ -422,10 +426,10 @@ public class ExecutionHelper {
       Plan newPlan =
           retryExecutionHelper.transformPlan(plan, identifierOfSkipStages, previousExecutionId, retryStagesIdentifier);
       return orchestrationService.startExecutionV2(
-          planCreationId, abstractions, executionMetadata, planExecutionMetadata);
+          planCreationId, abstractions, executionMetadata, planExecutionMetadata, notifyOnlyMe);
     }
     return orchestrationService.startExecutionV2(
-        planCreationId, abstractions, executionMetadata, planExecutionMetadata);
+        planCreationId, abstractions, executionMetadata, planExecutionMetadata, notifyOnlyMe);
   }
 
   public RetryExecutionInfo buildRetryInfo(boolean isRetry, String originalExecutionId) {

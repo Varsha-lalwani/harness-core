@@ -97,7 +97,7 @@ public class PipelineExecutorTest extends CategoryTest {
     doReturnStatementsForFreshRun(null, false, null);
 
     PlanExecutionResponseDto planExecutionResponse = pipelineExecutor.runPipelineWithInputSetPipelineYaml(
-        accountId, orgId, projectId, pipelineId, moduleType, runtimeInputYaml, useV2);
+        accountId, orgId, projectId, pipelineId, moduleType, runtimeInputYaml, useV2, false);
     assertThat(planExecutionResponse.getPlanExecution()).isEqualTo(planExecution);
     assertThat(planExecutionResponse.getGitDetails()).isEqualTo(EntityGitDetails.builder().build());
 
@@ -204,7 +204,7 @@ public class PipelineExecutorTest extends CategoryTest {
 
     doReturn(planExecution)
         .when(executionHelper)
-        .startExecution(accountId, orgId, projectId, metadata, planExecutionMetadata, false, null, null, null);
+        .startExecution(accountId, orgId, projectId, metadata, planExecutionMetadata, false, null, null, null, false);
   }
 
   private void verifyStatementsForFreshRun(
@@ -228,9 +228,10 @@ public class PipelineExecutorTest extends CategoryTest {
               executionTriggerInfo, originalExecutionId, retryExecutionParameters);
     }
     verify(executionHelper, times(1))
-        .startExecution(accountId, orgId, projectId, metadata, planExecutionMetadata, false, null, null, null);
+        .startExecution(accountId, orgId, projectId, metadata, planExecutionMetadata, false, null, null, null, false);
     verify(executionHelper, times(0))
-        .startExecutionV2(anyString(), anyString(), anyString(), any(), any(), anyBoolean(), any(), any(), any());
+        .startExecutionV2(
+            anyString(), anyString(), anyString(), any(), any(), anyBoolean(), any(), any(), any(), false);
   }
 
   @Test
@@ -261,7 +262,7 @@ public class PipelineExecutorTest extends CategoryTest {
     doReturn(pipelineEntity).when(executionHelper).fetchPipelineEntity(accountId, orgId, projectId, pipelineId);
     assertThatThrownBy(()
                            -> pipelineExecutor.runPipelineWithInputSetPipelineYaml(
-                               accountId, orgId, projectId, pipelineId, moduleType, runtimeInputYaml, useV2))
+                               accountId, orgId, projectId, pipelineId, moduleType, runtimeInputYaml, useV2, false))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage(
             String.format("Cannot execute a Draft Pipeline with PipelineID: %s, ProjectID %s", pipelineId, projectId));
