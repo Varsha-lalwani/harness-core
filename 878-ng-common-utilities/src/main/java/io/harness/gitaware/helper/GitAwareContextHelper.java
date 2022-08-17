@@ -104,19 +104,13 @@ public class GitAwareContextHelper {
     return EmptyPredicate.isEmpty(val) || val.equals(DEFAULT);
   }
 
-  public String getWorkingBranch(Scope scope, String entityRepoURL) {
-    GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitRequestParamsInfo();
-    String branchName = gitEntityInfo.getBranch();
-    String parentEntityRepoUrl = getParentEntityRepoUrl(scope, gitEntityInfo);
-    if (!GitAwareContextHelper.isNullOrDefault(parentEntityRepoUrl) && !parentEntityRepoUrl.equals(entityRepoURL)) {
-      branchName = "";
-    }
-    return branchName;
-  }
-
-  public String getParentEntityRepoUrl(Scope scope, GitEntityInfo gitEntityInfo) {
-    return scmGitSyncHelper
-        .getRepoUrl(scope, gitEntityInfo.getRepoName(), gitEntityInfo.getConnectorRef(), Collections.emptyMap())
-        .getRepoUrl();
-  }
+  //  public String getWorkingBranch(Scope scope, String entityRepoURL) {
+  //    GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitRequestParamsInfo();
+  //    String branchName = gitEntityInfo.getBranch();
+  //    String parentEntityRepoUrl = getParentEntityRepoUrl(scope, gitEntityInfo);
+  //    if (!GitAwareContextHelper.isNullOrDefault(parentEntityRepoUrl) && !parentEntityRepoUrl.equals(entityRepoURL)) {
+  //      branchName = "";
+  //    }
+  //    return branchName;
+  //  }
 }

@@ -7,9 +7,11 @@
 
 package io.harness.gitaware.helper;
 
+import static io.harness.rule.OwnerRule.ADITHYA;
 import static io.harness.rule.OwnerRule.NAMAN;
 import static io.harness.rule.OwnerRule.VIVEK_DIXIT;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
@@ -26,6 +28,7 @@ import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.scm.SCMGitSyncHelper;
 import io.harness.gitsync.scm.beans.ScmCreateFileGitResponse;
 import io.harness.gitsync.scm.beans.ScmGetFileResponse;
+import io.harness.gitsync.scm.beans.ScmGetRepoUrlResponse;
 import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmUpdateFileGitResponse;
 import io.harness.manage.GlobalContextManager;
@@ -64,6 +67,10 @@ public class GitAwareEntityHelperTest extends CategoryTest {
   GitContextRequestParams gitContextRequestParams;
   GitContextRequestParams __default__branchGitParams;
   Scope scope;
+
+  private static final String ENTITY_REPO_URL = "https://github.com/wings-software/mohit-git-sync-local";
+  private static final String PARENT_ENTITY_REPO = "testRepo";
+  private static final String PARENT_ENTITY_CONNECTOR_REF = "account.github_connector";
 
   @Before
   public void setUp() {
@@ -246,6 +253,41 @@ public class GitAwareEntityHelperTest extends CategoryTest {
     MockedStatic<GitAwareContextHelper> utilities = Mockito.mockStatic(GitAwareContextHelper.class);
     utilities.when(GitAwareContextHelper::getGitRequestParamsInfo).thenReturn(gitEntityInfo);
     assertThatThrownBy(() -> gitAwareEntityHelper.checkRootFolder()).isInstanceOf(InvalidRequestException.class);
+  }
+
+  @Test
+  @Owner(developers = ADITHYA)
+  @Category(UnitTests.class)
+  public void testGetWorkingBranch() {
+    Scope scope = Scope.of(accountId, orgId, projectId);
+    doReturn(ScmGetRepoUrlResponse.builder().repoUrl(ENTITY_REPO_URL).build())
+        .when(scmGitSyncHelper)
+        .getRepoUrl(any(), any(), any(), any());
+
+    GitEntityInfo branchInfo = GitEntityInfo.builder().branch(branch).build();
+    setupGitContext(branchInfo);
+
+    assertThat(gitAwareEntityHelper.getWorkingBranch(scope, ENTITY_REPO_URL)).isEqualTo(branch);
+    branchInfo = GitEntityInfo.builder().branch(branch).parentEntityRepoURL(ENTITY_REPO_URL).build();
+    setupGitContext(branchInfo);
+    assertThat(gitAwareEntityHelper.getWorkingBranch(scope, "random repo url")).isEqualTo("");
+    assertThat(gitAwareEntityHelper.getWorkingBranch(scope, ENTITY_REPO_URL)).isEqualTo(branch);
+  }
+
+  @Test
+  @Owner(developers = ADITHYA)
+  @Category(UnitTests.class)
+  public void testGetParentEntityRepoUrl() {
+    GitEntityInfo gitEntityInfo = GitEntityInfo.builder()
+                                      .parentEntityRepoName(PARENT_ENTITY_REPO)
+                                      .parentEntityConnectorRef(PARENT_ENTITY_CONNECTOR_REF)
+                                      .build();
+    Scope scope = Scope.of(accountId, orgId, projectId);
+    doReturn(ScmGetRepoUrlResponse.builder().repoUrl(ENTITY_REPO_URL).build())
+        .when(scmGitSyncHelper)
+        .getRepoUrl(any(), any(), any(), any());
+    String parentRepoUrl = gitAwareEntityHelper.getParentEntityRepoUrl(scope, gitEntityInfo);
+    assertEquals(ENTITY_REPO_URL, parentRepoUrl);
   }
 
   @Data

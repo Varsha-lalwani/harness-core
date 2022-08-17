@@ -13,7 +13,6 @@ import static io.harness.rule.OwnerRule.NAMAN;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
-import io.harness.beans.Scope;
 import io.harness.category.element.UnitTests;
 import io.harness.context.GlobalContext;
 import io.harness.gitsync.interceptor.GitEntityInfo;
@@ -32,9 +31,6 @@ public class GitAwareContextHelperTest extends CategoryTest {
   private static final String BranchName = "branch";
   private static final String RepoName = "repo";
   private static final String ObjectId = "objID";
-  private static final String AccountId = "accountID";
-  private static final String OrgId = "orgID";
-  private static final String ProjectId = "projectID";
 
   @Test
   @Owner(developers = MOHIT_GARG)
@@ -115,21 +111,6 @@ public class GitAwareContextHelperTest extends CategoryTest {
     GitEntityInfo branchInfo = GitEntityInfo.builder().filePath(FilePath).build();
     setupGitContext(branchInfo);
     assertThat(GitAwareContextHelper.getFilepathInRequest()).isEqualTo(FilePath);
-  }
-
-  @Test
-  @Owner(developers = MOHIT_GARG)
-  @Category(UnitTests.class)
-  public void testGetWorkingBranch() {
-    String entityRepoURL = "https://github.com/wings-software/mohit-git-sync-local";
-    GitEntityInfo branchInfo = GitEntityInfo.builder().branch(BranchName).build();
-    setupGitContext(branchInfo);
-    Scope scope = Scope.of(AccountId, OrgId, ProjectId);
-    assertThat(GitAwareContextHelper.getWorkingBranch(scope, entityRepoURL)).isEqualTo(BranchName);
-    branchInfo = GitEntityInfo.builder().branch(BranchName).parentEntityRepoURL(entityRepoURL).build();
-    setupGitContext(branchInfo);
-    assertThat(GitAwareContextHelper.getWorkingBranch(scope, "random repo url")).isEqualTo("");
-    assertThat(GitAwareContextHelper.getWorkingBranch(scope, entityRepoURL)).isEqualTo(BranchName);
   }
 
   private void setupGitContext(GitEntityInfo branchInfo) {

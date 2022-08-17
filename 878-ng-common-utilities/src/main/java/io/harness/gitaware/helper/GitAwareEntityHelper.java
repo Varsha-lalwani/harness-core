@@ -15,12 +15,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.gitaware.dto.GitContextRequestParams;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.scm.SCMGitSyncHelper;
-import io.harness.gitsync.scm.beans.ScmCreateFileGitRequest;
-import io.harness.gitsync.scm.beans.ScmCreateFileGitResponse;
-import io.harness.gitsync.scm.beans.ScmGetFileResponse;
-import io.harness.gitsync.scm.beans.ScmGitMetaData;
-import io.harness.gitsync.scm.beans.ScmUpdateFileGitRequest;
-import io.harness.gitsync.scm.beans.ScmUpdateFileGitResponse;
+import io.harness.gitsync.scm.beans.*;
 import io.harness.persistence.gitaware.GitAware;
 
 import com.google.inject.Inject;
@@ -207,5 +202,24 @@ public class GitAwareEntityHelper {
     if (!filePath.startsWith(key)) {
       throw new InvalidRequestException("The Requested YAML path should begin with \".harness/\"");
     }
+  }
+
+  public String getWorkingBranch(Scope scope, String entityRepoURL) {
+    GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitRequestParamsInfo();
+    String branchName = gitEntityInfo.getBranch();
+    String parentEntityRepoUrl = getParentEntityRepoUrl(scope, gitEntityInfo);
+    if (!GitAwareContextHelper.isNullOrDefault(parentEntityRepoUrl) && !parentEntityRepoUrl.equals(entityRepoURL)) {
+      branchName = "";
+    }
+    return branchName;
+  }
+
+  public String getParentEntityRepoUrl(Scope scope, GitEntityInfo gitEntityInfo) {
+    ScmGetRepoUrlResponse repoUrlResponse = scmGitSyncHelper.getRepoUrl(scope, gitEntityInfo.getParentEntityRepoName(),
+        gitEntityInfo.getParentEntityConnectorRef(), Collections.emptyMap());
+    if (repoUrlResponse != null) {
+      return repoUrlResponse.getRepoUrl();
+    }
+    return "";
   }
 }
