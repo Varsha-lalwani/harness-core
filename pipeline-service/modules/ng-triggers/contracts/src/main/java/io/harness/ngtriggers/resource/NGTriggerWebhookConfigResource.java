@@ -29,6 +29,7 @@ import io.harness.ngtriggers.beans.source.webhook.v2.github.action.GithubPRActio
 import io.harness.ngtriggers.beans.source.webhook.v2.github.event.GithubTriggerEvent;
 import io.harness.ngtriggers.beans.source.webhook.v2.gitlab.action.GitlabPRAction;
 import io.harness.ngtriggers.beans.source.webhook.v2.gitlab.event.GitlabTriggerEvent;
+import io.harness.pms.pipeline.PipelineResourceConstants;
 import io.harness.security.annotations.PublicApi;
 
 import io.swagger.annotations.Api;
@@ -265,13 +266,13 @@ public interface NGTriggerWebhookConfigResource {
   @ApiOperation(value = "accept custom webhook event V2", nickname = "customWebhookEndpointV2")
   @PublicApi
   ResponseDTO<NGProcessWebhookResponseDTO>
-  processWebhookEventV2(@Parameter(description = "Account ID") @NotNull @QueryParam(
+  processWebhookEventV2(@Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
                             NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-      @Parameter(description = "Organization ID") @NotNull @QueryParam(
+      @Parameter(description = PipelineResourceConstants.ORG_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
-      @Parameter(description = "Project ID") @NotNull @QueryParam(
+      @Parameter(description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-      @Parameter(description = "Pipeline ID") @QueryParam(
+      @Parameter(description = PipelineResourceConstants.PIPELINE_ID_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.PIPELINE_KEY) String pipelineIdentifier,
       @Parameter(description = "Trigger Key") @QueryParam(TRIGGER_KEY) String triggerIdentifier,
       @Parameter(description = "Trigger Payload") @NotNull String eventPayload, @Context HttpHeaders httpHeaders,
