@@ -72,6 +72,7 @@ public interface EntityTypeConstants {
 
   String BUILD_AND_PUSH_GCR = "BuildAndPushGCR";
   String BUILD_AND_PUSH_ECR = "BuildAndPushECR";
+  String BUILD_AND_PUSH_ACR = "BuildAndPushACR";
   String BUILD_AND_PUSH_DOCKER_REGISTRY = "BuildAndPushDockerRegistry";
   String TERRAFORM_APPLY = "TerraformApply";
   String TERRAFORM_PLAN = "TerraformPlan";
@@ -106,4 +107,5 @@ public interface EntityTypeConstants {
   String AZURE_WEBAPP_ROLLBACK = "AzureWebAppRollback";
   String QUEUE = "Queue";
   String JENKINS_BUILD = "JenkinsBuild";
+  String AZURE_CREATE_ARM_RESOURCE_STEP = "AzureCreateARMResource";
 }

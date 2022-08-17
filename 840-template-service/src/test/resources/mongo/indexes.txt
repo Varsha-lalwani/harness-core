@@ -61,6 +61,12 @@ delegateTokens {"name": "validUntil_1", "background": true, "expireAfterSeconds"
 delegateTokensNG {"name": "byAccountAndStatus", "background": true} {"accountId": 1, "owner": 1, "status": 1}
 delegateTokensNG {"name": "byAccountOwnerAndName", "unique": true} {"accountId": 1, "owner": 1, "name": 1}
 delegateTokensNG {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
+delegates {"name": "accountId_1", "background": true} {"accountId": 1}
+delegates {"name": "byAcctNgGroupIdOwner", "background": true} {"accountId": 1, "ng": 1, "delegateGroupId": 1, "owner": 1}
+delegates {"name": "capabilitiesCheckNextIteration_1", "background": true} {"capabilitiesCheckNextIteration": 1}
+delegates {"name": "createdAt_1", "background": true} {"createdAt": 1}
+delegates {"name": "taskExpiryCheckNextIteration_1", "background": true} {"taskExpiryCheckNextIteration": 1}
+delegates {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
 emailQueue2 {"name": "earliestGet_1", "background": true, "expireAfterSeconds": 86400} {"earliestGet": 1}
 emailQueue2 {"name": "next4", "background": true} {"topic": 1, "earliestGet": 1}
 encryptedRecords {"name": "acctKmsIdx", "background": true} {"accountId": 1, "kmsId": 1}
@@ -104,6 +110,8 @@ migratedEntityMapping {"name": "identifier_1", "background": true} {"identifier"
 migratedEntityMapping {"name": "orgIdentifier_1", "background": true} {"orgIdentifier": 1}
 migratedEntityMapping {"name": "projectIdentifier_1", "background": true} {"projectIdentifier": 1}
 migratedEntityMapping {"name": "scope_1", "background": true} {"scope": 1}
+migrationAsyncTracker {"name": "accountId_1", "background": true} {"accountId": 1}
+migrationAsyncTracker {"name": "appId_1", "background": true} {"appId": 1}
 newRelicMetricRecords {"name": "accountId_1", "background": true} {"accountId": 1}
 newRelicMetricRecords {"name": "appId_1", "background": true} {"appId": 1}
 newRelicMetricRecords {"name": "createdAt_1", "background": true} {"createdAt": 1}
@@ -167,6 +175,7 @@ templatesNG {"name": "accountId_organizationId_projectId_identifier_isStable_rep
 templatesNG {"name": "accountId_organizationId_projectId_identifier_label_isDefault", "background": true} {"accountId": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1, "versionLabel": 1, "isFromDefaultBranch": 1, "createdAt": -1}
 templatesNG {"name": "accountId_project_org_isDefault", "background": true} {"accountId": 1, "projectIdentifier": 1, "orgIdentifier": 1, "isFromDefaultBranch": 1, "createdAt": -1}
 templatesNG {"name": "accountId_project_org_repo_branch", "background": true} {"accountId": 1, "projectIdentifier": 1, "orgIdentifier": 1, "yamlGitConfigRef": 1, "branch": 1, "createdAt": -1}
+templatesNG {"name": "accountId_repoURL_filePath", "background": true} {"accountId": 1, "repoURL": 1, "filePath": 1}
 templatesNG {"name": "createdAt_1", "background": true} {"createdAt": 1}
 templatesNG {"name": "lastUpdatedAt_idx", "background": true} {"lastUpdatedAt": 1}
 templatesNG {"name": "unique_accountId_organizationId_projectId_identifier_label_repo_branch", "unique": true} {"accountId": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1, "versionLabel": 1, "yamlGitConfigRef": 1, "branch": 1}

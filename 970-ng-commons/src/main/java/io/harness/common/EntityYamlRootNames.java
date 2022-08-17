@@ -97,6 +97,7 @@ public class EntityYamlRootNames {
   public static final String GCS_UPLOAD = "GCSUpload";
   public static final String S3_UPLOAD = "S3Upload";
   public static final String BUILD_AND_PUSH_GCR = "BuildAndPushGCR";
+  public static final String BUILD_AND_PUSH_ACR = "BuildAndPushACR";
   public static final String BUILD_AND_PUSH_ECR = "BuildAndPushECR";
   public static final String BUILD_AND_PUSH_DOCKER_REGISTRY = "BuildAndPushDockerRegistry";
   public static final String NG_FILE = "NgFile";
@@ -115,4 +116,5 @@ public class EntityYamlRootNames {
   public static final String AZURE_SWAP_SLOT_STEP = "AzureSwapSlot";
   public static final String AZURE_WEBAPP_ROLLBACK_STEP = "AzureWebAppRollback";
   public static final String EMAIL = "EMAIL";
+  public static final String AZURE_CREATE_ARM_RESOURCE_STEP = "AzureCreateARMResource";
 }

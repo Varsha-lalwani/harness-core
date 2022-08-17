@@ -17,6 +17,7 @@ import io.harness.cdng.azure.webapp.ApplicationSettingsParameters;
 import io.harness.cdng.azure.webapp.ConnectionStringsParameters;
 import io.harness.cdng.azure.webapp.StartupCommandParameters;
 import io.harness.cdng.configfile.steps.ConfigFileStepParameters;
+import io.harness.cdng.configfile.steps.ConfigFilesOutcome;
 import io.harness.cdng.environment.yaml.EnvironmentYaml;
 import io.harness.cdng.gitops.CreatePRStepInfo;
 import io.harness.cdng.gitops.CreatePRStepParams;
@@ -65,6 +66,7 @@ import io.harness.cdng.pipeline.beans.DeploymentStageStepParameters;
 import io.harness.cdng.pipeline.beans.RollbackNode;
 import io.harness.cdng.pipeline.beans.RollbackOptionalChildChainStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
+import io.harness.cdng.provision.azure.AzureCreateARMResourceStepInfo;
 import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepInfo;
 import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepInfo;
 import io.harness.cdng.provision.cloudformation.CloudformationRollbackStepInfo;
@@ -181,7 +183,8 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(JenkinsBuildStepInfo.class, 12700);
     kryo.register(MergePRStepParams.class, 12604);
     kryo.register(MergePRStepInfo.class, 12605);
-
     kryo.register(CustomFetchResponsePassThroughData.class, 12705);
+    kryo.register(ConfigFilesOutcome.class, 12608);
+    kryo.register(AzureCreateARMResourceStepInfo.class, 12609);
   }
 }

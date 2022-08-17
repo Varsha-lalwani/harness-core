@@ -32,6 +32,7 @@ import io.harness.cdng.helm.HelmRollbackStep;
 import io.harness.cdng.infra.steps.EnvironmentStep;
 import io.harness.cdng.infra.steps.InfrastructureSectionStep;
 import io.harness.cdng.infra.steps.InfrastructureStep;
+import io.harness.cdng.infra.steps.InfrastructureTaskExecutableStep;
 import io.harness.cdng.jenkins.jenkinsstep.JenkinsBuildStep;
 import io.harness.cdng.k8s.K8sApplyStep;
 import io.harness.cdng.k8s.K8sBGSwapServicesStep;
@@ -48,6 +49,7 @@ import io.harness.cdng.pipeline.steps.DeploymentStageStep;
 import io.harness.cdng.pipeline.steps.NGSectionStep;
 import io.harness.cdng.pipeline.steps.RollbackOptionalChildChainStep;
 import io.harness.cdng.pipeline.steps.RollbackOptionalChildrenStep;
+import io.harness.cdng.provision.azure.AzureCreateARMResourceStep;
 import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStep;
 import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStep;
 import io.harness.cdng.provision.cloudformation.CloudformationRollbackStep;
@@ -89,6 +91,7 @@ public class NgStepRegistrar {
     engineSteps.put(NGSectionStep.STEP_TYPE, NGSectionStep.class);
     engineSteps.put(InfrastructureSectionStep.STEP_TYPE, InfrastructureSectionStep.class);
     engineSteps.put(InfrastructureStep.STEP_TYPE, InfrastructureStep.class);
+    engineSteps.put(InfrastructureTaskExecutableStep.STEP_TYPE, InfrastructureTaskExecutableStep.class);
     engineSteps.put(DeploymentStageStep.STEP_TYPE, DeploymentStageStep.class);
     engineSteps.put(ServiceConfigStep.STEP_TYPE, ServiceConfigStep.class);
     engineSteps.put(ServiceSectionStep.STEP_TYPE, ServiceSectionStep.class);
@@ -140,6 +143,7 @@ public class NgStepRegistrar {
     engineSteps.putAll(NGCommonUtilStepsRegistrar.getEngineSteps());
     engineSteps.put(GitopsClustersStep.STEP_TYPE, GitopsClustersStep.class);
     engineSteps.put(JenkinsBuildStep.STEP_TYPE, JenkinsBuildStep.class);
+    engineSteps.put(AzureCreateARMResourceStep.STEP_TYPE, AzureCreateARMResourceStep.class);
     return engineSteps;
   }
 }
