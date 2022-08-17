@@ -38,6 +38,9 @@ public class TemplateGitXHelperTest {
   private static final String PROJECT_IDENTIFIER = "projectIdentifier";
   private static final String ENTITY_REPO_URL = "https://github.com/adivishy1/testRepo";
 
+  private static final String PARENT_ENTITY_REPO = "testRepo";
+  private static final String PARENT_ENTITY_CONNECTOR_REF = "account.github_connector";
+
   @Before
   public void setUp() throws IOException {
     MockitoAnnotations.initMocks(this);
@@ -47,7 +50,11 @@ public class TemplateGitXHelperTest {
   @Owner(developers = ADITHYA)
   @Category(UnitTests.class)
   public void testGetWorkingBranch() {
-    GitEntityInfo branchInfo = GitEntityInfo.builder().branch(BranchName).build();
+    GitEntityInfo branchInfo = GitEntityInfo.builder()
+                                   .branch(BranchName)
+                                   .parentEntityRepoName(PARENT_ENTITY_REPO)
+                                   .parentEntityConnectorRef(PARENT_ENTITY_CONNECTOR_REF)
+                                   .build();
     setupGitContext(branchInfo);
     Scope scope = Scope.of(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER);
     doReturn(ScmGetRepoUrlResponse.builder().repoUrl(ENTITY_REPO_URL).build())
@@ -55,7 +62,7 @@ public class TemplateGitXHelperTest {
         .getRepoUrl(any(), any(), any(), any());
     assertThat(templateGitXHelper.getWorkingBranch(scope, ENTITY_REPO_URL)).isEqualTo(BranchName);
 
-    branchInfo = GitEntityInfo.builder().branch(BranchName).build();
+    branchInfo = GitEntityInfo.builder().branch(BranchName).parentEntityRepoUrl(ENTITY_REPO_URL).build();
     setupGitContext(branchInfo);
     doReturn(ScmGetRepoUrlResponse.builder().build()).when(scmGitSyncHelper).getRepoUrl(any(), any(), any(), any());
     assertThat(templateGitXHelper.getWorkingBranch(scope, "random repo url")).isEqualTo("");

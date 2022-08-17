@@ -44,6 +44,7 @@ public class GitEntityInfo {
   String connectorRef;
   @Setter String repoName;
   @Wither String lastCommitId;
+  @Setter String parentEntityRepoUrl;
   String parentEntityConnectorRef; // connector ref of entity under whose context actions are occurring
   String parentEntityRepoName; // repo name of entity under whose context actions are occurring
 
