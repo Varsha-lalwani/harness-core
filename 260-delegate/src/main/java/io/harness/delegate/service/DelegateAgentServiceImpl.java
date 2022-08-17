@@ -142,7 +142,7 @@ import io.harness.logstreaming.LogStreamingClient;
 import io.harness.logstreaming.LogStreamingHelper;
 import io.harness.logstreaming.LogStreamingSanitizer;
 import io.harness.logstreaming.LogStreamingTaskClient;
-import io.harness.logstreaming.LogStreamingTaskClient.LogStreamingTaskClientBuilder;
+import io.harness.logstreaming.LogStreamingTaskClientHelper;
 import io.harness.managerclient.DelegateAgentManagerClient;
 import io.harness.metrics.HarnessMetricRegistry;
 import io.harness.network.FibonacciBackOff;
@@ -331,6 +331,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private static volatile String delegateId;
   private static final String delegateInstanceId = generateUuid();
 
+  private static volatile String logSteamingToken;
+
   @Inject
   @Getter(value = PACKAGE, onMethod = @__({ @VisibleForTesting }))
   private DelegateConfiguration delegateConfiguration;
@@ -366,6 +368,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Inject private KryoSerializer kryoSerializer;
   @Nullable @Inject(optional = true) private ChronicleEventTailer chronicleEventTailer;
   @Inject HarnessMetricRegistry metricRegistry;
+
+  @Inject LogStreamingTaskClientHelper logStreamingTaskClientHelper;
 
   private final AtomicBoolean waiter = new AtomicBoolean(true);
 
@@ -2074,6 +2078,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     log.debug("DelegateTask acquired - accountId: {}, taskType: {}", accountId, taskData.getTaskType());
     Pair<String, Set<String>> activitySecrets = obtainActivitySecrets(delegateTaskPackage);
     Optional<LogSanitizer> sanitizer = getLogSanitizer(activitySecrets);
+    // TODO: Question, why are we creating logClient for cg tasks also
     ILogStreamingTaskClient logStreamingTaskClient = getLogStreamingTaskClient(activitySecrets, delegateTaskPackage);
     // At the moment used to download and render terraform json plan file and keep track of the download tf plans
     // so we can clean up at the end of the task. Expected mainly to be used in Shell Script Task
@@ -2117,6 +2122,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       logStreamingConfigPresent = true;
     }
 
+    String taskId = delegateTaskPackage.getDelegateTaskId();
+
     // Extract appId and activityId from task params, in case LogCallback logging has to be used for backward
     // compatibility reasons
     Object[] taskParameters = delegateTaskPackage.getData().getParameters();
@@ -2140,32 +2147,35 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         ? LogStreamingHelper.generateLogBaseKey(delegateTaskPackage.getLogStreamingAbstractions())
         : EMPTY;
 
-    LogStreamingTaskClientBuilder taskClientBuilder =
-        LogStreamingTaskClient.builder()
-            .logStreamingClient(logStreamingClient)
-            .accountId(delegateTaskPackage.getAccountId())
-            .token(delegateTaskPackage.getLogStreamingToken())
-            .logStreamingSanitizer(
-                LogStreamingSanitizer.builder()
-                    .secrets(activitySecrets.getRight().stream().map(String::trim).collect(Collectors.toSet()))
-                    .build())
-            .baseLogKey(logBaseKey)
-            .logService(delegateLogService)
-            .taskProgressExecutor(taskProgressExecutor)
-            .appId(appId)
-            .activityId(activityId);
+    logStreamingTaskClientHelper.setLogStreamingSanitizerInMap(taskId,
+        LogStreamingSanitizer.builder()
+            .secrets(activitySecrets.getRight().stream().map(String::trim).collect(Collectors.toSet()))
+            .build());
+
+    logStreamingTaskClientHelper.setAppIdInMap(taskId, appId);
+    logStreamingTaskClientHelper.setActivityIdInMap(taskId, activityId);
+    logStreamingTaskClientHelper.setBaseLogKeyInMap(taskId, logBaseKey);
 
     if (isNotBlank(delegateTaskPackage.getDelegateCallbackToken()) && delegateServiceAgentClient != null) {
-      taskClientBuilder.taskProgressClient(TaskProgressClient.builder()
-                                               .accountId(delegateTaskPackage.getAccountId())
-                                               .taskId(delegateTaskPackage.getDelegateTaskId())
-                                               .delegateCallbackToken(delegateTaskPackage.getDelegateCallbackToken())
-                                               .delegateServiceAgentClient(delegateServiceAgentClient)
-                                               .kryoSerializer(kryoSerializer)
-                                               .build());
+      logStreamingTaskClientHelper.setTaskProgressClientInMap(taskId,
+          TaskProgressClient.builder()
+              .accountId(delegateTaskPackage.getAccountId())
+              .taskId(taskId)
+              .delegateCallbackToken(delegateTaskPackage.getDelegateCallbackToken())
+              .delegateServiceAgentClient(delegateServiceAgentClient)
+              .kryoSerializer(kryoSerializer)
+              .build());
     }
 
-    return taskClientBuilder.build();
+    String newLogStreamingToken = delegateTaskPackage.getLogStreamingToken();
+
+    // How to make sure that manager is not sending new logStreaming token frequently?
+    if (!newLogStreamingToken.equals(logSteamingToken)) {
+      logSteamingToken = newLogStreamingToken;
+    }
+
+    return LogStreamingTaskClient.getInstance(!newLogStreamingToken.equals(logSteamingToken), delegateLogService,
+        logStreamingClient, taskProgressExecutor, newLogStreamingToken, delegateTaskPackage.getAccountId());
   }
 
   private Optional<LogSanitizer> getLogSanitizer(Pair<String, Set<String>> activitySecrets) {
@@ -2277,7 +2287,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       if (logStreamingTaskClient != null) {
         try {
           // Opens the log stream for task
-          logStreamingTaskClient.openStream(null);
+          logStreamingTaskClient.openStream(null, null);
         } catch (Exception ex) {
           log.error("Unexpected error occurred while opening the log stream.");
         }
@@ -2310,7 +2320,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       if (logStreamingTaskClient != null) {
         try {
           // Closes the log stream for the task
-          logStreamingTaskClient.closeStream(null);
+          logStreamingTaskClient.closeStream(null, null);
         } catch (Exception ex) {
           log.error("Unexpected error occurred while closing the log stream.");
         }

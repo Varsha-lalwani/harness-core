@@ -941,6 +941,15 @@ public class DelegateModule extends AbstractModule {
         new DefaultAsyncHttpClientConfig.Builder().setUseProxyProperties(true).setSslContext(sslContext).build());
   }
 
+  // what should be the ideal threadpool size here
+  @Provides
+  @Singleton
+  @Named("logStreamingClientExecutor")
+  public ScheduledExecutorService logStreamingClientExecutor() {
+    return new ScheduledThreadPoolExecutor(40,
+        new ThreadFactoryBuilder().setNameFormat("log-streaming-client-%d").setPriority(Thread.NORM_PRIORITY).build());
+  }
+
   @Override
   protected void configure() {
     bindDelegateTasks();

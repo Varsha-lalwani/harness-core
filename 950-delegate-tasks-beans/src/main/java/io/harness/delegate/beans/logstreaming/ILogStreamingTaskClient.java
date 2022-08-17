@@ -20,12 +20,12 @@ public interface ILogStreamingTaskClient {
   /**
    * Open new log stream on log streaming service.
    */
-  void openStream(String baseLogKeySuffix);
+  void openStream(String taskId, String baseLogKeySuffix);
 
   /**
    * Close existing log stream on log streaming service
    */
-  void closeStream(String baseLogKeySuffix);
+  void closeStream(String taskId, String baseLogKeySuffix);
 
   /**
    * Push log message to the existing log stream

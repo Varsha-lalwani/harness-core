@@ -30,7 +30,9 @@ import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.DelegateLogService;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -38,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.Builder;
 import lombok.Builder.Default;
@@ -56,40 +57,67 @@ import org.jetbrains.annotations.NotNull;
  */
 @Builder
 @Slf4j
+@Singleton
 @TargetModule(HarnessModule._420_DELEGATE_AGENT)
 public class LogStreamingTaskClient implements ILogStreamingTaskClient {
+  // Question? is this thread-safe?
+  private static volatile LogStreamingTaskClient instance;
+
   private final DelegateLogService logService;
   private final LogStreamingClient logStreamingClient;
-  private final LogStreamingSanitizer logStreamingSanitizer;
   private final ExecutorService taskProgressExecutor;
   private final String token;
   private final String accountId;
-  private final String baseLogKey;
-  private ScheduledExecutorService scheduledExecutorService;
-  @Deprecated private final String appId;
-  @Deprecated private final String activityId;
 
-  private final ITaskProgressClient taskProgressClient;
+  // inject it directly as singleton
+
+  @Inject @Named("logStreamingClientExecutor") private ScheduledExecutorService scheduledExecutorService;
+
+  @Inject private LogStreamingTaskClientHelper logStreamingTaskClientHelper;
+  // create a new class and save below fields in cache
+
+  // below fields should be removed after fixing unit tests, they are null temporarily
+  private final LogStreamingSanitizer logStreamingSanitizer = null;
+  private final String baseLogKey = null;
+  @Deprecated private final String appId = null;
+  @Deprecated private final String activityId = null;
+  private final ITaskProgressClient taskProgressClient = null;
 
   @Default private final Map<String, List<LogLine>> logCache = new HashMap<>();
 
+  public LogStreamingTaskClient(DelegateLogService logService, LogStreamingClient logStreamingClient,
+      ExecutorService taskProgressExecutor, String token, String accountId) {
+    this.logService = logService;
+    this.logStreamingClient = logStreamingClient;
+    this.taskProgressExecutor = taskProgressExecutor;
+    this.token = token;
+    this.accountId = accountId;
+  }
+
+  // Question? Is this thread-safe?
+  public static LogStreamingTaskClient getInstance(boolean shouldCreateNewInstance, DelegateLogService logService,
+      LogStreamingClient logStreamingClient, ExecutorService taskProgressExecutor, String token, String accountId) {
+    if (shouldCreateNewInstance || instance == null) {
+      instance = new LogStreamingTaskClient(logService, logStreamingClient, taskProgressExecutor, token, accountId);
+    }
+    return instance;
+  }
+
   @Override
-  public void openStream(String baseLogKeySuffix) {
-    String logKey = getLogKey(baseLogKeySuffix);
+  public void openStream(String taskId, String baseLogKeySuffix) {
+    String logKey = getLogKey(taskId, baseLogKeySuffix);
 
     try {
       SafeHttpCall.executeWithExceptions(logStreamingClient.openLogStream(token, accountId, logKey));
     } catch (Exception ex) {
       log.error("Unable to open log stream for account {} and key {}", accountId, logKey, ex);
     }
-    scheduledExecutorService = new ScheduledThreadPoolExecutor(1,
-        new ThreadFactoryBuilder().setNameFormat("log-streaming-client-%d").setPriority(Thread.NORM_PRIORITY).build());
-    scheduledExecutorService.scheduleAtFixedRate(this::dispatchLogs, 0, 100, TimeUnit.MILLISECONDS);
+    scheduledExecutorService.scheduleAtFixedRate(() -> dispatchLogs(taskId, logKey), 0, 100, TimeUnit.MILLISECONDS);
   }
 
   @Override
-  public void closeStream(String baseLogKeySuffix) {
-    String logKey = getLogKey(baseLogKeySuffix);
+  public void closeStream(String taskId, String baseLogKeySuffix) {
+    String logKey = getLogKey(taskId, baseLogKeySuffix);
 
     // we don't want workflow steps to hang because of any log reasons. Putting a safety net just in case
     long startTime = currentTimeMillis();
@@ -122,7 +150,7 @@ public class LogStreamingTaskClient implements ILogStreamingTaskClient {
       throw new InvalidArgumentsException("Log line parameter is mandatory.");
     }
 
-    String logKey = getLogKey(baseLogKeySuffix);
+    String logKey = getLogKey(null, baseLogKeySuffix);
 
     logStreamingSanitizer.sanitizeLogMessage(logLine);
     colorLog(logLine);
@@ -136,7 +164,7 @@ public class LogStreamingTaskClient implements ILogStreamingTaskClient {
   }
 
   @VisibleForTesting
-  void dispatchLogs() {
+  void dispatchLogs(String taskId, String logKey) {
     synchronized (logCache) {
       for (Iterator<Map.Entry<String, List<LogLine>>> iterator = logCache.entrySet().iterator(); iterator.hasNext();) {
         Map.Entry<String, List<LogLine>> next = iterator.next();
@@ -153,8 +181,9 @@ public class LogStreamingTaskClient implements ILogStreamingTaskClient {
   }
 
   @NotNull
-  private String getLogKey(String baseLogKeySuffix) {
-    return baseLogKey + (isBlank(baseLogKeySuffix) ? "" : String.format(COMMAND_UNIT_PLACEHOLDER, baseLogKeySuffix));
+  private String getLogKey(String taskId, String baseLogKeySuffix) {
+    return logStreamingTaskClientHelper.getBaseLogKeyFromMap(taskId)
+        + (isBlank(baseLogKeySuffix) ? "" : String.format(COMMAND_UNIT_PLACEHOLDER, baseLogKeySuffix));
   }
 
   private void colorLog(LogLine logLine) {

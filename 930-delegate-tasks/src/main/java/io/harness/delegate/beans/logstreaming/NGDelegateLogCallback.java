@@ -42,7 +42,7 @@ public class NGDelegateLogCallback implements LogCallback {
     this.taskId = taskId;
 
     if (shouldOpenStream) {
-      iLogStreamingTaskClient.openStream(commandUnitName);
+      iLogStreamingTaskClient.openStream(null, commandUnitName);
     }
   }
 
@@ -64,7 +64,7 @@ public class NGDelegateLogCallback implements LogCallback {
 
     boolean terminalStatus = CommandExecutionStatus.isTerminalStatus(commandExecutionStatus);
     if (terminalStatus) {
-      iLogStreamingTaskClient.closeStream(commandUnitName);
+      iLogStreamingTaskClient.closeStream(null, commandUnitName);
     }
 
     LinkedHashMap<String, CommandUnitProgress> commandUnitProgressMap =

@@ -59,7 +59,7 @@ public class LogStreamingTaskClientTest extends CategoryTest {
   @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void shouldInvokeOpenLogStreamWithoutKeySuffix() {
-    completeLogStreamingTaskClient.openStream(null);
+    completeLogStreamingTaskClient.openStream(null, null);
     verify(logStreamingClientMock).openLogStream(TOKEN, ACCOUNT_ID, BASE_LOG_KEY);
   }
 
@@ -67,7 +67,7 @@ public class LogStreamingTaskClientTest extends CategoryTest {
   @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void shouldInvokeOpenLogStreamWithKeySuffix() {
-    completeLogStreamingTaskClient.openStream("keySuffix");
+    completeLogStreamingTaskClient.openStream(null, "keySuffix");
     verify(logStreamingClientMock)
         .openLogStream(TOKEN, ACCOUNT_ID, BASE_LOG_KEY + String.format(COMMAND_UNIT_PLACEHOLDER, "keySuffix"));
   }
@@ -76,8 +76,8 @@ public class LogStreamingTaskClientTest extends CategoryTest {
   @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void shouldInvokeCloseLogStreamWithoutKeySuffix() {
-    completeLogStreamingTaskClient.openStream(null);
-    completeLogStreamingTaskClient.closeStream(null);
+    completeLogStreamingTaskClient.openStream(null, null);
+    completeLogStreamingTaskClient.closeStream(null, null);
     verify(logStreamingClientMock).closeLogStream(TOKEN, ACCOUNT_ID, BASE_LOG_KEY, true);
   }
 
@@ -85,8 +85,8 @@ public class LogStreamingTaskClientTest extends CategoryTest {
   @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void shouldInvokeCloseLogStreamWithKeySuffix() {
-    completeLogStreamingTaskClient.openStream("keySuffix");
-    completeLogStreamingTaskClient.closeStream("keySuffix");
+    completeLogStreamingTaskClient.openStream(null, "keySuffix");
+    completeLogStreamingTaskClient.closeStream(null, "keySuffix");
     verify(logStreamingClientMock)
         .closeLogStream(TOKEN, ACCOUNT_ID, BASE_LOG_KEY + String.format(COMMAND_UNIT_PLACEHOLDER, "keySuffix"), true);
   }
@@ -107,7 +107,7 @@ public class LogStreamingTaskClientTest extends CategoryTest {
     LogLine logLine = LogLine.builder().level(LogLevel.INFO).message("msg").build();
 
     completeLogStreamingTaskClient.writeLogLine(logLine, null);
-    completeLogStreamingTaskClient.dispatchLogs();
+    completeLogStreamingTaskClient.dispatchLogs(null, null);
 
     verify(logStreamingSanitizerMock).sanitizeLogMessage(logLine);
 
@@ -123,7 +123,7 @@ public class LogStreamingTaskClientTest extends CategoryTest {
   public void shouldInvokePushMessageWithKeySuffix() {
     LogLine logLine = LogLine.builder().level(LogLevel.INFO).message("msg").build();
     completeLogStreamingTaskClient.writeLogLine(logLine, "keySuffix");
-    completeLogStreamingTaskClient.dispatchLogs();
+    completeLogStreamingTaskClient.dispatchLogs(null, null);
 
     verify(logStreamingSanitizerMock).sanitizeLogMessage(logLine);
 
