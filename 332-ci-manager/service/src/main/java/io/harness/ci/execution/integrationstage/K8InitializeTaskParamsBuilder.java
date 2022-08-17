@@ -64,7 +64,6 @@ import io.harness.k8s.model.ImageDetails;
 import io.harness.licensing.Edition;
 import io.harness.licensing.beans.summary.LicensesWithSummaryDTO;
 import io.harness.licensing.remote.NgLicenseHttpClient;
-import io.harness.licensing.services.LicenseService;
 import io.harness.ng.core.NGAccess;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.plancreator.stages.stage.StageElementConfig;
@@ -77,7 +76,6 @@ import io.harness.yaml.extended.ci.codebase.CodeBase;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -87,7 +85,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import retrofit2.Call;
 import retrofit2.Response;
 
 @Singleton

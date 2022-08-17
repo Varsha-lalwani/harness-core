@@ -51,7 +51,6 @@ import io.harness.delegate.beans.ci.pod.CIK8PodParams;
 import io.harness.delegate.beans.ci.pod.PodParams;
 import io.harness.delegate.task.citasks.cik8handler.k8java.container.ContainerSpecBuilder;
 import io.harness.delegate.task.citasks.cik8handler.k8java.container.ContainerSpecBuilderResponse;
-import io.harness.delegate.task.citasks.cik8handler.params.CIConstants;
 import io.harness.rule.Owner;
 
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
