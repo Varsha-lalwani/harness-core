@@ -36,7 +36,6 @@ import io.harness.secretmanagerclient.remote.SecretManagerClient;
 import io.harness.security.encryption.EncryptionConfig;
 import io.harness.utils.featureflaghelper.NGFeatureFlagHelperService;
 
-import software.wings.beans.BaseVaultConfig;
 import software.wings.beans.VaultConfig;
 
 import com.google.inject.Inject;
@@ -108,9 +107,7 @@ public class NGSecretManagerServiceImpl implements NGSecretManagerService {
               if (APP_ROLE.equals(vaultConfig.getAccessType())
                   && (ngFeatureFlagHelperService.isEnabled(
                       accountIdentifier, FeatureName.DO_NOT_RENEW_APPROLE_TOKEN))) {
-                BaseVaultConfig baseVaultConfig = (BaseVaultConfig) encryptionConfig;
-                baseVaultConfig.setRenewAppRoleToken(false);
-                vaultConfig = (VaultConfig) baseVaultConfig;
+                vaultConfig.setRenewAppRoleToken(false);
               }
               if (!vaultConfig.isReadOnly()) {
                 validationResult = vaultEncryptorsRegistry.getVaultEncryptor(VAULT).validateSecretManagerConfiguration(
