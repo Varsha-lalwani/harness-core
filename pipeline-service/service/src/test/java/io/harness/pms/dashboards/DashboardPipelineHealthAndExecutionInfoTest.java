@@ -166,12 +166,12 @@ public class DashboardPipelineHealthAndExecutionInfoTest extends CategoryTest {
     pipelineExecutionInfoList.add(
         PipelineExecutionInfo.builder()
             .date(1617235200000L)
-            .count(PipelineCountInfo.builder().total(2).success(0).failure(2).aborted(1).expired(1).build())
+            .count(PipelineCountInfo.builder().total(2).success(0).failure(0).aborted(1).expired(1).build())
             .build());
     pipelineExecutionInfoList.add(
         PipelineExecutionInfo.builder()
             .date(1617321600000L)
-            .count(PipelineCountInfo.builder().total(4).success(2).failure(2).aborted(1).build())
+            .count(PipelineCountInfo.builder().total(4).success(2).failure(1).aborted(1).build())
             .build());
     pipelineExecutionInfoList.add(PipelineExecutionInfo.builder()
                                       .date(1617408000000L)

@@ -155,13 +155,12 @@ public class PipelineDashboardServiceImpl implements PipelineDashboardService {
           total++;
           if (successList.contains(statusAndTime.get(i).getStatus())) {
             success++;
-          } else if (failedList.contains(statusAndTime.get(i).getStatus())) {
-            failed++;
-          }
-          if (statusAndTime.get(i).getStatus().contentEquals(ExecutionStatus.ABORTED.name())) {
+          } else if (statusAndTime.get(i).getStatus().contentEquals(ExecutionStatus.ABORTED.name())) {
             aborted++;
           } else if (statusAndTime.get(i).getStatus().contentEquals(ExecutionStatus.EXPIRED.name())) {
             expired++;
+          } else if (failedList.contains(statusAndTime.get(i).getStatus())) {
+            failed++;
           }
         }
       }
