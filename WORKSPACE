@@ -238,8 +238,8 @@ go_repository(
 go_repository(
     name = "com_github_kr_pretty",
     importpath = "github.com/kr/pretty",
-    sum = "h1:s5hAObm+yFO5uHYt5dYjxi2rXrsnmRpJx4OYvIWUaQs=",
-    version = "v0.2.0",
+    sum = "h1:Fmg33tUaq4/8ym9TJN1x7sLJnHVwhP33CNkpYV/7rwI=",
+    version = "v0.2.1",
 )
 
 go_repository(
@@ -280,8 +280,8 @@ go_repository(
 go_repository(
     name = "com_github_rogpeppe_go_internal",
     importpath = "github.com/rogpeppe/go-internal",
-    sum = "h1:RR9dF3JtopPvtkroDZuVD7qquD0bnHlKSqaQhgwt8yk=",
-    version = "v1.3.0",
+    sum = "h1:aIihoIOHCiLZHxyoNQ+ABL4NKhFTgKLBdMLyEAh98m0=",
+    version = "v1.6.2",
 )
 
 go_repository(
@@ -1022,8 +1022,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:tx7Xgpt64DYq90WFPVi9T/5c7IuNQ8ckbb8qUEK05gU=",
-    version = "v1.26.1-0.20220718061611-2e3f1a56c8dd",
+    sum = "h1:fBIa4YifR1Mp8gAB1fsdznxknVAMvGOh3Z0doCirJG8=",
+    version = "v1.27.1-0.20220807170932-48f05b7abd88",
 )
 
 go_repository(
@@ -1470,8 +1470,8 @@ go_repository(
 go_repository(
     name = "com_github_creack_pty",
     importpath = "github.com/creack/pty",
-    sum = "h1:uDmaGzcdjhF4i/plgjmEsriH11Y0o7RKapEf/LDaM3w=",
-    version = "v1.1.9",
+    sum = "h1:07n33Z8lZxZ2qwegKbObQohDhXDQxiMMz1NOUGYlesw=",
+    version = "v1.1.11",
 )
 
 go_repository(
@@ -1512,9 +1512,8 @@ go_repository(
 go_repository(
     name = "com_github_docker_cli",
     importpath = "github.com/docker/cli",
-    strip_prefix = "cli-a8ff7f821017ae3d5347392c82718d6cba221681",
-    type = "zip",
-    urls = ["https://github.com/docker/cli/archive/a8ff7f821017ae3d5347392c82718d6cba221681.zip"],
+    sum = "h1:2HQmlpI3yI9deH18Q6xiSOIjXD4sLI55Y/gfpa8/558=",
+    version = "v0.0.0-20191017083524-a8ff7f821017",
 )
 
 go_repository(
@@ -2787,8 +2786,8 @@ go_repository(
 go_repository(
     name = "com_github_spf13_cobra",
     importpath = "github.com/spf13/cobra",
-    sum = "h1:xghbfqPkxzxP3C/f3n5DdpAbdKLj4ZE4BWQI362l53M=",
-    version = "v1.1.3",
+    sum = "h1:6m/oheQuQ13N9ks4hubMG6BnvwOeaJrqSPLahSnczz8=",
+    version = "v1.0.0",
 )
 
 go_repository(
@@ -3096,108 +3095,96 @@ go_repository(
     name = "io_k8s_api",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/api",
-    strip_prefix = "api-0.20.1",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/api/archive/refs/tags/v0.20.1.zip"],
+    sum = "h1:ud1c3W3YNzGd6ABJlbFfKXBKXO+1KdGfcgGGNgFR03E=",
+    version = "v0.20.1",
 )
 
 go_repository(
     name = "io_k8s_apimachinery",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/apimachinery",
-    strip_prefix = "apimachinery-0.20.1",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/apimachinery/archive/refs/tags/v0.20.1.zip"],
+    sum = "h1:LAhz8pKbgR8tUwn7boK+b2HZdt7MiTu2mkYtFMUjTRQ=",
+    version = "v0.20.1",
 )
 
 go_repository(
     name = "io_k8s_apiserver",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/apiserver",
-    strip_prefix = "apiserver-0.18.8",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/apiserver/archive/refs/tags/v0.18.8.zip"],
+    sum = "h1:Au4kMn8sb1zFdyKqc8iMHLsYLxRI6Y+iAhRNKKQtlBY=",
+    version = "v0.18.8",
 )
 
 go_repository(
     name = "io_k8s_client_go",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/client-go",
-    strip_prefix = "client-go-0.18.8",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/client-go/archive/refs/tags/v0.18.8.zip"],
+    sum = "h1:SdbLpIxk5j5YbFr1b7fq8S7mDgDjYmUxSbszyoesoDM=",
+    version = "v0.18.8",
 )
 
 go_repository(
     name = "io_k8s_cloud_provider",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/cloud-provider",
-    strip_prefix = "cloud-provider-0.18.8",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/cloud-provider/archive/refs/tags/v0.18.8.zip"],
+    sum = "h1:XNCJIzKFtoXhn6cyyXe7JWde0KjK6o8vo2Dtat7hb6Q=",
+    version = "v0.18.8",
 )
 
 go_repository(
     name = "io_k8s_code_generator",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/code-generator",
-    strip_prefix = "code-generator-0.17.2",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/code-generator/archive/refs/tags/v0.17.2.zip"],
+    sum = "h1:pTwl3rLB1fUyxmvEzmVPMM0tBSdUehd7z+bDzpj4lPE=",
+    version = "v0.17.2",
 )
 
 go_repository(
     name = "io_k8s_component_base",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/component-base",
-    strip_prefix = "component-base-0.18.8",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/component-base/archive/refs/tags/v0.18.8.zip"],
+    sum = "h1:BW5CORobxb6q5mb+YvdwQlyXXS6NVH5fDXWbU7tf2L8=",
+    version = "v0.18.8",
 )
 
 go_repository(
     name = "io_k8s_csi_translation_lib",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/csi-translation-lib",
-    strip_prefix = "csi-translation-lib-0.18.8",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/csi-translation-lib/archive/refs/tags/v0.18.8.zip"],
+    sum = "h1:HdyTgN4+O0zPDsF3rDGVYNwuhsG16HLQvC7lKuIxBq4=",
+    version = "v0.18.8",
 )
 
 go_repository(
     name = "io_k8s_gengo",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/gengo",
-    strip_prefix = "gengo-3a45101e95ac3a2015e6bf3e41269d624610c946",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/gengo/archive/3a45101e95ac3a2015e6bf3e41269d624610c946.zip"],
+    sum = "h1:sAvhNk5RRuc6FNYGqe7Ygz3PSo/2wGWbulskmzRX8Vs=",
+    version = "v0.0.0-20200413195148-3a45101e95ac",
 )
 
 go_repository(
     name = "io_k8s_klog",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/klog",
-    strip_prefix = "klog-1.0.0",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/klog/archive/refs/tags/v1.0.0.zip"],
+    sum = "h1:Pt+yjF5aB1xDSVbau4VsWe+dQNzA0qv1LlXdC2dF6Q8=",
+    version = "v1.0.0",
 )
 
 go_repository(
     name = "io_k8s_kube_openapi",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/kube-openapi",
-    strip_prefix = "kube-openapi-d219536bb9fd63731fa65ca4b42f14bc2f10c61b",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/kube-openapi/archive/d219536bb9fd63731fa65ca4b42f14bc2f10c61b.zip"],
+    sum = "h1:sOHNzJIkytDF6qadMNKhhDRpc6ODik8lVC6nOur7B2c=",
+    version = "v0.0.0-20201113171705-d219536bb9fd",
 )
 
 go_repository(
     name = "io_k8s_legacy_cloud_providers",
     build_file_proto_mode = "disable_global",
     importpath = "k8s.io/legacy-cloud-providers",
-    strip_prefix = "legacy-cloud-providers-0.18.8",
-    type = "zip",
-    urls = ["https://github.com/kubernetes/legacy-cloud-providers/archive/refs/tags/v0.18.8.zip"],
+    sum = "h1:IGASZSYJjkMk5d1HU9+zskZqoRG3zccVzvA3hV7hCL0=",
+    version = "v0.18.8",
 )
 
 go_repository(
@@ -3367,8 +3354,8 @@ go_repository(
 go_repository(
     name = "in_gopkg_yaml_v3",
     importpath = "gopkg.in/yaml.v3",
-    sum = "h1:dUUwHk2QECo/6vqA44rthZ8ie2QXMNeKRTHCNY2nXvo=",
-    version = "v3.0.0-20200313102051-9f266ea9e77c",
+    sum = "h1:h8qDotaEPuJATrMmW04NCwg7v22aHH28wwpauUhK9Oo=",
+    version = "v3.0.0-20210107192922-496545a6307b",
 )
 
 go_repository(
