@@ -38,5 +38,4 @@ public class ArtifactTaskExecutionResponse {
   ExecuteCommandResponse executeCommandResponse;
   CommandExecutionStatus status;
   String errorMessage;
-  UnitProgressData unitProgressData;
 }

@@ -214,7 +214,7 @@ public class ArtifactDelegateRequestUtils {
   }
 
   public CustomArtifactDelegateRequest getCustomDelegateRequest(String artifactsArrayPath, String versionRegex,
-      String ShellType, ArtifactSourceType sourceType, ScriptType scriptType, String versionPath, String script,
+      String shellType, ArtifactSourceType sourceType, ScriptType scriptType, String versionPath, String script,
       Map<String, String> attributes, Map<String, String> inputs, String version, String executionId, long timeout,
       String accountId) {
     return CustomArtifactDelegateRequest.builder()
@@ -222,7 +222,7 @@ public class ArtifactDelegateRequestUtils {
         .attributes(attributes)
         .versionRegex(trim(versionRegex))
         .sourceType(sourceType)
-        .type(ShellType)
+        .type(shellType)
         .versionPath(versionPath)
         .script(script)
         .scriptType(scriptType)
