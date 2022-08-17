@@ -14,6 +14,7 @@ import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBui
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicContainerParamsWithVolume;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicContainerParamsWithoutImageCred;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPod;
+import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPodWithHostedTtl;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPodWithImageCred;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPodWithPVC;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPodWithRuntime;
@@ -21,6 +22,7 @@ import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBui
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPodWithVolumeMount;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInput;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInputTaint;
+import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInputWithHostedTtl;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInputWithImageCred;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInputWithPVC;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInputWithRuntime;
@@ -49,6 +51,7 @@ import io.harness.delegate.beans.ci.pod.CIK8PodParams;
 import io.harness.delegate.beans.ci.pod.PodParams;
 import io.harness.delegate.task.citasks.cik8handler.k8java.container.ContainerSpecBuilder;
 import io.harness.delegate.task.citasks.cik8handler.k8java.container.ContainerSpecBuilderResponse;
+import io.harness.delegate.task.citasks.cik8handler.params.CIConstants;
 import io.harness.rule.Owner;
 
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
@@ -250,6 +253,21 @@ public class PodSpecBuilderTest extends CategoryTest {
     V1Pod expectedPod = expectedPodWithSecurityContext();
     V1ContainerBuilder containerBuilder = basicContainerBuilderWithSecurityContext();
 
+    when(containerSpecBuilder.createSpec(containerParams))
+        .thenReturn(ContainerSpecBuilderResponse.builder().containerBuilder(containerBuilder).build());
+    V1PodBuilder responsePodBuilder = cik8PodSpecBuilder.createSpec((PodParams) podParams);
+    assertEquals(responsePodBuilder.build(), expectedPod);
+  }
+
+  @Test
+  @Owner(developers = HEN)
+  @Category(UnitTests.class)
+  public void createBasicSpecWithHostedTtl() {
+    CIK8PodParams<CIK8ContainerParams> podParams = basicInputWithHostedTtl();
+    CIK8ContainerParams containerParams = basicContainerParamsWithoutImageCred();
+
+    V1Pod expectedPod = basicExpectedPodWithHostedTtl();
+    V1ContainerBuilder containerBuilder = basicContainerBuilder();
     when(containerSpecBuilder.createSpec(containerParams))
         .thenReturn(ContainerSpecBuilderResponse.builder().containerBuilder(containerBuilder).build());
     V1PodBuilder responsePodBuilder = cik8PodSpecBuilder.createSpec((PodParams) podParams);

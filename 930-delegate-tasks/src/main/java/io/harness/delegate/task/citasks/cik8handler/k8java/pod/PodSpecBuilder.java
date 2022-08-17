@@ -32,6 +32,8 @@ public class PodSpecBuilder extends BasePodSpecBuilder {
     }
 
     podBuilderSpecNested.withRestartPolicy(CIConstants.RESTART_POLICY);
-    podBuilderSpecNested.withActiveDeadlineSeconds(podParams.getActiveDeadLineSeconds());
+    podBuilderSpecNested.withActiveDeadlineSeconds(podParams.getActiveDeadLineSeconds() == null
+            ? CIConstants.POD_MAX_TTL_SECS
+            : podParams.getActiveDeadLineSeconds());
   }
 }

@@ -50,8 +50,6 @@ import io.harness.grpc.client.AbstractManagerGrpcClientModule;
 import io.harness.grpc.client.ManagerGrpcClientModule;
 import io.harness.impl.scm.ScmServiceClientImpl;
 import io.harness.licensing.remote.NgLicenseHttpClientModule;
-import io.harness.licensing.services.DefaultLicenseServiceImpl;
-import io.harness.licensing.services.LicenseService;
 import io.harness.lock.DistributedLockImplementation;
 import io.harness.lock.PersistentLockModule;
 import io.harness.manage.ManagedScheduledExecutorService;
