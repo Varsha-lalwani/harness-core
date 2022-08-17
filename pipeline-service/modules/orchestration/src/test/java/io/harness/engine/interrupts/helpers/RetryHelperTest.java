@@ -223,7 +223,8 @@ public class RetryHelperTest extends OrchestrationTestBase {
     doReturn(executionInputInstance).when(executionInputService).getExecutionInputInstance(originalNodeExecutionId);
 
     doReturn(ExecutionInputInstance.builder()
-                 .userInput(executionInputInstance.getUserInput()) o.template(executionInputInstance.getTemplate())
+                 .userInput(executionInputInstance.getUserInput())
+                 .template(executionInputInstance.getTemplate())
                  .mergedInputTemplate(executionInputInstance.getMergedInputTemplate())
                  .nodeExecutionId(newNodeExecutionId)
                  .inputInstanceId("RandomUUID")
