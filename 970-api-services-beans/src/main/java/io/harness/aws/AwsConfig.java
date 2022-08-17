@@ -27,4 +27,5 @@ public class AwsConfig {
   boolean isIRSA;
   CrossAccountAccess crossAccountAccess;
   AwsAccessKeyCredential awsAccessKeyCredential;
+  int xyz;
 }
