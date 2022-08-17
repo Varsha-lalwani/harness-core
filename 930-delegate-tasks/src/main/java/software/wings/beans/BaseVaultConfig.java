@@ -21,7 +21,6 @@ import io.harness.expression.ExpressionEvaluator;
 import io.harness.mongo.index.FdIndex;
 import io.harness.security.encryption.AccessType;
 
-import com.esotericsoftware.kryo.serializers.FieldSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.reinert.jjschema.Attributes;
@@ -80,10 +79,7 @@ public abstract class BaseVaultConfig extends SecretManagerConfig {
   @Attributes(title = "serviceAccountTokenPath") private String serviceAccountTokenPath;
   @Attributes(title = "k8sAuthEndpoint") private String k8sAuthEndpoint;
 
-  @Attributes(title = "renewAppRoleToken")
-  @Builder.Default
-  @FieldSerializer.Optional("renewAppRoleToken")
-  private Boolean renewAppRoleToken = Boolean.TRUE;
+  @Attributes(title = "renewAppRoleToken") @Builder.Default private Boolean renewAppRoleToken = Boolean.TRUE;
 
   public boolean isCertValidationRequired() {
     return isCertValidationRequired;
@@ -122,7 +118,7 @@ public abstract class BaseVaultConfig extends SecretManagerConfig {
   @JsonIgnore
   @SchemaIgnore
   public boolean getRenewAppRoleToken() {
-    return renewAppRoleToken == null || renewAppRoleToken;
+    return renewAppRoleToken == null ? Boolean.TRUE : renewAppRoleToken;
   }
 
   @Override

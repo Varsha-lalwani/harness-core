@@ -204,6 +204,7 @@ public class NGVaultServiceImpl implements NGVaultService {
   public void renewAppRoleClientToken(VaultConnector vaultConnector) {
     if (RestClientUtils.getResponse(accountClient.isFeatureFlagEnabled(
             DO_NOT_RENEW_APPROLE_TOKEN.name(), vaultConnector.getAccountIdentifier()))) {
+      vaultConnector.setRenewAppRoleToken(false);
       return;
     }
     SecretManagerConfig secretManagerConfig = getSecretManagerConfig(vaultConnector.getAccountIdentifier(),

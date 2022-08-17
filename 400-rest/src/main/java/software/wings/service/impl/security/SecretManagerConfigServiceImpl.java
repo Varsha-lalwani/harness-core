@@ -325,6 +325,7 @@ public class SecretManagerConfigServiceImpl implements SecretManagerConfigServic
   private void updateConfigForAppRoleTokenRenewal(SecretManagerConfig secretManagerConfig, String accountId) {
     if ((secretManagerConfig instanceof BaseVaultConfig)
         && (((BaseVaultConfig) secretManagerConfig).getAccessType() == APP_ROLE)
+        && ((BaseVaultConfig) secretManagerConfig).getRenewAppRoleToken()
         && (accountService.isFeatureFlagEnabled(FeatureName.DO_NOT_RENEW_APPROLE_TOKEN.name(), accountId))) {
       ((BaseVaultConfig) secretManagerConfig).setRenewAppRoleToken(false);
     }
