@@ -1,0 +1,106 @@
+on:
+  pull_request_target:
+  pull_request:
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@master
+      - run: |
+          npm install
+          npm build
+
+      - uses: ./.github/actions/do-a-local-action
+        with:
+          arg1: ${{ secrets.supersecret1 }}
+
+      - uses: completely/fakeaction@5fd3084fc36e372ff1fff382a39b10d03659f355
+        with:
+          arg2: ${{ secrets.supersecret2 }}
+
+      - uses: docker://alpine@sha256:402d21757a03a114d273bbe372fa4b9eca567e8b6c332fa7ebf982b902207242
+
+      - uses: completely/fakeaction@5fd3084
+        with:
+          arg2: ${{ secrets.supersecret2 }}
+ 
+      - uses: fakerepo/comment-on-pr@v1
+        with:
+          message: |
+            Thank you!
+ 
+      - uses: fakerepo/comment-on-pr
+        with:
+          message: |
+            Thank you!
+      
+      # curl with --insecure flag
+      - name: curl with --insecure flag
+        run: curl --insecure http://www.example.com/
+
+      # wget with --no-check-certificate flag
+      - name: wget with --no-check-certificate flag
+        run: wget --no-check-certificate http://ipv4.download.thinkbroadband.com/10MB.zip
+
+      # curl with -k flag
+      - name: curl with -k flag
+        run: curl -k http://www.example.com/
+
+      # wget with HTTPS
+      - name: wget with HTTPS
+        run: wget https://www.example.com/ --output-document=securefile.txt
+
+      # curl with HTTPS
+      - name: curl with HTTPS
+        run: curl https://www.example.com/ -o securefile.txt
+
+      # Commands using HTTP
+      - name: curl HTTP request
+        run: curl http://www.example.com/
+
+      - name: wget HTTP download
+        run: wget http://ipv4.download.thinkbroadband.com/10MB.zip
+
+      - name: Run curl with --proxy-insecure flag
+        run: |
+          curl --proxy-insecure -x http://proxy.example.com:8080 http://www.example.com/
+
+      - uses: docker://gcr.io/cloud-builders/gradle
+
+      - uses: docker://alpine:3.8
+
+      - name: Upload SARIF file for GitHub Advanced Security Dashboard
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
+
+  build2:
+    name: Build and test using a local workflow
+    uses: ./.github/workflows/use_a_local_workflow.yml@master
+    secrets: inherit
+    with:
+      examplearg: true
+  
+  docker-build:
+    runs-on: ubuntu-latest
+    env:
+      workdir: lambdas/run-semgrep
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        working-directory:
+          ${{ env.workdir }}/src
+     
+        run: docker build -t semgrep-scanner:latest .
+      - name:
+          blah
+        run: |
+          CONTENTS=$(curl https://blah.com)
+          eval $CONTENTS
